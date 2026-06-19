@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Camino" />
   <title>Camino</title>
   <style>
     * {
@@ -11,13 +16,19 @@
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       background: #111;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100dvh;
       overflow: hidden;
+      overscroll-behavior: none;      /* no pull-to-refresh / bounce */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      touch-action: none;
     }
 
     canvas {
