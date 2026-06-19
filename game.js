@@ -79,7 +79,10 @@ const VERSES = [
 const VERSE_EVERY = 100; // km between verses
 let shake = 0;     // remaining shake frames
 let flash = 0;     // remaining hit-flash frames
+let lifeFlash = 0; // animates the life-lost indicator in the HUD
 let bestScore = Number(localStorage.getItem('camino_best') || 0);
+
+const MAX_LIVES = 3;
 
 // After dying, ignore restart input briefly so leftover swipes/keys don't
 // skip past the score screen.
@@ -121,9 +124,10 @@ function startGame() {
     targetX:  W / 2,
     targetY:  H * 0.74,
     size:     pW * 0.15,
-    lives:    3,
+    lives:    MAX_LIVES,
     hitTimer: 0,
   };
+  lifeFlash = 0;
 }
 
 function endGame() {
@@ -178,8 +182,8 @@ function handleInput(dx, dy) {
   if (gameState !== 'playing') { if (canRestart()) startGame(); return; }
   if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
 
-  const stepH = pW * 0.165;
-  const stepV = H  * 0.065;
+  const stepH = pW * 0.22;   // ~1.5 pilgrim widths — clears one obstacle per swipe
+  const stepV = H  * 0.085;
 
   if (Math.abs(dx) >= Math.abs(dy)) {
     player.targetX += dx > 0 ? stepH : -stepH;
@@ -305,38 +309,44 @@ function hits(p, obj, shrink = 0.38) {
 }
 
 // ── Update ─────────────────────────────────────────────────
-function update() {
+// dt is a frame-rate-independent factor: 1.0 at 60fps, 0.5 at 120fps, etc.
+// Every continuous motion is multiplied by dt so the game runs at the same
+// real-world speed and stays smooth on any refresh rate or through frame drops.
+function update(dt) {
   if (gameState !== 'playing') return;
 
-  frame++;
+  frame  += dt;
   speed   = BASE_SPEED + frame * SPEED_INC;
-  score  += speed * 0.011;
-  scrollY = (scrollY + speed) % (H * 0.13);
+  score  += speed * 0.011 * dt;
+  scrollY = (scrollY + speed * dt) % (H * 0.13);
 
-  if (player.hitTimer > 0) player.hitTimer--;
-  if (shake > 0) shake--;
+  if (player.hitTimer > 0) player.hitTimer -= dt;
+  if (shake > 0) shake -= dt;
+  if (flash > 0) flash -= dt;
+  if (lifeFlash > 0) lifeFlash -= dt;
 
-  // Glide pilgrim toward target position (smooth movement)
-  player.x += (player.targetX - player.x) * 0.22;
-  player.y += (player.targetY - player.y) * 0.22;
-  if (flash > 0) flash--;
+  // Glide pilgrim toward target (exponential smoothing, dt-corrected)
+  const glide = 1 - Math.pow(1 - 0.22, dt);
+  player.x += (player.targetX - player.x) * glide;
+  player.y += (player.targetY - player.y) * glide;
 
   // Particles
+  const damp = Math.pow(0.92, dt);
   for (const p of particles) {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx *= 0.92;
-    p.vy *= 0.92;
-    p.life--;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= damp;
+    p.vy *= damp;
+    p.life -= dt;
   }
   particles = particles.filter(p => p.life > 0);
 
   // Floating score text drifts up and fades
-  for (const f of floats) { f.y -= 1.1; f.life--; }
+  for (const f of floats) { f.y -= 1.1 * dt; f.life -= dt; }
   floats = floats.filter(f => f.life > 0);
 
   // Drifting light motes (grace in the air)
-  moteTimer++;
+  moteTimer += dt;
   if (moteTimer >= 18) {
     moteTimer = 0;
     motes.push({
@@ -349,9 +359,9 @@ function update() {
     });
   }
   for (const m of motes) {
-    m.y += m.vy;
-    m.sway += 0.03;
-    m.x += Math.sin(m.sway) * 0.4;
+    m.y += m.vy * dt;
+    m.sway += 0.03 * dt;
+    m.x += Math.sin(m.sway) * 0.4 * dt;
   }
   motes = motes.filter(m => m.y < H + 10);
 
@@ -361,32 +371,33 @@ function update() {
     verse = { ...v, life: 220, max: 220 };
     nextVerse += VERSE_EVERY;
   }
-  if (verse) { verse.life--; if (verse.life <= 0) verse = null; }
+  if (verse) { verse.life -= dt; if (verse.life <= 0) verse = null; }
 
   // Spawn timers
-  spawnTimer++;
+  spawnTimer += dt;
   const spawnInterval = Math.max(36, 88 - frame * 0.042);
   if (spawnTimer >= spawnInterval) { spawnObstacle();  spawnTimer  = 0; }
 
-  collectTimer++;
+  collectTimer += dt;
   if (collectTimer >= 105) { spawnCollectible(); collectTimer = 0; }
 
-  decoTimer++;
+  decoTimer += dt;
   if (decoTimer >= 52) { spawnDecoration();  decoTimer  = 0; }
 
   // Scroll everything toward player
-  for (const obj of obstacles)    obj.y += speed;
-  for (const obj of collectibles) obj.y += speed;
-  for (const obj of decorations)  obj.y += speed;
+  for (const obj of obstacles)    obj.y += speed * dt;
+  for (const obj of collectibles) obj.y += speed * dt;
+  for (const obj of decorations)  obj.y += speed * dt;
 
   // Obstacle collision
-  if (player.hitTimer === 0) {
+  if (player.hitTimer <= 0) {
     for (const obs of obstacles) {
       if (hits(player, obs)) {
         player.lives--;
         player.hitTimer = 90;
         shake = 16;
         flash = 18;
+        lifeFlash = 40;
         spawnParticles(player.x, player.y);
         obs.y = H + 200;
         if (player.lives <= 0) { endGame(); return; }
@@ -601,9 +612,38 @@ function drawHUD() {
   ctx.textAlign = 'left';
   ctx.fillText(`${Math.floor(score)} km`, W*0.04, H*0.068);
 
-  for (let i = 0; i < player.lives; i++) {
-    const lw = Math.max(2, W * 0.009);
-    drawCross(W - W*0.055 - i * W*0.078, H*0.052, W*0.05, C.uiGold, lw);
+  const lw      = Math.max(2, W * 0.009);
+  const size    = W * 0.05;
+  const spacing = W * 0.078;
+  const x0      = W - W*0.055;   // rightmost slot
+  const y       = H * 0.052;
+
+  // Remaining lives briefly pulse when one is lost, drawing the eye to the HUD
+  const pulse = lifeFlash > 0
+    ? 1 + Math.sin((40 - lifeFlash) * 0.45) * 0.13 * (lifeFlash / 40)
+    : 1;
+
+  // Always show all MAX_LIVES slots: filled = life remaining, faint = lost.
+  // Keeping empty slots visible makes "you have 3, you lost one" obvious.
+  for (let i = 0; i < MAX_LIVES; i++) {
+    const x = x0 - i * spacing;
+    if (i < player.lives) drawCross(x, y, size * pulse, C.uiGold, lw);
+    else                  drawCross(x, y, size, 'rgba(255,215,0,0.2)', lw);
+  }
+
+  // Flash the just-lost slot: a red cross expanding and fading away
+  if (lifeFlash > 0) {
+    const t = lifeFlash / 40;                  // 1 → 0
+    const x = x0 - player.lives * spacing;
+    drawCross(x, y, size * (1 + (1 - t) * 0.5), `rgba(220,60,40,${t})`, lw + 1);
+
+    // Floating "−1" rising above the lives
+    ctx.globalAlpha = t;
+    ctx.fillStyle = '#E84A3A';
+    ctx.font = `bold ${W*0.05}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('−1', x, y - (1 - t) * H * 0.045);
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -629,21 +669,34 @@ function drawStart() {
 
   ctx.fillStyle = C.uiCream;
   ctx.font      = `${Math.min(W*0.05, 22)}px serif`;
-  ctx.fillText("The Pilgrim's Journey", W/2, H*0.615);
+  ctx.fillText("The Pilgrim's Journey", W/2, H*0.585);
+
+  // Lives legend: show the three crosses so players learn the life system
+  const lcSize = Math.min(W*0.055, 26);
+  const lcGap  = lcSize * 1.5;
+  const lcY    = H * 0.66;
+  const lw     = Math.max(2, W*0.009);
+  for (let i = 0; i < MAX_LIVES; i++) {
+    drawCross(W/2 + (i - 1) * lcGap, lcY, lcSize, C.uiGold, lw);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.72)';
+  ctx.font      = `${Math.min(W*0.04, 17)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('3 lives — avoid rocks & water', W/2, H*0.71);
 
   if (bestScore > 0) {
     ctx.fillStyle = C.uiCream;
     ctx.font      = `${Math.min(W*0.045, 20)}px sans-serif`;
-    ctx.fillText(`Best: ${bestScore} km`, W/2, H*0.69);
+    ctx.fillText(`Best: ${bestScore} km`, W/2, H*0.765);
   }
 
   // Swipe-direction hint: four arrows around a center pilgrim dot
-  drawSwipeHint(W/2, H*0.81, Math.min(W*0.13, 64));
+  drawSwipeHint(W/2, H*0.86, Math.min(W*0.11, 52));
 
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.font      = `${Math.min(W*0.045, 19)}px sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText('Swipe to guide the pilgrim', W/2, H*0.93);
+  ctx.fillText('Swipe to guide the pilgrim', W/2, H*0.96);
 }
 
 function drawSwipeHint(cx, cy, reach) {
@@ -852,11 +905,18 @@ function drawVerse() {
 
 // ── Loop ───────────────────────────────────────────────────
 let frameCount = 0;
-function loop() {
-  frameCount++;
-  update();
+let lastTime = performance.now();
+
+function loop(now) {
+  // dt = elapsed time as a fraction of one 60fps frame (16.67ms).
+  // Capped at 3 so a long pause (tab backgrounded) can't teleport the world.
+  const dt = Math.min((now - lastTime) / (1000 / 60), 3);
+  lastTime = now;
+  frameCount += dt;
+
+  update(dt);
   render();
   requestAnimationFrame(loop);
 }
 
-loop();
+requestAnimationFrame(loop);
