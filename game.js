@@ -82,6 +82,10 @@ let flash = 0;     // remaining hit-flash frames
 let lifeFlash = 0; // animates the life-lost indicator in the HUD
 let bestScore = Number(localStorage.getItem('camino_best') || 0);
 
+// First-play guide: walk the player through the four moves once, ever.
+let tutorial = null;
+const TUT_KEY = 'camino_tutorial_done';
+
 const MAX_LIVES = 3;
 
 // After dying, ignore restart input briefly so leftover swipes/keys don't
@@ -128,6 +132,11 @@ function startGame() {
     hitTimer: 0,
   };
   lifeFlash = 0;
+
+  // Only guide the very first journey; retries start straight away.
+  tutorial = localStorage.getItem(TUT_KEY)
+    ? null
+    : { steps: ['left', 'right', 'up', 'down'], idx: 0 };
 }
 
 function endGame() {
@@ -185,12 +194,24 @@ function handleInput(dx, dy) {
   const stepH = pW * 0.22;   // ~1.5 pilgrim widths — clears one obstacle per swipe
   const stepV = H  * 0.085;
 
+  let action;
   if (Math.abs(dx) >= Math.abs(dy)) {
+    action = dx > 0 ? 'right' : 'left';
     player.targetX += dx > 0 ? stepH : -stepH;
   } else {
+    action = dy > 0 ? 'down' : 'up';
     player.targetY += dy > 0 ? stepV : -stepV;
   }
   clampPlayer();
+
+  // Advance the first-play tutorial when the prompted move is performed.
+  if (tutorial && action === tutorial.steps[tutorial.idx]) {
+    tutorial.idx++;
+    if (tutorial.idx >= tutorial.steps.length) {
+      tutorial = null;
+      localStorage.setItem(TUT_KEY, '1');
+    }
+  }
 }
 
 // ── Spawn ──────────────────────────────────────────────────
@@ -376,7 +397,8 @@ function update(dt) {
   // Spawn timers
   spawnTimer += dt;
   const spawnInterval = Math.max(36, 88 - frame * 0.042);
-  if (spawnTimer >= spawnInterval) { spawnObstacle();  spawnTimer  = 0; }
+  // Hold obstacles back while the first-play tutorial teaches the moves.
+  if (!tutorial && spawnTimer >= spawnInterval) { spawnObstacle();  spawnTimer  = 0; }
 
   collectTimer += dt;
   if (collectTimer >= 105) { spawnCollectible(); collectTimer = 0; }
@@ -647,6 +669,36 @@ function drawHUD() {
   }
 }
 
+// ── First-play tutorial ────────────────────────────────────
+// Prompts the four moves one at a time; obstacles are paused until done.
+function drawTutorial() {
+  const prompts = {
+    left:  '◀   Swipe left',
+    right: 'Swipe right   ▶',
+    up:    '▲   Swipe up',
+    down:  'Swipe down   ▼',
+  };
+  const step = tutorial.steps[tutorial.idx];
+
+  ctx.save();
+  ctx.textAlign = 'center';
+
+  // Dim banner so the prompt reads clearly over the path.
+  ctx.fillStyle = 'rgba(10,20,50,0.4)';
+  ctx.fillRect(0, H * 0.4, W, H * 0.16);
+
+  const pulse = 1 + Math.sin(frameCount * 0.08) * 0.05;
+  ctx.fillStyle = C.uiGold;
+  ctx.font = `bold ${Math.min(W * 0.075, 34) * pulse}px sans-serif`;
+  ctx.fillText(prompts[step], W / 2, H * 0.475);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.72)';
+  ctx.font = `${Math.min(W * 0.04, 18)}px sans-serif`;
+  ctx.fillText(`Learn the way   ·   ${tutorial.idx + 1} / ${tutorial.steps.length}`, W / 2, H * 0.53);
+
+  ctx.restore();
+}
+
 // ── Start screen ───────────────────────────────────────────
 function drawStart() {
   ctx.fillStyle = C.grass;
@@ -853,6 +905,7 @@ function render() {
 
   drawHUD();
   if (verse) drawVerse();
+  if (tutorial && gameState === 'playing') drawTutorial();
 
   if (gameState === 'gameover') drawGameOver();
 }
