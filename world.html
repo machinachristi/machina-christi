@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Camino" />
-  <meta name="description" content="An immersive 3D world — coming soon." />
-  <title>Camino · The 3D World</title>
+  <meta name="description" content="The Garden of Eden — an immersive world you can wander." />
+  <title>Camino · The Garden</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,7 +17,7 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --cool:      150, 178, 214;
+      --leaf:      168, 205, 140;   /* the garden's living green (rgb parts) */
     }
 
     html, body {
@@ -32,91 +32,221 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* A cooler, more distant light than the home page — somewhere yet to come. */
-    body {
+    /* ── The world itself, held at arm's length in an iframe ──
+       A crash inside it cannot reach this page: the frame is a separate
+       document, and the return-home link below lives out here with us. */
+    .stage {
+      position: fixed;
+      inset: 0;
+    }
+    .stage iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    body[data-world-state="ready"] .stage iframe { opacity: 1; }
+
+    /* ── Return home: always present, always on top, in every state ── */
+    .home {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: max(14px, env(safe-area-inset-left));
+      z-index: 10;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      color: rgba(232, 213, 163, 0.9);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(11, 10, 8, 0.45);
+      border: 1px solid rgba(232, 213, 163, 0.25);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+    .home:hover, .home:focus-visible {
+      color: #fff;
+      border-color: rgba(232, 213, 163, 0.6);
+      background: rgba(11, 10, 8, 0.65);
+      outline: none;
+    }
+
+    /* ── Splash (loading) and fallback (failed) share the dark liturgy ── */
+    .veil {
+      position: fixed;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       padding: 24px;
-      gap: clamp(20px, 5vh, 40px);
+      gap: clamp(14px, 3.5vh, 26px);
       background:
-        radial-gradient(120% 90% at 50% 40%, rgba(90, 112, 150, 0.26), transparent 62%),
-        radial-gradient(150% 130% at 50% 120%, rgba(60, 78, 110, 0.20), transparent 55%),
+        radial-gradient(120% 90% at 50% 40%, rgba(90, 120, 70, 0.22), transparent 62%),
+        radial-gradient(150% 130% at 50% 120%, rgba(70, 90, 50, 0.16), transparent 55%),
         var(--bg);
-      position: relative;
-      animation: fadein 0.7s ease both;
+      transition: opacity 0.7s ease;
+      z-index: 5;
     }
-    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-
-    body::after {
+    .veil::after {
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(1.5px 1.5px at 22% 28%, rgba(200,216,240,0.30), transparent),
-        radial-gradient(1.5px 1.5px at 72% 32%, rgba(200,216,240,0.22), transparent),
-        radial-gradient(1.5px 1.5px at 58% 72%, rgba(200,216,240,0.26), transparent),
-        radial-gradient(1.5px 1.5px at 38% 78%, rgba(200,216,240,0.18), transparent);
+        radial-gradient(1.5px 1.5px at 22% 28%, rgba(232, 213, 163, 0.30), transparent),
+        radial-gradient(1.5px 1.5px at 72% 32%, rgba(232, 213, 163, 0.22), transparent),
+        radial-gradient(1.5px 1.5px at 58% 72%, rgba(232, 213, 163, 0.26), transparent),
+        radial-gradient(1.5px 1.5px at 38% 78%, rgba(232, 213, 163, 0.18), transparent);
       opacity: 0.6;
-      animation: drift 16s ease-in-out infinite alternate;
+      animation: drift 14s ease-in-out infinite alternate;
     }
-    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
 
-    .badge {
-      font-size: clamp(10px, 3vw, 12px);
-      letter-spacing: 0.34em;
-      text-indent: 0.34em;
-      color: rgba(var(--cool), 0.85);
-      z-index: 1;
+    body[data-world-state="ready"] .veil {
+      opacity: 0;
+      pointer-events: none;
     }
-    h1 {
+
+    .veil h1 {
       font-weight: normal;
-      font-size: clamp(28px, 8vw, 50px);
-      letter-spacing: 0.22em;
-      text-indent: 0.22em;
+      font-size: clamp(26px, 7.5vw, 46px);
+      letter-spacing: 0.28em;
+      text-indent: 0.28em;
       color: var(--gold-soft);
-      text-shadow: 0 0 26px rgba(var(--cool), 0.4);
-      z-index: 1;
+      text-shadow: 0 0 26px rgba(var(--leaf), 0.35);
     }
-    p {
+    .veil .verse {
+      max-width: 34ch;
+      line-height: 1.7;
+      font-size: clamp(13px, 3.6vw, 16px);
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.65);
+    }
+    .veil .status {
+      font-size: clamp(10px, 3vw, 12px);
+      letter-spacing: 0.3em;
+      text-indent: 0.3em;
+      color: rgba(var(--leaf), 0.85);
+      animation: breathe 2.4s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    /* Failed state: swap what the veil says, offer another try. */
+    .veil .fallback { display: none; }
+    body[data-world-state="failed"] .veil .status { display: none; }
+    body[data-world-state="failed"] .veil .fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .fallback p {
       max-width: 30ch;
       line-height: 1.7;
-      font-size: clamp(14px, 4vw, 18px);
+      font-size: clamp(13px, 3.8vw, 16px);
       font-style: italic;
       color: rgba(232, 213, 163, 0.7);
-      z-index: 1;
     }
-
-    .home {
-      z-index: 1;
-      margin-top: 8px;
+    .fallback button {
+      font-family: inherit;
       font-size: 13px;
       letter-spacing: 0.16em;
       text-indent: 0.16em;
-      color: rgba(232, 213, 163, 0.55);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(232, 213, 163, 0.25);
-      padding-bottom: 3px;
-      transition: color 0.25s ease, border-color 0.25s ease;
-    }
-    .home:hover, .home:focus-visible {
       color: var(--gold-soft);
-      border-color: rgba(232, 213, 163, 0.6);
+      background: rgba(201, 162, 39, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.55);
+      border-radius: 999px;
+      padding: 10px 26px;
+      cursor: pointer;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+    .fallback button:hover, .fallback button:focus-visible {
+      background: rgba(201, 162, 39, 0.28);
+      color: #fff;
       outline: none;
     }
 
     @media (prefers-reduced-motion: reduce) {
-      body, body::after { animation: none; }
+      .veil::after, .veil .status { animation: none; }
+      .stage iframe, .veil { transition-duration: 0.15s; }
     }
   </style>
 </head>
-<body>
-  <span class="badge">COMING SOON</span>
-  <h1>THE 3D WORLD</h1>
-  <p>An immersive world you can wander — the whole screen, the whole horizon. It is still being built. Come back soon.</p>
-  <a class="home" href="index.html">&larr; return home</a>
+<body data-world-state="loading">
+  <div class="stage" aria-hidden="false"></div>
+
+  <div class="veil" role="status" aria-live="polite">
+    <h1>THE GARDEN</h1>
+    <p class="verse">&ldquo;And the LORD God planted a garden eastward in Eden.&rdquo;</p>
+    <p class="status">ENTERING&hellip;</p>
+    <div class="fallback">
+      <p>The garden is resting for a moment. Please try again.</p>
+      <button type="button" onclick="location.reload()">try again</button>
+    </div>
+  </div>
+
+  <a class="home" href="index.html" aria-label="Return to the Camino home page">&lsaquo; return home</a>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const stage = document.querySelector('.stage');
+
+      // The world lives in its own document. Its sandbox permits scripts and
+      // same-origin fetches but NOT top navigation — even a hostile bug in
+      // there cannot steer this page; "return home" above always works.
+      const iframe = document.createElement('iframe');
+      iframe.src = 'world-app/index.html' + location.search;
+      iframe.title = 'The Garden of Eden — interactive 3D world';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      stage.appendChild(iframe);
+
+      let settled = false;
+
+      // Two clocks: one for "the network never finished" (generous, slow
+      // mobile connections are real), one for "loaded but never came alive."
+      const networkTimer = setTimeout(() => fail('timeout: never loaded'), 25000);
+      let bootTimer = null;
+      iframe.addEventListener('load', () => {
+        clearTimeout(networkTimer);
+        if (!settled) bootTimer = setTimeout(() => fail('timeout: loaded but not ready'), 8000);
+      });
+
+      window.addEventListener('message', (e) => {
+        if (e.source !== iframe.contentWindow) return;
+        const msg = e.data;
+        if (!msg || typeof msg.type !== 'string') return;
+        if (msg.type === 'world:ready') ready();
+        else if (msg.type === 'world:error') fail(msg.message);
+      });
+
+      function ready() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(networkTimer);
+        clearTimeout(bootTimer);
+        body.dataset.worldState = 'ready';
+        // Hand keyboard focus to the world so desktop arrows/WASD work
+        // immediately, without needing a click first.
+        iframe.focus();
+      }
+
+      function fail(reason) {
+        if (body.dataset.worldState === 'failed') return;
+        settled = true;
+        clearTimeout(networkTimer);
+        clearTimeout(bootTimer);
+        // Remove the frame entirely: stops any broken loop, frees the GPU.
+        iframe.remove();
+        body.dataset.worldState = 'failed';
+        console.warn('world failed:', reason);
+      }
+    })();
+  </script>
 </body>
 </html>

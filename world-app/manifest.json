@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "threeVersion": "0.185.1",
+  "log": [
+    {
+      "version": 1,
+      "date": "2026-07-03",
+      "focus": "the garden planted",
+      "summary": "Eden exists, whole and simple: rolling meadow with a rim melting into fog, a river through the land, ~40 low-poly trees with the Tree of Life (golden, lit) and the Tree of the Knowledge of Good and Evil (dark, fruited) at the center, flowers, three birds, a grazing lamb, drifting light motes, and Adam (Eve via ?character=eve) walkable by one-finger drag with a following camera."
+    }
+  ],
+  "next": [
+    "Let the river flow: animate the water surface, and divide the one river into four (Genesis 2:10)",
+    "A day/night cycle — evening and morning",
+    "More creatures: fish in the river, doves, cattle; give the birds perching behavior",
+    "Surface the Adam/Eve choice to visitors instead of a query parameter",
+    "Gentle ambient sound: wind, water, birdsong (respecting mobile autoplay rules)",
+    "Deepen the sacred trees: falling leaves of gold, a subtle reverence moment when approached",
+    "Name the four rivers — Pishon, Gihon, Tigris, Euphrates — with subtle inscriptions"
+  ]
+}
