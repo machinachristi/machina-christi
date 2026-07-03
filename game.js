@@ -98,6 +98,18 @@ function canRestart() {
   return gameState !== 'playing' && frameCount >= restartReadyAt;
 }
 
+// Tap targets on the game-over screen, in CSS-pixel (viewport) coordinates.
+// The canvas fills the whole viewport, so pointer coords map straight to these.
+let gameOverButtons = null;
+
+function pointInRect(x, y, r) {
+  return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+
+function goHome() {
+  window.location.href = 'index.html';
+}
+
 const BASE_SPEED = 2.4;
 const SPEED_INC  = 0.00045;
 
@@ -167,14 +179,30 @@ canvas.addEventListener('touchstart', e => {
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
   if (!touch0) return;
-  const dx = e.changedTouches[0].clientX - touch0.x;
-  const dy = e.changedTouches[0].clientY - touch0.y;
+  const end = e.changedTouches[0];
+  const dx = end.clientX - touch0.x;
+  const dy = end.clientY - touch0.y;
   touch0 = null;
+
+  // On the game-over screen a tap on "Return home" leaves the game; any other
+  // tap or swipe still walks again (handled by handleInput).
+  if (gameState === 'gameover' && canRestart() &&
+      Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN &&
+      pointInRect(end.clientX, end.clientY, gameOverButtons && gameOverButtons.home)) {
+    goHome();
+    return;
+  }
   handleInput(dx, dy);
 }, { passive: false });
 
-canvas.addEventListener('click', () => {
-  if (canRestart()) startGame();
+canvas.addEventListener('click', e => {
+  if (!canRestart()) return;
+  if (gameState === 'gameover' &&
+      pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.home)) {
+    goHome();
+    return;
+  }
+  startGame();
 });
 
 document.addEventListener('keydown', e => {
@@ -185,6 +213,10 @@ document.addEventListener('keydown', e => {
     handleInput(dx * 80, dy * 80);
   }
   if (e.key === ' ' && canRestart()) { e.preventDefault(); startGame(); }
+  if ((e.key === 'Escape' || e.key === 'h' || e.key === 'H') && canRestart()) {
+    e.preventDefault();
+    goHome();
+  }
 });
 
 function handleInput(dx, dy) {
@@ -790,6 +822,42 @@ function drawSwipeHint(cx, cy, reach) {
 }
 
 // ── Game over screen ───────────────────────────────────────
+function roundRectPath(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+// A tappable pill on the game-over screen. Primary = warm gold fill, secondary
+// = outline only. `fade` eases it in once the restart lockout has cleared.
+function drawButton(r, label, primary, fade) {
+  roundRectPath(r.x, r.y, r.w, r.h, r.h / 2);
+
+  if (primary) {
+    ctx.fillStyle   = `rgba(201,162,39,${0.20 * fade})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(255,215,0,${0.85 * fade})`;
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+    ctx.fillStyle   = `rgba(255,215,0,${fade})`;
+  } else {
+    ctx.strokeStyle = `rgba(232,213,163,${0.40 * fade})`;
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+    ctx.fillStyle   = `rgba(232,213,163,${0.80 * fade})`;
+  }
+
+  ctx.font         = `${Math.min(W * 0.05, 22)}px serif`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
+  ctx.textBaseline = 'alphabetic';   // restore default for later draws
+}
+
 function drawGameOver() {
   // Ease the whole screen in over ~0.5s so it doesn't appear abruptly.
   const fadeIn = Math.min(1, (frameCount - gameOverAt) / 30);
@@ -817,13 +885,24 @@ function drawGameOver() {
   ctx.font      = `${Math.min(W*0.045, 20)}px sans-serif`;
   ctx.fillText(isBest ? '✦ New best journey! ✦' : `Best: ${bestScore} km`, W/2, H*0.655);
 
-  // Only invite a restart once the input lockout has cleared, fading in so it
-  // reads as "now you may go again" rather than an instant tap target.
+  // Only offer the next step once the input lockout has cleared, fading the
+  // choices in so they read as "now you may choose" rather than instant taps.
+  gameOverButtons = null;
   if (canRestart()) {
     const fade = Math.min(1, (frameCount - restartReadyAt) / 25);
-    ctx.fillStyle = `rgba(255,255,255,${0.52 * fade})`;
-    ctx.font      = `${Math.min(W*0.04, 18)}px sans-serif`;
-    ctx.fillText('Tap or press Space to walk again', W/2, H*0.76);
+
+    const bw = Math.min(W * 0.62, 280);
+    const bh = Math.min(H * 0.078, 54);
+    const cx = W / 2;
+    const y1 = H * 0.74;
+    const y2 = y1 + bh + Math.min(H * 0.022, 16);
+
+    const again = { x: cx - bw / 2, y: y1 - bh / 2, w: bw, h: bh };
+    const home  = { x: cx - bw / 2, y: y2 - bh / 2, w: bw, h: bh };
+    gameOverButtons = { again, home };
+
+    drawButton(again, 'Walk again',  true,  fade);
+    drawButton(home,  'Return home', false, fade);
   }
 
   ctx.restore();

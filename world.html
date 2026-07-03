@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Camino" />
+  <meta name="description" content="An immersive 3D world — coming soon." />
+  <title>Camino · The 3D World</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --cool:      150, 178, 214;
+    }
+
+    html, body {
+      height: 100dvh;
+      background: var(--bg);
+      color: var(--gold-soft);
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* A cooler, more distant light than the home page — somewhere yet to come. */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      gap: clamp(20px, 5vh, 40px);
+      background:
+        radial-gradient(120% 90% at 50% 40%, rgba(90, 112, 150, 0.26), transparent 62%),
+        radial-gradient(150% 130% at 50% 120%, rgba(60, 78, 110, 0.20), transparent 55%),
+        var(--bg);
+      position: relative;
+      animation: fadein 0.7s ease both;
+    }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(1.5px 1.5px at 22% 28%, rgba(200,216,240,0.30), transparent),
+        radial-gradient(1.5px 1.5px at 72% 32%, rgba(200,216,240,0.22), transparent),
+        radial-gradient(1.5px 1.5px at 58% 72%, rgba(200,216,240,0.26), transparent),
+        radial-gradient(1.5px 1.5px at 38% 78%, rgba(200,216,240,0.18), transparent);
+      opacity: 0.6;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+
+    .badge {
+      font-size: clamp(10px, 3vw, 12px);
+      letter-spacing: 0.34em;
+      text-indent: 0.34em;
+      color: rgba(var(--cool), 0.85);
+      z-index: 1;
+    }
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 8vw, 50px);
+      letter-spacing: 0.22em;
+      text-indent: 0.22em;
+      color: var(--gold-soft);
+      text-shadow: 0 0 26px rgba(var(--cool), 0.4);
+      z-index: 1;
+    }
+    p {
+      max-width: 30ch;
+      line-height: 1.7;
+      font-size: clamp(14px, 4vw, 18px);
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.7);
+      z-index: 1;
+    }
+
+    .home {
+      z-index: 1;
+      margin-top: 8px;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-indent: 0.16em;
+      color: rgba(232, 213, 163, 0.55);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(232, 213, 163, 0.25);
+      padding-bottom: 3px;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .home:hover, .home:focus-visible {
+      color: var(--gold-soft);
+      border-color: rgba(232, 213, 163, 0.6);
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body, body::after { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">COMING SOON</span>
+  <h1>THE 3D WORLD</h1>
+  <p>An immersive world you can wander — the whole screen, the whole horizon. It is still being built. Come back soon.</p>
+  <a class="home" href="index.html">&larr; return home</a>
+</body>
+</html>
