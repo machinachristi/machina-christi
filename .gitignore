@@ -1,0 +1,12 @@
+# Playwright is installed ad hoc (locally and in CI) and must never be
+# committed: a package.json at the repo root would trigger Azure SWA's Oryx
+# build detection and silently change how this zero-build-step site deploys.
+node_modules/
+package.json
+package-lock.json
+
+# Playwright output
+playwright-report/
+test-results/
+
+.DS_Store

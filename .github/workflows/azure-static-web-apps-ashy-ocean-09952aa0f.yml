@@ -44,3 +44,24 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_OCEAN_09952AA0F }}
           action: "close"
+
+  # Headless-browser smoke tests: the gate that world updates (including
+  # future AI-authored ones) must pass before merging to main. Runs against
+  # a local static server — no Azure dependency, no secrets. Playwright is
+  # installed ad hoc on purpose: a package.json committed at the repo root
+  # would trigger Oryx build detection in the deploy job above.
+  smoke_test_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Smoke Test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Playwright (ad hoc — never committed)
+        run: |
+          npm init -y > /dev/null
+          npm i -D @playwright/test@1.61.1
+          npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        env:
+          CI: "true"
+        run: npx playwright test -c tests/playwright.config.js
