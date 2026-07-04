@@ -15,6 +15,8 @@ function watchErrors(page) {
 
 async function gotoWorldReady(page, query = '') {
   await page.goto('/world.html' + query);
+  // The intro explainer gates everything else — nothing loads until it's dismissed.
+  await page.click('.intro__enter');
   await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
 }
 
@@ -29,6 +31,17 @@ const getState = page => appFrame(page).evaluate(() => window.__world.getState()
 const dist2d = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
 test.describe('the garden loads', () => {
+  test('shows an explainer before loading; entering starts the world', async ({ page }) => {
+    await page.goto('/world.html');
+    expect(await page.getAttribute('body', 'data-world-state')).toBe('intro');
+    await expect(page.locator('.intro')).toBeVisible();
+    await expect(page.locator('.stage iframe')).toHaveCount(0);   // nothing loads yet
+
+    await page.click('.intro__enter');
+    await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
+    await expect(page.locator('.stage iframe')).toHaveCount(1);
+  });
+
   test('reaches ready with zero console/page errors', async ({ page }) => {
     const errors = watchErrors(page);
     await gotoWorldReady(page);
@@ -152,6 +165,17 @@ test.describe('walking the garden', () => {
     const s1 = await getState(page);
     expect(dist2d(s1.pos, s0.pos)).toBeGreaterThan(0.5);
   });
+
+  test('the companion wanders on its own', async ({ page }) => {
+    await gotoWorldReady(page);
+    const s0 = await getState(page);
+    expect(s0.companion).toBeTruthy();
+    expect(s0.companion.character).not.toBe(s0.character);
+
+    await page.waitForTimeout(3000);
+    const s1 = await getState(page);
+    expect(dist2d(s1.companion.pos, s0.companion.pos)).toBeGreaterThan(0.3);
+  });
 });
 
 test.describe('isolation: a broken world cannot break the site', () => {
@@ -181,6 +205,7 @@ test.describe('isolation: a broken world cannot break the site', () => {
   test('a crashing world shows the fallback; return home still works', async ({ page }) => {
     // NOTE: this test *expects* a page error inside the iframe — that's the point.
     await page.goto('/world.html?debug=forceError');
+    await page.click('.intro__enter');
     await page.waitForSelector('body[data-world-state="failed"]', { timeout: 15000 });
 
     await expect(page.locator('.fallback p')).toBeVisible();
@@ -208,6 +233,7 @@ test.describe('arrival and layout', () => {
     await page.goto('/index.html');
     await page.locator('.door--world').click();
     await page.waitForURL('**/world.html');
+    await page.click('.intro__enter');
     await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
     expect(errors).toEqual([]);
   });

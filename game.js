@@ -184,12 +184,16 @@ canvas.addEventListener('touchend', e => {
   const dy = end.clientY - touch0.y;
   touch0 = null;
 
-  // On the game-over screen a tap on "Return home" leaves the game; any other
-  // tap or swipe still walks again (handled by handleInput).
-  if (gameState === 'gameover' && canRestart() &&
-      Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN &&
-      pointInRect(end.clientX, end.clientY, gameOverButtons && gameOverButtons.home)) {
-    goHome();
+  // On the game-over screen, only a tap on "Walk again" or "Return home"
+  // does anything — swipes and taps elsewhere no longer restart by accident.
+  if (gameState === 'gameover') {
+    if (!canRestart()) return;
+    const tap = Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN;
+    if (tap && pointInRect(end.clientX, end.clientY, gameOverButtons && gameOverButtons.home)) {
+      goHome();
+    } else if (tap && pointInRect(end.clientX, end.clientY, gameOverButtons && gameOverButtons.again)) {
+      startGame();
+    }
     return;
   }
   handleInput(dx, dy);
@@ -197,12 +201,14 @@ canvas.addEventListener('touchend', e => {
 
 canvas.addEventListener('click', e => {
   if (!canRestart()) return;
-  if (gameState === 'gameover' &&
-      pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.home)) {
+  // Before the first game, gameOverButtons doesn't exist yet — any click
+  // begins the game, same as it always has.
+  if (gameState !== 'gameover') { startGame(); return; }
+  if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.home)) {
     goHome();
-    return;
+  } else if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.again)) {
+    startGame();
   }
-  startGame();
 });
 
 document.addEventListener('keydown', e => {

@@ -53,6 +53,51 @@ rig.beginIntro(garden.sacredMidpoint);
 
 const controls = createControls(renderer.domElement, () => rig.skipIntro());
 
+// The companion — always the other one of the pair, walking on its own.
+// Never wired into CameraRig, so the camera keeps following only `character`.
+const companion = createCharacter({ eve: !eve });
+companion.group.position.set(4.5, garden.heightAt(4.5, -8), -8);
+scene.add(companion.group);
+
+// A second seeded RNG, independent of the garden's own, so the companion's
+// path stays deterministic across reloads and screenshots without disturbing
+// the draw order the garden's planting already depends on.
+const wanderRng = mulberry32(20260703 + 1);
+const companionWander = { mode: 'pause', until: 1.5 + wanderRng() * 2, target: null };
+
+// Graze/walk idiom borrowed from the lamb (scenes/creatures.js): pause a
+// while, walk to a new spot, pause again — but driven through the same
+// character.update() interface the player uses, so it gets the same turning,
+// terrain-following and walk-cycle animation for free.
+function updateCompanion(dt) {
+  const w = companionWander;
+  w.until -= dt;
+  let move = { x: 0, z: 0 };
+
+  if (w.mode === 'pause') {
+    if (w.until <= 0) {
+      w.mode = 'walk';
+      const angle = wanderRng() * Math.PI * 2;
+      const r = garden.radius * (0.25 + wanderRng() * 0.65);
+      w.target = { x: Math.cos(angle) * r, z: Math.sin(angle) * r };
+      w.until = 30; // generous cap; arrival ends the walk sooner
+    }
+  } else {
+    const dx = w.target.x - companion.group.position.x;
+    const dz = w.target.z - companion.group.position.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist < 0.5 || w.until <= 0) {
+      w.mode = 'pause';
+      w.until = 2 + wanderRng() * 4;
+    } else {
+      move = { x: dx / dist, z: dz / dist };
+    }
+  }
+
+  // camYaw = 0: `move` is already a world-space direction, not camera-space.
+  companion.update(dt, move, 0, garden.heightAt, garden.radius);
+}
+
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -77,6 +122,7 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
   character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
+  updateCompanion(dt);
   rig.update(dt);
   garden.update(dt);
   renderer.render(scene, camera);
@@ -98,6 +144,10 @@ window.__world = {
       pos: { x: character.group.position.x, y: character.group.position.y, z: character.group.position.z },
       cam: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       camDist: camera.position.distanceTo(character.group.position),
+      companion: {
+        character: eve ? 'adam' : 'eve',
+        pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
+      },
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

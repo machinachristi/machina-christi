@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -7,6 +7,12 @@
       "date": "2026-07-03",
       "focus": "the garden planted",
       "summary": "Eden exists, whole and simple: rolling meadow with a rim melting into fog, a river through the land, ~40 low-poly trees with the Tree of Life (golden, lit) and the Tree of the Knowledge of Good and Evil (dark, fruited) at the center, flowers, three birds, a grazing lamb, drifting light motes, and Adam (Eve via ?character=eve) walkable by one-finger drag with a following camera."
+    },
+    {
+      "version": 2,
+      "date": "2026-07-03",
+      "focus": "the first companion",
+      "summary": "Adam and Eve are both in the garden now. You walk one; the other wanders the meadow on its own — pausing, choosing a new spot, walking there — so the garden always has someone else in it. Also: an explainer screen now greets visitors before the world loads, naming this as an AI-made, AI-tended rendition of Eden."
     }
   ],
   "next": [

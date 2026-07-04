@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="About Eden, the Machina Christi living 3D garden, and its changelog." />
+  <title>Eden · About · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --leaf:      168, 205, 140;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(90, 120, 70, 0.20), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.7;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.30), transparent),
+        radial-gradient(1.5px 1.5px at 75% 25%, rgba(232,213,163,0.20), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.25), transparent),
+        radial-gradient(1.5px 1.5px at 35% 80%, rgba(232,213,163,0.18), transparent);
+      opacity: 0.6;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: max(24px, env(safe-area-inset-top)) 24px max(48px, env(safe-area-inset-bottom));
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      color: rgba(232, 213, 163, 0.7);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 1px;
+      margin-bottom: 2em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 40px);
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      margin-bottom: 0.6em;
+    }
+    h2 {
+      font-weight: normal;
+      font-size: clamp(18px, 4.5vw, 22px);
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      margin: 1.6em 0 0.7em;
+    }
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.85); }
+    a.enter {
+      color: var(--gold-soft);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(232,213,163,0.4);
+      padding-bottom: 1px;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    a.enter:hover, a.enter:focus-visible { color: #fff; border-color: rgba(232,213,163,0.8); outline: none; }
+
+    .entry { margin-bottom: 1.6em; padding-bottom: 1.4em; border-bottom: 1px solid rgba(232, 213, 163, 0.12); }
+    .entry:last-child { border-bottom: none; }
+    .entry__meta {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: rgba(var(--leaf), 0.9);
+      margin-bottom: 0.3em;
+    }
+    .entry h3 { font-weight: normal; font-size: 17px; letter-spacing: 0.02em; color: var(--gold-soft); margin: 0 0 0.3em; }
+    .entry p { margin: 0; }
+
+    #next-list { padding-left: 1.2em; color: rgba(232, 213, 163, 0.75); }
+    #next-list li { margin-bottom: 0.6em; }
+
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    code {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 0.9em;
+      background: rgba(232, 213, 163, 0.08);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+    }
+
+    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="about.html">&lsaquo; about</a>
+    <h1>Eden</h1>
+    <p>Eden is a small three-dimensional garden you can walk through — a living rendition of the Garden of Eden from Genesis. It isn't finished, and it isn't meant to be: AI keeps adding to it and refining it on its own, over time.</p>
+    <p><a class="enter" href="world.html">Enter Eden &rarr;</a></p>
+
+    <h2>Changelog</h2>
+    <div id="changelog-list"><p>Loading&hellip;</p></div>
+
+    <h2>What's next</h2>
+    <ul id="next-list"></ul>
+  </div>
+
+  <script>
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    fetch('./world-app/manifest.json')
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(manifest => {
+        const entries = [...(manifest.log || [])].reverse();
+        document.getElementById('changelog-list').innerHTML = entries.length
+          ? entries.map(e => `
+            <article class="entry">
+              <p class="entry__meta">v${escapeHtml(e.version)} &middot; ${escapeHtml(e.date)}</p>
+              <h3>${escapeHtml(e.focus)}</h3>
+              <p>${escapeHtml(e.summary)}</p>
+            </article>`).join('')
+          : '<p>Nothing logged yet.</p>';
+
+        const next = manifest.next || [];
+        document.getElementById('next-list').innerHTML = next.length
+          ? next.map(n => `<li>${escapeHtml(n)}</li>`).join('')
+          : '<li>Nothing queued right now.</li>';
+      })
+      .catch(err => {
+        document.getElementById('changelog-list').innerHTML =
+          '<p class="notice">The changelog couldn’t be loaded right now &mdash; view <code>world-app/manifest.json</code> directly, or make sure this page is served over http(s) rather than opened as a local file.</p>';
+        console.warn('Eden changelog failed to load:', err);
+      });
+  </script>
+</body>
+</html>
