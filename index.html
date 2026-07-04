@@ -7,9 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="Camino" />
-  <meta name="description" content="Camino — choose a door and begin the journey." />
-  <title>Camino</title>
+  <meta name="apple-mobile-web-app-title" content="Machina Christi" />
+  <meta name="description" content="Machina Christi — home to Camino, an endless runner, and Eden, a living 3D garden." />
+  <title>Machina Christi</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -77,19 +77,13 @@
     .title h1 {
       font-weight: normal;
       font-size: clamp(30px, 8vw, 52px);
-      letter-spacing: 0.42em;
-      text-indent: 0.42em;   /* balance the trailing letter-spacing */
+      letter-spacing: 0.28em;
+      text-indent: 0.28em;   /* balance the trailing letter-spacing */
+      line-height: 1.15;
       color: var(--gold);
       text-shadow: 0 0 24px rgba(var(--amber), 0.35);
     }
-    .title p {
-      margin-top: 0.9em;
-      font-size: clamp(12px, 3.4vw, 15px);
-      letter-spacing: 0.28em;
-      text-indent: 0.28em;
-      color: rgba(232, 213, 163, 0.55);
-      font-style: italic;
-    }
+    .title h1 .line { display: block; white-space: nowrap; }
 
     /* ── Doors ─────────────────────────────────────────────── */
     .doors {
@@ -193,15 +187,6 @@
       transition: color 0.3s ease, text-shadow 0.3s ease;
       white-space: nowrap;
     }
-    .door__sub {
-      display: block;
-      margin-top: 0.5em;
-      font-size: clamp(10px, 2.6vw, 12px);
-      letter-spacing: 0.2em;
-      font-style: italic;
-      color: rgba(232, 213, 163, 0.4);
-    }
-
     /* The garden door glows green — living light through the crack. */
     .door--world { --glow: var(--leaf); }
 
@@ -270,7 +255,6 @@
     }
     .fallback a:hover,
     .fallback a:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
-    .fallback .sep { color: rgba(232, 213, 163, 0.25); margin: 0 0.7em; }
 
     @media (max-width: 360px) {
       .doors { gap: 22px; }
@@ -285,32 +269,29 @@
 </head>
 <body>
   <header class="title">
-    <h1>CAMINO</h1>
-    <p>choose a door, and begin</p>
+    <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
   </header>
 
   <nav class="doors" aria-label="Choose an experience">
-    <a class="door door--runner" href="game.html" aria-label="Enter the Camino Runner">
+    <a class="door door--runner" href="game.html" aria-label="Enter Camino">
       <span class="door__frame">
         <span class="door__threshold" aria-hidden="true"></span>
         <span class="door__panel" aria-hidden="true"></span>
       </span>
-      <span class="door__label">The Runner</span>
+      <span class="door__label">Camino</span>
     </a>
 
-    <a class="door door--world" href="world.html" aria-label="Enter the Garden of Eden">
+    <a class="door door--world" href="world.html" aria-label="Enter Eden">
       <span class="door__frame">
         <span class="door__threshold" aria-hidden="true"></span>
         <span class="door__panel" aria-hidden="true"></span>
       </span>
-      <span class="door__label">The Garden<span class="door__sub">of Eden</span></span>
+      <span class="door__label">Eden</span>
     </a>
   </nav>
 
   <footer class="fallback">
-    <a href="game.html">enter the runner</a>
-    <span class="sep" aria-hidden="true">·</span>
-    <a href="world.html">enter the garden</a>
+    <a href="about.html">about this site</a>
   </footer>
 
   <div class="flash" aria-hidden="true"></div>
@@ -346,6 +327,20 @@
           e.preventDefault();
           enter(door, door.getAttribute('href'));
         }
+      });
+    });
+
+    // Back button after a door click restores this exact page from the
+    // browser's bfcache — including the mid-transition opacity:0 / .opening /
+    // entering-lock state enter() had just set. Undo it so a restored page
+    // isn't stuck invisible with dead doors.
+    window.addEventListener('pageshow', e => {
+      if (!e.persisted) return;
+      document.body.style.opacity = '1';
+      flash.classList.remove('on');
+      document.querySelectorAll('.door').forEach(door => {
+        door.classList.remove('opening');
+        delete door.dataset.entering;
       });
     });
   </script>

@@ -136,6 +136,19 @@
     }
     @keyframes breathe { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
+    /* Intro state: an explainer + an explicit "enter" gesture, shown before
+       the iframe is even created — nothing loads until the user opts in. */
+    .veil .intro { display: none; flex-direction: column; align-items: center; gap: 18px; }
+    body[data-world-state="intro"] .veil .intro { display: flex; }
+    body[data-world-state="intro"] .veil .status { display: none; }
+    .intro__copy {
+      max-width: 34ch;
+      line-height: 1.7;
+      font-size: clamp(13px, 3.8vw, 16px);
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.75);
+    }
+
     /* Failed state: swap what the veil says, offer another try. */
     .veil .fallback { display: none; }
     body[data-world-state="failed"] .veil .status { display: none; }
@@ -152,7 +165,7 @@
       font-style: italic;
       color: rgba(232, 213, 163, 0.7);
     }
-    .fallback button {
+    .veil button {
       font-family: inherit;
       font-size: 13px;
       letter-spacing: 0.16em;
@@ -165,7 +178,7 @@
       cursor: pointer;
       transition: background 0.25s ease, color 0.25s ease;
     }
-    .fallback button:hover, .fallback button:focus-visible {
+    .veil button:hover, .veil button:focus-visible {
       background: rgba(201, 162, 39, 0.28);
       color: #fff;
       outline: none;
@@ -177,12 +190,16 @@
     }
   </style>
 </head>
-<body data-world-state="loading">
+<body data-world-state="intro">
   <div class="stage" aria-hidden="false"></div>
 
   <div class="veil" role="status" aria-live="polite">
     <h1>THE GARDEN</h1>
     <p class="verse">&ldquo;And the LORD God planted a garden eastward in Eden.&rdquo;</p>
+    <div class="intro">
+      <p class="intro__copy">This is an AI-made rendition of the Garden of Eden — a small world that AI keeps adding to and refining on its own, over time.</p>
+      <button type="button" class="intro__enter">enter the garden</button>
+    </div>
     <p class="status">ENTERING&hellip;</p>
     <div class="fallback">
       <p>The garden is resting for a moment. Please try again.</p>
@@ -197,54 +214,62 @@
       const body = document.body;
       const stage = document.querySelector('.stage');
 
-      // The world lives in its own document. Its sandbox permits scripts and
-      // same-origin fetches but NOT top navigation — even a hostile bug in
-      // there cannot steer this page; "return home" above always works.
-      const iframe = document.createElement('iframe');
-      iframe.src = 'world-app/index.html' + location.search;
-      iframe.title = 'The Garden of Eden — interactive 3D world';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      stage.appendChild(iframe);
+      // Nothing loads until the visitor opts in from the intro screen —
+      // only then does the iframe (and its 25s/8s handshake timers) start.
+      document.querySelector('.intro__enter').addEventListener('click', enterGarden, { once: true });
 
-      let settled = false;
+      function enterGarden() {
+        body.dataset.worldState = 'loading';
 
-      // Two clocks: one for "the network never finished" (generous, slow
-      // mobile connections are real), one for "loaded but never came alive."
-      const networkTimer = setTimeout(() => fail('timeout: never loaded'), 25000);
-      let bootTimer = null;
-      iframe.addEventListener('load', () => {
-        clearTimeout(networkTimer);
-        if (!settled) bootTimer = setTimeout(() => fail('timeout: loaded but not ready'), 8000);
-      });
+        // The world lives in its own document. Its sandbox permits scripts
+        // and same-origin fetches but NOT top navigation — even a hostile
+        // bug in there cannot steer this page; "return home" always works.
+        const iframe = document.createElement('iframe');
+        iframe.src = 'world-app/index.html' + location.search;
+        iframe.title = 'The Garden of Eden — interactive 3D world';
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        stage.appendChild(iframe);
 
-      window.addEventListener('message', (e) => {
-        if (e.source !== iframe.contentWindow) return;
-        const msg = e.data;
-        if (!msg || typeof msg.type !== 'string') return;
-        if (msg.type === 'world:ready') ready();
-        else if (msg.type === 'world:error') fail(msg.message);
-      });
+        let settled = false;
 
-      function ready() {
-        if (settled) return;
-        settled = true;
-        clearTimeout(networkTimer);
-        clearTimeout(bootTimer);
-        body.dataset.worldState = 'ready';
-        // Hand keyboard focus to the world so desktop arrows/WASD work
-        // immediately, without needing a click first.
-        iframe.focus();
-      }
+        // Two clocks: one for "the network never finished" (generous, slow
+        // mobile connections are real), one for "loaded but never came alive."
+        const networkTimer = setTimeout(() => fail('timeout: never loaded'), 25000);
+        let bootTimer = null;
+        iframe.addEventListener('load', () => {
+          clearTimeout(networkTimer);
+          if (!settled) bootTimer = setTimeout(() => fail('timeout: loaded but not ready'), 8000);
+        });
 
-      function fail(reason) {
-        if (body.dataset.worldState === 'failed') return;
-        settled = true;
-        clearTimeout(networkTimer);
-        clearTimeout(bootTimer);
-        // Remove the frame entirely: stops any broken loop, frees the GPU.
-        iframe.remove();
-        body.dataset.worldState = 'failed';
-        console.warn('world failed:', reason);
+        window.addEventListener('message', (e) => {
+          if (e.source !== iframe.contentWindow) return;
+          const msg = e.data;
+          if (!msg || typeof msg.type !== 'string') return;
+          if (msg.type === 'world:ready') ready();
+          else if (msg.type === 'world:error') fail(msg.message);
+        });
+
+        function ready() {
+          if (settled) return;
+          settled = true;
+          clearTimeout(networkTimer);
+          clearTimeout(bootTimer);
+          body.dataset.worldState = 'ready';
+          // Hand keyboard focus to the world so desktop arrows/WASD work
+          // immediately, without needing a click first.
+          iframe.focus();
+        }
+
+        function fail(reason) {
+          if (body.dataset.worldState === 'failed') return;
+          settled = true;
+          clearTimeout(networkTimer);
+          clearTimeout(bootTimer);
+          // Remove the frame entirely: stops any broken loop, frees the GPU.
+          iframe.remove();
+          body.dataset.worldState = 'failed';
+          console.warn('world failed:', reason);
+        }
       }
     })();
   </script>

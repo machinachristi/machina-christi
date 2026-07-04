@@ -25,21 +25,20 @@ async function forceGameOver(page) {
 }
 
 test.describe('home page', () => {
-  test('structure: two doors, labels, fallback links', async ({ page }) => {
+  test('structure: two doors, labels, fallback link', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
-    expect(await page.title()).toBe('Camino');
+    expect(await page.title()).toBe('Machina Christi');
 
     await expect(page.locator('.door')).toHaveCount(2);
     await expect(page.locator('.door--runner')).toHaveAttribute('href', 'game.html');
     await expect(page.locator('.door--world')).toHaveAttribute('href', 'world.html');
-    await expect(page.locator('.door--runner .door__label')).toContainText('The Runner');
-    await expect(page.locator('.door--world .door__label')).toContainText('The Garden');
+    await expect(page.locator('.door--runner .door__label')).toContainText('Camino');
+    await expect(page.locator('.door--world .door__label')).toContainText('Eden');
 
     const fb = page.locator('.fallback a');
-    await expect(fb).toHaveCount(2);
-    await expect(fb.nth(0)).toHaveAttribute('href', 'game.html');
-    await expect(fb.nth(1)).toHaveAttribute('href', 'world.html');
+    await expect(fb).toHaveCount(1);
+    await expect(fb).toHaveAttribute('href', 'about.html');
 
     const overflow = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -62,10 +61,26 @@ test.describe('home page', () => {
     await page.waitForURL('**/game.html');
   });
 
-  test('the fallback garden link works', async ({ page }) => {
+  test('the fallback about link works', async ({ page }) => {
     await page.goto('/index.html');
-    await page.locator('.fallback a', { hasText: 'garden' }).click();
-    await page.waitForURL('**/world.html');
+    await page.locator('.fallback a').click();
+    await page.waitForURL('**/about.html');
+  });
+
+  test('the browser back button restores a fully visible, interactive home page after a door click', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.locator('.door--runner').click();
+    await page.waitForURL('**/game.html');
+    await page.goBack();
+    await page.waitForURL('**/index.html');
+
+    expect(await page.evaluate(() => getComputedStyle(document.body).opacity)).toBe('1');
+    expect(await page.evaluate(() =>
+      document.querySelector('.door--runner').classList.contains('opening'))).toBe(false);
+
+    // Prove the door isn't just visually reset but still actually works.
+    await page.locator('.door--runner').click();
+    await page.waitForURL('**/game.html');
   });
 });
 
@@ -93,6 +108,14 @@ test.describe('runner game-over navigation', () => {
     await page.mouse.click(btns.again.x + btns.again.w / 2, btns.again.y + btns.again.h / 2);
     await page.waitForTimeout(150);
     expect(await page.evaluate(() => gameState)).toBe('playing');
+    expect(page.url()).toContain('game.html');
+  });
+
+  test('clicking elsewhere on the game-over screen does not restart', async ({ page }) => {
+    await forceGameOver(page);
+    await page.mouse.click(20, 20);   // nowhere near either button
+    await page.waitForTimeout(150);
+    expect(await page.evaluate(() => gameState)).toBe('gameover');
     expect(page.url()).toContain('game.html');
   });
 
