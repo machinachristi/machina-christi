@@ -17,17 +17,16 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --wood:      #3a2c1e;
-      --wood-hi:   #5a4632;
       --amber:     255, 196, 92;   /* warm candle glow (rgb parts) */
-      --leaf:      168, 205, 140;  /* living green spilling from the garden */
+      --leaf:      168, 205, 140;  /* living green of the garden */
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
     }
 
     html, body {
       height: 100dvh;
       background: var(--bg);
       color: var(--gold-soft);
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: var(--serif);
       overflow: hidden;
       overscroll-behavior: none;
       -webkit-user-select: none;
@@ -36,34 +35,34 @@
       -webkit-touch-callout: none;
     }
 
-    /* A single warm ember of light at the centre; the edges fall to black. */
+    /* One warm ember of light at the centre; the edges fall to black. */
     body {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: clamp(28px, 6vh, 64px);
+      gap: clamp(30px, 6.5vh, 68px);
       background:
-        radial-gradient(120% 90% at 50% 42%, rgba(120, 92, 48, 0.28), transparent 60%),
-        radial-gradient(140% 120% at 50% 120%, rgba(90, 70, 40, 0.22), transparent 55%),
+        radial-gradient(120% 90% at 50% 40%, rgba(120, 92, 48, 0.22), transparent 60%),
+        radial-gradient(140% 120% at 50% 120%, rgba(90, 70, 40, 0.18), transparent 55%),
         var(--bg);
       position: relative;
       transition: opacity 0.6s ease;
     }
 
-    /* Faint drifting motes, echoing the game's atmosphere. */
+    /* Faint drifting motes — dust in a shaft of light. */
     body::after {
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.35), transparent),
-        radial-gradient(1.5px 1.5px at 75% 25%, rgba(232,213,163,0.25), transparent),
-        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.30), transparent),
-        radial-gradient(1.5px 1.5px at 35% 80%, rgba(232,213,163,0.20), transparent);
-      opacity: 0.6;
-      animation: drift 14s ease-in-out infinite alternate;
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.30), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.22), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.25), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
     }
     @keyframes drift {
       from { transform: translateY(0); }
@@ -73,31 +72,50 @@
     .title {
       text-align: center;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
     }
     .title h1 {
       font-weight: normal;
-      font-size: clamp(30px, 8vw, 52px);
-      letter-spacing: 0.28em;
-      text-indent: 0.28em;   /* balance the trailing letter-spacing */
-      line-height: 1.15;
+      font-size: clamp(26px, 7vw, 46px);
+      letter-spacing: 0.34em;
+      text-indent: 0.34em;   /* balance the trailing letter-spacing */
+      line-height: 1.3;
       color: var(--gold);
-      text-shadow: 0 0 24px rgba(var(--amber), 0.35);
+      text-shadow: 0 0 30px rgba(var(--amber), 0.28);
     }
     .title h1 .line { display: block; white-space: nowrap; }
+    .title .epigraph {
+      font-style: italic;
+      font-size: clamp(12px, 3.4vw, 15px);
+      letter-spacing: 0.06em;
+      color: rgba(232, 213, 163, 0.55);
+    }
+    /* A thin gold rule beneath the name, like a line ruled in an old book. */
+    .title::after {
+      content: "";
+      width: clamp(70px, 18vw, 120px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,162,39,0.7), transparent);
+    }
+    .title .epigraph { order: 3; }
 
-    /* ── Doors ─────────────────────────────────────────────── */
+    /* ── Portals ───────────────────────────────────────────────
+       Two arched thresholds of light. Each is plainly a way in:
+       a name, a word of description, and an "enter" cue at rest. */
     .doors {
       display: flex;
-      gap: clamp(28px, 9vw, 88px);
+      gap: clamp(26px, 8vw, 80px);
       z-index: 1;
-      perspective: 1400px;
     }
 
     .door {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
@@ -105,124 +123,145 @@
       outline: none;
     }
 
-    .door__frame {
+    .door__arch {
       position: relative;
-      width: clamp(96px, 30vw, 150px);
-      aspect-ratio: 5 / 9;
-      border-radius: 50% 50% 6px 6px / 30% 30% 4px 4px;   /* arched top */
-      transform-style: preserve-3d;
-      transition: transform 0.35s ease, filter 0.35s ease;
-      filter: drop-shadow(0 0 10px rgba(var(--glow, var(--amber)), 0.18));
-    }
-
-    /* The warm light spilling from behind / around the closed door. */
-    .door__frame::before {
-      content: "";
-      position: absolute;
-      inset: -22% -30%;
-      border-radius: 50%;
-      background: radial-gradient(closest-side, rgba(var(--glow, var(--amber)), 0.28), transparent 72%);
-      opacity: 0.55;
-      transition: opacity 0.4s ease, transform 0.4s ease;
-      z-index: -1;
-    }
-
-    /* The lit threshold behind the door, revealed as it opens. */
-    .door__threshold {
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background:
-        radial-gradient(80% 60% at 50% 40%, rgba(var(--glow, var(--amber)), 0.9), rgba(var(--glow, var(--amber)), 0.25) 70%, transparent);
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    /* The door leaf itself — planked wood with iron bands. */
-    .door__panel {
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      transform-origin: left center;
-      transform: rotateY(0deg);
-      transition: transform 0.7s cubic-bezier(0.34, 0.02, 0.2, 1), box-shadow 0.35s ease;
-      background:
-        repeating-linear-gradient(90deg,
-          var(--wood) 0, var(--wood) 14px,
-          rgba(0,0,0,0.28) 14px, rgba(0,0,0,0.28) 15px,
-          var(--wood-hi) 15px, var(--wood-hi) 16px,
-          var(--wood) 16px, var(--wood) 30px);
-      box-shadow:
-        inset 0 0 0 3px rgba(0,0,0,0.35),
-        inset 0 0 22px rgba(0,0,0,0.55),
-        0 10px 24px rgba(0,0,0,0.5);
+      width: clamp(128px, 36vw, 172px);
+      aspect-ratio: 5 / 8;
+      border: 1px solid rgba(201, 162, 39, 0.38);
+      border-radius: 50% 50% 10px 10px / 34% 34% 10px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
       overflow: hidden;
+      transition: transform 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
+      box-shadow:
+        inset 0 0 34px rgba(0, 0, 0, 0.5),
+        0 0 0 rgba(var(--glow, var(--amber)), 0);
     }
-    /* Iron bands + a hint of a ring handle. */
-    .door__panel::before {
+    /* A second, inner hairline — the moulding of the arch. */
+    .door__arch::before {
       content: "";
       position: absolute;
-      left: 0; right: 0;
-      top: 26%; height: 5px;
-      background: rgba(20, 16, 10, 0.7);
-      box-shadow: 0 32% 0 rgba(20,16,10,0.7), 0 -4px 0 rgba(90,70,40,0.25);
+      inset: 7px;
+      border: 1px solid rgba(201, 162, 39, 0.16);
+      border-radius: 50% 50% 7px 7px / 34% 34% 7px 7px;
+      pointer-events: none;
+      transition: border-color 0.45s ease;
     }
-    .door__panel::after {
-      content: "";
+    /* The light waiting past the threshold. */
+    .door__light {
       position: absolute;
-      right: 14%;
-      top: 50%;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--gold);
-      box-shadow: 0 0 8px rgba(var(--glow, var(--amber)), 0.6);
-      transform: translateY(-50%);
+      inset: 0;
+      background: radial-gradient(90% 55% at 50% 100%, rgba(var(--glow, var(--amber)), 0.22), transparent 75%);
+      opacity: 0.7;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+
+    .door__glyph {
+      position: absolute;
+      top: 21%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 42%;
+      height: auto;
+      stroke: rgba(201, 162, 39, 0.85);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px rgba(var(--glow, var(--amber)), 0.25));
+      transition: stroke 0.4s ease, filter 0.4s ease;
     }
 
     .door__label {
-      font-size: clamp(13px, 3.6vw, 17px);
-      letter-spacing: 0.18em;
-      text-indent: 0.18em;
-      color: rgba(232, 213, 163, 0.75);
+      position: relative;
+      font-size: clamp(15px, 4.2vw, 19px);
+      letter-spacing: 0.26em;
+      text-indent: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+      margin-bottom: 8px;
       transition: color 0.3s ease, text-shadow 0.3s ease;
       white-space: nowrap;
     }
-    /* The garden door glows green — living light through the crack. */
+    .door__enter {
+      position: relative;
+      font-size: 11px;
+      font-style: italic;
+      letter-spacing: 0.3em;
+      text-indent: 0.3em;
+      color: rgba(201, 162, 39, 0.75);
+      border-top: 1px solid rgba(201, 162, 39, 0.28);
+      padding: 9px 0 13px;
+      width: 62%;
+      text-align: center;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .door__desc {
+      font-style: italic;
+      font-size: clamp(12px, 3.3vw, 14px);
+      color: rgba(232, 213, 163, 0.5);
+      letter-spacing: 0.04em;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+
+    /* The garden door glows green — living light through the arch. */
     .door--world { --glow: var(--leaf); }
 
-    /* Hover / focus — the door brightens and lifts, light swells. */
-    .door:hover  .door__frame,
-    .door:focus-visible .door__frame {
-      transform: translateY(-6px) scale(1.02);
-      filter: drop-shadow(0 0 22px rgba(var(--glow, var(--amber)), 0.5));
+    /* Hover / focus — the threshold wakes: light swells, gold brightens. */
+    .door:hover  .door__arch,
+    .door:focus-visible .door__arch {
+      transform: translateY(-5px);
+      border-color: rgba(201, 162, 39, 0.85);
+      box-shadow:
+        inset 0 0 34px rgba(0, 0, 0, 0.35),
+        0 14px 44px -12px rgba(var(--glow, var(--amber)), 0.35);
     }
-    .door:hover  .door__frame::before,
-    .door:focus-visible .door__frame::before {
-      opacity: 1;
-      transform: scale(1.08);
+    .door:hover  .door__arch::before,
+    .door:focus-visible .door__arch::before { border-color: rgba(201, 162, 39, 0.35); }
+    .door:hover  .door__light,
+    .door:focus-visible .door__light { opacity: 1; transform: scale(1.06); }
+    .door:hover  .door__glyph,
+    .door:focus-visible .door__glyph {
+      stroke: rgba(232, 213, 163, 1);
+      filter: drop-shadow(0 0 10px rgba(var(--glow, var(--amber)), 0.5));
     }
     .door:hover  .door__label,
     .door:focus-visible .door__label {
-      color: var(--gold-soft);
-      text-shadow: 0 0 14px rgba(var(--glow, var(--amber)), 0.45);
+      color: #fff;
+      text-shadow: 0 0 16px rgba(var(--glow, var(--amber)), 0.5);
     }
-    .door:focus-visible { outline: none; }
-    .door:focus-visible .door__frame {
-      outline: 2px solid rgba(var(--glow, var(--amber)), 0.7);
-      outline-offset: 10px;
-      border-radius: inherit;
+    .door:hover  .door__enter,
+    .door:focus-visible .door__enter {
+      color: rgba(232, 213, 163, 0.95);
+      border-color: rgba(201, 162, 39, 0.6);
+    }
+    .door:hover .door__desc { color: rgba(232, 213, 163, 0.75); }
+    .door:focus-visible .door__arch {
+      outline: 1px solid rgba(var(--glow, var(--amber)), 0.7);
+      outline-offset: 8px;
     }
 
-    /* ── Opening: the chosen door swings wide, its light floods out. ── */
-    .door.opening .door__panel {
-      transform: rotateY(-108deg);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    /* ── Opening: the chosen threshold fills with its own light. ── */
+    .door.opening .door__light {
+      opacity: 1;
+      transform: scale(1.6);
+      background: radial-gradient(100% 80% at 50% 85%, rgba(var(--glow, var(--amber)), 0.65), transparent 85%);
     }
-    .door.opening .door__threshold { opacity: 1; }
-    .door.opening .door__frame {
-      transform: translateY(-6px) scale(1.04);
-      filter: drop-shadow(0 0 44px rgba(var(--glow, var(--amber)), 0.85));
+    .door.opening .door__arch {
+      transform: translateY(-5px) scale(1.03);
+      border-color: rgba(var(--glow, var(--amber)), 0.9);
+      box-shadow:
+        inset 0 0 60px rgba(var(--glow, var(--amber)), 0.25),
+        0 0 70px -8px rgba(var(--glow, var(--amber)), 0.55);
     }
+    .door.opening .door__glyph,
+    .door.opening .door__label,
+    .door.opening .door__enter { opacity: 0; transition: opacity 0.45s ease; }
 
     /* A full-screen wash of light as we step through. */
     .flash {
@@ -236,57 +275,76 @@
     }
     .flash.on { opacity: 1; }
 
-    /* ── Text fallback ─────────────────────────────────────── */
+    /* ── About link ────────────────────────────────────────── */
     .fallback {
       position: fixed;
       bottom: max(18px, env(safe-area-inset-bottom));
       left: 0; right: 0;
       text-align: center;
-      font-size: 12px;
-      letter-spacing: 0.14em;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-indent: 0.22em;
       z-index: 1;
     }
     .fallback a {
-      color: rgba(232, 213, 163, 0.45);
+      color: rgba(232, 213, 163, 0.42);
       text-decoration: none;
       border-bottom: 1px solid transparent;
-      padding-bottom: 1px;
+      padding-bottom: 2px;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
     .fallback a:hover,
     .fallback a:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
 
     @media (max-width: 360px) {
-      .doors { gap: 22px; }
+      .doors { gap: 20px; }
     }
 
-    /* Respect reduced-motion: no drifting, no slow swing. */
+    /* Respect reduced-motion: no drifting, no slow swelling. */
     @media (prefers-reduced-motion: reduce) {
       body::after { animation: none; }
-      .door__frame, .door__panel, .door__threshold, .flash { transition-duration: 0.15s; }
+      .door__arch, .door__light, .flash { transition-duration: 0.15s; }
     }
   </style>
 </head>
 <body>
   <header class="title">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
+    <p class="epigraph">&ldquo;Enter through the narrow gate.&rdquo;</p>
   </header>
 
-  <nav class="doors" aria-label="Choose an experience">
-    <a class="door door--runner" href="game.html" aria-label="Enter Camino">
-      <span class="door__frame">
-        <span class="door__threshold" aria-hidden="true"></span>
-        <span class="door__panel" aria-hidden="true"></span>
+  <nav class="doors" aria-label="Choose a door">
+    <a class="door door--runner" href="game.html" aria-label="Enter Camino, the pilgrim's road">
+      <span class="door__arch">
+        <span class="door__light" aria-hidden="true"></span>
+        <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
+          <!-- a wayside cross above the road -->
+          <path d="M24 12 V44" />
+          <path d="M14 22 H34" />
+          <path d="M10 54 Q24 48 38 54" />
+        </svg>
+        <span class="door__label">Camino</span>
+        <span class="door__enter">enter</span>
       </span>
-      <span class="door__label">Camino</span>
+      <span class="door__desc">the pilgrim&rsquo;s road</span>
     </a>
 
-    <a class="door door--world" href="world.html" aria-label="Enter Eden">
-      <span class="door__frame">
-        <span class="door__threshold" aria-hidden="true"></span>
-        <span class="door__panel" aria-hidden="true"></span>
+    <a class="door door--world" href="world.html" aria-label="Enter Eden, the living garden">
+      <span class="door__arch">
+        <span class="door__light" aria-hidden="true"></span>
+        <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
+          <!-- the tree of life, bearing fruit -->
+          <path d="M24 56 V20" />
+          <path d="M24 38 C16 36 11 30 10 22" />
+          <path d="M24 38 C32 36 37 30 38 22" />
+          <circle cx="10" cy="17.5" r="2.8" />
+          <circle cx="38" cy="17.5" r="2.8" />
+          <circle cx="24" cy="14.5" r="2.8" />
+        </svg>
+        <span class="door__label">Eden</span>
+        <span class="door__enter">enter</span>
       </span>
-      <span class="door__label">Eden</span>
+      <span class="door__desc">the living garden</span>
     </a>
   </nav>
 
@@ -300,18 +358,18 @@
     const flash = document.querySelector('.flash');
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Walk *through* the door: open it, flood the screen with its light, then go.
+    // Step through the threshold: its light swells, floods the screen, then go.
     function enter(door, href) {
       if (door.dataset.entering) return;
       door.dataset.entering = '1';
 
-      // Tint the flash to match the door's own glow (warm runner / green garden).
+      // Tint the flash to match the door's own glow (warm road / green garden).
       const glow = door.classList.contains('door--world') ? '168, 205, 140' : '255, 196, 92';
       flash.style.setProperty('--flash-glow', glow);
 
       const delay = prefersReduced ? 120 : 620;
       door.classList.add('opening');
-      setTimeout(() => flash.classList.add('on'), prefersReduced ? 0 : 320);
+      setTimeout(() => flash.classList.add('on'), prefersReduced ? 0 : 300);
       document.body.style.opacity = '0';
       setTimeout(() => { window.location.href = href; }, delay);
     }
