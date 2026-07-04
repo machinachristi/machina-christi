@@ -117,6 +117,50 @@ test.describe('home page', () => {
   });
 });
 
+// The default project runs on a touch phone; these run on a hover/fine pointer
+// so the desktop-only code path (arrows + drag-to-scroll) is actually exercised.
+// A regression guard for the bug where capturing the pointer on pointerdown
+// made Chromium retarget the click to the strip and the gates stopped opening.
+test.describe('home page on a desktop pointer', () => {
+  test.use({ viewport: { width: 1280, height: 800 }, hasTouch: false, isMobile: false });
+
+  test('the centered gate is clickable and enters', async ({ page }) => {
+    await page.goto('/index.html');
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+    await page.locator('.portal--eden').click();
+    await page.waitForURL('**/world.html');
+  });
+
+  test('a plain click on a side gate centers it, then enters', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.locator('.portal--camino').click();
+    await expect(page.locator('.portal--camino')).toHaveClass(/is-active/);
+    expect(page.url()).toContain('index.html');
+    await page.locator('.portal--camino').click();
+    await page.waitForURL('**/game.html');
+  });
+
+  test('the arrows walk between gates', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.locator('.arrow--next').click();
+    await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
+    await page.locator('.arrow--prev').click();
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+  });
+
+  test('dragging the strip scrolls without walking through a gate', async ({ page }) => {
+    await page.goto('/index.html');
+    const box = await page.locator('.portal--eden').boundingBox();
+    const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx - 220, cy, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(400);
+    expect(page.url()).toContain('index.html');
+  });
+});
+
 test.describe('runner game-over navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/game.html');

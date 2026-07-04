@@ -533,23 +533,31 @@
         prevBtn = makeArrow('prev', 'Previous experience', '‹');
         nextBtn = makeArrow('next', 'Next experience', '›');
 
-        // Drag the strip with the mouse; snapping pauses while the hand
-        // is on it and the nearest gate is settled on release.
-        let dragging = false, dragged = false, startX = 0, startLeft = 0;
+        // Drag the strip with the mouse. Capture begins only once the pointer
+        // has actually travelled past a small threshold — a plain click never
+        // grabs the pointer, so the gate beneath it stays clickable. (Capturing
+        // on pointerdown would make Chromium retarget the click to the strip,
+        // and the portals would stop responding to clicks entirely.)
+        let down = false, dragging = false, dragged = false, startX = 0, startLeft = 0;
+        const THRESHOLD = 6;
         strip.addEventListener('pointerdown', e => {
           if (e.pointerType !== 'mouse' || e.button !== 0) return;
-          dragging = true; dragged = false;
+          down = true; dragging = false; dragged = false;
           startX = e.clientX; startLeft = strip.scrollLeft;
-          strip.classList.add('dragging');
-          strip.setPointerCapture(e.pointerId);
         });
         strip.addEventListener('pointermove', e => {
-          if (!dragging) return;
+          if (!down) return;
           const dx = e.clientX - startX;
-          if (Math.abs(dx) > 6) dragged = true;
+          if (!dragging) {
+            if (Math.abs(dx) < THRESHOLD) return;   // still just a click, not a drag
+            dragging = true; dragged = true;
+            strip.classList.add('dragging');
+            strip.setPointerCapture(e.pointerId);
+          }
           strip.scrollLeft = startLeft - dx;
         });
         const endDrag = () => {
+          down = false;
           if (!dragging) return;
           dragging = false;
           strip.classList.remove('dragging');
@@ -557,7 +565,7 @@
         };
         strip.addEventListener('pointerup', endDrag);
         strip.addEventListener('pointercancel', endDrag);
-        // A release at the end of a drag must not walk through a gate.
+        // A release at the end of a real drag must not walk through a gate.
         strip.addEventListener('click', e => {
           if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; }
         }, true);
