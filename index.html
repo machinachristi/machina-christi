@@ -10,6 +10,10 @@
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
   <meta name="description" content="Machina Christi — home to Camino, an endless runner, and Eden, a living 3D garden." />
   <title>Machina Christi</title>
+  <!-- Marks that scripting is alive before first paint, so the arrival
+       (lights coming up over the road) only plays when JS can run it.
+       Without JS the page renders fully lit and the doors are plain links. -->
+  <script>document.documentElement.classList.add('js');</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,7 +21,7 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --amber:     255, 196, 92;   /* warm candle glow (rgb parts) */
+      --amber:     255, 196, 92;   /* warm lamplight (rgb parts) */
       --leaf:      168, 205, 140;  /* living green of the garden */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
     }
@@ -35,127 +39,169 @@
       -webkit-touch-callout: none;
     }
 
-    /* One warm ember of light at the centre; the edges fall to black. */
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(30px, 6.5vh, 68px);
-      background:
-        radial-gradient(120% 90% at 50% 40%, rgba(120, 92, 48, 0.22), transparent 60%),
-        radial-gradient(140% 120% at 50% 120%, rgba(90, 70, 40, 0.18), transparent 55%),
-        var(--bg);
       position: relative;
-      transition: opacity 0.6s ease;
+      /* A quiet fallback sky for the no-JS page; the canvas paints over it. */
+      background:
+        radial-gradient(120% 80% at 50% 42%, rgba(120, 92, 48, 0.16), transparent 60%),
+        var(--bg);
+      transition: opacity 0.5s ease 0.3s;
+    }
+    body.leaving { opacity: 0; }
+
+    /* ── The space ─────────────────────────────────────────────
+       Everything that exists "in the room" lives inside .space:
+       the painted scene (canvas) and the things standing in it
+       (the inscription, the two thresholds). Walking through a
+       door scales this whole element — a camera dolly, done with
+       a single compositor-friendly transform. */
+    .space {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 55%;
+    }
+    .space.entering {
+      transform: scale(2.6);
+      transition: transform 1s cubic-bezier(0.55, 0.04, 0.85, 0.4);
+      will-change: transform;
     }
 
-    /* Faint drifting motes — dust in a shaft of light. */
-    body::after {
-      content: "";
+    #scene {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .layer {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background:
-        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.30), transparent),
-        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.22), transparent),
-        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.25), transparent),
-        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
-      opacity: 0.55;
-      animation: drift 16s ease-in-out infinite alternate;
-    }
-    @keyframes drift {
-      from { transform: translateY(0); }
-      to   { transform: translateY(-14px); }
     }
 
-    .title {
-      text-align: center;
-      z-index: 1;
+    /* ── The inscription ───────────────────────────────────────
+       The name stands far back in the space, above the road's
+       end, like letters carved over a distant lintel. */
+    .layer--far {
       display: flex;
       flex-direction: column;
-      gap: 14px;
       align-items: center;
+      justify-content: flex-start;
+      padding-top: clamp(48px, 13dvh, 132px);
+    }
+    .title {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      align-items: center;
+      transition: opacity 1.4s ease 0.25s;
     }
     .title h1 {
       font-weight: normal;
-      font-size: clamp(26px, 7vw, 46px);
+      font-size: clamp(23px, 6vw, 44px);
       letter-spacing: 0.34em;
       text-indent: 0.34em;   /* balance the trailing letter-spacing */
-      line-height: 1.3;
+      line-height: 1.32;
       color: var(--gold);
-      text-shadow: 0 0 30px rgba(var(--amber), 0.28);
+      text-shadow: 0 0 26px rgba(var(--amber), 0.25);
+      transition: letter-spacing 1.8s ease, text-indent 1.8s ease;
     }
     .title h1 .line { display: block; white-space: nowrap; }
+    /* A thin gold rule beneath the name, like a line ruled in an old book. */
+    .title .rule {
+      width: clamp(64px, 16vw, 110px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.65), transparent);
+    }
     .title .epigraph {
       font-style: italic;
       font-size: clamp(12px, 3.4vw, 15px);
       letter-spacing: 0.06em;
       color: rgba(232, 213, 163, 0.55);
     }
-    /* A thin gold rule beneath the name, like a line ruled in an old book. */
-    .title::after {
-      content: "";
-      width: clamp(70px, 18vw, 120px);
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(201,162,39,0.7), transparent);
-    }
-    .title .epigraph { order: 3; }
+    /* Before the light comes up, the letters sit a breath wider apart,
+       then settle — as if the room resolves as it brightens. */
+    .js body:not(.lit) .title { opacity: 0; }
+    .js body:not(.lit) .title h1 { letter-spacing: 0.42em; text-indent: 0.42em; }
 
-    /* ── Portals ───────────────────────────────────────────────
-       Two arched thresholds of light. Each is plainly a way in:
-       a name, a word of description, and an "enter" cue at rest. */
-    .doors {
+    /* ── The thresholds ────────────────────────────────────────
+       Two arches standing on the near floor, flanking the road.
+       Each is a real link: a name, a word, an "enter" cue. Their
+       inner light (--kindle) is fed per-frame by the script as
+       the lamplight drifts near, and forced full on hover/focus. */
+    .layer--doors {
       display: flex;
-      gap: clamp(26px, 8vw, 80px);
-      z-index: 1;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .doors {
+      pointer-events: none;
+      width: min(92vw, 860px);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: clamp(58px, 11dvh, 118px);
     }
 
     .door {
+      --kindle: var(--kindle-js, 0);
+      pointer-events: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 13px;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       outline: none;
+      transition: opacity 1.1s ease;
     }
+    .js body:not(.lit) .door { opacity: 0; transform: translateY(10px); }
+    body.lit .door { transform: translateY(0); transition: opacity 1.1s ease, transform 1.3s ease; }
+    body.lit .door--world { transition-delay: 0.18s; }
 
     .door__arch {
       position: relative;
-      width: clamp(128px, 36vw, 172px);
+      width: clamp(118px, min(34vw, 24dvh), 184px);
       aspect-ratio: 5 / 8;
-      border: 1px solid rgba(201, 162, 39, 0.38);
-      border-radius: 50% 50% 10px 10px / 34% 34% 10px 10px;
+      border: 1px solid rgba(201, 162, 39, 0.34);
+      border-radius: 50% 50% 8px 8px / 34% 34% 8px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
       overflow: hidden;
-      transition: transform 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
-      box-shadow:
-        inset 0 0 34px rgba(0, 0, 0, 0.5),
-        0 0 0 rgba(var(--glow, var(--amber)), 0);
+      transition: border-color 0.45s ease, box-shadow 0.45s ease, transform 0.45s ease;
+      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.55);
     }
     /* A second, inner hairline — the moulding of the arch. */
     .door__arch::before {
       content: "";
       position: absolute;
       inset: 7px;
-      border: 1px solid rgba(201, 162, 39, 0.16);
-      border-radius: 50% 50% 7px 7px / 34% 34% 7px 7px;
+      border: 1px solid rgba(201, 162, 39, 0.15);
+      border-radius: 50% 50% 6px 6px / 34% 34% 6px 6px;
       pointer-events: none;
       transition: border-color 0.45s ease;
     }
-    /* The light waiting past the threshold. */
-    .door__light {
+    /* Each arch is angled a few degrees toward the road, the way a
+       real gate would stand along a real way. */
+    .door--runner .door__arch { transform: perspective(1100px) rotateY(7deg); }
+    .door--world  .door__arch { transform: perspective(1100px) rotateY(-7deg); }
+
+    /* The light waiting past the threshold — swells as the lamplight
+       drifts near (via --kindle), fills when the door is chosen. */
+    .door__halo {
       position: absolute;
       inset: 0;
-      background: radial-gradient(90% 55% at 50% 100%, rgba(var(--glow, var(--amber)), 0.22), transparent 75%);
-      opacity: 0.7;
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      background: radial-gradient(95% 60% at 50% 100%, rgba(var(--glow, var(--amber)), 0.30), transparent 78%);
+      opacity: calc(0.32 + 0.68 * var(--kindle));
+      transition: opacity 0.35s ease;
       pointer-events: none;
     }
 
@@ -166,13 +212,14 @@
       transform: translateX(-50%);
       width: 42%;
       height: auto;
-      stroke: rgba(201, 162, 39, 0.85);
+      stroke: rgb(213, 180, 86);
       fill: none;
       stroke-width: 1.6;
       stroke-linecap: round;
       stroke-linejoin: round;
-      filter: drop-shadow(0 0 6px rgba(var(--glow, var(--amber)), 0.25));
-      transition: stroke 0.4s ease, filter 0.4s ease;
+      filter: drop-shadow(0 0 7px rgba(var(--glow, var(--amber)), 0.45));
+      opacity: calc(0.42 + 0.58 * var(--kindle));
+      transition: opacity 0.35s ease;
     }
 
     .door__label {
@@ -183,7 +230,7 @@
       text-transform: uppercase;
       color: var(--gold-soft);
       margin-bottom: 8px;
-      transition: color 0.3s ease, text-shadow 0.3s ease;
+      transition: color 0.35s ease, text-shadow 0.35s ease;
       white-space: nowrap;
     }
     .door__enter {
@@ -197,45 +244,39 @@
       padding: 9px 0 13px;
       width: 62%;
       text-align: center;
-      transition: color 0.3s ease, border-color 0.3s ease;
+      transition: color 0.35s ease, border-color 0.35s ease, opacity 0.45s ease;
+      opacity: calc(0.55 + 0.45 * var(--kindle));
     }
-
     .door__desc {
       font-style: italic;
       font-size: clamp(12px, 3.3vw, 14px);
       color: rgba(232, 213, 163, 0.5);
       letter-spacing: 0.04em;
-      transition: color 0.3s ease;
+      transition: color 0.35s ease;
       white-space: nowrap;
     }
 
     /* The garden door glows green — living light through the arch. */
     .door--world { --glow: var(--leaf); }
 
-    /* Hover / focus — the threshold wakes: light swells, gold brightens. */
-    .door:hover  .door__arch,
+    /* Hover / focus — the threshold kindles fully and the stone warms.
+       No lifting or floating: these stand on the ground. */
+    .door:hover, .door:focus-visible { --kindle: 1; }
+    .door:hover .door__arch,
     .door:focus-visible .door__arch {
-      transform: translateY(-5px);
-      border-color: rgba(201, 162, 39, 0.85);
+      border-color: rgba(201, 162, 39, 0.8);
       box-shadow:
         inset 0 0 34px rgba(0, 0, 0, 0.35),
-        0 14px 44px -12px rgba(var(--glow, var(--amber)), 0.35);
+        0 18px 50px -16px rgba(var(--glow, var(--amber)), 0.4);
     }
-    .door:hover  .door__arch::before,
-    .door:focus-visible .door__arch::before { border-color: rgba(201, 162, 39, 0.35); }
-    .door:hover  .door__light,
-    .door:focus-visible .door__light { opacity: 1; transform: scale(1.06); }
-    .door:hover  .door__glyph,
-    .door:focus-visible .door__glyph {
-      stroke: rgba(232, 213, 163, 1);
-      filter: drop-shadow(0 0 10px rgba(var(--glow, var(--amber)), 0.5));
-    }
-    .door:hover  .door__label,
+    .door:hover .door__arch::before,
+    .door:focus-visible .door__arch::before { border-color: rgba(201, 162, 39, 0.34); }
+    .door:hover .door__label,
     .door:focus-visible .door__label {
       color: #fff;
       text-shadow: 0 0 16px rgba(var(--glow, var(--amber)), 0.5);
     }
-    .door:hover  .door__enter,
+    .door:hover .door__enter,
     .door:focus-visible .door__enter {
       color: rgba(232, 213, 163, 0.95);
       border-color: rgba(201, 162, 39, 0.6);
@@ -246,46 +287,52 @@
       outline-offset: 8px;
     }
 
-    /* ── Opening: the chosen threshold fills with its own light. ── */
-    .door.opening .door__light {
+    /* ── Walking through ───────────────────────────────────────
+       The chosen threshold floods with its own light while the
+       camera moves; the cue and glyph dissolve into it. */
+    .door.opening { --kindle: 1; }
+    .door.opening .door__halo {
       opacity: 1;
-      transform: scale(1.6);
-      background: radial-gradient(100% 80% at 50% 85%, rgba(var(--glow, var(--amber)), 0.65), transparent 85%);
+      background: radial-gradient(120% 95% at 50% 90%, rgba(var(--glow, var(--amber)), 0.75), transparent 88%);
     }
     .door.opening .door__arch {
-      transform: translateY(-5px) scale(1.03);
       border-color: rgba(var(--glow, var(--amber)), 0.9);
       box-shadow:
-        inset 0 0 60px rgba(var(--glow, var(--amber)), 0.25),
-        0 0 70px -8px rgba(var(--glow, var(--amber)), 0.55);
+        inset 0 0 60px rgba(var(--glow, var(--amber)), 0.3),
+        0 0 70px -8px rgba(var(--glow, var(--amber)), 0.5);
     }
     .door.opening .door__glyph,
     .door.opening .door__label,
-    .door.opening .door__enter { opacity: 0; transition: opacity 0.45s ease; }
+    .door.opening .door__enter { opacity: 0; transition: opacity 0.4s ease; }
 
-    /* A full-screen wash of light as we step through. */
+    /* A wash of the door's own light, rising from the door itself. */
     .flash {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 50% 55%, rgba(var(--flash-glow, var(--amber)), 0.95), rgba(var(--flash-glow, var(--amber)), 0.6) 40%, transparent 75%);
+      background: radial-gradient(circle at var(--flash-x, 50%) var(--flash-y, 60%),
+        rgba(var(--flash-glow, var(--amber)), 0.95),
+        rgba(var(--flash-glow, var(--amber)), 0.55) 38%,
+        transparent 72%);
       opacity: 0;
       pointer-events: none;
       z-index: 5;
-      transition: opacity 0.55s ease;
+      transition: opacity 0.5s ease;
     }
     .flash.on { opacity: 1; }
 
     /* ── About link ────────────────────────────────────────── */
     .fallback {
       position: fixed;
-      bottom: max(18px, env(safe-area-inset-bottom));
+      bottom: max(16px, env(safe-area-inset-bottom));
       left: 0; right: 0;
       text-align: center;
       font-size: 11px;
       letter-spacing: 0.22em;
       text-indent: 0.22em;
       z-index: 1;
+      transition: opacity 1.6s ease 0.5s;
     }
+    .js body:not(.lit) .fallback { opacity: 0; }
     .fallback a {
       color: rgba(232, 213, 163, 0.42);
       text-decoration: none;
@@ -294,59 +341,67 @@
       transition: color 0.25s ease, border-color 0.25s ease;
     }
     .fallback a:hover,
-    .fallback a:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    .fallback a:focus-visible { color: var(--gold-soft); border-color: rgba(232, 213, 163, 0.5); outline: none; }
 
-    @media (max-width: 360px) {
-      .doors { gap: 20px; }
-    }
-
-    /* Respect reduced-motion: no drifting, no slow swelling. */
+    /* Respect reduced-motion: the room is simply there, already lit —
+       depth without sway, arrival without theatre, exit without travel. */
     @media (prefers-reduced-motion: reduce) {
-      body::after { animation: none; }
-      .door__arch, .door__light, .flash { transition-duration: 0.15s; }
+      .title, .door, .fallback { transition-duration: 0.2s; transition-delay: 0s; }
+      .title h1 { transition: none; }
+      .space.entering { transform: none; transition: none; }
+      body { transition: opacity 0.15s ease 0s; }
     }
   </style>
 </head>
 <body>
-  <header class="title">
-    <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
-    <p class="epigraph">&ldquo;Enter through the narrow gate.&rdquo;</p>
-  </header>
+  <div class="space">
+    <canvas id="scene" aria-hidden="true"></canvas>
 
-  <nav class="doors" aria-label="Choose a door">
-    <a class="door door--runner" href="game.html" aria-label="Enter Camino, the pilgrim's road">
-      <span class="door__arch">
-        <span class="door__light" aria-hidden="true"></span>
-        <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
-          <!-- a wayside cross above the road -->
-          <path d="M24 12 V44" />
-          <path d="M14 22 H34" />
-          <path d="M10 54 Q24 48 38 54" />
-        </svg>
-        <span class="door__label">Camino</span>
-        <span class="door__enter">enter</span>
-      </span>
-      <span class="door__desc">the pilgrim&rsquo;s road</span>
-    </a>
+    <div class="layer layer--far">
+      <header class="title">
+        <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
+        <div class="rule" aria-hidden="true"></div>
+        <p class="epigraph">&ldquo;Enter through the narrow gate.&rdquo;</p>
+      </header>
+    </div>
 
-    <a class="door door--world" href="world.html" aria-label="Enter Eden, the living garden">
-      <span class="door__arch">
-        <span class="door__light" aria-hidden="true"></span>
-        <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
-          <!-- the tree of life, bearing fruit -->
-          <path d="M24 56 V20" />
-          <path d="M24 38 C16 36 11 30 10 22" />
-          <path d="M24 38 C32 36 37 30 38 22" />
-          <circle cx="10" cy="17.5" r="2.8" />
-          <circle cx="38" cy="17.5" r="2.8" />
-          <circle cx="24" cy="14.5" r="2.8" />
-        </svg>
-        <span class="door__label">Eden</span>
-        <span class="door__enter">enter</span>
-      </span>
-      <span class="door__desc">the living garden</span>
-    </a>
-  </nav>
+    <div class="layer layer--doors">
+      <nav class="doors" aria-label="Choose a door">
+        <a class="door door--runner" href="game.html" aria-label="Enter Camino, the pilgrim's road">
+          <span class="door__arch">
+            <span class="door__halo" aria-hidden="true"></span>
+            <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
+              <!-- a wayside cross above the road -->
+              <path d="M24 12 V44" />
+              <path d="M14 22 H34" />
+              <path d="M10 54 Q24 48 38 54" />
+            </svg>
+            <span class="door__label">Camino</span>
+            <span class="door__enter">enter</span>
+          </span>
+          <span class="door__desc">the pilgrim&rsquo;s road</span>
+        </a>
+
+        <a class="door door--world" href="world.html" aria-label="Enter Eden, the living garden">
+          <span class="door__arch">
+            <span class="door__halo" aria-hidden="true"></span>
+            <svg class="door__glyph" viewBox="0 0 48 64" aria-hidden="true">
+              <!-- the tree of life, bearing fruit -->
+              <path d="M24 56 V20" />
+              <path d="M24 38 C16 36 11 30 10 22" />
+              <path d="M24 38 C32 36 37 30 38 22" />
+              <circle cx="10" cy="17.5" r="2.8" />
+              <circle cx="38" cy="17.5" r="2.8" />
+              <circle cx="24" cy="14.5" r="2.8" />
+            </svg>
+            <span class="door__label">Eden</span>
+            <span class="door__enter">enter</span>
+          </span>
+          <span class="door__desc">the living garden</span>
+        </a>
+      </nav>
+    </div>
+  </div>
 
   <footer class="fallback">
     <a href="about.html">about this site</a>
@@ -355,52 +410,448 @@
   <div class="flash" aria-hidden="true"></div>
 
   <script>
-    const flash = document.querySelector('.flash');
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    (() => {
+      'use strict';
 
-    // Step through the threshold: its light swells, floods the screen, then go.
-    function enter(door, href) {
-      if (door.dataset.entering) return;
-      door.dataset.entering = '1';
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-      // Tint the flash to match the door's own glow (warm road / green garden).
-      const glow = door.classList.contains('door--world') ? '168, 205, 140' : '255, 196, 92';
-      flash.style.setProperty('--flash-glow', glow);
+      const space  = document.querySelector('.space');
+      const canvas = document.getElementById('scene');
+      const flash  = document.querySelector('.flash');
+      const farLayer   = document.querySelector('.layer--far');
+      const doorsLayer = document.querySelector('.layer--doors');
+      const doors  = Array.from(document.querySelectorAll('.door'));
+      // The canvas paints every pixel each frame, so let the browser skip
+      // alpha compositing for it. No pixels are ever read back (getImageData /
+      // toDataURL) — iOS privacy protections make readback slow and noisy.
+      const ctx = canvas.getContext('2d', { alpha: false });
 
-      const delay = prefersReduced ? 120 : 620;
-      door.classList.add('opening');
-      setTimeout(() => flash.classList.add('on'), prefersReduced ? 0 : 300);
-      document.body.style.opacity = '0';
-      setTimeout(() => { window.location.href = href; }, delay);
-    }
+      /* ── Scene geometry ──────────────────────────────────────
+         One-point perspective: every line on the floor runs to a
+         single vanishing point behind the title. The road's width
+         is derived from where the door arches actually stand, so
+         the drawing and the DOM always agree. */
+      const DPR_CAP = 2;               // fill-rate mercy for mobile Safari
+      let W = 0, H = 0, dpr = 1;
+      let vpX = 0, vpY = 0;            // vanishing point
+      let roadHalf = 0;                // road half-width at the bottom edge
+      let doorRects = [];              // arch rects in CSS px, for kindling
+      const doorGlows = doors.map(d =>
+        d.classList.contains('door--world') ? '168, 205, 140' : '255, 196, 92');
+      let floorArt = null;             // pre-rendered static scene
 
-    document.querySelectorAll('.door').forEach(door => {
-      door.addEventListener('click', e => {
-        e.preventDefault();
-        enter(door, door.getAttribute('href'));
-      });
-      // Enter/Space on a focused door behaves like a click.
-      door.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
+      // The lamplight: one warm, breathing source that leans toward the
+      // pointer on desktop and wanders the road on its own on touch.
+      const light = {
+        x: 0, y: 0,          // current position (CSS px)
+        tx: 0, ty: 0,        // target position
+        level: reduced ? 1 : 0,  // overall intensity 0..1 (arrival ramp)
+        boost: 0,            // extra swell while walking through a door
+        flicker: 0,          // small candle-like wander of intensity
+      };
+      const lean = { x: 0, y: 0, tx: 0, ty: 0 };   // pointer lean, -1..1
+      let hasPointer = false;
+      let motes = [];
+      let born = performance.now();
+      let rafId = 0;
+      let leaving = false;
+
+      function seedMotes() {
+        const count = Math.min(64, Math.round((W * H) / 26000));
+        motes = Array.from({ length: count }, () => ({
+          x: Math.random() * W,
+          y: vpY + Math.random() * (H - vpY),
+          z: 0.25 + Math.random() * 0.75,          // depth: 0 far … 1 near
+          drift: 0.5 + Math.random(),
+          phase: Math.random() * Math.PI * 2,
+        }));
+      }
+
+      /* The static painting: sky, distant dawn, floor lines, road, haze.
+         Re-rendered only on resize, then blitted every frame. */
+      function paintFloor() {
+        floorArt = document.createElement('canvas');
+        floorArt.width = canvas.width;
+        floorArt.height = canvas.height;
+        const f = floorArt.getContext('2d', { alpha: false });
+        f.scale(dpr, dpr);
+
+        // Night sky falling to a faintly warm horizon.
+        const sky = f.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#080706');
+        sky.addColorStop(Math.max(0.01, vpY / H - 0.05), '#0b0a08');
+        sky.addColorStop(Math.min(1, vpY / H + 0.02), '#141008');
+        sky.addColorStop(1, '#0d0b08');
+        f.fillStyle = sky;
+        f.fillRect(0, 0, W, H);
+
+        // Dawn at the end of the road — the far light the way leads to.
+        const dawn = f.createRadialGradient(vpX, vpY, 0, vpX, vpY, Math.max(W, H) * 0.34);
+        dawn.addColorStop(0, 'rgba(255, 208, 128, 0.22)');
+        dawn.addColorStop(0.35, 'rgba(200, 150, 70, 0.09)');
+        dawn.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        f.fillStyle = dawn;
+        f.fillRect(0, 0, W, H);
+
+        // Flagstone joints: lines parallel to the horizon, packed tighter
+        // with distance (simple perspective foreshortening).
+        const rows = 9;
+        for (let i = 1; i <= rows; i++) {
+          const t = Math.pow(i / rows, 2.1);
+          const y = vpY + (H - vpY) * t;
+          const a = 0.015 + 0.045 * t;
+          f.strokeStyle = `rgba(201, 162, 39, ${a.toFixed(3)})`;
+          f.lineWidth = 1;
+          f.beginPath();
+          f.moveTo(0, y);
+          f.lineTo(W, y);
+          f.stroke();
+        }
+
+        // Lines running to the vanishing point: the road's two edges,
+        // bright enough to read, and a few fainter courses beyond them.
+        const fan = [
+          { half: roadHalf,        a: 0.20 },
+          { half: roadHalf * 1.9,  a: 0.05 },
+          { half: roadHalf * 3.1,  a: 0.03 },
+        ];
+        for (const { half, a } of fan) {
+          f.strokeStyle = `rgba(201, 162, 39, ${a})`;
+          f.lineWidth = 1;
+          for (const s of [-1, 1]) {
+            f.beginPath();
+            f.moveTo(vpX, vpY);
+            f.lineTo(vpX + s * half, H);
+            f.stroke();
+          }
+        }
+
+        // The road itself: a barely-lighter wedge between its edges.
+        const roadGrad = f.createLinearGradient(0, vpY, 0, H);
+        roadGrad.addColorStop(0, 'rgba(232, 213, 163, 0.0)');
+        roadGrad.addColorStop(1, 'rgba(232, 213, 163, 0.045)');
+        f.fillStyle = roadGrad;
+        f.beginPath();
+        f.moveTo(vpX, vpY);
+        f.lineTo(vpX + roadHalf, H);
+        f.lineTo(vpX - roadHalf, H);
+        f.closePath();
+        f.fill();
+
+        // Haze over the horizon: distance dissolves into it.
+        const hazeH = H * 0.16;
+        const haze = f.createLinearGradient(0, vpY - hazeH * 0.55, 0, vpY + hazeH * 0.45);
+        haze.addColorStop(0, 'rgba(11, 10, 8, 0)');
+        haze.addColorStop(0.5, 'rgba(13, 11, 8, 0.48)');
+        haze.addColorStop(1, 'rgba(11, 10, 8, 0)');
+        f.fillStyle = haze;
+        f.fillRect(0, vpY - hazeH * 0.55, W, hazeH);
+
+        // Hold the edges of the room dark.
+        const vig = f.createRadialGradient(vpX, H * 0.55, Math.min(W, H) * 0.35, vpX, H * 0.55, Math.max(W, H) * 0.85);
+        vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vig.addColorStop(1, 'rgba(4, 3, 2, 0.5)');
+        f.fillStyle = vig;
+        f.fillRect(0, 0, W, H);
+      }
+
+      function measure() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        vpX = W / 2;
+        vpY = H * 0.40;
+
+        // Stand the road between the two arches: its width at the arches'
+        // feet is the gap between them, projected out to the bottom edge —
+        // then clamped, so it stays a road on every screen (never a needle
+        // on narrow phones, never a plain that swallows a wide desktop).
+        doorRects = doors.map(d => d.querySelector('.door__arch').getBoundingClientRect());
+        const gapHalf = Math.max(40, (doorRects[1].left - doorRects[0].right) / 2 * 0.95);
+        const footY = Math.max(vpY + 40, (doorRects[0].bottom + doorRects[1].bottom) / 2);
+        roadHalf = Math.min(W * 0.24, Math.max(W * 0.20, gapHalf * (H - vpY) / (footY - vpY)));
+
+        light.x = light.tx = vpX;
+        light.y = light.ty = vpY + (H - vpY) * 0.42;
+
+        paintFloor();
+        seedMotes();
+        if (reduced) drawFrame(performance.now());   // one still, correct frame
+      }
+
+      /* ── Painting one frame ─────────────────────────────────── */
+      function drawFrame(now) {
+        const t = (now - born) / 1000;
+
+        // Re-assert the DPR transform every frame: anything that touches
+        // canvas.width (resize, the browser itself) silently resets it,
+        // and a frame drawn in device pixels lands at half scale.
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Blit the still painting, then add the living light over it.
+        ctx.drawImage(floorArt, 0, 0, W, H);
+
+        // Candle breathing: two slow sines so it never feels metronomic,
+        // plus a whisper of flicker that random-walks and decays.
+        light.flicker += (Math.random() - 0.5) * 0.06;
+        light.flicker *= 0.94;
+        const breath = reduced ? 1 :
+          1 + 0.055 * Math.sin(t * 2.1) + 0.03 * Math.sin(t * 5.3 + 1.7) + light.flicker * 0.25;
+
+        // Ease the lamp toward its target; ease the room's lean too.
+        light.x += (light.tx - light.x) * 0.035;
+        light.y += (light.ty - light.y) * 0.035;
+        lean.x += (lean.tx - lean.x) * 0.04;
+        lean.y += (lean.ty - lean.y) * 0.04;
+
+        const level = light.level * (1 + light.boost * 1.6);
+        const glow = level * breath;
+        const R = Math.min(W, H) * (0.32 + 0.1 * light.boost);
+
+        ctx.globalCompositeOperation = 'lighter';
+
+        // The far dawn breathes very slightly with the lamp.
+        const dawnPulse = ctx.createRadialGradient(vpX, vpY, 0, vpX, vpY, Math.max(W, H) * 0.2);
+        dawnPulse.addColorStop(0, `rgba(255, 210, 130, ${(0.075 * glow).toFixed(3)})`);
+        dawnPulse.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = dawnPulse;
+        ctx.fillRect(0, 0, W, H);
+
+        // The pool of light the lamp lays on the floor beneath it.
+        const poolY = Math.min(H * 0.97, light.y + H * 0.14);
+        const pool = ctx.createRadialGradient(light.x, poolY, 0, light.x, poolY, R * 1.15);
+        pool.addColorStop(0, `rgba(255, 196, 92, ${(0.16 * glow).toFixed(3)})`);
+        pool.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = pool;
+        ctx.save();
+        ctx.translate(light.x, poolY);
+        ctx.scale(1, 0.34);                       // an ellipse lying on the floor
+        ctx.translate(-light.x, -poolY);
+        ctx.fillRect(light.x - R * 1.3, poolY - R * 1.3, R * 2.6, R * 2.6);
+        ctx.restore();
+
+        // The lamp's bloom in the air.
+        const bloom = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, R);
+        bloom.addColorStop(0, `rgba(255, 224, 160, ${(0.25 * glow).toFixed(3)})`);
+        bloom.addColorStop(0.35, `rgba(255, 196, 92, ${(0.10 * glow).toFixed(3)})`);
+        bloom.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bloom;
+        ctx.fillRect(light.x - R, light.y - R, R * 2, R * 2);
+
+        // Each threshold lays its own light at its feet — amber for the
+        // road, green for the garden — seating the arch on the floor.
+        for (let i = 0; i < doorRects.length; i++) {
+          const r = doorRects[i];
+          if (!r) continue;
+          const k = doors[i]._kindle || 0;
+          const fx = r.left + r.width / 2;
+          const fy = r.bottom + 6;
+          const fr = r.width * 0.85;
+          const a = (0.05 + 0.15 * k) * level;
+          const foot = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr);
+          foot.addColorStop(0, `rgba(${doorGlows[i]}, ${a.toFixed(3)})`);
+          foot.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = foot;
+          ctx.save();
+          ctx.translate(fx, fy);
+          ctx.scale(1, 0.26);
+          ctx.translate(-fx, -fy);
+          ctx.fillRect(fx - fr, fy - fr, fr * 2, fr * 2);
+          ctx.restore();
+        }
+
+        // Dust hanging in the air, brightest where the light finds it.
+        for (const m of motes) {
+          if (!reduced) {
+            m.y -= m.drift * 0.12 * m.z;
+            m.x += Math.sin(t * 0.4 + m.phase) * 0.08 * m.z;
+            if (m.y < vpY) { m.y = H + 4; m.x = Math.random() * W; }
+          }
+          const px = m.x - lean.x * 26 * m.z;      // near dust sways the most
+          const py = m.y - lean.y * 14 * m.z;
+          const dx = px - light.x, dy = py - light.y;
+          const near = Math.max(0, 1 - Math.hypot(dx, dy) / (R * 1.25));
+          const a = (0.07 + 0.5 * near * near) * m.z * level;
+          if (a < 0.012) continue;
+          ctx.fillStyle = `rgba(255, 224, 168, ${a.toFixed(3)})`;
+          const s = 0.5 + 1.3 * m.z;
+          ctx.fillRect(px - s / 2, py - s / 2, s, s);
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Kindle each threshold by the lamp's nearness (hover overrides in CSS).
+        for (let i = 0; i < doors.length; i++) {
+          const r = doorRects[i];
+          if (!r) continue;
+          const cx = r.left + r.width / 2, cy = r.top + r.height * 0.62;
+          const d = Math.hypot(cx - light.x, cy - light.y);
+          const reach = Math.max(r.width * 2.4, R * 1.05);
+          let k = Math.max(0, 1 - d / reach);
+          k = k * k * (3 - 2 * k);                 // smoothstep
+          const prev = doors[i]._kindle || 0;
+          if (Math.abs(k - prev) > 0.015) {
+            doors[i]._kindle = k;
+            doors[i].style.setProperty('--kindle-js', k.toFixed(3));
+          }
+        }
+
+        // The room leans almost imperceptibly with the pointer — nearer
+        // layers more than far ones. Transform-only: no layout, no paint.
+        if (!reduced) {
+          const ix = Math.sin(t * 0.22) * 2.4, iy = Math.cos(t * 0.17) * 1.6;
+          farLayer.style.transform =
+            `translate3d(${(-lean.x * 5 + ix * 0.4).toFixed(2)}px, ${(-lean.y * 3 + iy * 0.4).toFixed(2)}px, 0)`;
+          doorsLayer.style.transform =
+            `translate3d(${(-lean.x * 13 + ix).toFixed(2)}px, ${(-lean.y * 7 + iy * 0.7).toFixed(2)}px, 0)`;
+        }
+      }
+
+      function loop(now) {
+        // On touch devices the lamp is a pilgrim of its own, slowly
+        // walking the road so the room is alive without any input.
+        if (!hasPointer && !leaving) {
+          const t = (now - born) / 1000;
+          light.tx = vpX + Math.sin(t * 0.21) * W * 0.14;
+          light.ty = vpY + (H - vpY) * (0.42 + Math.sin(t * 0.13 + 2) * 0.1);
+        }
+        drawFrame(now);
+        rafId = requestAnimationFrame(loop);
+      }
+
+      /* ── Arrival: the light comes up over the road ──────────── */
+      function arrive() {
+        if (reduced) {
+          document.body.classList.add('lit');
+          drawFrame(performance.now());
+          return;
+        }
+        const start = performance.now() + 260;     // a beat of darkness first
+        const DURATION = 1500;
+        (function ramp(now) {
+          const p = Math.min(1, Math.max(0, (now - start) / DURATION));
+          const e = 1 - Math.pow(1 - p, 3);        // ease-out cubic
+          light.level = e * (1 + 0.22 * Math.sin(p * Math.PI));  // small overshoot, then settle
+          if (p >= 0.16) document.body.classList.add('lit');
+          if (p < 1) requestAnimationFrame(ramp);
+          else light.level = 1;
+        })(performance.now());
+      }
+
+      /* ── Walking through a door ─────────────────────────────── */
+      function enter(door, href) {
+        if (door.dataset.entering) return;
+        door.dataset.entering = '1';
+        leaving = true;
+
+        const glow = door.classList.contains('door--world') ? '168, 205, 140' : '255, 196, 92';
+        const arch = door.querySelector('.door__arch').getBoundingClientRect();
+        const cx = arch.left + arch.width / 2;
+        const cy = arch.top + arch.height * 0.58;
+
+        // The wash of light rises from the chosen door, not from nowhere.
+        flash.style.setProperty('--flash-glow', glow);
+        flash.style.setProperty('--flash-x', `${(cx / W * 100).toFixed(1)}%`);
+        flash.style.setProperty('--flash-y', `${(cy / H * 100).toFixed(1)}%`);
+
+        door.classList.add('opening');
+
+        if (reduced) {
+          flash.classList.add('on');
+          document.body.classList.add('leaving');
+          setTimeout(() => { window.location.href = href; }, 150);
+          return;
+        }
+
+        // Dolly: scale the whole space up around the arch — walking forward —
+        // while the lamp rushes to the threshold and swells.
+        space.style.transformOrigin = `${cx}px ${cy}px`;
+        space.classList.add('entering');
+        light.tx = cx; light.ty = cy;
+        light.boost = 1;
+
+        setTimeout(() => flash.classList.add('on'), 330);
+        document.body.classList.add('leaving');
+        setTimeout(() => { window.location.href = href; }, 830);
+      }
+
+      doors.forEach(door => {
+        door.addEventListener('click', e => {
+          // Let the browser keep its own behaviors: new tab, window, etc.
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return;
           e.preventDefault();
           enter(door, door.getAttribute('href'));
+        });
+        door.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            enter(door, door.getAttribute('href'));
+          }
+        });
+      });
+
+      /* ── Pointer: the lamp leans toward attention ───────────── */
+      if (finePointer) {
+        window.addEventListener('pointermove', e => {
+          hasPointer = true;
+          lean.tx = (e.clientX / W) * 2 - 1;
+          lean.ty = (e.clientY / H) * 2 - 1;
+          light.tx = vpX + lean.tx * W * 0.17;
+          light.ty = vpY + (H - vpY) * 0.42 + lean.ty * H * 0.1;
+        }, { passive: true });
+        document.addEventListener('pointerleave', () => {
+          hasPointer = false;
+          lean.tx = 0; lean.ty = 0;
+        });
+      }
+
+      /* ── Housekeeping ───────────────────────────────────────── */
+      let resizeTimer = 0;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(measure, 120);
+      });
+
+      // Spend no frames on a hidden tab.
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        } else if (!reduced && !rafId) {
+          rafId = requestAnimationFrame(loop);
         }
       });
-    });
 
-    // Back button after a door click restores this exact page from the
-    // browser's bfcache — including the mid-transition opacity:0 / .opening /
-    // entering-lock state enter() had just set. Undo it so a restored page
-    // isn't stuck invisible with dead doors.
-    window.addEventListener('pageshow', e => {
-      if (!e.persisted) return;
-      document.body.style.opacity = '1';
-      flash.classList.remove('on');
-      document.querySelectorAll('.door').forEach(door => {
-        door.classList.remove('opening');
-        delete door.dataset.entering;
+      // Back button after a door click restores this exact page from the
+      // browser's bfcache — including the mid-dolly state enter() had just
+      // set. Undo all of it so a restored page isn't stuck half-entered.
+      window.addEventListener('pageshow', e => {
+        if (!e.persisted) return;
+        leaving = false;
+        light.boost = 0;
+        light.level = 1;
+        document.body.classList.remove('leaving');
+        document.body.classList.add('lit');
+        flash.classList.remove('on');
+        space.classList.remove('entering');
+        space.style.transformOrigin = '';
+        doors.forEach(door => {
+          door.classList.remove('opening');
+          delete door.dataset.entering;
+        });
+        measure();
+        if (!reduced && !rafId) rafId = requestAnimationFrame(loop);
       });
-    });
+
+      measure();
+      arrive();
+      if (!reduced) rafId = requestAnimationFrame(loop);
+    })();
   </script>
 </body>
 </html>
