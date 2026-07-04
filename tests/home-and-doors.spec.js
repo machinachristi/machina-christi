@@ -1,6 +1,6 @@
-// Regression suite for the home page doors and the runner game's game-over
-// navigation — formalizing the ad hoc checks that shipped those features, so
-// they can't silently rot as the site grows.
+// Regression suite for the home page portal gallery and the runner game's
+// game-over navigation — formalizing the ad hoc checks that shipped those
+// features, so they can't silently rot as the site grows.
 const { test, expect } = require('@playwright/test');
 
 function watchErrors(page) {
@@ -25,61 +25,89 @@ async function forceGameOver(page) {
 }
 
 test.describe('home page', () => {
-  test('structure: two doors, labels, fallback link', async ({ page }) => {
+  test('structure: three portals, labels, hrefs, waymarks', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
     expect(await page.title()).toBe('Machina Christi');
 
-    await expect(page.locator('.door')).toHaveCount(2);
-    await expect(page.locator('.door--runner')).toHaveAttribute('href', 'game.html');
-    await expect(page.locator('.door--world')).toHaveAttribute('href', 'world.html');
-    await expect(page.locator('.door--runner .door__label')).toContainText('Camino');
-    await expect(page.locator('.door--world .door__label')).toContainText('Eden');
+    await expect(page.locator('.portal')).toHaveCount(3);
+    await expect(page.locator('.portal--camino')).toHaveAttribute('href', 'game.html');
+    await expect(page.locator('.portal--eden')).toHaveAttribute('href', 'world.html');
+    await expect(page.locator('.portal--about')).toHaveAttribute('href', 'about.html');
+    await expect(page.locator('.portal--camino .portal__title')).toContainText('Camino');
+    await expect(page.locator('.portal--eden .portal__title')).toContainText('Eden');
+    await expect(page.locator('.portal--about .portal__title')).toContainText('About');
 
-    const fb = page.locator('.fallback a');
-    await expect(fb).toHaveCount(1);
-    await expect(fb).toHaveAttribute('href', 'about.html');
+    // One waymark dot per portal, with the first (centered) one current.
+    await expect(page.locator('.waymarks button')).toHaveCount(3);
+    await expect(page.locator('.waymarks button').first()).toHaveAttribute('aria-current', 'true');
 
+    // The strip itself must be swipeable (its content overflows it)…
+    const stripOverflow = await page.evaluate(() => {
+      const s = document.querySelector('.strip');
+      return s.scrollWidth - s.clientWidth;
+    });
+    expect(stripOverflow).toBeGreaterThan(0);
+
+    // …while the document itself must not scroll sideways.
     const overflow = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
     expect(errors).toEqual([]);
   });
 
-  test('doors are keyboard-focusable', async ({ page }) => {
+  test('portals are keyboard-focusable', async ({ page }) => {
     await page.goto('/index.html');
     const focused = await page.evaluate(() => {
-      document.querySelector('.door--runner').focus();
-      return document.activeElement.classList.contains('door--runner');
+      document.querySelector('.portal--camino').focus();
+      return document.activeElement.classList.contains('portal--camino');
     });
     expect(focused).toBe(true);
   });
 
-  test('the runner door opens the game', async ({ page }) => {
+  test('the centered portal opens its experience', async ({ page }) => {
     await page.goto('/index.html');
-    await page.locator('.door--runner').click();
+    // Camino stands centered on arrival, so a tap walks straight through.
+    await expect(page.locator('.portal--camino')).toHaveClass(/is-active/);
+    await page.locator('.portal--camino').click();
     await page.waitForURL('**/game.html');
   });
 
-  test('the fallback about link works', async ({ page }) => {
+  test('tapping a side portal centers it instead of entering', async ({ page }) => {
     await page.goto('/index.html');
-    await page.locator('.fallback a').click();
+    // Tap the sliver of Eden peeking in at the right edge, with raw
+    // coordinates — locator.click() would auto-scroll it into view first
+    // and defeat the very behavior under test.
+    const box = await page.locator('.portal--eden').boundingBox();
+    const vw = page.viewportSize().width;
+    await page.mouse.click(Math.min(vw - 12, box.x + 24), box.y + box.height / 2);
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+    expect(page.url()).toContain('index.html');
+    // A second tap, now that it is centered, walks through.
+    await page.locator('.portal--eden').click();
+    await page.waitForURL('**/world.html');
+  });
+
+  test('keyboard: Enter on a focused portal navigates', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.locator('.portal--about').focus();
+    await page.keyboard.press('Enter');
     await page.waitForURL('**/about.html');
   });
 
-  test('the browser back button restores a fully visible, interactive home page after a door click', async ({ page }) => {
+  test('the browser back button restores a fully visible, interactive home page after entering', async ({ page }) => {
     await page.goto('/index.html');
-    await page.locator('.door--runner').click();
+    await page.locator('.portal--camino').click();
     await page.waitForURL('**/game.html');
     await page.goBack();
     await page.waitForURL('**/index.html');
 
     expect(await page.evaluate(() => getComputedStyle(document.body).opacity)).toBe('1');
     expect(await page.evaluate(() =>
-      document.querySelector('.door--runner').classList.contains('opening'))).toBe(false);
+      document.querySelector('.portal--camino').classList.contains('opening'))).toBe(false);
 
-    // Prove the door isn't just visually reset but still actually works.
-    await page.locator('.door--runner').click();
+    // Prove the gate isn't just visually reset but still actually works.
+    await page.locator('.portal--camino').click();
     await page.waitForURL('**/game.html');
   });
 });

@@ -228,10 +228,13 @@ test.describe('isolation: a broken world cannot break the site', () => {
 });
 
 test.describe('arrival and layout', () => {
-  test('the garden door on the home page leads here', async ({ page }) => {
+  test('the Eden portal on the home page leads here', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
-    await page.locator('.door--world').click();
+    // Keyboard entry is deterministic regardless of which portal stands
+    // centered; pointer entry on side portals is covered in home-and-doors.
+    await page.locator('.portal--eden').focus();
+    await page.keyboard.press('Enter');
     await page.waitForURL('**/world.html');
     await page.click('.intro__enter');
     await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
