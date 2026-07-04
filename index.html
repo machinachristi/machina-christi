@@ -27,8 +27,9 @@
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
          beneath the hero: never wider than the phone allows a neighbor to
-         peek, never taller than the room. */
-      --card-w:   clamp(180px, min(62vw, 36dvh), 300px);
+         peek, never taller than the room. Kept trim so the name leads and
+         the neighbors clearly peek in — a swipe is one glance away. */
+      --card-w:   clamp(150px, min(52vw, 33dvh), 250px);
       --card-gap: clamp(14px, 3vw, 26px);
     }
 
@@ -84,7 +85,7 @@
     }
     .hero h1 {
       font-weight: normal;
-      font-size: clamp(21px, 5.6vw, 38px);
+      font-size: clamp(28px, 7.4vw, 48px);
       letter-spacing: 0.34em;
       text-indent: 0.34em;   /* balance the trailing letter-spacing */
       line-height: 1.32;
@@ -295,13 +296,13 @@
     .waymarks {
       display: flex;
       justify-content: center;
-      min-height: 26px;
+      min-height: 32px;
       margin-bottom: max(14px, env(safe-area-inset-bottom));
     }
     .waymarks button {
       position: relative;
-      width: 26px;
-      height: 26px;
+      width: 34px;
+      height: 32px;
       background: none;
       border: none;
       cursor: pointer;
@@ -312,11 +313,11 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 6px;
-      height: 6px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(201, 162, 39, 0.28);
+      background: rgba(201, 162, 39, 0.3);
       transition: background 0.3s ease, box-shadow 0.3s ease;
     }
     .waymarks button:hover::after,
@@ -324,7 +325,7 @@
     .waymarks button:focus-visible { outline: 1px solid rgba(201, 162, 39, 0.5); outline-offset: -4px; border-radius: 50%; }
     .waymarks button[aria-current="true"]::after {
       background: rgba(232, 213, 163, 0.92);
-      box-shadow: 0 0 8px rgba(var(--amber), 0.4);
+      box-shadow: 0 0 11px rgba(var(--amber), 0.5);
     }
 
     /* ── Desktop arrows ────────────────────────────────────────
@@ -385,7 +386,7 @@
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
     <div class="rule" aria-hidden="true"></div>
-    <p class="epigraph">&ldquo;Enter through the narrow gate.&rdquo;</p>
+    <p class="epigraph">Enter through the narrow gate.</p>
   </header>
 
   <nav class="gallery" aria-label="Experiences">
@@ -404,11 +405,11 @@
           </svg>
         </span>
         <span class="portal__title">Camino</span>
-        <span class="portal__desc">the pilgrim&rsquo;s road &mdash; an endless walk along the narrow way</span>
+        <span class="portal__desc">the pilgrim&rsquo;s road</span>
         <span class="portal__enter">enter</span>
       </a>
 
-      <a class="portal portal--eden" href="world.html" aria-label="Enter Eden, the living garden">
+      <a class="portal portal--eden" href="world.html" aria-label="Enter Eden, the digital garden">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
@@ -422,7 +423,7 @@
           </svg>
         </span>
         <span class="portal__title">Eden</span>
-        <span class="portal__desc">the living garden &mdash; a world that grows and is tended over time</span>
+        <span class="portal__desc">the digital garden</span>
         <span class="portal__enter">enter</span>
       </a>
 
@@ -437,7 +438,7 @@
           </svg>
         </span>
         <span class="portal__title">About</span>
-        <span class="portal__desc">the story behind it all &mdash; what these are and why they exist</span>
+        <span class="portal__desc">the story behind it all</span>
         <span class="portal__enter">enter</span>
       </a>
     </div>
@@ -605,7 +606,10 @@
         setActive(nearest());
       });
 
-      setActive(nearest());
+      // Open on Eden — the middle gate — so either neighbor is one swipe away.
+      const start = Math.min(1, portals.length - 1);
+      center(start, true);
+      setActive(start);
 
       // Arrival: two frames so the transition from the unlit state applies.
       requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('lit')));

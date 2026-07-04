@@ -38,9 +38,10 @@ test.describe('home page', () => {
     await expect(page.locator('.portal--eden .portal__title')).toContainText('Eden');
     await expect(page.locator('.portal--about .portal__title')).toContainText('About');
 
-    // One waymark dot per portal, with the first (centered) one current.
+    // One waymark dot per portal; Eden, the middle gate, stands centered on
+    // arrival, so its (second) dot is the current one.
     await expect(page.locator('.waymarks button')).toHaveCount(3);
-    await expect(page.locator('.waymarks button').first()).toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('.waymarks button').nth(1)).toHaveAttribute('aria-current', 'true');
 
     // The strip itself must be swipeable (its content overflows it)…
     const stripOverflow = await page.evaluate(() => {
@@ -67,25 +68,25 @@ test.describe('home page', () => {
 
   test('the centered portal opens its experience', async ({ page }) => {
     await page.goto('/index.html');
-    // Camino stands centered on arrival, so a tap walks straight through.
-    await expect(page.locator('.portal--camino')).toHaveClass(/is-active/);
-    await page.locator('.portal--camino').click();
-    await page.waitForURL('**/game.html');
+    // Eden stands centered on arrival, so a tap walks straight through.
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+    await page.locator('.portal--eden').click();
+    await page.waitForURL('**/world.html');
   });
 
   test('tapping a side portal centers it instead of entering', async ({ page }) => {
     await page.goto('/index.html');
-    // Tap the sliver of Eden peeking in at the right edge, with raw
-    // coordinates — locator.click() would auto-scroll it into view first
+    // About peeks in at the right edge (Eden is centered). Tap its sliver with
+    // raw coordinates — locator.click() would auto-scroll it into view first
     // and defeat the very behavior under test.
-    const box = await page.locator('.portal--eden').boundingBox();
+    const box = await page.locator('.portal--about').boundingBox();
     const vw = page.viewportSize().width;
     await page.mouse.click(Math.min(vw - 12, box.x + 24), box.y + box.height / 2);
-    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+    await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
     expect(page.url()).toContain('index.html');
     // A second tap, now that it is centered, walks through.
-    await page.locator('.portal--eden').click();
-    await page.waitForURL('**/world.html');
+    await page.locator('.portal--about').click();
+    await page.waitForURL('**/about.html');
   });
 
   test('keyboard: Enter on a focused portal navigates', async ({ page }) => {
@@ -97,18 +98,22 @@ test.describe('home page', () => {
 
   test('the browser back button restores a fully visible, interactive home page after entering', async ({ page }) => {
     await page.goto('/index.html');
-    await page.locator('.portal--camino').click();
-    await page.waitForURL('**/game.html');
+    // Focus+Enter enters the focused gate outright, independent of which gate
+    // is centered — deterministic across the back-button round trip.
+    await page.locator('.portal--eden').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL('**/world.html');
     await page.goBack();
     await page.waitForURL('**/index.html');
 
     expect(await page.evaluate(() => getComputedStyle(document.body).opacity)).toBe('1');
     expect(await page.evaluate(() =>
-      document.querySelector('.portal--camino').classList.contains('opening'))).toBe(false);
+      document.querySelector('.portal--eden').classList.contains('opening'))).toBe(false);
 
     // Prove the gate isn't just visually reset but still actually works.
-    await page.locator('.portal--camino').click();
-    await page.waitForURL('**/game.html');
+    await page.locator('.portal--eden').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL('**/world.html');
   });
 });
 
