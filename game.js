@@ -218,6 +218,9 @@ document.addEventListener('keydown', e => {
   const dirs = { ArrowUp: [0,-1], ArrowDown: [0,1], ArrowLeft: [-1,0], ArrowRight: [1,0] };
   if (dirs[e.key]) {
     e.preventDefault();
+    // handleInput()'s catch-all ("any input begins the game") is meant for
+    // the start screen, not game-over — there, only the buttons restart.
+    if (gameState === 'gameover') return;
     const [dx, dy] = dirs[e.key];
     handleInput(dx * 80, dy * 80);
   }
