@@ -7,9 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="Camino" />
-  <meta name="description" content="The Garden of Eden — an immersive world you can wander." />
-  <title>Camino · The Garden</title>
+  <meta name="apple-mobile-web-app-title" content="Eden" />
+  <meta name="description" content="Eden — a living 3D garden you can wander, tended and refined by the machine over time." />
+  <title>Eden · Machina Christi</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -18,13 +18,14 @@
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
       --leaf:      168, 205, 140;   /* the garden's living green (rgb parts) */
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
     }
 
     html, body {
       height: 100dvh;
       background: var(--bg);
       color: var(--gold-soft);
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: var(--serif);
       overflow: hidden;
       overscroll-behavior: none;
       -webkit-user-select: none;
@@ -55,26 +56,26 @@
       top: max(14px, env(safe-area-inset-top));
       left: max(14px, env(safe-area-inset-left));
       z-index: 10;
-      font-size: 13px;
-      letter-spacing: 0.14em;
-      color: rgba(232, 213, 163, 0.9);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: rgba(232, 213, 163, 0.85);
       text-decoration: none;
-      padding: 8px 14px;
+      padding: 9px 16px;
       border-radius: 999px;
       background: rgba(11, 10, 8, 0.45);
-      border: 1px solid rgba(232, 213, 163, 0.25);
+      border: 1px solid rgba(201, 162, 39, 0.3);
       -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
       transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
     }
     .home:hover, .home:focus-visible {
       color: #fff;
-      border-color: rgba(232, 213, 163, 0.6);
+      border-color: rgba(201, 162, 39, 0.7);
       background: rgba(11, 10, 8, 0.65);
       outline: none;
     }
 
-    /* ── Splash (loading) and fallback (failed) share the dark liturgy ── */
+    /* ── The veil: intro, loading, and failed states share the dark hush ── */
     .veil {
       position: fixed;
       inset: 0;
@@ -84,10 +85,10 @@
       justify-content: center;
       text-align: center;
       padding: 24px;
-      gap: clamp(14px, 3.5vh, 26px);
+      gap: clamp(16px, 3.5vh, 26px);
       background:
-        radial-gradient(120% 90% at 50% 40%, rgba(90, 120, 70, 0.22), transparent 62%),
-        radial-gradient(150% 130% at 50% 120%, rgba(70, 90, 50, 0.16), transparent 55%),
+        radial-gradient(120% 90% at 50% 40%, rgba(90, 120, 70, 0.18), transparent 62%),
+        radial-gradient(150% 130% at 50% 120%, rgba(70, 90, 50, 0.14), transparent 55%),
         var(--bg);
       transition: opacity 0.7s ease;
       z-index: 5;
@@ -98,12 +99,12 @@
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(1.5px 1.5px at 22% 28%, rgba(232, 213, 163, 0.30), transparent),
-        radial-gradient(1.5px 1.5px at 72% 32%, rgba(232, 213, 163, 0.22), transparent),
-        radial-gradient(1.5px 1.5px at 58% 72%, rgba(232, 213, 163, 0.26), transparent),
-        radial-gradient(1.5px 1.5px at 38% 78%, rgba(232, 213, 163, 0.18), transparent);
-      opacity: 0.6;
-      animation: drift 14s ease-in-out infinite alternate;
+        radial-gradient(1.5px 1.5px at 22% 28%, rgba(232, 213, 163, 0.28), transparent),
+        radial-gradient(1px 1px at 72% 32%, rgba(232, 213, 163, 0.20), transparent),
+        radial-gradient(1.5px 1.5px at 58% 72%, rgba(232, 213, 163, 0.24), transparent),
+        radial-gradient(1px 1px at 38% 78%, rgba(232, 213, 163, 0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
     }
     @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
 
@@ -112,41 +113,67 @@
       pointer-events: none;
     }
 
+    /* The tree of life — the same glyph as the door you stepped through. */
+    .veil .glyph {
+      width: clamp(44px, 12vw, 60px);
+      stroke: rgba(201, 162, 39, 0.85);
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 8px rgba(var(--leaf), 0.3));
+    }
+
     .veil h1 {
       font-weight: normal;
-      font-size: clamp(26px, 7.5vw, 46px);
-      letter-spacing: 0.28em;
-      text-indent: 0.28em;
-      color: var(--gold-soft);
-      text-shadow: 0 0 26px rgba(var(--leaf), 0.35);
+      font-size: clamp(26px, 7.5vw, 44px);
+      letter-spacing: 0.34em;
+      text-indent: 0.34em;
+      color: var(--gold);
+      text-shadow: 0 0 26px rgba(var(--leaf), 0.3);
     }
     .veil .verse {
-      max-width: 34ch;
-      line-height: 1.7;
+      max-width: 36ch;
+      line-height: 1.8;
       font-size: clamp(13px, 3.6vw, 16px);
       font-style: italic;
-      color: rgba(232, 213, 163, 0.65);
+      color: rgba(232, 213, 163, 0.6);
     }
+    .veil .verse small {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.72em;
+      font-style: normal;
+      letter-spacing: 0.22em;
+      color: rgba(232, 213, 163, 0.35);
+    }
+
+    /* Entering: everything falls away but one quiet, breathing line. */
     .veil .status {
-      font-size: clamp(10px, 3vw, 12px);
-      letter-spacing: 0.3em;
-      text-indent: 0.3em;
-      color: rgba(var(--leaf), 0.85);
-      animation: breathe 2.4s ease-in-out infinite;
+      font-size: clamp(11px, 3vw, 13px);
+      font-style: italic;
+      letter-spacing: 0.32em;
+      text-indent: 0.32em;
+      color: rgba(var(--leaf), 0.9);
+      animation: breathe 2.6s ease-in-out infinite;
     }
-    @keyframes breathe { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    @keyframes breathe { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+    .veil .glyph, .veil h1, .veil .verse { transition: opacity 0.6s ease; }
+    body[data-world-state="loading"] .veil .glyph,
+    body[data-world-state="loading"] .veil h1,
+    body[data-world-state="loading"] .veil .verse { opacity: 0; }
 
     /* Intro state: an explainer + an explicit "enter" gesture, shown before
-       the iframe is even created — nothing loads until the user opts in. */
-    .veil .intro { display: none; flex-direction: column; align-items: center; gap: 18px; }
+       the iframe is even created — nothing loads until the visitor opts in. */
+    .veil .intro { display: none; flex-direction: column; align-items: center; gap: 22px; }
     body[data-world-state="intro"] .veil .intro { display: flex; }
     body[data-world-state="intro"] .veil .status { display: none; }
     .intro__copy {
-      max-width: 34ch;
-      line-height: 1.7;
-      font-size: clamp(13px, 3.8vw, 16px);
-      font-style: italic;
-      color: rgba(232, 213, 163, 0.75);
+      max-width: 36ch;
+      line-height: 1.8;
+      font-size: clamp(13px, 3.8vw, 15px);
+      color: rgba(232, 213, 163, 0.7);
     }
 
     /* Failed state: swap what the veil says, offer another try. */
@@ -156,31 +183,35 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 20px;
     }
     .fallback p {
-      max-width: 30ch;
-      line-height: 1.7;
-      font-size: clamp(13px, 3.8vw, 16px);
+      max-width: 32ch;
+      line-height: 1.8;
+      font-size: clamp(13px, 3.8vw, 15px);
       font-style: italic;
-      color: rgba(232, 213, 163, 0.7);
+      color: rgba(232, 213, 163, 0.65);
     }
+
     .veil button {
-      font-family: inherit;
-      font-size: 13px;
-      letter-spacing: 0.16em;
-      text-indent: 0.16em;
+      font-family: var(--serif);
+      font-size: 12px;
+      letter-spacing: 0.28em;
+      text-indent: 0.28em;
+      text-transform: uppercase;
       color: var(--gold-soft);
-      background: rgba(201, 162, 39, 0.12);
-      border: 1px solid rgba(255, 215, 0, 0.55);
+      background: rgba(201, 162, 39, 0.07);
+      border: 1px solid rgba(201, 162, 39, 0.45);
       border-radius: 999px;
-      padding: 10px 26px;
+      padding: 13px 34px;
       cursor: pointer;
-      transition: background 0.25s ease, color 0.25s ease;
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
     .veil button:hover, .veil button:focus-visible {
-      background: rgba(201, 162, 39, 0.28);
+      background: rgba(201, 162, 39, 0.16);
+      border-color: rgba(201, 162, 39, 0.85);
       color: #fff;
+      box-shadow: 0 0 30px -6px rgba(var(--leaf), 0.35);
       outline: none;
     }
 
@@ -194,20 +225,28 @@
   <div class="stage" aria-hidden="false"></div>
 
   <div class="veil" role="status" aria-live="polite">
-    <h1>THE GARDEN</h1>
-    <p class="verse">&ldquo;And the LORD God planted a garden eastward in Eden.&rdquo;</p>
+    <svg class="glyph" viewBox="0 0 48 64" aria-hidden="true">
+      <path d="M24 56 V20" />
+      <path d="M24 38 C16 36 11 30 10 22" />
+      <path d="M24 38 C32 36 37 30 38 22" />
+      <circle cx="10" cy="17.5" r="2.8" />
+      <circle cx="38" cy="17.5" r="2.8" />
+      <circle cx="24" cy="14.5" r="2.8" />
+    </svg>
+    <h1>EDEN</h1>
+    <p class="verse">&ldquo;And the LORD God planted a garden eastward in Eden.&rdquo;<small>GENESIS 2 : 8</small></p>
     <div class="intro">
-      <p class="intro__copy">This is an AI-made rendition of the Garden of Eden — a small world that AI keeps adding to and refining on its own, over time.</p>
+      <p class="intro__copy">A rendition of the first garden — a small world the machine keeps tending, adding to and refining on its own, over time.</p>
       <button type="button" class="intro__enter">enter the garden</button>
     </div>
-    <p class="status">ENTERING&hellip;</p>
+    <p class="status">entering&hellip;</p>
     <div class="fallback">
       <p>The garden is resting for a moment. Please try again.</p>
       <button type="button" onclick="location.reload()">try again</button>
     </div>
   </div>
 
-  <a class="home" href="index.html" aria-label="Return to the Camino home page">&lsaquo; return home</a>
+  <a class="home" href="index.html" aria-label="Return to the Machina Christi home page">&lsaquo; return home</a>
 
   <script>
     (function () {

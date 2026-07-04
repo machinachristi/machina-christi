@@ -14,17 +14,18 @@
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
       --leaf:      168, 205, 140;
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
     }
 
     html, body { min-height: 100dvh; }
     body {
       background:
-        radial-gradient(120% 60% at 50% 0%, rgba(120, 92, 48, 0.22), transparent 60%),
+        radial-gradient(120% 60% at 50% 0%, rgba(120, 92, 48, 0.2), transparent 60%),
         var(--bg);
       background-attachment: fixed;
       color: var(--gold-soft);
-      font-family: Georgia, 'Times New Roman', serif;
-      line-height: 1.7;
+      font-family: var(--serif);
+      line-height: 1.75;
       -webkit-tap-highlight-color: transparent;
     }
     body::before {
@@ -34,50 +35,73 @@
       pointer-events: none;
       z-index: -1;
       background:
-        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.30), transparent),
-        radial-gradient(1.5px 1.5px at 75% 25%, rgba(232,213,163,0.20), transparent),
-        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.25), transparent),
-        radial-gradient(1.5px 1.5px at 35% 80%, rgba(232,213,163,0.18), transparent);
-      opacity: 0.6;
-      animation: drift 14s ease-in-out infinite alternate;
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
     }
     @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
 
     .wrap {
-      max-width: 640px;
+      max-width: 620px;
       margin: 0 auto;
-      padding: max(24px, env(safe-area-inset-top)) 24px max(48px, env(safe-area-inset-bottom));
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
     }
 
     .back {
       display: inline-block;
-      font-size: 13px;
-      letter-spacing: 0.14em;
-      color: rgba(232, 213, 163, 0.7);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: rgba(232, 213, 163, 0.55);
       text-decoration: none;
       border-bottom: 1px solid transparent;
-      padding-bottom: 1px;
-      margin-bottom: 2em;
+      padding-bottom: 2px;
+      margin-bottom: 3em;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
     .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
 
     h1 {
       font-weight: normal;
-      font-size: clamp(28px, 7vw, 40px);
-      letter-spacing: 0.1em;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
       color: var(--gold);
-      margin-bottom: 0.6em;
     }
-    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.85); }
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 0.7em 0 1.1em;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+
     a.enter {
+      display: inline-block;
+      margin-top: 0.8em;
+      font-size: 12px;
+      letter-spacing: 0.26em;
+      text-indent: 0.26em;
+      text-transform: uppercase;
       color: var(--gold-soft);
       text-decoration: none;
-      border-bottom: 1px solid rgba(232,213,163,0.4);
-      padding-bottom: 1px;
-      transition: color 0.25s ease, border-color 0.25s ease;
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      padding: 12px 30px;
+      background: rgba(201, 162, 39, 0.06);
+      transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
     }
-    a.enter:hover, a.enter:focus-visible { color: #fff; border-color: rgba(232,213,163,0.8); outline: none; }
+    a.enter:hover, a.enter:focus-visible {
+      border-color: rgba(201, 162, 39, 0.85);
+      background: rgba(201, 162, 39, 0.14);
+      color: #fff;
+      box-shadow: 0 0 30px -8px rgba(255, 196, 92, 0.35);
+      outline: none;
+    }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
@@ -86,9 +110,9 @@
   <div class="wrap">
     <a class="back" href="about.html">&lsaquo; about</a>
     <h1>Camino</h1>
-    <p>Camino is an endless runner about walking the narrow way: swipe or steer to dodge what the road throws at you, and see how far the journey carries you.</p>
-    <p>(More of the story behind Camino — what inspired it, what the name means here — belongs on this page. Placeholder for now.)</p>
-    <p><a class="enter" href="game.html">Play Camino &rarr;</a></p>
+    <p>Camino is an endless walk along the narrow way. Swipe to keep the pilgrim on the path — around the rocks, across the water — and see how far the road carries you.</p>
+    <p>The name comes from the Camino de Santiago, the Way of St&nbsp;James: a pilgrim road walked for over a thousand years, marked by the scallop shell its walkers carry as a sign of the journey. Here the road never ends — there is only the walking, and how far you are willing to go.</p>
+    <p><a class="enter" href="game.html">walk the road</a></p>
   </div>
 </body>
 </html>

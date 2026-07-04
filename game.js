@@ -28,8 +28,11 @@ const C = {
   staff:      '#5C4020',
   uiGold:     '#FFD700',
   uiCream:    '#E8D5A3',
-  overlay:    'rgba(10,20,50,0.88)',
+  overlay:    'rgba(11,10,8,0.86)',
 };
+
+// Serif stack for the start / game-over screens, matching the site's pages.
+const UI_SERIF = '"Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif';
 
 // ── Layout ─────────────────────────────────────────────────
 let W, H, pL, pR, pW;
@@ -749,44 +752,50 @@ function drawStart() {
   ctx.fillStyle = C.overlay;
   ctx.fillRect(0, 0, W, H);
 
-  const crossSize = Math.min(H * 0.19, W * 0.42);
-  drawCross(W/2, H*0.28, crossSize, C.crossGold, Math.max(7, crossSize*0.065));
+  const crossSize = Math.min(H * 0.17, W * 0.38);
+  drawCross(W/2, H*0.27, crossSize, C.crossGold, Math.max(5, crossSize*0.05));
 
-  ctx.fillStyle   = C.uiGold;
-  ctx.font        = `bold ${Math.min(W*0.15, 72)}px serif`;
-  ctx.textAlign   = 'center';
-  ctx.fillText('CAMINO', W/2, H*0.52);
+  // Letter-spaced capitals, like the site's pages. Canvas letterSpacing also
+  // pads after the last glyph, so nudge x by half a space to stay centred.
+  const titleSize = Math.min(W*0.125, 60);
+  const titleLs   = titleSize * 0.24;
+  ctx.fillStyle     = C.crossGold;
+  ctx.font          = `${titleSize}px ${UI_SERIF}`;
+  ctx.textAlign     = 'center';
+  ctx.letterSpacing = `${titleLs}px`;
+  ctx.fillText('CAMINO', W/2 + titleLs/2, H*0.51);
+  ctx.letterSpacing = '0px';
 
-  ctx.fillStyle = C.uiCream;
-  ctx.font      = `${Math.min(W*0.05, 22)}px serif`;
-  ctx.fillText("The Pilgrim's Journey", W/2, H*0.585);
+  ctx.fillStyle = 'rgba(232,213,163,0.75)';
+  ctx.font      = `italic ${Math.min(W*0.048, 21)}px ${UI_SERIF}`;
+  ctx.fillText('the pilgrim’s road', W/2, H*0.575);
 
   // Lives legend: show the three crosses so players learn the life system
-  const lcSize = Math.min(W*0.055, 26);
-  const lcGap  = lcSize * 1.5;
-  const lcY    = H * 0.66;
-  const lw     = Math.max(2, W*0.009);
+  const lcSize = Math.min(W*0.05, 24);
+  const lcGap  = lcSize * 1.6;
+  const lcY    = H * 0.655;
+  const lw     = Math.max(1.5, W*0.007);
   for (let i = 0; i < MAX_LIVES; i++) {
-    drawCross(W/2 + (i - 1) * lcGap, lcY, lcSize, C.uiGold, lw);
+    drawCross(W/2 + (i - 1) * lcGap, lcY, lcSize, C.crossGold, lw);
   }
-  ctx.fillStyle = 'rgba(255,255,255,0.72)';
-  ctx.font      = `${Math.min(W*0.04, 17)}px sans-serif`;
+  ctx.fillStyle = 'rgba(232,213,163,0.6)';
+  ctx.font      = `italic ${Math.min(W*0.04, 16)}px ${UI_SERIF}`;
   ctx.textAlign = 'center';
-  ctx.fillText('3 lives — avoid rocks & water', W/2, H*0.71);
+  ctx.fillText('three lives — mind the rocks and water', W/2, H*0.705);
 
   if (bestScore > 0) {
-    ctx.fillStyle = C.uiCream;
-    ctx.font      = `${Math.min(W*0.045, 20)}px sans-serif`;
-    ctx.fillText(`Best: ${bestScore} km`, W/2, H*0.765);
+    ctx.fillStyle = 'rgba(232,213,163,0.85)';
+    ctx.font      = `${Math.min(W*0.042, 18)}px ${UI_SERIF}`;
+    ctx.fillText(`farthest walk · ${bestScore} km`, W/2, H*0.762);
   }
 
   // Swipe-direction hint: four arrows around a center pilgrim dot
   drawSwipeHint(W/2, H*0.86, Math.min(W*0.11, 52));
 
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font      = `${Math.min(W*0.045, 19)}px sans-serif`;
+  ctx.fillStyle = 'rgba(232,213,163,0.6)';
+  ctx.font      = `italic ${Math.min(W*0.042, 17)}px ${UI_SERIF}`;
   ctx.textAlign = 'center';
-  ctx.fillText('Swipe to guide the pilgrim', W/2, H*0.96);
+  ctx.fillText('swipe to guide the pilgrim', W/2, H*0.96);
 }
 
 function drawSwipeHint(cx, cy, reach) {
@@ -795,15 +804,15 @@ function drawSwipeHint(cx, cy, reach) {
   const r = reach * pulse;
 
   // Center dot (the pilgrim)
-  ctx.fillStyle = C.uiGold;
+  ctx.fillStyle = C.crossGold;
   ctx.beginPath();
-  ctx.arc(cx, cy, reach * 0.16, 0, Math.PI * 2);
+  ctx.arc(cx, cy, reach * 0.14, 0, Math.PI * 2);
   ctx.fill();
 
   const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-  ctx.strokeStyle = 'rgba(255,215,0,0.85)';
-  ctx.fillStyle   = 'rgba(255,215,0,0.85)';
-  ctx.lineWidth   = Math.max(2, reach * 0.05);
+  ctx.strokeStyle = 'rgba(201,162,39,0.85)';
+  ctx.fillStyle   = 'rgba(201,162,39,0.85)';
+  ctx.lineWidth   = Math.max(1.5, reach * 0.04);
   ctx.lineCap     = 'round';
   ctx.lineJoin    = 'round';
 
@@ -844,20 +853,20 @@ function drawButton(r, label, primary, fade) {
   roundRectPath(r.x, r.y, r.w, r.h, r.h / 2);
 
   if (primary) {
-    ctx.fillStyle   = `rgba(201,162,39,${0.20 * fade})`;
+    ctx.fillStyle   = `rgba(201,162,39,${0.14 * fade})`;
     ctx.fill();
-    ctx.strokeStyle = `rgba(255,215,0,${0.85 * fade})`;
-    ctx.lineWidth   = 1.5;
+    ctx.strokeStyle = `rgba(201,162,39,${0.85 * fade})`;
+    ctx.lineWidth   = 1;
     ctx.stroke();
-    ctx.fillStyle   = `rgba(255,215,0,${fade})`;
+    ctx.fillStyle   = `rgba(232,213,163,${fade})`;
   } else {
-    ctx.strokeStyle = `rgba(232,213,163,${0.40 * fade})`;
-    ctx.lineWidth   = 1.5;
+    ctx.strokeStyle = `rgba(232,213,163,${0.35 * fade})`;
+    ctx.lineWidth   = 1;
     ctx.stroke();
-    ctx.fillStyle   = `rgba(232,213,163,${0.80 * fade})`;
+    ctx.fillStyle   = `rgba(232,213,163,${0.75 * fade})`;
   }
 
-  ctx.font         = `${Math.min(W * 0.05, 22)}px serif`;
+  ctx.font         = `${Math.min(W * 0.046, 20)}px ${UI_SERIF}`;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
@@ -874,22 +883,27 @@ function drawGameOver() {
   ctx.fillStyle = C.overlay;
   ctx.fillRect(0, 0, W, H);
 
-  const crossSize = Math.min(H * 0.13, W * 0.3);
-  drawCross(W/2, H*0.26, crossSize, C.crossGold, Math.max(5, crossSize*0.065));
+  const crossSize = Math.min(H * 0.12, W * 0.28);
+  drawCross(W/2, H*0.26, crossSize, C.crossGold, Math.max(4, crossSize*0.05));
 
-  ctx.fillStyle   = C.uiGold;
-  ctx.font        = `bold ${Math.min(W*0.092, 44)}px serif`;
-  ctx.textAlign   = 'center';
-  ctx.fillText("JOURNEY'S END", W/2, H*0.47);
+  // Letter-spaced capitals, like the start screen and the site's pages.
+  const goSize = Math.min(W*0.085, 40);
+  const goLs   = goSize * 0.2;
+  ctx.fillStyle     = C.crossGold;
+  ctx.font          = `${goSize}px ${UI_SERIF}`;
+  ctx.textAlign     = 'center';
+  ctx.letterSpacing = `${goLs}px`;
+  ctx.fillText('JOURNEY’S END', W/2 + goLs/2, H*0.46);
+  ctx.letterSpacing = '0px';
 
-  ctx.fillStyle = C.uiCream;
-  ctx.font      = `${Math.min(W*0.06, 28)}px sans-serif`;
-  ctx.fillText(`${Math.floor(score)} km walked`, W/2, H*0.575);
+  ctx.fillStyle = 'rgba(232,213,163,0.95)';
+  ctx.font      = `${Math.min(W*0.058, 26)}px ${UI_SERIF}`;
+  ctx.fillText(`${Math.floor(score)} km walked`, W/2, H*0.565);
 
   const isBest = Math.floor(score) >= bestScore && bestScore > 0;
-  ctx.fillStyle = C.uiGold;
-  ctx.font      = `${Math.min(W*0.045, 20)}px sans-serif`;
-  ctx.fillText(isBest ? '✦ New best journey! ✦' : `Best: ${bestScore} km`, W/2, H*0.655);
+  ctx.fillStyle = isBest ? C.crossGold : 'rgba(232,213,163,0.6)';
+  ctx.font      = `italic ${Math.min(W*0.042, 18)}px ${UI_SERIF}`;
+  ctx.fillText(isBest ? '✦ a new farthest walk ✦' : `farthest walk · ${bestScore} km`, W/2, H*0.645);
 
   // Only offer the next step once the input lockout has cleared, fading the
   // choices in so they read as "now you may choose" rather than instant taps.
