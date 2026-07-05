@@ -8,7 +8,7 @@ import { createGarden } from './scenes/garden.js';
 import { createCharacter } from './character.js';
 import { CameraRig } from './camera-rig.js';
 import { createControls } from './controls.js';
-import { mulberry32 } from './util.js';
+import { mulberry32, breathe } from './util.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -39,7 +39,10 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 900);
 
 // Deterministic planting: the same Eden for every visitor, every reload.
-const garden = createGarden(scene, mulberry32(20260703));
+// (Top-level await: the build yields between steps so the parent page's
+// loading animation stays alive; a failure here surfaces as an unhandled
+// rejection, which index.html relays to the shell as world:error.)
+const garden = await createGarden(scene, mulberry32(20260703));
 
 const eve = params.get('character') === 'eve';
 const character = createCharacter({ eve });
@@ -117,6 +120,12 @@ fetch('./manifest.json')
   .then(r => (r.ok ? r.json() : null))
   .then(m => { if (m) meta.version = m.version; })
   .catch(() => { /* cosmetic only — never fatal */ });
+
+// Warm-up frame: the first render compiles every shader and uploads every
+// buffer — a one-time stall. Take it here, while the parent's veil still
+// fully covers the stage, so the reveal that follows never stutters.
+renderer.render(scene, camera);
+await breathe();
 
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
