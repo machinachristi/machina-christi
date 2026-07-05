@@ -288,9 +288,13 @@ test.describe('walking the garden', () => {
     expect(s0.companion).toBeTruthy();
     expect(s0.companion.character).not.toBe(s0.character);
 
-    await page.waitForTimeout(3000);
-    const s1 = await getState(page);
-    expect(dist2d(s1.companion.pos, s0.companion.pos)).toBeGreaterThan(0.3);
+    // The companion pauses a few seconds before each stroll, and CI's
+    // software renderer dilates simulated time (slow frames hit the dt
+    // cap) — so watch patiently for the stroll instead of sampling once.
+    await expect.poll(async () => {
+      const s1 = await getState(page);
+      return dist2d(s1.companion.pos, s0.companion.pos);
+    }, { timeout: 15000 }).toBeGreaterThan(0.3);
   });
 });
 
