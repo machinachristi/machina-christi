@@ -166,7 +166,7 @@ renderer.setAnimationLoop(() => {
   rig.update(dt);
   const hour = garden.update(dt, character.group.position);
   updateNamingCaption();
-  ambience.update(dt, hour.night, character.group.position);
+  ambience.update(dt, hour.night, character.group.position, hour.rain);
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
     ambience.chime();
@@ -199,6 +199,11 @@ window.__world = {
       // The day's clock (see scenes/sky.js): t in [0,1), a named phase,
       // and how deep into night the world is.
       time: { t: garden.hour.t, phase: garden.hour.phase, night: garden.hour.night },
+      // The weather (v7): how deep into a shower the garden is (0 dry → 1),
+      // and where each drifting cloud presently lays its shade.
+      weather: { rain: garden.hour.rain, shade: garden.hour.shade },
+      // The signs' slow wheel through the long year (Genesis 1:14), radians.
+      heavens: { wheel: garden.hour.wheel },
       // The ambience (audio.js): supported/muted/actually-running.
       sound: ambience.state(),
       // The four heads' standing stones — name and where each stands.
@@ -230,6 +235,12 @@ window.__world = {
   setMuted(b) {
     ambience.setMuted(b);
     return ambience.state();
+  },
+  // Call the rain (1), send it away (0), or hand the sky back its own
+  // shower clock (null). For tests, screenshots, and the curious.
+  setRain(v) {
+    const hour = garden.setRain(v);
+    return { rain: hour.rain };
   },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without

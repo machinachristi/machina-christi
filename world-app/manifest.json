@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -37,13 +37,18 @@
       "date": "2026-07-05",
       "focus": "the naming",
       "summary": "Draw near any creature and its name is given (Genesis 2:19-20): a quiet caption rises at the foot of the screen — Taleh the lamb, Shor the ox, Yonah the dove, Tsippor the bird, Dag the fish — and fades again as you walk on. The names are the plain Hebrew ones, as the first tongue might have spoken them; a wing passing low overhead is a naming too. And one name is kept for the finders: somewhere in the river swims a fish that bears a name all its own."
+    },
+    {
+      "version": 7,
+      "date": "2026-07-05",
+      "focus": "rain, seasons, and small wings",
+      "summary": "The garden has weather now: each drifting cloud lays its shadow on the meadow, cast along the true line of the sun — long shade at the golden hours — and once in a while a brief gentle rain passes over, greying the light, hushing the birds, and pattering softly for those who have asked for sound; then it moves on and the colours return. The night sky keeps the seasons (Genesis 1:14): the whole firmament wheels slowly about its pole through a long year of days, its starting angle set by the visitor's own calendar, so the Bear, Orion, and the Pleiades stand where the season sets them. And small wings fill the blossoms: six butterflies in petal colours flit the flower band by day and fold their wings in the grass at dusk, while eight bees hum at two beds of flowers — heard as a low murmur by any walker who draws near — and every one of them, drawn near, is named: Parpar the butterfly, Devorah the bee."
     }
   ],
   "next": [
-    "Weather: cloud-shadows crossing the meadow, and once in a while a brief gentle rain",
     "Stillness rewarded: sit the walker down by the water and let the creatures draw near",
-    "Seasons for the signs: the constellations wheeling slowly through the long year (Genesis 1:14)",
     "Eastward glimpses: the garden's far side hinting at a gate where light stands (Genesis 3:24, foreshadowed)",
-    "Small wings among the blossoms: butterflies by day, and the hum of bees in the flowered grass"
+    "Reeds and rushes: the banks grown soft with swaying green, and the river heard before it is seen",
+    "A subtle presence: rarely, and only near the Tree of Knowledge, something long and quiet stirs the grass (Genesis 3:1, foreshadowed)"
   ]
 }
