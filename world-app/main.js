@@ -61,6 +61,28 @@ const controls = createControls(renderer.domElement, () => rig.skipIntro());
 // crickets by night. It follows the sky's clock and the walker's position.
 const ambience = createAmbience();
 
+// The naming caption (Genesis 2:19-20): a quiet line at the foot of the
+// screen, filled from the garden's sense of which creature the walker has
+// drawn near. CSS carries the fade; the last name lingers through it.
+const naming = document.createElement('div');
+naming.className = 'naming';
+naming.innerHTML = '<span class="naming__name"></span><span class="naming__label"></span>';
+document.body.appendChild(naming);
+const namingName = naming.querySelector('.naming__name');
+const namingLabel = naming.querySelector('.naming__label');
+let namingShown = '';
+function updateNamingCaption() {
+  const given = garden.named();
+  const key = given ? given.name + '·' + given.label : '';
+  if (key === namingShown) return;
+  namingShown = key;
+  if (given) {
+    namingName.textContent = given.name;
+    namingLabel.textContent = given.label;
+  }
+  naming.classList.toggle('naming--shown', !!given);
+}
+
 // The companion — always the other one of the pair, walking on its own.
 // Never wired into CameraRig, so the camera keeps following only `character`.
 const companion = createCharacter({ eve: !eve });
@@ -143,6 +165,7 @@ renderer.setAnimationLoop(() => {
   updateCompanion(dt);
   rig.update(dt);
   const hour = garden.update(dt, character.group.position);
+  updateNamingCaption();
   ambience.update(dt, hour.night, character.group.position);
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
@@ -186,6 +209,9 @@ window.__world = {
       constellations: garden.constellations,
       // A census of the creatures, with each flyer's present mode.
       fauna: garden.fauna(),
+      // The naming (Genesis 2:19-20): the creature whose name is presently
+      // given to the walker standing near it, or null apart from them all.
+      naming: garden.named(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

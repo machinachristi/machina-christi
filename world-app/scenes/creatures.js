@@ -3,6 +3,11 @@
 // the meadow, and a small school of fish swimming the river's wadable
 // stretch — "every beast of the field, and every fowl of the air"
 // (Genesis 2:19), each with a simple life of its own.
+//
+// Each creature also bears its name — the plain Hebrew nouns, as the first
+// tongue might have spoken them — given to the walker who draws near
+// (Genesis 2:19-20): "whatsoever Adam called every living creature, that
+// was the name thereof."
 
 import * as THREE from 'three';
 import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
@@ -167,11 +172,11 @@ export function createCreatures(scene, rng) {
 
   const flyers = [];
   const flyerDefs = [
-    { kind: 'bird', tone: 0xF5F0E4 },
-    { kind: 'bird', tone: 0xD9C9AC },
-    { kind: 'bird', tone: 0xFFFFFF },
-    { kind: 'dove', tone: 0xF7F4EC },
-    { kind: 'dove', tone: 0xEFE8DA },
+    { kind: 'bird', tone: 0xF5F0E4, name: 'Tsippor', label: 'the bird' },
+    { kind: 'bird', tone: 0xD9C9AC, name: 'Tsippor', label: 'the bird' },
+    { kind: 'bird', tone: 0xFFFFFF, name: 'Tsippor', label: 'the bird' },
+    { kind: 'dove', tone: 0xF7F4EC, name: 'Yonah', label: 'the dove' },
+    { kind: 'dove', tone: 0xEFE8DA, name: 'Yonah', label: 'the dove' },
   ];
   for (let i = 0; i < flyerDefs.length; i++) {
     const def = flyerDefs[i];
@@ -194,7 +199,7 @@ export function createCreatures(scene, rng) {
     group.add(bird.group);
     flyers.push({
       ...bird, orbit,
-      kind: def.kind,
+      kind: def.kind, name: def.name, label: def.label,
       mode: 'fly',                              // fly | toRoost | roost | toPerch | perched | toFly
       perch: PERCHES[i],
       restIn: dove ? 14 + rng() * 20 : Infinity, // day perch-rests: doves only
@@ -212,6 +217,7 @@ export function createCreatures(scene, rng) {
     group.add(lamb.group);
     grazers.push({
       ...lamb, spot: lambSpot, speed: 0.72, stepFreq: 7, dip: 0.95,
+      kind: 'lamb', name: 'Taleh', label: 'the lamb',
       mode: 'graze', until: 2 + rng() * 3, target: null, phase: 0,
     });
     for (const tone of [0x9C6B4A, 0x7E5A3C]) {
@@ -222,6 +228,7 @@ export function createCreatures(scene, rng) {
       group.add(cow.group);
       grazers.push({
         ...cow, spot: cowSpot, speed: 0.55, stepFreq: 5, dip: 0.7,
+        kind: 'ox', name: 'Shor', label: 'the ox',
         mode: 'graze', until: 3 + rng() * 5, target: null, phase: 0,
       });
     }
@@ -249,7 +256,14 @@ export function createCreatures(scene, rng) {
     const x0 = loop.cx + Math.cos(loop.theta) * loop.lx;
     f.group.position.set(x0, -0.8, riverZ(x0) + Math.sin(loop.theta) * loop.lz);
     group.add(f.group);
-    fish.push({ ...f, loop });
+    // The golden fish (tone 0xD9B36A) alone bears a name of its own.
+    const gold = i === 3;
+    fish.push({
+      ...f, loop,
+      kind: 'fish',
+      name: gold ? 'Zahav' : 'Dag',
+      label: gold ? 'the golden fish' : 'the fish',
+    });
   }
 
   // Glide a flyer toward a point; returns remaining distance.
@@ -268,10 +282,49 @@ export function createCreatures(scene, rng) {
     return dist - step;
   }
 
+  // ── The naming (Genesis 2:19-20) ──────────────────────────
+  // Whatever the walker draws near is named. A short dwell keeps names from
+  // strobing mid-stride; a touch of hysteresis lets a name linger while the
+  // walker stands close by. Flyers count even overhead — a wing passing low
+  // above the walker is a naming too.
+  const NAME_DWELL = 0.35;
+  let named = null;       // the creature whose name is presently given
+  let candidate = null;   // the creature being dwelt toward
+  let dwelt = 0;
+
+  function nearestNamable(walker) {
+    let best = null, bestD = Infinity;
+    const consider = (c, reach, vLimit) => {
+      const p = c.group.position;
+      const d = Math.hypot(p.x - walker.x, p.z - walker.z);
+      const keep = c === named ? reach + 0.8 : reach;   // linger once given
+      if (d <= keep && Math.abs(p.y - walker.y) <= vLimit && d < bestD) {
+        best = c;
+        bestD = d;
+      }
+    };
+    for (const b of flyers) consider(b, 2.4, 9);
+    for (const G of grazers) consider(G, 2.6, 4);
+    for (const f of fish) consider(f, 2.4, 4);
+    return best;
+  }
+
   let t = 0;
   const orbitPoint = new THREE.Vector3();
-  function update(dt, night = 0) {
+  function update(dt, night = 0, walker = null) {
     t += dt;
+
+    if (walker) {
+      const near = nearestNamable(walker);
+      if (near !== candidate) {
+        candidate = near;
+        dwelt = 0;
+      } else {
+        dwelt += dt;
+      }
+      if (!candidate) named = null;
+      else if (candidate !== named && dwelt >= NAME_DWELL) named = candidate;
+    }
 
     for (const b of flyers) {
       const o = b.orbit;
@@ -392,15 +445,23 @@ export function createCreatures(scene, rng) {
     }
   }
 
-  // A census for the debug state and the smoke suite.
+  // A census for the debug state and the smoke suite. Grazers and fish
+  // report where they presently stand, so a test can walk right up to one.
   function fauna() {
     return {
       flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
+      grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z })),
+      shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z })),
       cattle: 2,
       lamb: 1,
       fish: fish.length,
     };
   }
 
-  return { update, fauna };
+  // The name presently given, if the walker stands near a creature.
+  function namedNow() {
+    return named ? { name: named.name, label: named.label, kind: named.kind } : null;
+  }
+
+  return { update, fauna, named: namedNow };
 }
