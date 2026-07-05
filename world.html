@@ -170,11 +170,31 @@
     body[data-world-state="loading"] .veil h1,
     body[data-world-state="loading"] .veil .verse { opacity: 0; }
 
+    /* The intro / entering / failed panels occupy the same grid cell so
+       that whichever one is showing never changes this box's height. Before,
+       .intro used display:none and vanished from the flex flow the instant
+       "enter the garden" was tapped — shrinking the column and, because the
+       veil centers its content with justify-content, snapping the glyph/h1/
+       verse above it to a new position in the very same frame their opacity
+       transition began. That reflow-during-transition is what corrupted the
+       compositor's text rendering (missing/garbled letters) on iOS Safari.
+       Stacking the panels in one grid cell keeps the column's height (and so
+       the header's position) constant across every state — only opacity
+       ever changes on that header, never its layout. */
+    .veil .swap { display: grid; justify-items: center; }
+    .veil .swap > * { grid-area: 1 / 1; }
+
     /* Intro state: an explainer + an explicit "enter" gesture, shown before
        the iframe is even created — nothing loads until the visitor opts in. */
-    .veil .intro { display: none; flex-direction: column; align-items: center; gap: 22px; }
-    body[data-world-state="intro"] .veil .intro { display: flex; }
-    body[data-world-state="intro"] .veil .status { display: none; }
+    .veil .intro {
+      display: flex;
+      visibility: hidden;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+    body[data-world-state="intro"] .veil .intro { visibility: visible; }
+    body[data-world-state="intro"] .veil .status { visibility: hidden; }
     .intro__copy {
       max-width: 36ch;
       line-height: 1.8;
@@ -183,14 +203,15 @@
     }
 
     /* Failed state: swap what the veil says, offer another try. */
-    .veil .fallback { display: none; }
-    body[data-world-state="failed"] .veil .status { display: none; }
-    body[data-world-state="failed"] .veil .fallback {
+    .veil .fallback {
       display: flex;
+      visibility: hidden;
       flex-direction: column;
       align-items: center;
       gap: 20px;
     }
+    body[data-world-state="failed"] .veil .status { visibility: hidden; }
+    body[data-world-state="failed"] .veil .fallback { visibility: visible; }
     .fallback p {
       max-width: 32ch;
       line-height: 1.8;
@@ -241,14 +262,16 @@
     </svg>
     <h1>EDEN</h1>
     <p class="verse">&ldquo;And the LORD God planted a garden eastward in Eden.&rdquo;<small>GENESIS 2 : 8</small></p>
-    <div class="intro">
-      <p class="intro__copy">A rendition of the first garden — a small world the machine keeps tending, adding to and refining on its own, over time.</p>
-      <button type="button" class="intro__enter">enter the garden</button>
-    </div>
-    <p class="status">entering&hellip;</p>
-    <div class="fallback">
-      <p>The garden is resting for a moment. Please try again.</p>
-      <button type="button" onclick="location.reload()">try again</button>
+    <div class="swap">
+      <div class="intro">
+        <p class="intro__copy">A rendition of the first garden — a small world the machine keeps tending, adding to and refining on its own, over time.</p>
+        <button type="button" class="intro__enter">enter the garden</button>
+      </div>
+      <p class="status">entering&hellip;</p>
+      <div class="fallback">
+        <p>The garden is resting for a moment. Please try again.</p>
+        <button type="button" onclick="location.reload()">try again</button>
+      </div>
     </div>
   </div>
 
