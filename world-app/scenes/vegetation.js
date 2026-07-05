@@ -5,17 +5,17 @@
 // golden motes carry the same light motif as the runner game and home page.
 
 import * as THREE from 'three';
-import { heightAt, riverZ } from './terrain.js';
+import { heightAt, riverEdgeDist } from './terrain.js';
 
 export const TREE_OF_LIFE_POS = new THREE.Vector3(-3.2, 0, -0.5);
 export const TREE_OF_KNOWLEDGE_POS = new THREE.Vector3(3.4, 0, 0.8);
 
 // A placement is fine if it's on open meadow: inside the planted band,
-// clear of the river, and not crowding the central clearing.
+// clear of the water (all four heads of it), and not crowding the clearing.
 function goodSpot(x, z, rMin, rMax) {
   const r = Math.hypot(x, z);
   if (r < rMin || r > rMax) return false;
-  if (Math.abs(z - riverZ(x)) < 4.5) return false;
+  if (riverEdgeDist(x, z) < 1.9) return false;
   return true;
 }
 

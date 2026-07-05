@@ -84,6 +84,23 @@ test.describe('the garden loads', () => {
     await expect.poll(async () => (await getState(page)).version).toBe(manifest.version);
   });
 
+  test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    // Mid-fan (x=42) the inner pair of heads ride ~±4.4 either side of the
+    // old centreline. Inside a head's channel the ground is a carved bed…
+    const inHead = await frame.evaluate(() => window.__world.teleport(42, 25.0));
+    expect(inHead.y).toBeLessThan(-0.9);
+    // …while midway between two heads it rises back to walkable meadow —
+    // the single course really has been parted, not merely widened.
+    const between = await frame.evaluate(() => window.__world.teleport(42, 20.65));
+    expect(between.y).toBeGreaterThan(0.2);
+    // Upstream, in the garden itself, the course is still one undivided
+    // river: its centreline is wet from bank to bank.
+    const upstream = await frame.evaluate(() => window.__world.teleport(0, 14));
+    expect(upstream.y).toBeLessThan(-0.9);
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');

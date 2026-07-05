@@ -1,9 +1,9 @@
-// The garden's first creatures: birds wheeling over the trees and a lamb
-// grazing the meadow — just enough life for Eden to feel inhabited. A fuller
-// bestiary (fish in the river, doves, cattle) is noted in the manifest.
+// The garden's creatures: birds wheeling over the trees, a lamb grazing the
+// meadow, and a small school of fish swimming the river's wadable stretch.
+// A fuller bestiary (doves, cattle, perching birds) is noted in the manifest.
 
 import * as THREE from 'three';
-import { heightAt, riverZ } from './terrain.js';
+import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
 import { clamp, shortestAngle } from '../util.js';
 
 function makeBird(tone) {
@@ -68,9 +68,25 @@ function lambSpot(rng) {
   for (let i = 0; i < 40; i++) {
     const x = (rng() * 2 - 1) * 24;
     const z = -2 - rng() * 20;
-    if (Math.abs(z - riverZ(x)) > 6.5 && Math.hypot(x, z) > 7) return { x, z };
+    if (riverEdgeDist(x, z) > 3.9 && Math.hypot(x, z) > 7) return { x, z };
   }
   return { x: -10, z: -14 };
+}
+
+// A fish: a low-poly body nosing forward along +z, with a tail fin that
+// sculls. Small enough that two cones read as life through the water.
+function makeFish(tone) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshLambertMaterial({ color: tone, flatShading: true });
+  const body = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.34, 4), mat);
+  body.rotation.x = Math.PI / 2;   // nose forward along +z
+  body.position.z = 0.05;
+  g.add(body);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 3), mat);
+  tail.rotation.x = Math.PI / 2;   // apex tucks into the body's rear
+  tail.position.z = -0.18;
+  g.add(tail);
+  return { group: g, tail };
 }
 
 export function createCreatures(scene, rng) {
@@ -102,6 +118,30 @@ export function createCreatures(scene, rng) {
   group.add(lamb.group);
   const lambState = { mode: 'graze', until: 2 + rng() * 3, target: null, phase: 0 };
 
+  // ── Fish ──────────────────────────────────────────────────
+  // Five fish — one gold — in the wadable stretch west of the parting. Each
+  // swims a slow elongated loop that follows the river's meander, staying
+  // well inside the channel (offsets ≤ ±1.3 against a 2.6 half-width), and
+  // rises now and then so its back just breaks the rippling surface.
+  const fishTones = [0x8FA8B8, 0x7C97A8, 0xA9BDC4, 0xD9B36A, 0x93A9A0];
+  const fish = [];
+  for (let i = 0; i < 5; i++) {
+    const f = makeFish(fishTones[i]);
+    const loop = {
+      cx: -34 + i * 11 + rng() * 4,               // anchors spread along the stretch
+      lx: 3.5 + rng() * 2.5,                      // half-length of the loop
+      lz: 0.8 + rng() * 0.5,                      // half-width, inside the channel
+      speed: (0.35 + rng() * 0.25) * (i % 2 ? -1 : 1),
+      theta: rng() * Math.PI * 2,
+      wig: rng() * Math.PI * 2,
+      bob: rng() * Math.PI * 2,
+    };
+    const x0 = loop.cx + Math.cos(loop.theta) * loop.lx;
+    f.group.position.set(x0, -0.8, riverZ(x0) + Math.sin(loop.theta) * loop.lz);
+    group.add(f.group);
+    fish.push({ ...f, loop });
+  }
+
   let t = 0;
   function update(dt) {
     t += dt;
@@ -120,6 +160,30 @@ export function createCreatures(scene, rng) {
       const flap = Math.sin(o.flap) * 0.55 + 0.15;
       b.wingL.rotation.z = flap;
       b.wingR.rotation.z = -flap;
+    }
+
+    for (const f of fish) {
+      const o = f.loop;
+      o.theta += o.speed * dt;
+      const nx = o.cx + Math.cos(o.theta) * o.lx;
+      const nz = riverZ(nx) + Math.sin(o.theta) * o.lz;
+      const p = f.group.position;
+
+      // Face the way it moves — the frame-to-frame delta already folds the
+      // meander in, so no derivative of the centreline is needed.
+      const dx = nx - p.x, dz = nz - p.z;
+      if (Math.hypot(dx, dz) > 1e-5) {
+        const targetYaw = Math.atan2(dx, dz);
+        f.group.rotation.y += shortestAngle(f.group.rotation.y, targetYaw) * clamp(dt * 6, 0, 1);
+      }
+
+      // Glide below the surface (-0.5), dipping toward the bed (-1.3) and
+      // rising so the back just crests; never into the ground.
+      const y = -0.78 + Math.sin(o.theta * 3 + o.bob) * 0.22;
+      p.set(nx, Math.max(y, heightAt(nx, nz) + 0.12), nz);
+
+      o.wig += dt * (6 + Math.abs(o.speed) * 4);
+      f.tail.rotation.y = Math.sin(o.wig) * 0.6;
     }
 
     // Lamb: graze a while, wander to a new patch, graze again.

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -13,15 +13,21 @@
       "date": "2026-07-03",
       "focus": "the first companion",
       "summary": "Adam and Eve are both in the garden now. You walk one; the other wanders the meadow on its own — pausing, choosing a new spot, walking there — so the garden always has someone else in it. Also: an explainer screen now greets visitors before the world loads, naming this as an AI-made, AI-tended rendition of Eden."
+    },
+    {
+      "version": 3,
+      "date": "2026-07-04",
+      "focus": "the waters",
+      "summary": "The river lives: its surface now flows downstream in low-poly ripples, and east of the garden the one course is parted and becomes four heads (Genesis 2:10) — channels that fan through the rim into the mist, with meadow islands between them. Five fish — one gold — swim the wadable stretch, gliding under the surface and rising to break it."
     }
   ],
   "next": [
-    "Let the river flow: animate the water surface, and divide the one river into four (Genesis 2:10)",
     "A day/night cycle — evening and morning",
-    "More creatures: fish in the river, doves, cattle; give the birds perching behavior",
+    "More creatures: doves, cattle; give the birds perching behavior",
     "Surface the Adam/Eve choice to visitors instead of a query parameter",
     "Gentle ambient sound: wind, water, birdsong (respecting mobile autoplay rules)",
     "Deepen the sacred trees: falling leaves of gold, a subtle reverence moment when approached",
-    "Name the four rivers — Pishon, Gihon, Tigris, Euphrates — with subtle inscriptions"
+    "Name the four heads — Pishon, Gihon, Tigris, Euphrates — inscribed where the river parts",
+    "A crossing: stepping stones where the walking paths meet the river"
   ]
 }

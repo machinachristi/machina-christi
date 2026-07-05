@@ -16,7 +16,7 @@ export function createGarden(scene, rng) {
 
   const sky = createSky(scene);
   createTerrain(scene, rng);
-  const water = createWater(scene, riverZ);
+  const water = createWater(scene);   // draws its own course from terrain's riverCourse()
   const vegetation = createVegetation(scene, rng);
   const creatures = createCreatures(scene, rng);
 

@@ -156,6 +156,13 @@ window.__world = {
       },
     };
   },
+  // Drop the character anywhere, for tests and debugging — lets the smoke
+  // suite probe far terrain (the river's four heads, the rim) without
+  // scripted walks. The walk-radius clamp still governs actual walking.
+  teleport(x, z) {
+    character.group.position.set(x, garden.heightAt(x, z), z);
+    return this.getState().pos;
+  },
   // Reads back a grid of drawing-buffer pixels right after an explicit
   // render, so the smoke test can prove the canvas holds a real scene.
   samplePixels(grid = 5) {
