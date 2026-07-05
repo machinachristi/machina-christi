@@ -200,6 +200,74 @@ test.describe('the garden loads', () => {
     }, { timeout: 5000 }).toBe(true);
   });
 
+  test('weather: rain answers the call, and the signs wheel with the year', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // A fresh visit is dry — the shower clock keeps its distance at first.
+    expect((await getState(page)).weather.rain).toBeLessThan(0.05);
+
+    // Call the rain and watch it arrive (eased, so poll — never sample once).
+    await frame.evaluate(() => window.__world.setRain(1));
+    await expect.poll(async () => (await getState(page)).weather.rain)
+      .toBeGreaterThan(0.8);
+
+    // Raining, the world still renders inside its budget.
+    const s = await getState(page);
+    expect(s.render.calls).toBeLessThan(200);
+    expect(s.render.triangles).toBeLessThan(150000);
+
+    // Every cloud lays a shade on the land, and the shade drifts with its
+    // cloud (poll for the motion — never a fixed-delay sample).
+    expect(s.weather.shade.length).toBe(5);
+    const shade0 = s.weather.shade[0];
+    await expect.poll(async () => {
+      const sh = (await getState(page)).weather.shade[0];
+      return Math.abs(sh.x - shade0.x);
+    }).toBeGreaterThan(0.01);
+
+    // Send it away again: the shower passes.
+    await frame.evaluate(() => window.__world.setRain(0));
+    await expect.poll(async () => (await getState(page)).weather.rain)
+      .toBeLessThan(0.1);
+
+    // The firmament wheels through the long year — slowly, but measurably:
+    // poll until the angle has visibly advanced from where it stood.
+    const wheel0 = (await getState(page)).heavens.wheel;
+    await expect.poll(async () => Math.abs((await getState(page)).heavens.wheel - wheel0))
+      .toBeGreaterThan(1e-4);
+  });
+
+  test('small wings among the blossoms: butterflies and bees, named and homed', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // The census: six butterflies aloft by day, eight bees at two beds.
+    const fauna = (await getState(page)).fauna;
+    expect(fauna.butterflies.length).toBe(6);
+    expect(fauna.butterflies.every(b => b.mode === 'flit')).toBe(true);
+    expect(fauna.bees.count).toBe(8);
+    expect(fauna.bees.mode).toBe('hum');
+    expect(fauna.bees.patches.length).toBe(2);
+
+    // Stand at the heart of a bee bed: the closest bee circles within reach,
+    // and the naming gives Devorah (the dwell makes one poll never enough).
+    const patch = fauna.bees.patches[0];
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z), [patch.x, patch.z]);
+    await expect.poll(async () => {
+      const naming = (await getState(page)).naming;
+      return naming && naming.name;
+    }, { timeout: 10000 }).toBe('Devorah');
+
+    // Night sends the small wings home: bees out of sight, butterflies
+    // folded into the grass.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => {
+      const f = (await getState(page)).fauna;
+      return f.bees.mode === 'home' && f.butterflies.every(b => b.mode === 'rest');
+    }, { timeout: 10000 }).toBe(true);
+  });
+
   test('draw near a creature and its name is given (Genesis 2:19-20)', async ({ page }) => {
     await gotoWorldReady(page);
     const frame = appFrame(page);

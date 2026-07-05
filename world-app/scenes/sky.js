@@ -9,11 +9,20 @@
 // fog every frame, so land and sky keep melting together at every hour.
 
 import * as THREE from 'three';
-import { smoothstep, lerp, clamp, mulberry32 } from '../util.js';
+import { smoothstep, lerp, clamp, damp, mulberry32 } from '../util.js';
+import { heightAt } from './terrain.js';
 
 export const HORIZON = new THREE.Color(0xEAE4CB);   // the day horizon — scene fog boots with it
 
 const DAY_LENGTH = 420;   // one whole day, in seconds — a day breathes in seven minutes
+const YEAR_DAYS = 28;     // the long year: the signs wheel full circle in 28 of those days
+// "Let them be for signs, and for seasons" (Genesis 1:14): the whole night
+// sky turns slowly about one pole, and its starting angle is set by the
+// visitor's real calendar date — the Bear stands where the season sets it.
+const POLE = new THREE.Vector3(
+  Math.cos(1.05) * Math.cos(0.45), Math.sin(1.05), Math.cos(1.05) * Math.sin(0.45),
+).normalize();
+const WHEEL_RATE = (Math.PI * 2) / (YEAR_DAYS * DAY_LENGTH);
 const DAY_END = 0.62;     // sunset, as a fraction of the cycle; night runs to 1
 const START_T = 0.075;    // every visit begins in morning light
 const ARC_TILT = 0.5;     // the sun's path leans, so noon light falls the way v1's did
@@ -156,7 +165,15 @@ export function createSky(scene) {
   }));
   stars.renderOrder = -9;
   stars.visible = false;
-  scene.add(stars);
+
+  // One rigid firmament: every star and sign rides this group, which wheels
+  // slowly about the pole through the long year — so which figures stand
+  // high at night drifts with the seasons, as Genesis 1:14 has it.
+  const celestial = new THREE.Group();
+  celestial.add(stars);
+  scene.add(celestial);
+  const startOfYear = Date.UTC(new Date().getUTCFullYear(), 0, 0);
+  const wheel0 = ((Date.now() - startOfYear) / 86400000 / 365.25) * Math.PI * 2;
 
   // Signs in the heavens: "let them be for signs, and for seasons"
   // (Genesis 1:14). Three figures the Scriptures themselves name — "which
@@ -211,7 +228,7 @@ export function createSky(scene) {
   }));
   signStars.renderOrder = -9;
   signStars.visible = false;
-  scene.add(signStars);
+  celestial.add(signStars);
   const lineGeo = new THREE.BufferGeometry();
   lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linePos), 3));
   const signLines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
@@ -224,14 +241,19 @@ export function createSky(scene) {
   }));
   signLines.renderOrder = -9;
   signLines.visible = false;
-  scene.add(signLines);
+  celestial.add(signLines);
 
-  // Clouds: one instanced icosahedron forming a few puffy clusters.
-  const CLOUD_PUFFS = [];
+  // Clouds: one instanced icosahedron forming a few puffy clusters. Each
+  // cluster drifts as one body (its puffs bob independently but travel
+  // together), because down on the meadow its shadow travels with it.
+  // The sun's tilted arc throws every shade north of its cloud by a steady
+  // ~0.55 × height, so three tracks are placed for where the shade falls:
+  // they sweep the garden's heart, its north band, and its south meadow,
+  // while two more clusters keep to the horizon as dressing.
   const clusters = [
-    { x: -60, y: 64, z: -90, n: 4, s: 9 },
-    { x: 85, y: 74, z: -30, n: 3, s: 7 },
-    { x: -30, y: 82, z: 95, n: 4, s: 8 },
+    { x: -60, y: 64, z: -34, n: 4, s: 9 },   // shade ≈ z +1
+    { x: 85, y: 74, z: -8, n: 3, s: 7 },     // shade ≈ z +32
+    { x: -30, y: 82, z: -70, n: 4, s: 8 },   // shade ≈ z −25
     { x: 100, y: 60, z: 80, n: 3, s: 6 },
     { x: 10, y: 90, z: -140, n: 3, s: 10 },
   ];
@@ -243,20 +265,101 @@ export function createSky(scene) {
   const q = new THREE.Quaternion();
   const sc = new THREE.Vector3();
   const p = new THREE.Vector3();
-  let idx = 0;
-  for (const cl of clusters) {
-    for (let i = 0; i < cl.n; i++) {
-      const dx = (i - (cl.n - 1) / 2) * cl.s * 0.9;
-      p.set(cl.x + dx, cl.y + (i % 2) * cl.s * 0.22, cl.z + ((i * 37) % 5 - 2) * 1.5);
-      sc.set(cl.s * (1 + (i % 3) * 0.25), cl.s * 0.45, cl.s * 0.7);
-      q.setFromEuler(new THREE.Euler(0, i * 0.9 + cl.x, 0));
-      m.compose(p, q, sc);
-      clouds.setMatrixAt(idx, m);
-      CLOUD_PUFFS.push({ base: p.clone(), scale: sc.clone(), quat: q.clone(), speed: 0.55 + (idx % 4) * 0.18 });
-      idx++;
+  {
+    let idx = 0;
+    for (let ci = 0; ci < clusters.length; ci++) {
+      const cl = clusters[ci];
+      cl.speed = 0.55 + (ci % 4) * 0.18;
+      cl.puffs = [];
+      for (let i = 0; i < cl.n; i++) {
+        const off = new THREE.Vector3(
+          (i - (cl.n - 1) / 2) * cl.s * 0.9,
+          (i % 2) * cl.s * 0.22,
+          ((i * 37) % 5 - 2) * 1.5,
+        );
+        sc.set(cl.s * (1 + (i % 3) * 0.25), cl.s * 0.45, cl.s * 0.7);
+        q.setFromEuler(new THREE.Euler(0, i * 0.9 + cl.x, 0));
+        cl.puffs.push({ idx, off, scale: sc.clone(), quat: q.clone() });
+        // A first placement, so even the warm-up frame has its clouds.
+        m.compose(p.set(cl.x + off.x, cl.y + off.y, cl.z + off.z), q, sc);
+        clouds.setMatrixAt(idx, m);
+        idx++;
+      }
     }
   }
   scene.add(clouds);
+
+  // Cloud-shadows: under each cluster, one soft gradient disc whose vertices
+  // are laid onto the terrain each frame (so the shade rolls over the
+  // meadow's rises), cast along the true sun ray — long shade at the golden
+  // hours, none once the sun has gone under or the rain has greyed the light.
+  const shadowCanvas = document.createElement('canvas');
+  shadowCanvas.width = shadowCanvas.height = 64;
+  {
+    const g = shadowCanvas.getContext('2d');
+    const grad = g.createRadialGradient(32, 32, 4, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+    grad.addColorStop(0.55, 'rgba(0, 0, 0, 0.5)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+  }
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x1E2A16,
+    map: new THREE.CanvasTexture(shadowCanvas),
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+  });
+  const cloudShadows = [];
+  for (const cl of clusters) {
+    const geo = new THREE.CircleGeometry(1, 14);
+    geo.rotateX(-Math.PI / 2);
+    const local = Float32Array.from(geo.attributes.position.array);   // unit-disc offsets
+    const mesh = new THREE.Mesh(geo, shadowMat);
+    mesh.renderOrder = 1;
+    mesh.frustumCulled = false;   // vertices are written in world space
+    mesh.visible = false;
+    scene.add(mesh);
+    cloudShadows.push({ mesh, attr: geo.attributes.position, local, cl, sx: (cl.n * cl.s * 0.9) / 2 + cl.s * 0.7, sz: cl.s * 1.1 });
+  }
+  // Where each cluster's shade presently stands, for the debug state (and
+  // through it the smoke suite, which watches the shade drift).
+  const shadeState = clusters.map(() => ({ x: 0, z: 0 }));
+
+  // Rain: "a brief gentle rain", once in a while — thin falling line
+  // segments recycled in a drum around the walker. The shower clock runs on
+  // its own seeded stream; setRain() overrides it for tests and the curious.
+  const RAIN_N = 300;
+  const RAIN_H = 17;
+  const rainRng = mulberry32(20260706);
+  const rainDrops = [];
+  for (let i = 0; i < RAIN_N; i++) {
+    const a = rainRng() * Math.PI * 2;
+    const r = Math.sqrt(rainRng()) * 24;
+    rainDrops.push({
+      ox: Math.cos(a) * r, oz: Math.sin(a) * r,
+      y0: rainRng() * RAIN_H,
+      len: 0.35 + rainRng() * 0.3,
+      speed: 9 + rainRng() * 3,
+    });
+  }
+  const rainPos = new Float32Array(RAIN_N * 6);
+  const rainGeo = new THREE.BufferGeometry();
+  rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+  const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({
+    color: 0xB9CBDD,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+  }));
+  rain.visible = false;
+  rain.frustumCulled = false;   // the drum always surrounds the camera
+  scene.add(rain);
+  let rainLevel = 0;            // 0 dry → 1 full shower (eased)
+  let rainForced = null;        // setRain() override; null returns to the sky's own clock
+  let showerIn = 210 + rainRng() * 240;   // first shower keeps its distance
+  let showerFor = 0;
 
   // The one directional light both great lights take turns holding,
   // plus the ambient bounce of sky and ground.
@@ -267,6 +370,8 @@ export function createSky(scene) {
 
   const CLOUD_EMISSIVE_DAY = new THREE.Color(0x8E99A8);
   const CLOUD_EMISSIVE_NIGHT = new THREE.Color(0x1C2433);
+  const CLOUD_EMISSIVE_RAIN = new THREE.Color(0x4E5661);
+  const RAIN_GREY = new THREE.Color(0x9AA3AC);
 
   // Reused per-frame scratch — no allocation inside update().
   const cur = { horizon: new THREE.Color(), zenith: new THREE.Color(), light: new THREE.Color() };
@@ -275,7 +380,7 @@ export function createSky(scene) {
   const sunV = new THREE.Vector3(), moonV = new THREE.Vector3();
   const num = { lightI: 0, hemiI: 0, glow: 0, stars: 0, moon: 0, night: 0 };
 
-  const state = { t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0 };
+  const state = { t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, rain: 0, wheel: wheel0, shade: shadeState };
   let t = START_T;
   let elapsed = 0;
 
@@ -295,6 +400,17 @@ export function createSky(scene) {
     hemiSky.lerpColors(a.hemiSky, b.hemiSky, k);
     hemiGround.lerpColors(a.hemiGround, b.hemiGround, k);
     for (const key of NUM_KEYS) num[key] = lerp(a[key], b[key], k);
+
+    // Rain greys the light: sky and lamps dim and flatten with the shower,
+    // and come back as it passes.
+    if (rainLevel > 0.001) {
+      cur.horizon.lerp(RAIN_GREY, 0.28 * rainLevel);
+      cur.zenith.lerp(RAIN_GREY, 0.22 * rainLevel);
+      num.lightI *= 1 - 0.38 * rainLevel;
+      num.hemiI *= 1 - 0.2 * rainLevel;
+      num.glow *= 1 - 0.7 * rainLevel;
+      num.stars *= 1 - 0.6 * rainLevel;
+    }
 
     // Repaint the dome and hand its horizon tone to the fog.
     for (let v = 0; v < domeT.length; v++) {
@@ -351,6 +467,7 @@ export function createSky(scene) {
     signLines.visible = stars.visible;
 
     cloudMat.emissive.lerpColors(CLOUD_EMISSIVE_DAY, CLOUD_EMISSIVE_NIGHT, num.night);
+    if (rainLevel > 0.001) cloudMat.emissive.lerp(CLOUD_EMISSIVE_RAIN, 0.5 * rainLevel);
 
     state.t = t;
     state.phase = phaseOf(t);
@@ -358,20 +475,99 @@ export function createSky(scene) {
     state.sunElev = sunV.y;
   }
 
-  function update(dt) {
+  function update(dt, walker = null) {
     elapsed += dt;
     t = (t + dt / DAY_LENGTH) % 1;
+
+    // The shower clock: long dry spells, a brief gentle rain, eased edges.
+    // A forced level (setRain) eases in faster, so tests never idle.
+    let target;
+    if (rainForced !== null) {
+      target = rainForced;
+    } else {
+      if (showerFor > 0) {
+        showerFor -= dt;
+        if (showerFor <= 0) showerIn = 210 + rainRng() * 260;
+      } else if ((showerIn -= dt) <= 0) {
+        showerFor = 22 + rainRng() * 18;
+      }
+      target = showerFor > 0 ? 1 : 0;
+    }
+    rainLevel = damp(rainLevel, target, rainForced !== null ? 1.1 : 0.25, dt);
+    if (target === 0 && rainLevel < 0.001) rainLevel = 0;
+
     apply();
-    for (let i = 0; i < CLOUD_PUFFS.length; i++) {
-      const puff = CLOUD_PUFFS[i];
-      p.copy(puff.base);
-      p.x += Math.sin(elapsed * 0.02 * puff.speed + i) * 6 + elapsed * 0.35 * puff.speed;
-      // Drift around: wrap far-east clouds back to the west.
-      p.x = ((p.x + 160) % 320) - 160;
-      m.compose(p, puff.quat, puff.scale);
-      clouds.setMatrixAt(i, m);
+
+    // The firmament wheels slowly about its pole through the long year.
+    state.wheel = wheel0 + elapsed * WHEEL_RATE;
+    celestial.quaternion.setFromAxisAngle(POLE, state.wheel);
+
+    // Each cluster drifts as one body; its puffs bob individually.
+    for (const cl of clusters) {
+      cl.driftX = ((cl.x + elapsed * 0.35 * cl.speed + 160) % 320) - 160;
+      for (const puff of cl.puffs) {
+        p.set(
+          cl.driftX + puff.off.x + Math.sin(elapsed * 0.02 * cl.speed + puff.idx) * 6,
+          cl.y + puff.off.y,
+          cl.z + puff.off.z,
+        );
+        m.compose(p, puff.quat, puff.scale);
+        clouds.setMatrixAt(puff.idx, m);
+      }
     }
     clouds.instanceMatrix.needsUpdate = true;
+
+    // Lay each cluster's shade onto the meadow along the true sun ray —
+    // long shade at the golden hours, none by night or under full rain.
+    const shadowSun = smoothstep(0.1, 0.3, sunV.y);
+    shadowMat.opacity = 0.19 * shadowSun * (1 - 0.75 * rainLevel);
+    const shadowsOn = shadowMat.opacity > 0.005;
+    for (let si = 0; si < cloudShadows.length; si++) {
+      const sh = cloudShadows[si];
+      sh.mesh.visible = shadowsOn;
+      if (!shadowsOn) continue;
+      const cl = sh.cl;
+      let offX = -(sunV.x / sunV.y) * cl.y;
+      let offZ = -(sunV.z / sunV.y) * cl.y;
+      const offLen = Math.hypot(offX, offZ);
+      if (offLen > 70) { offX *= 70 / offLen; offZ *= 70 / offLen; }
+      shadeState[si].x = cl.driftX + offX;
+      shadeState[si].z = cl.z + offZ;
+      const arr = sh.attr.array;
+      for (let v = 0; v < arr.length; v += 3) {
+        const wx = shadeState[si].x + sh.local[v] * sh.sx;
+        const wz = shadeState[si].z + sh.local[v + 2] * sh.sz;
+        arr[v] = wx;
+        arr[v + 1] = Math.max(heightAt(wx, wz), -0.45) + 0.12;
+        arr[v + 2] = wz;
+      }
+      sh.attr.needsUpdate = true;
+    }
+
+    // The rain's drum of drops rides with the walker.
+    rain.visible = rainLevel > 0.015;
+    if (rain.visible) {
+      rain.material.opacity = 0.38 * rainLevel;
+      if (walker) rain.position.set(walker.x, walker.y - 3, walker.z);
+      for (let i = 0; i < RAIN_N; i++) {
+        const d = rainDrops[i];
+        const y = RAIN_H - ((elapsed * d.speed + d.y0) % RAIN_H);
+        const o = i * 6;
+        rainPos[o] = d.ox; rainPos[o + 1] = y + d.len; rainPos[o + 2] = d.oz;
+        rainPos[o + 3] = d.ox; rainPos[o + 4] = y; rainPos[o + 5] = d.oz;
+      }
+      rainGeo.attributes.position.needsUpdate = true;
+    }
+
+    state.rain = rainLevel;
+    return state;
+  }
+
+  // Call the rain or send it away — 1 (or true) summons it, 0 dismisses it,
+  // null hands the sky back its own clock. For tests and the curious.
+  function setRain(v) {
+    if (v === null || v === undefined) rainForced = null;
+    else rainForced = clamp(v === true ? 1 : v === false ? 0 : +v || 0, 0, 1);
     return state;
   }
 
@@ -387,5 +583,5 @@ export function createSky(scene) {
   }
 
   apply();
-  return { update, setTime, state, constellations: CONSTELLATIONS.map(c => c.name) };
+  return { update, setTime, setRain, state, constellations: CONSTELLATIONS.map(c => c.name) };
 }

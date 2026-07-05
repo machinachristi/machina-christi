@@ -45,7 +45,7 @@ export async function createGarden(scene, rng) {
   // and drawing near a creature gives its name (the naming).
   let reverence = 0;
   function update(dt, playerPos) {
-    const hour = sky.update(dt);
+    const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
     water.update(dt);
     reverence = vegetation.update(dt, hour.night, playerPos);
     creatures.update(dt, hour.night, playerPos);
@@ -56,6 +56,7 @@ export async function createGarden(scene, rng) {
   return {
     update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint,
     setTime: sky.setTime,
+    setRain: sky.setRain,
     hour: sky.state,
     stones: stones.list,
     crossing: CROSSING,

@@ -1,8 +1,9 @@
 // The garden's creatures: birds and doves on the wing (perching by day,
 // roosting in the two sacred trees at dusk), a lamb and two cattle grazing
-// the meadow, and a small school of fish swimming the river's wadable
-// stretch — "every beast of the field, and every fowl of the air"
-// (Genesis 2:19), each with a simple life of its own.
+// the meadow, a small school of fish swimming the river's wadable stretch,
+// and small wings among the blossoms — butterflies flitting the flower band
+// by day, bees humming at their two beds — "every beast of the field, and
+// every fowl of the air" (Genesis 2:19), each with a simple life of its own.
 //
 // Each creature also bears its name — the plain Hebrew nouns, as the first
 // tongue might have spoken them — given to the walker who draws near
@@ -12,7 +13,11 @@
 import * as THREE from 'three';
 import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
-import { clamp, shortestAngle } from '../util.js';
+import { clamp, damp, shortestAngle, mulberry32 } from '../util.js';
+
+// Two beds of blossom the bees keep to — open meadow south of the river,
+// inside the flower band. Exported so the ambience can hum near them too.
+export const BEE_PATCHES = [{ x: 16, z: -10 }, { x: -11, z: -15 }];
 
 function makeBird(tone) {
   const g = new THREE.Group();
@@ -152,6 +157,22 @@ function makeFish(tone) {
   return { group: g, tail };
 }
 
+// A butterfly: two petal-toned wings hinged at a slip of a body. The wings
+// share two geometries across all butterflies; only the material tints.
+const WING_L = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).translate(-0.095, 0, 0);
+const WING_R = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).translate(0.095, 0, 0);
+const BUTTERFLY_BODY = new THREE.BoxGeometry(0.022, 0.022, 0.13);
+const BODY_MAT = new THREE.MeshLambertMaterial({ color: 0x3A3226, flatShading: true });
+
+function makeButterfly(tone) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshLambertMaterial({ color: tone, side: THREE.DoubleSide, flatShading: true });
+  const wingL = new THREE.Mesh(WING_L, mat);
+  const wingR = new THREE.Mesh(WING_R, mat);
+  g.add(wingL, wingR, new THREE.Mesh(BUTTERFLY_BODY, BODY_MAT));
+  return { group: g, wingL, wingR };
+}
+
 export function createCreatures(scene, rng) {
   const group = new THREE.Group();
   scene.add(group);
@@ -266,6 +287,62 @@ export function createCreatures(scene, rng) {
     });
   }
 
+  // ── Small wings: six butterflies, eight bees ──────────────
+  // Their own seeded stream, appended after the elder creatures' draws, so
+  // nothing shifts in the garden's existing planting or wanderings.
+  const wingRng = mulberry32(20260707);
+
+  // A flutter target on dry meadow — anywhere in the flower band.
+  function flutterSpot() {
+    for (let i = 0; i < 12; i++) {
+      const a = wingRng() * Math.PI * 2;
+      const r = 5 + wingRng() * 29;
+      const x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (riverEdgeDist(x, z) > 2) return { x, z };
+    }
+    return { x: 10, z: -10 };
+  }
+
+  const BUTTERFLY_TONES = [0xE8D5A3, 0xC97BA2, 0xF2F2E9, 0xD98A5B, 0xC9A227, 0xEFE8DA];
+  const butterflies = [];
+  for (let i = 0; i < 6; i++) {
+    const B = makeButterfly(BUTTERFLY_TONES[i]);
+    const s0 = flutterSpot();
+    B.group.position.set(s0.x, Math.max(heightAt(s0.x, s0.z), -0.45) + 0.55, s0.z);
+    group.add(B.group);
+    butterflies.push({
+      ...B, kind: 'butterfly', name: 'Parpar', label: 'the butterfly',
+      mode: 'flit',                            // flit by day | rest by night
+      target: flutterSpot(), until: 6 + wingRng() * 8,
+      flap: wingRng() * Math.PI * 2, bob: wingRng() * Math.PI * 2,
+    });
+  }
+
+  // The bees: one instanced mesh of golden specks, each circling its patch.
+  // Radii are laddered so every patch keeps one bee close enough to its
+  // heart that a walker standing there is always within naming reach.
+  const beeMesh = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.048, 6, 4),
+    new THREE.MeshLambertMaterial({ color: 0xC9A227, flatShading: true }),
+    8,
+  );
+  group.add(beeMesh);
+  const beeM = new THREE.Matrix4();
+  const swarm = [];
+  for (let i = 0; i < 8; i++) {
+    const patch = BEE_PATCHES[i % 2];
+    swarm.push({
+      kind: 'bee', name: 'Devorah', label: 'the bee',
+      patch,
+      r: 0.5 + ((i >> 1) % 4) * 0.5,
+      rate: (1.6 + wingRng() * 1.8) * ((i >> 1) % 2 ? -1 : 1),
+      theta: wingRng() * Math.PI * 2,
+      bob: wingRng() * Math.PI * 2,
+      lift: 0.35 + ((i * 13) % 3) * 0.18,
+      pos: new THREE.Vector3(patch.x, 0, patch.z),
+    });
+  }
+
   // Glide a flyer toward a point; returns remaining distance.
   function glideToward(b, target, dt) {
     const p = b.group.position;
@@ -295,7 +372,7 @@ export function createCreatures(scene, rng) {
   function nearestNamable(walker) {
     let best = null, bestD = Infinity;
     const consider = (c, reach, vLimit) => {
-      const p = c.group.position;
+      const p = c.group ? c.group.position : c.pos;
       const d = Math.hypot(p.x - walker.x, p.z - walker.z);
       const keep = c === named ? reach + 0.8 : reach;   // linger once given
       if (d <= keep && Math.abs(p.y - walker.y) <= vLimit && d < bestD) {
@@ -306,6 +383,8 @@ export function createCreatures(scene, rng) {
     for (const b of flyers) consider(b, 2.4, 9);
     for (const G of grazers) consider(G, 2.6, 4);
     for (const f of fish) consider(f, 2.4, 4);
+    for (const B of butterflies) consider(B, 2.0, 3);
+    if (beeMesh.visible) for (const B of swarm) consider(B, 1.7, 2.6);
     return best;
   }
 
@@ -411,6 +490,61 @@ export function createCreatures(scene, rng) {
       f.tail.rotation.y = Math.sin(o.wig) * 0.6;
     }
 
+    // Small wings, by day only: dusk settles the butterflies into the grass
+    // with folded wings, and sends the bees home out of sight; morning
+    // lifts them all again.
+    for (const B of butterflies) {
+      if (night >= 0.45 && B.mode === 'flit') B.mode = 'rest';
+      else if (night < 0.18 && B.mode === 'rest') {
+        B.mode = 'flit';
+        B.target = flutterSpot();
+        B.until = 6 + wingRng() * 8;
+      }
+      const p = B.group.position;
+      if (B.mode === 'flit') {
+        const dx = B.target.x - p.x, dz = B.target.z - p.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist < 0.4 || (B.until -= dt) <= 0) {
+          B.target = flutterSpot();
+          B.until = 6 + wingRng() * 8;
+        } else {
+          const step = Math.min(dist, 1.15 * dt);
+          p.x += (dx / dist) * step;
+          p.z += (dz / dist) * step;
+          const yaw = Math.atan2(dx, dz);
+          B.group.rotation.y += shortestAngle(B.group.rotation.y, yaw) * clamp(dt * 3, 0, 1);
+        }
+        B.bob += dt * 2.6;
+        p.y = Math.max(heightAt(p.x, p.z), -0.45) + 0.55 + Math.sin(B.bob) * 0.28;
+        B.flap += dt * 13;
+        const flap = 0.15 + Math.sin(B.flap) * 0.85;
+        B.wingL.rotation.z = flap;
+        B.wingR.rotation.z = -flap;
+      } else {
+        // Settle to the grass; wings held upright, barely breathing.
+        p.y = damp(p.y, Math.max(heightAt(p.x, p.z), -0.45) + 0.07, 2.2, dt);
+        B.flap += dt * 1.4;
+        const fold = 1.15 + Math.sin(B.flap) * 0.1;
+        B.wingL.rotation.z = fold;
+        B.wingR.rotation.z = -fold;
+      }
+    }
+
+    beeMesh.visible = night < 0.5;
+    if (beeMesh.visible) {
+      for (let i = 0; i < swarm.length; i++) {
+        const B = swarm[i];
+        B.theta += B.rate * dt;
+        const r = B.r * (1 + 0.15 * Math.sin(t * 1.1 + B.bob));
+        const x = B.patch.x + Math.cos(B.theta) * r;
+        const z = B.patch.z + Math.sin(B.theta) * r;
+        B.pos.set(x, heightAt(x, z) + B.lift + Math.sin(t * 4 + B.bob) * 0.1, z);
+        beeM.setPosition(B.pos);
+        beeMesh.setMatrixAt(i, beeM);
+      }
+      beeMesh.instanceMatrix.needsUpdate = true;
+    }
+
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
       G.until -= dt;
@@ -452,6 +586,8 @@ export function createCreatures(scene, rng) {
       flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
       grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z })),
       shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z })),
+      butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
+      bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },
       cattle: 2,
       lamb: 1,
       fish: fish.length,

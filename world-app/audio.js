@@ -1,14 +1,17 @@
 // The garden's voice, woven from nothing: no sound files, only WebAudio
 // oscillators and filtered noise shaped live — wind moving in slow gusts,
 // the river heard as a low soft brook near its banks, birdsong scattered
-// through the day, crickets after dark in short phrases (never a drone),
-// and a quiet chime of reverence near the sacred trees. Everything passes
-// through one mellowing low-pass, so nothing in Eden ever hisses or bites.
-// Silent until invited: the garden starts muted, and the corner toggle
-// (persisted) is how a visitor asks for its voice.
+// through the day (hushed while rain falls), a soft patter when the shower
+// passes over, the hum of bees near their beds of blossom, crickets after
+// dark in short phrases (never a drone), and a quiet chime of reverence
+// near the sacred trees. Everything passes through one mellowing low-pass,
+// so nothing in Eden ever hisses or bites. Silent until invited: the garden
+// starts muted, and the corner toggle (persisted) is how a visitor asks
+// for its voice.
 
-import { clamp } from './util.js';
+import { clamp, smoothstep } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
+import { BEE_PATCHES } from './scenes/creatures.js';
 
 const PREF_KEY = 'camino_sound';
 
@@ -53,6 +56,9 @@ export function createAmbience() {
       if (shape === 'deep') {          // brown-ish, for wind
         b0 = (b0 + 0.02 * w) / 1.02;
         d[i] = b0 * 3.5;
+      } else if (shape === 'rain') {   // lighter, with a soft patter of hiss
+        b0 = 0.96 * b0 + w * 0.08;
+        d[i] = b0 * 1.4 + w * 0.22;
       } else {                          // deep-brushed brown, for gentle water
         b0 = 0.99 * b0 + w * 0.02;
         b1 = 0.8 * b1 + w * 0.25;
@@ -120,7 +126,39 @@ export function createAmbience() {
     lap.connect(lapAmt).connect(waterLP.frequency);
     lap.start();
 
-    refs = { windGain, waterGain };
+    // Rain: a soft patter, brighter than the brook but kept gentle under
+    // its own low-pass; its level simply follows the sky's shower.
+    const rainLP = ctx.createBiquadFilter();
+    rainLP.type = 'lowpass';
+    rainLP.frequency.value = 2300;
+    rainLP.Q.value = 0.4;
+    const rainGain = ctx.createGain();
+    rainGain.gain.value = 0;
+    loopNoise(noiseBuffer('rain')).connect(rainLP);
+    rainLP.connect(rainGain).connect(master);
+
+    // The bees: one soft triangle hum with a slow wobble, heard only near
+    // their two beds of blossom, by day, and never above a murmur.
+    const beeLP = ctx.createBiquadFilter();
+    beeLP.type = 'lowpass';
+    beeLP.frequency.value = 700;
+    beeLP.Q.value = 0.5;
+    const beeGain = ctx.createGain();
+    beeGain.gain.value = 0;
+    const bee = ctx.createOscillator();
+    bee.type = 'triangle';
+    bee.frequency.value = 172;
+    const beeWobble = ctx.createOscillator();
+    beeWobble.frequency.value = 5.7;
+    const beeWobbleAmt = ctx.createGain();
+    beeWobbleAmt.gain.value = 9;
+    beeWobble.connect(beeWobbleAmt).connect(bee.frequency);
+    bee.connect(beeLP);
+    beeLP.connect(beeGain).connect(master);
+    bee.start();
+    beeWobble.start();
+
+    refs = { windGain, waterGain, rainGain, beeGain };
     master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
@@ -252,7 +290,7 @@ export function createAmbience() {
     }
   }
 
-  function update(dt, skyNight, pos) {
+  function update(dt, skyNight, pos, rain = 0) {
     night = skyNight;
     if (!refs || !ctx || ctx.state !== 'running' || muted) return;
     acc += dt;
@@ -266,7 +304,17 @@ export function createAmbience() {
     const nearness = 1 - clamp(d / 16, 0, 1);
     refs.waterGain.gain.setTargetAtTime(0.006 + 0.06 * Math.pow(nearness, 1.6), tc, 0.5);
 
-    // Crickets keep the night watch in phrases; birds keep the day.
+    // The patter follows the shower; the bees are heard near their beds of
+    // blossom, by day and in dry air.
+    refs.rainGain.gain.setTargetAtTime(0.034 * rain, tc, 0.6);
+    let dBee = Infinity;
+    for (const b of BEE_PATCHES) dBee = Math.min(dBee, Math.hypot(pos.x - b.x, pos.z - b.z));
+    const beeNear = 1 - clamp((dBee - 1) / 8, 0, 1);
+    const beeDay = 1 - smoothstep(0.3, 0.5, night);
+    refs.beeGain.gain.setTargetAtTime(0.012 * Math.pow(beeNear, 1.5) * beeDay * (1 - 0.7 * rain), tc, 0.4);
+
+    // Crickets keep the night watch in phrases; birds keep the day, and
+    // hold their peace while the rain falls.
     cricketIn -= step;
     if (cricketIn <= 0) {
       cricketIn = 1.2 + Math.random() * 2.8;
@@ -275,7 +323,7 @@ export function createAmbience() {
     birdIn -= step;
     if (birdIn <= 0) {
       birdIn = 2.5 + Math.random() * 5.5;
-      if (night < 0.45) chirp();
+      if (night < 0.45 && rain < 0.35) chirp();
     }
   }
 
