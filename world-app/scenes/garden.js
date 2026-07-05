@@ -41,13 +41,14 @@ export async function createGarden(scene, rng) {
   // The sky keeps the day's clock; its state (how deep into night, etc.)
   // flows to everything that keeps the hours — and back to the caller,
   // where the ambience listens to it too. The walker's position flows the
-  // other way, so drawing near the sacred trees can be felt (reverence).
+  // other way, so drawing near the sacred trees can be felt (reverence),
+  // and drawing near a creature gives its name (the naming).
   let reverence = 0;
   function update(dt, playerPos) {
     const hour = sky.update(dt);
     water.update(dt);
     reverence = vegetation.update(dt, hour.night, playerPos);
-    creatures.update(dt, hour.night);
+    creatures.update(dt, hour.night, playerPos);
     mist.update(dt, hour.t);
     return hour;
   }
@@ -60,6 +61,7 @@ export async function createGarden(scene, rng) {
     crossing: CROSSING,
     constellations: sky.constellations,
     fauna: creatures.fauna,
+    named: creatures.named,
     get reverence() { return reverence; },
   };
 }

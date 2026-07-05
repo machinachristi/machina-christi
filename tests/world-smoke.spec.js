@@ -200,6 +200,42 @@ test.describe('the garden loads', () => {
     }, { timeout: 5000 }).toBe(true);
   });
 
+  test('draw near a creature and its name is given (Genesis 2:19-20)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Standing apart on the south-eastern meadow, no name is given.
+    await frame.evaluate(() => window.__world.teleport(30, -30));
+    await expect.poll(async () => (await getState(page)).naming).toBe(null);
+
+    // Draw near the lamb — wherever it now grazes. It wanders, so each
+    // poll re-reads its place from the census and steps up beside it;
+    // the short dwell before a name is given makes one poll never enough.
+    await expect.poll(async () => {
+      const lamb = (await getState(page)).fauna.grazers.find(g => g.kind === 'lamb');
+      await frame.evaluate(([x, z]) => window.__world.teleport(x + 0.7, z + 0.7), [lamb.x, lamb.z]);
+      const naming = (await getState(page)).naming;
+      return naming && naming.name;
+    }, { timeout: 10000 }).toBe('Taleh');
+
+    // The caption stands in the world's own document, name and kind.
+    await expect(frame.locator('.naming')).toHaveClass(/naming--shown/);
+    await expect(frame.locator('.naming__label')).toHaveText('the lamb');
+
+    // The golden fish alone bears a name of its own.
+    await expect.poll(async () => {
+      const gold = (await getState(page)).fauna.shoal.find(f => f.name === 'Zahav');
+      await frame.evaluate(([x, z]) => window.__world.teleport(x + 0.4, z), [gold.x, gold.z]);
+      const naming = (await getState(page)).naming;
+      return naming && naming.name;
+    }, { timeout: 10000 }).toBe('Zahav');
+
+    // Walking away, the caption lets go and the garden falls quiet again.
+    await frame.evaluate(() => window.__world.teleport(30, -30));
+    await expect.poll(async () => (await getState(page)).naming).toBe(null);
+    await expect(frame.locator('.naming')).not.toHaveClass(/naming--shown/);
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');

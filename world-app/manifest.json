@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -31,14 +31,19 @@
       "date": "2026-07-05",
       "focus": "the garden filled",
       "summary": "The garden fills with life and sign: two doves circle low over the heart of it and two cattle graze the western meadow beside the lamb; the birds now perch, and at dusk every flyer comes home to roost in the two sacred trees. Six stepping stones ford the river north of the trees — truly walkable, feet staying dry above the ripples. A morning mist rises from the earth to water the ground (Genesis 2:6), thick at dawn and burnt away by mid-morning. The night sky bears its signs (Genesis 1:14): the Bear, Orion, and the Pleiades — the three figures Job 9:9 names — drawn with faint joining lines. The Tree of Life sheds a slow fall of golden leaves, and drawing near either sacred tree kindles a quiet reverence: the gold deepens and a soft chime sounds once. And the garden's voice was gentled: the river murmurs low instead of hissing, the crickets sing in short phrases with silences between (no more drone), one mellowing filter rounds everything — and sound is now opt-in, silent until a visitor asks for it with the corner toggle."
+    },
+    {
+      "version": 6,
+      "date": "2026-07-05",
+      "focus": "the naming",
+      "summary": "Draw near any creature and its name is given (Genesis 2:19-20): a quiet caption rises at the foot of the screen — Taleh the lamb, Shor the ox, Yonah the dove, Tsippor the bird, Dag the fish — and fades again as you walk on. The names are the plain Hebrew ones, as the first tongue might have spoken them; a wing passing low overhead is a naming too. And one name is kept for the finders: somewhere in the river swims a fish that bears a name all its own."
     }
   ],
   "next": [
-    "Surface the Adam/Eve choice to visitors instead of a query parameter",
-    "Name the animals: draw near a creature and its name is given (Genesis 2:19-20)",
     "Weather: cloud-shadows crossing the meadow, and once in a while a brief gentle rain",
     "Stillness rewarded: sit the walker down by the water and let the creatures draw near",
     "Seasons for the signs: the constellations wheeling slowly through the long year (Genesis 1:14)",
-    "Eastward glimpses: the garden's far side hinting at a gate where light stands (Genesis 3:24, foreshadowed)"
+    "Eastward glimpses: the garden's far side hinting at a gate where light stands (Genesis 3:24, foreshadowed)",
+    "Small wings among the blossoms: butterflies by day, and the hum of bees in the flowered grass"
   ]
 }
