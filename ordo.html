@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="Ordo — today in the Church: the day's Gospel reading and, on a feast or memorial, the saint of the day from Butler's Lives of the Saints." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/ordo.html" />
+  <meta property="og:title" content="Ordo · Machina Christi" />
+  <meta property="og:description" content="Today in the Church: the day's Gospel reading and, on a feast or memorial, the saint of the day from Butler's Lives of the Saints." />
+  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>Ordo · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(120, 100, 150, 0.16), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.75;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      margin-bottom: 3em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 0.7em 0 1.1em;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+
+    /* ── Date rail: the day, with quiet prev/next stepping ────── */
+    .daterail {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 1.8em;
+    }
+    .daterail .date {
+      font-size: clamp(16px, 4.4vw, 19px);
+      letter-spacing: 0.02em;
+      color: var(--gold-soft);
+    }
+    .daterail nav { display: flex; gap: 6px; }
+    .daterail a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      color: rgba(232, 213, 163, 0.7);
+      text-decoration: none;
+      font-size: 17px;
+      transition: border-color 0.25s ease, color 0.25s ease;
+    }
+    .daterail a:hover, .daterail a:focus-visible { border-color: rgba(201, 162, 39, 0.7); color: #fff; outline: none; }
+    .daterail a.today {
+      width: auto;
+      border-radius: 999px;
+      padding: 0 14px;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* ── The day's celebration ─────────────────────────────────── */
+    .rank {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(var(--violet), 0.95);
+      border: 1px solid rgba(var(--violet), 0.4);
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin-bottom: 0.9em;
+    }
+    .celebration {
+      font-size: clamp(20px, 5.5vw, 25px);
+      color: var(--gold-soft);
+      margin-bottom: 0.5em;
+    }
+
+    a.enter {
+      display: inline-block;
+      margin-top: 0.4em;
+      font-size: 14px;
+      letter-spacing: 0.24em;
+      text-indent: 0.24em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+      text-decoration: none;
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      padding: 12px 30px;
+      background: rgba(201, 162, 39, 0.06);
+      transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    }
+    a.enter:hover, a.enter:focus-visible {
+      border-color: rgba(201, 162, 39, 0.85);
+      background: rgba(201, 162, 39, 0.14);
+      color: #fff;
+      box-shadow: 0 0 30px -8px rgba(var(--violet), 0.4);
+      outline: none;
+    }
+
+    h2 {
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 2.6em 0 1.1em;
+      padding-bottom: 0.8em;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+    }
+
+    /* ── Saint bio card ────────────────────────────────────────── */
+    .saint blockquote {
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.78);
+      border-left: 2px solid rgba(var(--violet), 0.4);
+      padding-left: 1.1em;
+      margin: 0 0 0.8em;
+    }
+    .saint .attribution {
+      font-size: 13px;
+      color: rgba(232, 213, 163, 0.5);
+      margin-bottom: 0;
+    }
+    .saint .attribution a { color: inherit; }
+
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+
+    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">&lsaquo; home</a>
+    <h1>Ordo</h1>
+    <p>Today in the Church: the day's Gospel, and — on a feast, memorial, or solemnity — the saint of the day, briefly told from Butler's <cite>Lives of the Saints</cite> (1894).</p>
+
+    <div class="daterail">
+      <span class="date" id="date-label">&hellip;</span>
+      <nav aria-label="Change day">
+        <a href="#" id="prev-day" aria-label="Previous day">&lsaquo;</a>
+        <a href="#" id="today-link" class="today">Today</a>
+        <a href="#" id="next-day" aria-label="Next day">&rsaquo;</a>
+      </nav>
+    </div>
+
+    <div id="celebration">
+      <p class="notice">Loading&hellip;</p>
+    </div>
+
+    <div id="saint"></div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      function toDateKey(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+
+      function parseDateKey(key) {
+        const [y, m, d] = key.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function usccbUrl(d) {
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const yy = String(d.getFullYear()).slice(-2);
+        return `https://bible.usccb.org/bible/readings/${mm}${dd}${yy}.cfm`;
+      }
+
+      // grade_lcl comes back in a few different cases from the API
+      // ("weekday", "Memorial", "FEAST OF THE LORD", …) — flatten to one style.
+      // Ordinary Time Sundays are internally graded as "Feast of the Lord" by
+      // litcal (Sundays outrank most feasts, but aren't filed under their own
+      // grade), which reads as a confusing label for a plain Sunday — so a
+      // name containing "Sunday" always wins over the raw grade label.
+      function rankLabel(grade, gradeLcl, name) {
+        if (grade === 0) return null;
+        if (/\bSunday\b/.test(name)) return 'Sunday';
+        return gradeLcl.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase());
+      }
+
+      const params = new URLSearchParams(location.search);
+      const requested = params.get('date');
+      const today = new Date();
+      let current = requested && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? parseDateKey(requested) : today;
+
+      const dateLabelEl = document.getElementById('date-label');
+      const celebrationEl = document.getElementById('celebration');
+      const saintEl = document.getElementById('saint');
+      const prevLink = document.getElementById('prev-day');
+      const nextLink = document.getElementById('next-day');
+      const todayLink = document.getElementById('today-link');
+
+      function linkFor(d) {
+        const key = toDateKey(d);
+        const todayKey = toDateKey(today);
+        return key === todayKey ? 'ordo.html' : `ordo.html?date=${key}`;
+      }
+
+      function render(d) {
+        dateLabelEl.textContent = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const prev = new Date(d); prev.setDate(prev.getDate() - 1);
+        const next = new Date(d); next.setDate(next.getDate() + 1);
+        prevLink.href = linkFor(prev);
+        nextLink.href = linkFor(next);
+        todayLink.href = 'ordo.html';
+        todayLink.style.visibility = toDateKey(d) === toDateKey(today) ? 'hidden' : 'visible';
+
+        const year = d.getFullYear();
+        Promise.all([
+          fetch(`./ordo/calendar-${year}.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch('./ordo/saints.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+        ]).then(([calendar, saints]) => {
+          if (!calendar) {
+            celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}">day's Gospel at USCCB</a> directly.</p>`;
+            saintEl.innerHTML = '';
+            return;
+          }
+          const key = toDateKey(d);
+          const entry = calendar[key];
+          const gospelLink = `<p><a class="enter" href="${usccbUrl(d)}" target="_blank" rel="noopener">read today&rsquo;s gospel &middot; usccb</a></p>`;
+
+          if (!entry || entry.grade === 0) {
+            celebrationEl.innerHTML = `<p class="celebration">${entry ? escapeHtml(entry.name) : 'Ordinary Weekday'}</p>${gospelLink}`;
+            saintEl.innerHTML = '';
+            return;
+          }
+
+          const label = rankLabel(entry.grade, entry.grade_lcl, entry.name);
+          celebrationEl.innerHTML =
+            (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
+            `<p class="celebration">${escapeHtml(entry.name)}</p>` +
+            gospelLink;
+
+          const isSaint = /^Saints?\b/.test(entry.name);
+          if (!isSaint) {
+            saintEl.innerHTML = '';
+            return;
+          }
+          const bio = saints[entry.name];
+          if (bio) {
+            saintEl.innerHTML = `
+              <h2>Saint of the Day</h2>
+              <div class="saint">
+                <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
+                <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
+              </div>`;
+          } else {
+            saintEl.innerHTML = `
+              <h2>Saint of the Day</h2>
+              <p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
+          }
+        });
+      }
+
+      function go(d) {
+        current = d;
+        history.replaceState(null, '', linkFor(d));
+        render(d);
+      }
+
+      prevLink.addEventListener('click', e => { e.preventDefault(); const d = new Date(current); d.setDate(d.getDate() - 1); go(d); });
+      nextLink.addEventListener('click', e => { e.preventDefault(); const d = new Date(current); d.setDate(d.getDate() + 1); go(d); });
+      todayLink.addEventListener('click', e => { e.preventDefault(); go(new Date()); });
+
+      render(current);
+    })();
+  </script>
+</body>
+</html>
