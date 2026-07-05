@@ -1,0 +1,7 @@
+# Machina Christi — all pages welcome to crawlers.
+# (world-app/index.html opts itself out with a noindex meta tag: it is the
+# world's iframe interior, not a landing page.)
+User-agent: *
+Allow: /
+
+Sitemap: https://machinachristi.com/sitemap.xml
