@@ -238,13 +238,16 @@ test.describe('walking the garden', () => {
     const dot = (step.x * away.x + step.z * away.z) / (awayLen * moved);
     expect(dot).toBeGreaterThan(0.5);
 
-    // Lift the finger: the character comes to rest.
+    // Lift the finger: the character glides to rest. Watch 400ms windows
+    // until one is still — CI's software renderer dilates simulated time,
+    // so the glide takes longer there than on any real device.
     await page.mouse.up();
-    await page.waitForTimeout(500);
-    const s2 = await getState(page);
-    await page.waitForTimeout(400);
-    const s3 = await getState(page);
-    expect(dist2d(s3.pos, s2.pos)).toBeLessThan(0.08);
+    await expect.poll(async () => {
+      const a = await getState(page);
+      await page.waitForTimeout(400);
+      const b = await getState(page);
+      return dist2d(b.pos, a.pos);
+    }, { timeout: 10000 }).toBeLessThan(0.08);
 
     expect(errors).toEqual([]);
   });
