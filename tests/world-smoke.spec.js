@@ -84,6 +84,82 @@ test.describe('the garden loads', () => {
     await expect.poll(async () => (await getState(page)).version).toBe(manifest.version);
   });
 
+  test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    // Mid-fan (x=42) the inner pair of heads ride ~±4.4 either side of the
+    // old centreline. Inside a head's channel the ground is a carved bed…
+    const inHead = await frame.evaluate(() => window.__world.teleport(42, 25.0));
+    expect(inHead.y).toBeLessThan(-0.9);
+    // …while midway between two heads it rises back to walkable meadow —
+    // the single course really has been parted, not merely widened.
+    const between = await frame.evaluate(() => window.__world.teleport(42, 20.65));
+    expect(between.y).toBeGreaterThan(0.2);
+    // Upstream, in the garden itself, the course is still one undivided
+    // river: its centreline is wet from bank to bank.
+    const upstream = await frame.evaluate(() => window.__world.teleport(0, 14));
+    expect(upstream.y).toBeLessThan(-0.9);
+  });
+
+  test('evening and morning — the sky keeps time (Genesis 1:5)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const meanBright = px => px.reduce((a, p) => a + Math.max(p[0], p[1], p[2]), 0) / px.length;
+
+    // Every visit begins in morning light…
+    const day = await frame.evaluate(() => ({
+      time: window.__world.getState().time,
+      px: window.__world.samplePixels(4),
+    }));
+    expect(day.time.phase).toBe('morning');
+    expect(day.time.night).toBeLessThan(0.1);
+
+    // …and the clock can be jumped to night: the same scene, truly darker,
+    // still inside the render budget with stars and moon now in the sky.
+    const night = await frame.evaluate(() => ({
+      time: window.__world.setTime('night'),
+      px: window.__world.samplePixels(4),
+    }));
+    expect(night.time.phase).toBe('night');
+    expect(night.time.night).toBeGreaterThan(0.9);
+    expect(meanBright(night.px)).toBeLessThan(meanBright(day.px) * 0.6);
+
+    const s = await getState(page);
+    expect(s.render.calls).toBeLessThan(200);
+    expect(s.render.triangles).toBeLessThan(150000);
+  });
+
+  test('the four heads bear their names (Genesis 2:11–14)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const stones = await frame.evaluate(() => window.__world.getState().stones);
+    expect(stones.map(s => s.name)).toEqual(['Pishon', 'Gihon', 'Tigris', 'Euphrates']);
+    // Each stone stands on dry ground beside its own channel — on the bank,
+    // never down in a carved riverbed.
+    for (const stone of stones) {
+      const pos = await frame.evaluate(
+        ([x, z]) => window.__world.teleport(x, z),
+        [stone.x, stone.z],
+      );
+      expect(pos.y).toBeGreaterThan(-0.4);
+    }
+  });
+
+  test('the ambience is present, polite, and mutable', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    const s0 = await frame.evaluate(() => window.__world.getState().sound);
+    expect(typeof s0.supported).toBe('boolean');
+    expect(s0.muted).toBe(false);            // fresh visit: sound is welcome
+
+    // The corner toggle exists, and muting persists for the next visit.
+    await expect(frame.locator('.sound')).toBeVisible();
+    const s1 = await frame.evaluate(() => window.__world.setMuted(true));
+    expect(s1.muted).toBe(true);
+    expect(await frame.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');

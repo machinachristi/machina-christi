@@ -1,8 +1,11 @@
 // The land: gently rolling low-poly ground, rising to a soft rim at the
 // garden's edge (the fog swallows anything beyond), with a riverbed carved
-// along a meandering curve — "a river went out of Eden to water the garden"
-// (Genesis 2:10). One analytic height function is shared by the mesh, the
-// character, the camera, and every planted thing, so they always agree.
+// along a meandering curve — "a river went out of Eden to water the garden;
+// and from thence it was parted, and became into four heads" (Genesis 2:10).
+// West of the parting the river runs whole; east of the garden it fans into
+// four channels that carve through the rim and vanish into the mist. One
+// analytic height function is shared by the mesh, the character, the camera,
+// and every planted thing, so they always agree.
 
 import * as THREE from 'three';
 import { lerp, smoothstep } from '../util.js';
@@ -11,9 +14,40 @@ export const GARDEN_RADIUS = 50;   // how far the walk may wander
 const SIZE = 170;                  // ground plane extent (edges hide in fog)
 const SEGMENTS = 64;
 
-// The river's centreline: z as a gentle function of x.
+// The river's centreline: z as a gentle function of x. Upstream this is the
+// whole river; past the parting it is the spine the four heads fan out from.
 export function riverZ(x) {
   return Math.sin(x * 0.055) * 9 + 14;
+}
+
+// Where the parting begins, how far the fan takes to open, and where each
+// head rides across it (in multiples of the growing gap).
+const SPLIT_X = 22;
+const FAN_LENGTH = 32;
+const HEADS = [-1.5, -0.5, 0.5, 1.5];
+
+// The river's cross-section at x: four channel centrelines and their shared
+// half-width. Upstream the four lie edge to edge, tiling the one wide course
+// exactly (4 × 1.3 = the old 5.2-wide river), so land and water stay seamless
+// where the parting begins; eastward the gap grows and each head narrows.
+export function riverCourse(x) {
+  const t = smoothstep(SPLIT_X, SPLIT_X + FAN_LENGTH, x);
+  const ease = t * t;
+  const zc = riverZ(x);
+  const gap = 1.3 + ease * 16;
+  return {
+    centers: HEADS.map(h => zc + h * gap),
+    halfWidth: 0.65 + ease * 1.05,
+  };
+}
+
+// Distance from (x, z) to the nearest water's edge — 0 anywhere on water.
+// The carve, the sandy banks, and every planting rule share this measure.
+export function riverEdgeDist(x, z) {
+  const { centers, halfWidth } = riverCourse(x);
+  let d = Infinity;
+  for (const zc of centers) d = Math.min(d, Math.abs(z - zc));
+  return Math.max(0, d - halfWidth);
 }
 
 export function heightAt(x, z) {
@@ -28,9 +62,9 @@ export function heightAt(x, z) {
   // The rim: land rises toward the edges so the horizon is always garden.
   h += smoothstep(40, 58, r) * 3.2;
 
-  // The riverbed, blended smoothly into the banks.
-  const d = Math.abs(z - riverZ(x));
-  h = lerp(-1.3, h, smoothstep(2.6, 6.0, d));
+  // The riverbed — one course through the garden, four heads past the
+  // parting — blended smoothly into the banks.
+  h = lerp(-1.3, h, smoothstep(0, 3.4, riverEdgeDist(x, z)));
 
   return h;
 }
@@ -58,7 +92,7 @@ export function createTerrain(scene, rng) {
     const cy = (pos.getY(f) + pos.getY(f + 1) + pos.getY(f + 2)) / 3;
     const cz = (pos.getZ(f) + pos.getZ(f + 1) + pos.getZ(f + 2)) / 3;
 
-    const nearRiver = 1 - smoothstep(2.4, 5.2, Math.abs(cz - riverZ(cx)));
+    const nearRiver = 1 - smoothstep(0, 2.7, riverEdgeDist(cx, cz));
     const high = smoothstep(1.2, 4.2, cy);
 
     c.copy(GRASS_LO).lerp(GRASS_HI, smoothstep(-0.5, 1.6, cy) * 0.9 + rng() * 0.1);

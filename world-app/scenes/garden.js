@@ -8,17 +8,27 @@ import { createTerrain, heightAt, riverZ, GARDEN_RADIUS } from './terrain.js';
 import { createWater } from './water.js';
 import { createVegetation, TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
 import { createCreatures } from './creatures.js';
+import { createStones } from './stones.js';
+import { breathe } from '../util.js';
 
-export function createGarden(scene, rng) {
+// Async, with a breath between the heavy build steps: the iframe shares the
+// parent page's main thread, so yielding here is what lets the veil's
+// "entering…" line keep breathing while the garden takes shape behind it.
+export async function createGarden(scene, rng) {
   // Fog shares the sky's horizon tone so the garden's edge dissolves into
   // light rather than ending — no walls, no visible boundary.
   scene.fog = new THREE.Fog(HORIZON.getHex(), 55, 115);
 
   const sky = createSky(scene);
+  await breathe();
   createTerrain(scene, rng);
-  const water = createWater(scene, riverZ);
+  await breathe();
+  const water = createWater(scene);   // draws its own course from terrain's riverCourse()
+  await breathe();
   const vegetation = createVegetation(scene, rng);
+  await breathe();
   const creatures = createCreatures(scene, rng);
+  const stones = createStones(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -26,12 +36,21 @@ export function createGarden(scene, rng) {
     .multiplyScalar(0.5);
   sacredMidpoint.y = heightAt(sacredMidpoint.x, sacredMidpoint.z);
 
+  // The sky keeps the day's clock; its state (how deep into night, etc.)
+  // flows to everything that keeps the hours — and back to the caller,
+  // where the ambience listens to it too.
   function update(dt) {
-    sky.update(dt);
+    const hour = sky.update(dt);
     water.update(dt);
-    vegetation.update(dt);
+    vegetation.update(dt, hour.night);
     creatures.update(dt);
+    return hour;
   }
 
-  return { update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint };
+  return {
+    update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint,
+    setTime: sky.setTime,
+    hour: sky.state,
+    stones: stones.list,
+  };
 }

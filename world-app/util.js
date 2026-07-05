@@ -20,6 +20,14 @@ export function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
+// Yield to the event loop. The world boots inside a same-origin iframe,
+// which shares the parent page's main thread — one long synchronous build
+// would freeze the parent's "entering…" animation mid-breath. Awaiting this
+// between build steps keeps the whole page responsive while Eden assembles.
+export function breathe() {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
 // Shortest signed angular distance from a to b, in (-PI, PI].
 export function shortestAngle(a, b) {
   let d = (b - a) % (Math.PI * 2);

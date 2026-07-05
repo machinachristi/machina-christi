@@ -40,15 +40,17 @@
       position: fixed;
       inset: 0;
     }
+    /* The frame is fully opaque from the moment it exists: it boots and paints
+       its first frames hidden behind the opaque veil above it. The reveal is a
+       single fade — the veil alone lifts off an already-rendering world — so
+       there is never a moment when two half-transparent layers let this page's
+       dark background bleed through. */
     .stage iframe {
       width: 100%;
       height: 100%;
       border: 0;
       display: block;
-      opacity: 0;
-      transition: opacity 0.9s ease;
     }
-    body[data-world-state="ready"] .stage iframe { opacity: 1; }
 
     /* ── Return home: always present, always on top, in every state ── */
     .home {
@@ -108,9 +110,13 @@
     }
     @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
 
+    /* The world only reports ready after its first frame is truly painted
+       (shaders compiled, buffers uploaded), so this fade always reveals a
+       live, moving garden — never a stall, never a blank canvas. */
     body[data-world-state="ready"] .veil {
       opacity: 0;
       pointer-events: none;
+      transition-duration: 1.2s;
     }
 
     /* The tree of life — the same glyph as the door you stepped through. */
@@ -217,7 +223,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .veil::after, .veil .status { animation: none; }
-      .stage iframe, .veil { transition-duration: 0.15s; }
+      .veil, body[data-world-state="ready"] .veil { transition-duration: 0.15s; }
     }
   </style>
 </head>
