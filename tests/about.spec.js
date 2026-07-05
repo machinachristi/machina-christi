@@ -16,6 +16,7 @@ test.describe('about hub', () => {
     await expect(page.locator('h1')).toContainText('About');
     await expect(page.locator('a[href="about-camino.html"]')).toBeVisible();
     await expect(page.locator('a[href="about-eden.html"]')).toBeVisible();
+    await expect(page.locator('a[href="about-ordo.html"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -40,6 +41,14 @@ test.describe('about sub-pages', () => {
     await page.goto('/about-eden.html');
     await expect(page.locator('h1')).toContainText('Eden');
     await expect(page.locator('a[href="world.html"]')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('about-ordo loads cleanly and links to ordo', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/about-ordo.html');
+    await expect(page.locator('h1')).toContainText('Ordo');
+    await expect(page.locator('a[href="ordo.html"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 

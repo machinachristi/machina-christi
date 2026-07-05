@@ -8,13 +8,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; and the story behind them." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; and the story behind them." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -34,6 +34,7 @@
       --gold-soft: #e8d5a3;
       --amber:     255, 196, 92;   /* Camino — warm lamplight (rgb parts) */
       --leaf:      168, 205, 140;  /* Eden — living green */
+      --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
       --parchment: 216, 198, 170;  /* About — the written word */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
@@ -182,6 +183,7 @@
 
     .portal--camino { --glow: var(--amber); }
     .portal--eden   { --glow: var(--leaf); }
+    .portal--ordo   { --glow: var(--violet); }
     .portal--about  { --glow: var(--parchment); }
 
     /* The light waiting past each threshold. */
@@ -436,6 +438,20 @@
         </span>
         <span class="portal__title">About</span>
         <span class="portal__desc">the story behind it all</span>
+      </a>
+
+      <a class="portal portal--ordo" href="ordo.html" aria-label="Enter Ordo, today in the Church">
+        <span class="portal__halo" aria-hidden="true"></span>
+        <span class="portal__vignette" aria-hidden="true">
+          <svg viewBox="0 0 48 64">
+            <!-- a candle burning before an open page -->
+            <path d="M24 10 C20 16 18 20 18 24 C18 28.4 20.7 31 24 31 C27.3 31 30 28.4 30 24 C30 20 28 16 24 10 Z" />
+            <path d="M20 31 V50 H28 V31" />
+            <path d="M11 50 H37" />
+          </svg>
+        </span>
+        <span class="portal__title">Ordo</span>
+        <span class="portal__desc">today in the Church</span>
       </a>
     </div>
 

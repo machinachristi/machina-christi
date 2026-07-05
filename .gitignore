@@ -10,3 +10,6 @@ playwright-report/
 test-results/
 
 .DS_Store
+
+# Python bytecode cache from the one-off scripts/*.py maintenance scripts
+__pycache__/

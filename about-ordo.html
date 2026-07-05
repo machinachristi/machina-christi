@@ -4,19 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="About Machina Christi — the site, the runner, the garden, and today in the Church." />
+  <meta name="description" content="About Ordo, the Machina Christi page for today in the Church." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://machinachristi.com/about.html" />
-  <meta property="og:title" content="About Machina Christi" />
-  <meta property="og:description" content="The site, the runner, the garden, and today in the Church — and the story behind them." />
+  <meta property="og:url" content="https://machinachristi.com/about-ordo.html" />
+  <meta property="og:title" content="About Ordo" />
+  <meta property="og:description" content="About Ordo, the Machina Christi page for today in the Church." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
   <meta name="twitter:card" content="summary_large_image" />
-  <title>About · Machina Christi</title>
+  <title>Ordo · About · Machina Christi</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -24,14 +24,14 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --leaf:      168, 205, 140;
+      --violet:    176, 150, 214;
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
     }
 
     html, body { min-height: 100dvh; }
     body {
       background:
-        radial-gradient(120% 60% at 50% 0%, rgba(120, 92, 48, 0.2), transparent 60%),
+        radial-gradient(120% 60% at 50% 0%, rgba(120, 100, 150, 0.18), transparent 60%),
         var(--bg);
       background-attachment: fixed;
       color: var(--gold-soft);
@@ -81,7 +81,6 @@
       text-transform: uppercase;
       color: var(--gold);
     }
-    /* A thin gold rule beneath the heading, like a line ruled in an old book. */
     h1::after {
       content: "";
       display: block;
@@ -92,68 +91,39 @@
     }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
 
-    .cards { display: flex; flex-direction: column; gap: 16px; margin-top: 2.2em; }
-    .card {
-      position: relative;
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      padding: 20px 52px 20px 24px;
-      border: 1px solid rgba(201, 162, 39, 0.28);
-      border-radius: 14px;
-      background: rgba(201, 162, 39, 0.04);
-      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card::after {
-      content: "\203A";
-      position: absolute;
-      right: 22px;
-      top: 50%;
-      transform: translateY(-52%);
-      font-size: 22px;
-      color: rgba(201, 162, 39, 0.5);
-      transition: color 0.3s ease;
-    }
-    .card:hover, .card:focus-visible {
-      border-color: rgba(201, 162, 39, 0.7);
-      background: rgba(201, 162, 39, 0.08);
-      box-shadow: 0 0 34px -12px rgba(255, 196, 92, 0.3);
-      outline: none;
-    }
-    .card:hover::after, .card:focus-visible::after { color: var(--gold-soft); }
-    .card h2 {
-      font-weight: normal;
+    a.enter {
+      display: inline-block;
+      margin-top: 0.8em;
       font-size: 14px;
-      letter-spacing: 0.26em;
+      letter-spacing: 0.24em;
+      text-indent: 0.24em;
       text-transform: uppercase;
       color: var(--gold-soft);
-      margin-bottom: 0.4em;
+      text-decoration: none;
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      padding: 12px 30px;
+      background: rgba(201, 162, 39, 0.06);
+      transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
     }
-    .card p { margin: 0; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
+    a.enter:hover, a.enter:focus-visible {
+      border-color: rgba(201, 162, 39, 0.85);
+      background: rgba(201, 162, 39, 0.14);
+      color: #fff;
+      box-shadow: 0 0 30px -8px rgba(var(--violet), 0.4);
+      outline: none;
+    }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <a class="back" href="index.html">&lsaquo; home</a>
-    <h1>About</h1>
-    <p>Machina Christi is a small, growing collection of experiences, built one conversation at a time. This is home base for the story behind them — what they are, why they exist, and how they keep changing.</p>
-
-    <div class="cards">
-      <a class="card" href="about-camino.html">
-        <h2>Camino</h2>
-        <p>An endless runner about walking the narrow way.</p>
-      </a>
-      <a class="card" href="about-eden.html">
-        <h2>Eden</h2>
-        <p>A living 3D garden, refined over time.</p>
-      </a>
-      <a class="card" href="about-ordo.html">
-        <h2>Ordo</h2>
-        <p>Today in the Church: the day&rsquo;s gospel, and the saint of the day from Butler&rsquo;s Lives of the Saints.</p>
-      </a>
-    </div>
+    <a class="back" href="about.html">&lsaquo; about</a>
+    <h1>Ordo</h1>
+    <p>Ordo is the quietest room in the house: today in the Church, at a glance. A link to the day's Gospel reading, and — on a feast, memorial, or solemnity — the name of the saint the Church remembers, with a short life drawn from Alban Butler's <cite>Lives of the Saints</cite> (1894), now in the public domain.</p>
+    <p>The calendar comes from the General Roman Calendar; the Gospel text itself lives at USCCB, linked out rather than reproduced. Not every saint on the calendar has a matching entry yet — Butler wrote before many modern canonizations, and the page says so plainly rather than guessing.</p>
+    <p><a class="enter" href="ordo.html">open today&rsquo;s page</a></p>
   </div>
 </body>
 </html>
