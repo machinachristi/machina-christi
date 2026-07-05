@@ -101,7 +101,7 @@
     }
     .hero .epigraph {
       font-style: italic;
-      font-size: clamp(12px, 3.4vw, 15px);
+      font-size: clamp(13px, 3.6vw, 16px);
       letter-spacing: 0.06em;
       color: rgba(232, 213, 163, 0.55);
     }
@@ -213,7 +213,7 @@
     .portal__title {
       position: relative;
       text-align: center;
-      font-size: clamp(13px, 4.6vw, 19px);
+      font-size: clamp(15px, 4.6vw, 19px);
       letter-spacing: 0.24em;
       text-indent: 0.24em;
       text-transform: uppercase;
@@ -225,26 +225,25 @@
       position: relative;
       text-align: center;
       font-style: italic;
-      font-size: clamp(11px, 3vw, 13.5px);
+      font-size: clamp(13px, 3.6vw, 15px);
       line-height: 1.5;
-      color: rgba(232, 213, 163, 0.5);
-      padding: 7px 14% 0;
+      color: rgba(232, 213, 163, 0.55);
+      padding: 8px 12% clamp(20px, 8%, 30px);
       transition: color 0.35s ease;
     }
-    .portal__enter {
-      position: relative;
-      align-self: center;
-      font-size: 10.5px;
-      font-style: italic;
-      letter-spacing: 0.3em;
-      text-indent: 0.3em;
-      color: rgba(201, 162, 39, 0.7);
-      border-top: 1px solid rgba(201, 162, 39, 0.26);
-      width: 58%;
+
+    /* One shared cue beneath the gates, in place of the word "enter" once
+       repeated on every arch. A single line reads cleaner and larger; the
+       JS below swaps "Tap" for "Click" on a mouse pointer. */
+    .hint {
       text-align: center;
-      padding: 9px 0;
-      margin: 12px 0 clamp(14px, 4.5%, 22px);
-      transition: color 0.35s ease, border-color 0.35s ease;
+      font-style: italic;
+      font-size: clamp(13px, 3.4vw, 15px);
+      letter-spacing: 0.16em;
+      text-indent: 0.16em;
+      color: rgba(232, 213, 163, 0.62);
+      padding: 0 20px;
+      margin-top: 6px;
     }
 
     /* With JS, gates away from the center rest dimmer and a step back;
@@ -267,11 +266,7 @@
       color: #fff;
       text-shadow: 0 0 14px rgba(var(--glow), 0.45);
     }
-    .portal:hover .portal__enter, .portal:focus-visible .portal__enter {
-      color: rgba(232, 213, 163, 0.9);
-      border-color: rgba(201, 162, 39, 0.55);
-    }
-    .portal:hover .portal__desc { color: rgba(232, 213, 163, 0.72); }
+    .portal:hover .portal__desc, .portal:focus-visible .portal__desc { color: rgba(232, 213, 163, 0.78); }
     .portal:focus-visible {
       outline: 1px solid rgba(var(--glow), 0.65);
       outline-offset: 6px;
@@ -406,7 +401,6 @@
         </span>
         <span class="portal__title">Camino</span>
         <span class="portal__desc">the pilgrim&rsquo;s road</span>
-        <span class="portal__enter">enter</span>
       </a>
 
       <a class="portal portal--eden" href="world.html" aria-label="Enter Eden, the digital garden">
@@ -424,7 +418,6 @@
         </span>
         <span class="portal__title">Eden</span>
         <span class="portal__desc">the digital garden</span>
-        <span class="portal__enter">enter</span>
       </a>
 
       <a class="portal portal--about" href="about.html" aria-label="About Machina Christi, the story behind it all">
@@ -439,10 +432,10 @@
         </span>
         <span class="portal__title">About</span>
         <span class="portal__desc">the story behind it all</span>
-        <span class="portal__enter">enter</span>
       </a>
     </div>
 
+    <p class="hint">Tap a gate to enter</p>
     <div class="waymarks"></div>
   </nav>
 
@@ -519,6 +512,10 @@
 
       /* ── Desktop: arrows and drag-to-scroll ─────────────────── */
       if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        // On a mouse, the gesture is a click, not a tap.
+        const hint = document.querySelector('.hint');
+        if (hint) hint.textContent = 'Click a gate to enter';
+
         const makeArrow = (dir, label, glyph) => {
           const b = document.createElement('button');
           b.type = 'button';
