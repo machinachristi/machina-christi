@@ -132,14 +132,24 @@ fetch('./manifest.json')
 renderer.render(scene, camera);
 await breathe();
 
+// The reverence chime is struck once per approach to the sacred trees,
+// re-armed only after the walker has properly drawn away again.
+let reverent = false;
+
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
   character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
   updateCompanion(dt);
   rig.update(dt);
-  const hour = garden.update(dt);
+  const hour = garden.update(dt, character.group.position);
   ambience.update(dt, hour.night, character.group.position);
+  if (garden.reverence > 0.6 && !reverent) {
+    reverent = true;
+    ambience.chime();
+  } else if (garden.reverence < 0.12) {
+    reverent = false;
+  }
   renderer.render(scene, camera);
 
   if (!ready) {
@@ -170,6 +180,12 @@ window.__world = {
       sound: ambience.state(),
       // The four heads' standing stones — name and where each stands.
       stones: garden.stones,
+      // The stepping stones of the river crossing.
+      crossing: garden.crossing,
+      // The named signs of the night sky (Genesis 1:14; Job 9:9).
+      constellations: garden.constellations,
+      // A census of the creatures, with each flyer's present mode.
+      fauna: garden.fauna(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

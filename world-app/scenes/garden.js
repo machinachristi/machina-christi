@@ -4,11 +4,12 @@
 
 import * as THREE from 'three';
 import { createSky, HORIZON } from './sky.js';
-import { createTerrain, heightAt, riverZ, GARDEN_RADIUS } from './terrain.js';
+import { createTerrain, heightAt, riverZ, GARDEN_RADIUS, CROSSING } from './terrain.js';
 import { createWater } from './water.js';
 import { createVegetation, TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
 import { createCreatures } from './creatures.js';
 import { createStones } from './stones.js';
+import { createMist } from './mist.js';
 import { breathe } from '../util.js';
 
 // Async, with a breath between the heavy build steps: the iframe shares the
@@ -29,6 +30,7 @@ export async function createGarden(scene, rng) {
   await breathe();
   const creatures = createCreatures(scene, rng);
   const stones = createStones(scene);
+  const mist = createMist(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -38,12 +40,15 @@ export async function createGarden(scene, rng) {
 
   // The sky keeps the day's clock; its state (how deep into night, etc.)
   // flows to everything that keeps the hours — and back to the caller,
-  // where the ambience listens to it too.
-  function update(dt) {
+  // where the ambience listens to it too. The walker's position flows the
+  // other way, so drawing near the sacred trees can be felt (reverence).
+  let reverence = 0;
+  function update(dt, playerPos) {
     const hour = sky.update(dt);
     water.update(dt);
-    vegetation.update(dt, hour.night);
-    creatures.update(dt);
+    reverence = vegetation.update(dt, hour.night, playerPos);
+    creatures.update(dt, hour.night);
+    mist.update(dt, hour.t);
     return hour;
   }
 
@@ -52,5 +57,9 @@ export async function createGarden(scene, rng) {
     setTime: sky.setTime,
     hour: sky.state,
     stones: stones.list,
+    crossing: CROSSING,
+    constellations: sky.constellations,
+    fauna: creatures.fauna,
+    get reverence() { return reverence; },
   };
 }

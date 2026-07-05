@@ -158,6 +158,74 @@ export function createSky(scene) {
   stars.visible = false;
   scene.add(stars);
 
+  // Signs in the heavens: "let them be for signs, and for seasons"
+  // (Genesis 1:14). Three figures the Scriptures themselves name — "which
+  // maketh Arcturus, Orion, and Pleiades" (Job 9:9) — set as brighter
+  // stars, the Bear and Orion joined by faint lines, the Pleiades left as
+  // the close-knit cluster it is. Revealed, like the stars, only by night.
+  // Each figure: a base direction (azimuth/elevation, radians) and star
+  // offsets in degrees; `lines` index into its own stars.
+  const CONSTELLATIONS = [
+    {
+      name: 'the Bear', az: 0.45, el: 0.72,
+      stars: [[0, 0], [4, 0.4], [4.8, -3.0], [0.6, -3.2], [7.6, 1.6], [10.8, 2.4], [14.4, 1.8]],
+      lines: [[0, 1], [1, 2], [2, 3], [3, 0], [1, 4], [4, 5], [5, 6]],
+    },
+    {
+      name: 'Orion', az: 2.65, el: 0.52,
+      stars: [[0, 0], [5.4, -0.6], [1.9, -5.2], [2.9, -5.8], [3.9, -6.4], [0.6, -11.4], [5.8, -10.6]],
+      lines: [[0, 1], [0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6], [5, 6]],
+    },
+    {
+      name: 'the Pleiades', az: 2.0, el: 0.92,
+      stars: [[0, 0], [0.9, 0.5], [1.6, -0.2], [0.7, -0.9], [-0.5, -0.6], [2.2, 0.6]],
+      lines: [],
+    },
+  ];
+  const signPos = [];
+  const linePos = [];
+  const DEG = Math.PI / 180;
+  for (const c of CONSTELLATIONS) {
+    const world = c.stars.map(([oa, oe]) => {
+      const az = c.az + oa * DEG;
+      const el = c.el + oe * DEG;
+      return new THREE.Vector3(
+        Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az),
+      ).multiplyScalar(398);
+    });
+    for (const w of world) signPos.push(w.x, w.y, w.z);
+    for (const [i2, j2] of c.lines) {
+      linePos.push(world[i2].x, world[i2].y, world[i2].z, world[j2].x, world[j2].y, world[j2].z);
+    }
+  }
+  const signGeo = new THREE.BufferGeometry();
+  signGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(signPos), 3));
+  const signStars = new THREE.Points(signGeo, new THREE.PointsMaterial({
+    size: 3.6,
+    sizeAttenuation: false,
+    color: 0xDFE8F5,
+    transparent: true,
+    opacity: 0,
+    fog: false,
+    depthWrite: false,
+  }));
+  signStars.renderOrder = -9;
+  signStars.visible = false;
+  scene.add(signStars);
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linePos), 3));
+  const signLines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+    color: 0x8FA6CC,
+    transparent: true,
+    opacity: 0,
+    fog: false,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }));
+  signLines.renderOrder = -9;
+  signLines.visible = false;
+  scene.add(signLines);
+
   // Clouds: one instanced icosahedron forming a few puffy clusters.
   const CLOUD_PUFFS = [];
   const clusters = [
@@ -277,6 +345,10 @@ export function createSky(scene) {
     const twinkle = 0.92 + 0.08 * Math.sin(elapsed * 2.1);
     stars.material.opacity = num.stars * twinkle;
     stars.visible = num.stars > 0.02;
+    signStars.material.opacity = num.stars * twinkle;
+    signStars.visible = stars.visible;
+    signLines.material.opacity = num.stars * 0.2;
+    signLines.visible = stars.visible;
 
     cloudMat.emissive.lerpColors(CLOUD_EMISSIVE_DAY, CLOUD_EMISSIVE_NIGHT, num.night);
 
@@ -315,5 +387,5 @@ export function createSky(scene) {
   }
 
   apply();
-  return { update, setTime, state };
+  return { update, setTime, state, constellations: CONSTELLATIONS.map(c => c.name) };
 }

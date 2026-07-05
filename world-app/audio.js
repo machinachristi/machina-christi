@@ -1,10 +1,11 @@
 // The garden's voice, woven from nothing: no sound files, only WebAudio
 // oscillators and filtered noise shaped live — wind moving in slow gusts,
-// the river heard when you stand near its banks (and fading as you leave),
-// birdsong scattered through the day, crickets after dark. Autoplay-polite:
-// sound begins only once the browser grants a user gesture (entering the
-// garden usually is one; the first touch always is), and a small persisted
-// toggle keeps Eden silent for those who prefer it that way.
+// the river heard as a low soft brook near its banks, birdsong scattered
+// through the day, crickets after dark in short phrases (never a drone),
+// and a quiet chime of reverence near the sacred trees. Everything passes
+// through one mellowing low-pass, so nothing in Eden ever hisses or bites.
+// Silent until invited: the garden starts muted, and the corner toggle
+// (persisted) is how a visitor asks for its voice.
 
 import { clamp } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
@@ -14,14 +15,16 @@ const PREF_KEY = 'camino_sound';
 export function createAmbience() {
   const AC = window.AudioContext || window.webkitAudioContext;
   let supported = typeof AC === 'function';
-  let muted = false;
-  try { muted = localStorage.getItem(PREF_KEY) === 'off'; } catch (_) { /* private mode etc. */ }
+  // Quiet by default: only an explicit, persisted "on" wakes the ambience.
+  let muted = true;
+  try { muted = localStorage.getItem(PREF_KEY) !== 'on'; } catch (_) { /* private mode etc. */ }
 
   let ctx = null;
   let master = null;
   let refs = null;        // live gain nodes the update loop steers
   let acc = 0;            // update throttle — audio params need ~4Hz, not 60
   let birdIn = 2.0;       // seconds until the next possible chirp
+  let cricketIn = 1.5;    // seconds until the next possible cricket phrase
   let night = 0;
 
   // ── The toggle: a small pill in the world's corner ──
@@ -50,10 +53,10 @@ export function createAmbience() {
       if (shape === 'deep') {          // brown-ish, for wind
         b0 = (b0 + 0.02 * w) / 1.02;
         d[i] = b0 * 3.5;
-      } else {                          // pink-ish, for water
-        b0 = 0.98 * b0 + w * 0.2;
-        b1 = 0.7 * b1 + w * 0.5;
-        d[i] = (b0 + b1 * 0.4 + w * 0.12) * 0.9;
+      } else {                          // deep-brushed brown, for gentle water
+        b0 = 0.99 * b0 + w * 0.02;
+        b1 = 0.8 * b1 + w * 0.25;
+        d[i] = b0 * 2.2 + b1 * 0.5 + w * 0.02;
       }
     }
     return buf;
@@ -70,7 +73,13 @@ export function createAmbience() {
   function buildGraph() {
     master = ctx.createGain();
     master.gain.value = 0;
-    master.connect(ctx.destination);
+    // One mellowing low-pass over everything: the air of the garden.
+    const air = ctx.createBiquadFilter();
+    air.type = 'lowpass';
+    air.frequency.value = 5600;
+    air.Q.value = 0.4;
+    master.connect(air);
+    air.connect(ctx.destination);
 
     // Wind: deep noise through a low-pass whose cutoff and level breathe
     // together on one slow LFO — gusts, not a steady hiss.
@@ -79,7 +88,7 @@ export function createAmbience() {
     windFilter.frequency.value = 340;
     windFilter.Q.value = 0.4;
     const windGain = ctx.createGain();
-    windGain.gain.value = 0.05;
+    windGain.gain.value = 0.045;
     loopNoise(noiseBuffer('deep')).connect(windFilter);
     windFilter.connect(windGain).connect(master);
     const gust = ctx.createOscillator();
@@ -88,49 +97,30 @@ export function createAmbience() {
     gustToFreq.gain.value = 90;
     gust.connect(gustToFreq).connect(windFilter.frequency);
     const gustToGain = ctx.createGain();
-    gustToGain.gain.value = 0.014;
+    gustToGain.gain.value = 0.012;
     gust.connect(gustToGain).connect(windGain.gain);
     gust.start();
 
-    // The river: pink noise through a wandering band-pass. Its level is set
-    // each update from the walker's true distance to the water's edge — the
-    // same riverEdgeDist the terrain itself is carved with.
-    const waterBand = ctx.createBiquadFilter();
-    waterBand.type = 'bandpass';
-    waterBand.frequency.value = 700;
-    waterBand.Q.value = 0.8;
+    // The river: a low brook, not a hiss — dark water-noise kept under a
+    // gentle low-pass, its cutoff swaying slowly so the flow murmurs. Its
+    // level is set each update from the walker's true distance to the
+    // water's edge — the same riverEdgeDist the terrain is carved with.
+    const waterLP = ctx.createBiquadFilter();
+    waterLP.type = 'lowpass';
+    waterLP.frequency.value = 460;
+    waterLP.Q.value = 0.7;
     const waterGain = ctx.createGain();
     waterGain.gain.value = 0;
-    loopNoise(noiseBuffer('pink')).connect(waterBand);
-    waterBand.connect(waterGain).connect(master);
-    const burble = ctx.createOscillator();
-    burble.frequency.value = 0.5;
-    const burbleAmt = ctx.createGain();
-    burbleAmt.gain.value = 220;
-    burble.connect(burbleAmt).connect(waterBand.frequency);
-    burble.start();
+    loopNoise(noiseBuffer('water')).connect(waterLP);
+    waterLP.connect(waterGain).connect(master);
+    const lap = ctx.createOscillator();
+    lap.frequency.value = 0.32;
+    const lapAmt = ctx.createGain();
+    lapAmt.gain.value = 110;
+    lap.connect(lapAmt).connect(waterLP.frequency);
+    lap.start();
 
-    // Crickets: two detuned high sines, amplitude-trembled at cricket rate.
-    // Silent by day; the night level is steered from the sky's cycle.
-    const cricketGain = ctx.createGain();
-    cricketGain.gain.value = 0;
-    const tremble = ctx.createGain();
-    tremble.gain.value = 0.5;
-    const trembleOsc = ctx.createOscillator();
-    trembleOsc.frequency.value = 33;
-    const trembleAmt = ctx.createGain();
-    trembleAmt.gain.value = 0.5;
-    trembleOsc.connect(trembleAmt).connect(tremble.gain);
-    trembleOsc.start();
-    for (const f of [4250, 4630]) {
-      const osc = ctx.createOscillator();
-      osc.frequency.value = f;
-      osc.connect(tremble);
-      osc.start();
-    }
-    tremble.connect(cricketGain).connect(master);
-
-    refs = { windGain, waterGain, cricketGain };
+    refs = { windGain, waterGain };
     master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
@@ -140,7 +130,7 @@ export function createAmbience() {
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-    const base = 1900 + Math.random() * 1400;
+    const base = 1600 + Math.random() * 1000;
     const notes = 2 + Math.floor(Math.random() * 4);
     g.gain.setValueAtTime(0, t0);
     let tt = t0;
@@ -148,7 +138,7 @@ export function createAmbience() {
       const f = base * (1 + (Math.random() - 0.5) * 0.18);
       osc.frequency.setValueAtTime(f, tt);
       osc.frequency.exponentialRampToValueAtTime(f * (1.12 + Math.random() * 0.2), tt + 0.055);
-      g.gain.linearRampToValueAtTime(0.05, tt + 0.014);
+      g.gain.linearRampToValueAtTime(0.032, tt + 0.014);
       g.gain.exponentialRampToValueAtTime(0.0008, tt + 0.1);
       tt += 0.1 + Math.random() * 0.08;
     }
@@ -162,6 +152,60 @@ export function createAmbience() {
     osc.start(t0);
     osc.stop(tt + 0.15);
     osc.onended = () => { osc.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
+  }
+
+  // One cricket phrase: a few soft pulses of one high-but-hushed tone,
+  // rounded by its own low-pass and panned into the grass somewhere.
+  // Phrases with silences between them — night music, not a constant beep.
+  function cricketPhrase() {
+    const t0 = ctx.currentTime + 0.02;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 4300;
+    lp.Q.value = 0.5;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    osc.frequency.value = 3350 + Math.random() * 480;
+    const pulses = 3 + Math.floor(Math.random() * 3);
+    g.gain.setValueAtTime(0.0001, t0);
+    let tt = t0;
+    for (let p = 0; p < pulses; p++) {
+      g.gain.linearRampToValueAtTime(0.011, tt + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0005, tt + 0.085);
+      tt += 0.115 + Math.random() * 0.02;
+    }
+    osc.connect(lp);
+    lp.connect(g);
+    if (pan) {
+      pan.pan.value = Math.random() * 1.4 - 0.7;
+      g.connect(pan).connect(master);
+    } else {
+      g.connect(master);
+    }
+    osc.start(t0);
+    osc.stop(tt + 0.1);
+    osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
+  }
+
+  // The reverence chime: two soft bell tones, a fifth apart, when a walker
+  // draws near the sacred trees — felt more than heard.
+  function chime() {
+    if (!ctx || ctx.state !== 'running' || muted) return;
+    const t0 = ctx.currentTime + 0.03;
+    for (const [f, at, amp] of [[659.25, 0, 0.03], [987.77, 0.4, 0.018]]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0 + at);
+      g.gain.linearRampToValueAtTime(amp, t0 + at + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0004, t0 + at + 2.6);
+      osc.connect(g).connect(master);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + 2.8);
+      osc.onended = () => { osc.disconnect(); g.disconnect(); };
+    }
   }
 
   function ensureStarted() {
@@ -179,8 +223,8 @@ export function createAmbience() {
     if (master) master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
-  // Entering the garden is usually already a user gesture; where the browser
-  // disagrees, the first touch or keypress in the world unlocks it.
+  // Waking the sound is itself a click on the toggle (already a gesture);
+  // these cover the case of a persisted "on" from an earlier visit.
   window.addEventListener('pointerdown', ensureStarted);
   window.addEventListener('keydown', ensureStarted);
   ensureStarted();
@@ -217,13 +261,17 @@ export function createAmbience() {
     acc = 0;
     const tc = ctx.currentTime;
 
-    // The river grows on the ear as the walker nears the water.
+    // The river grows on the ear as the walker nears the water — gently.
     const d = riverEdgeDist(pos.x, pos.z);
     const nearness = 1 - clamp(d / 16, 0, 1);
-    refs.waterGain.gain.setTargetAtTime(0.012 + 0.11 * Math.pow(nearness, 1.6), tc, 0.4);
+    refs.waterGain.gain.setTargetAtTime(0.006 + 0.06 * Math.pow(nearness, 1.6), tc, 0.5);
 
-    // Crickets keep the night watch; birds keep the day.
-    refs.cricketGain.gain.setTargetAtTime(night * night * 0.05, tc, 0.6);
+    // Crickets keep the night watch in phrases; birds keep the day.
+    cricketIn -= step;
+    if (cricketIn <= 0) {
+      cricketIn = 1.2 + Math.random() * 2.8;
+      if (night > 0.5) cricketPhrase();
+    }
     birdIn -= step;
     if (birdIn <= 0) {
       birdIn = 2.5 + Math.random() * 5.5;
@@ -239,5 +287,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, state };
+  return { update, setMuted, chime, state };
 }
