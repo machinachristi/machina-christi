@@ -21,6 +21,47 @@
     }
 
     canvas { display: block; touch-action: none; }
+
+    /* The ambience toggle (created by audio.js) — a quiet pill in the
+       corner, echoing the shell's "return home" styling. */
+    .sound {
+      position: fixed;
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 10;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(201, 162, 39, 0.35);
+      background: rgba(11, 10, 8, 0.4);
+      color: rgba(232, 213, 163, 0.9);
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      touch-action: manipulation;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+    .sound:hover, .sound:focus-visible {
+      border-color: rgba(201, 162, 39, 0.7);
+      background: rgba(11, 10, 8, 0.6);
+      outline: none;
+    }
+    .sound svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .sound .slash { display: none; }
+    .sound--off .wave { display: none; }
+    .sound--off .slash { display: block; }
+    .sound--off { color: rgba(232, 213, 163, 0.55); }
   </style>
   <script>
     // Error relay to the parent shell (world.html). Registered before the

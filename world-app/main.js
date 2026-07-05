@@ -8,6 +8,7 @@ import { createGarden } from './scenes/garden.js';
 import { createCharacter } from './character.js';
 import { CameraRig } from './camera-rig.js';
 import { createControls } from './controls.js';
+import { createAmbience } from './audio.js';
 import { mulberry32, breathe } from './util.js';
 
 const params = new URLSearchParams(location.search);
@@ -55,6 +56,10 @@ const rig = new CameraRig(camera, character.group, garden.heightAt);
 rig.beginIntro(garden.sacredMidpoint);
 
 const controls = createControls(renderer.domElement, () => rig.skipIntro());
+
+// The garden's procedural soundscape — wind, near-water, birds by day,
+// crickets by night. It follows the sky's clock and the walker's position.
+const ambience = createAmbience();
 
 // The companion — always the other one of the pair, walking on its own.
 // Never wired into CameraRig, so the camera keeps following only `character`.
@@ -133,7 +138,8 @@ renderer.setAnimationLoop(() => {
   character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
   updateCompanion(dt);
   rig.update(dt);
-  garden.update(dt);
+  const hour = garden.update(dt);
+  ambience.update(dt, hour.night, character.group.position);
   renderer.render(scene, camera);
 
   if (!ready) {
@@ -157,6 +163,13 @@ window.__world = {
         character: eve ? 'adam' : 'eve',
         pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
       },
+      // The day's clock (see scenes/sky.js): t in [0,1), a named phase,
+      // and how deep into night the world is.
+      time: { t: garden.hour.t, phase: garden.hour.phase, night: garden.hour.night },
+      // The ambience (audio.js): supported/muted/actually-running.
+      sound: ambience.state(),
+      // The four heads' standing stones — name and where each stands.
+      stones: garden.stones,
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -165,11 +178,25 @@ window.__world = {
       },
     };
   },
+  // Jump the day's clock — 'dawn'|'morning'|'noon'|'evening'|'dusk'|'night'
+  // or a number in [0,1). For tests, screenshots, and the curious.
+  setTime(v) {
+    const hour = garden.setTime(v);
+    return { t: hour.t, phase: hour.phase, night: hour.night };
+  },
+  // Quiet or wake the ambience (persisted, same as the corner toggle).
+  setMuted(b) {
+    ambience.setMuted(b);
+    return ambience.state();
+  },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without
   // scripted walks. The walk-radius clamp still governs actual walking.
-  teleport(x, z) {
+  // Optional `facing` (radians, yaw) also turns the character, and with it
+  // where the follow camera settles — screenshots become composable.
+  teleport(x, z, facing) {
     character.group.position.set(x, garden.heightAt(x, z), z);
+    if (typeof facing === 'number') character.group.rotation.y = facing;
     return this.getState().pos;
   },
   // Reads back a grid of drawing-buffer pixels right after an explicit

@@ -60,6 +60,10 @@ export function createVegetation(scene, rng) {
   const group = new THREE.Group();
   scene.add(group);
 
+  // Kept in scope for the night: after dark the Tree of Life's lamp and
+  // golden canopy brighten, and the motes turn firefly (see update()).
+  let lifeLamp, lifeGold;
+
   // ── The two sacred trees, hand-shaped ─────────────────────
   // Tree of Life: pale trunk, golden triple canopy, its own warm light.
   {
@@ -84,6 +88,8 @@ export function createVegetation(scene, rng) {
     t.add(lamp);
     t.position.set(TREE_OF_LIFE_POS.x, heightAt(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z), TREE_OF_LIFE_POS.z);
     group.add(t);
+    lifeLamp = lamp;
+    lifeGold = gold;
   }
 
   // Tree of Knowledge: a leaning, twisted trunk, deep shadowed canopy,
@@ -244,7 +250,10 @@ export function createVegetation(scene, rng) {
   group.add(motes);
 
   let t = 0;
-  function update(dt) {
+  // `night` (0 day → 1 full dark, from the sky's cycle): after sundown the
+  // Tree of Life answers the dark — lamp and canopy brighten — and the
+  // drifting motes glow larger and fuller, reading as fireflies.
+  function update(dt, night = 0) {
     t += dt;
     const arr = moteGeo.attributes.position.array;
     for (let i = 0; i < MOTES; i++) {
@@ -253,6 +262,11 @@ export function createVegetation(scene, rng) {
       arr[i * 3] += Math.sin(t * 0.22 + s2.phase) * 0.0016;
     }
     moteGeo.attributes.position.needsUpdate = true;
+
+    lifeLamp.intensity = 26 + night * 30;
+    lifeGold.emissiveIntensity = 0.55 + night * 0.5;
+    motes.material.opacity = 0.8 + night * 0.2;
+    motes.material.size = 0.16 + night * 0.06;
   }
 
   return { update };

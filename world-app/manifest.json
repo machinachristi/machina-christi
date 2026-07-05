@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -19,15 +19,20 @@
       "date": "2026-07-04",
       "focus": "the waters",
       "summary": "The river lives: its surface now flows downstream in low-poly ripples, and east of the garden the one course is parted and becomes four heads (Genesis 2:10) — channels that fan through the rim into the mist, with meadow islands between them. Five fish — one gold — swim the wadable stretch, gliding under the surface and rising to break it."
+    },
+    {
+      "version": 4,
+      "date": "2026-07-04",
+      "focus": "evening and morning",
+      "summary": "Time passes in Eden now: a whole day breathes in seven minutes — morning, noon, golden hour, an amber sunset, and a starlit night where the moon takes the light (Genesis 1:16), the Tree of Life burns brighter, and the motes rise as fireflies. The garden found its voice, woven live from oscillators and filtered noise with no sound files at all: wind in gusts, the river swelling on the ear near its banks, birdsong by day, crickets after dark — with a quiet corner toggle. And at the parting, four standing stones name the heads: Pishon, Gihon, Tigris, Euphrates (Genesis 2:11–14)."
     }
   ],
   "next": [
-    "A day/night cycle — evening and morning",
-    "More creatures: doves, cattle; give the birds perching behavior",
+    "More creatures: doves, cattle; give the birds perching behavior — and let them roost at dusk",
     "Surface the Adam/Eve choice to visitors instead of a query parameter",
-    "Gentle ambient sound: wind, water, birdsong (respecting mobile autoplay rules)",
     "Deepen the sacred trees: falling leaves of gold, a subtle reverence moment when approached",
-    "Name the four heads — Pishon, Gihon, Tigris, Euphrates — inscribed where the river parts",
-    "A crossing: stepping stones where the walking paths meet the river"
+    "A crossing: stepping stones where the walking paths meet the river",
+    "The mist of Eden: a morning haze rising from the ground to water it (Genesis 2:6)",
+    "Signs and seasons: shape a few night stars into constellations with meaning (Genesis 1:14)"
   ]
 }
