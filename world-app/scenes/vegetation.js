@@ -6,6 +6,7 @@
 
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist } from './terrain.js';
+import { smoothstep, mulberry32 } from '../util.js';
 
 export const TREE_OF_LIFE_POS = new THREE.Vector3(-3.2, 0, -0.5);
 export const TREE_OF_KNOWLEDGE_POS = new THREE.Vector3(3.4, 0, 0.8);
@@ -249,11 +250,53 @@ export function createVegetation(scene, rng) {
   }));
   group.add(motes);
 
+  // ── Falling gold: leaves the Tree of Life sheds ───────────
+  // A handful of tiny golden tetrahedra loosed from the canopy, swaying
+  // down to the clearing floor and rising to fall again — its own seeded
+  // stream, so the shedding is the same for every visitor.
+  const LEAVES = 14;
+  const leafRng = mulberry32(20260705);
+  const lifeGroundY = heightAt(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z);
+  const leaves = new THREE.InstancedMesh(
+    new THREE.TetrahedronGeometry(0.07),
+    new THREE.MeshLambertMaterial({
+      color: 0xE8C86A, emissive: 0x6B5215, emissiveIntensity: 0.5, flatShading: true,
+    }),
+    LEAVES,
+  );
+  const leafSeed = [];
+  function shedLeaf(s2) {
+    const a = leafRng() * Math.PI * 2;
+    const r = 0.5 + leafRng() * 1.5;
+    s2.x = TREE_OF_LIFE_POS.x + Math.cos(a) * r;
+    s2.z = TREE_OF_LIFE_POS.z + Math.sin(a) * r;
+    s2.y = lifeGroundY + 3.4 + leafRng() * 1.8;
+    s2.vy = 0.28 + leafRng() * 0.24;
+    s2.sway = leafRng() * Math.PI * 2;
+    s2.spin = leafRng() * Math.PI * 2;
+    s2.spinRate = 1 + leafRng() * 2;
+  }
+  for (let i = 0; i < LEAVES; i++) {
+    const s2 = {};
+    shedLeaf(s2);
+    s2.y = lifeGroundY + 0.2 + leafRng() * 4.6;   // first fall: already mid-air
+    leafSeed.push(s2);
+  }
+  group.add(leaves);
+  const leafM = new THREE.Matrix4();
+  const leafQ = new THREE.Quaternion();
+  const leafE = new THREE.Euler();
+  const leafP = new THREE.Vector3();
+  const leafS = new THREE.Vector3();
+
   let t = 0;
   // `night` (0 day → 1 full dark, from the sky's cycle): after sundown the
   // Tree of Life answers the dark — lamp and canopy brighten — and the
   // drifting motes glow larger and fuller, reading as fireflies.
-  function update(dt, night = 0) {
+  // `playerPos`: the walker's position; drawing near either sacred tree
+  // kindles a quiet reverence — the gold deepens, the motes lean brighter —
+  // returned to the caller so the ambience can answer it too.
+  function update(dt, night = 0, playerPos = null) {
     t += dt;
     const arr = moteGeo.attributes.position.array;
     for (let i = 0; i < MOTES; i++) {
@@ -263,10 +306,33 @@ export function createVegetation(scene, rng) {
     }
     moteGeo.attributes.position.needsUpdate = true;
 
-    lifeLamp.intensity = 26 + night * 30;
-    lifeGold.emissiveIntensity = 0.55 + night * 0.5;
-    motes.material.opacity = 0.8 + night * 0.2;
-    motes.material.size = 0.16 + night * 0.06;
+    // The falling leaves: sway down, shrink out at the grass, rise anew.
+    for (let i = 0; i < LEAVES; i++) {
+      const s2 = leafSeed[i];
+      s2.y -= s2.vy * dt;
+      const ground = heightAt(s2.x, s2.z) + 0.04;
+      if (s2.y <= ground) shedLeaf(s2);
+      leafP.set(s2.x + Math.sin(t * 0.8 + s2.sway) * 0.3, s2.y, s2.z + Math.cos(t * 0.7 + s2.sway) * 0.2);
+      leafE.set(t * s2.spinRate + s2.spin, s2.spin, t * s2.spinRate * 0.7);
+      leafS.setScalar(Math.min(1, (s2.y - ground) / 0.5) * 0.75 + 0.25);
+      leafM.compose(leafP, leafQ.setFromEuler(leafE), leafS);
+      leaves.setMatrixAt(i, leafM);
+    }
+    leaves.instanceMatrix.needsUpdate = true;
+
+    let reverence = 0;
+    if (playerPos) {
+      const dL = Math.hypot(playerPos.x - TREE_OF_LIFE_POS.x, playerPos.z - TREE_OF_LIFE_POS.z);
+      const dK = Math.hypot(playerPos.x - TREE_OF_KNOWLEDGE_POS.x, playerPos.z - TREE_OF_KNOWLEDGE_POS.z);
+      reverence = 1 - smoothstep(3.5, 8.5, Math.min(dL, dK));
+    }
+
+    lifeLamp.intensity = 26 + night * 30 + reverence * 16;
+    lifeGold.emissiveIntensity = 0.55 + night * 0.5 + reverence * 0.3;
+    motes.material.opacity = Math.min(1, 0.8 + night * 0.2 + reverence * 0.15);
+    motes.material.size = 0.16 + night * 0.06 + reverence * 0.03;
+
+    return reverence;
   }
 
   return { update };

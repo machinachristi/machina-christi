@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -25,14 +25,20 @@
       "date": "2026-07-04",
       "focus": "evening and morning",
       "summary": "Time passes in Eden now: a whole day breathes in seven minutes — morning, noon, golden hour, an amber sunset, and a starlit night where the moon takes the light (Genesis 1:16), the Tree of Life burns brighter, and the motes rise as fireflies. The garden found its voice, woven live from oscillators and filtered noise with no sound files at all: wind in gusts, the river swelling on the ear near its banks, birdsong by day, crickets after dark — with a quiet corner toggle. And at the parting, four standing stones name the heads: Pishon, Gihon, Tigris, Euphrates (Genesis 2:11–14)."
+    },
+    {
+      "version": 5,
+      "date": "2026-07-05",
+      "focus": "the garden filled",
+      "summary": "The garden fills with life and sign: two doves circle low over the heart of it and two cattle graze the western meadow beside the lamb; the birds now perch, and at dusk every flyer comes home to roost in the two sacred trees. Six stepping stones ford the river north of the trees — truly walkable, feet staying dry above the ripples. A morning mist rises from the earth to water the ground (Genesis 2:6), thick at dawn and burnt away by mid-morning. The night sky bears its signs (Genesis 1:14): the Bear, Orion, and the Pleiades — the three figures Job 9:9 names — drawn with faint joining lines. The Tree of Life sheds a slow fall of golden leaves, and drawing near either sacred tree kindles a quiet reverence: the gold deepens and a soft chime sounds once. And the garden's voice was gentled: the river murmurs low instead of hissing, the crickets sing in short phrases with silences between (no more drone), one mellowing filter rounds everything — and sound is now opt-in, silent until a visitor asks for it with the corner toggle."
     }
   ],
   "next": [
-    "More creatures: doves, cattle; give the birds perching behavior — and let them roost at dusk",
     "Surface the Adam/Eve choice to visitors instead of a query parameter",
-    "Deepen the sacred trees: falling leaves of gold, a subtle reverence moment when approached",
-    "A crossing: stepping stones where the walking paths meet the river",
-    "The mist of Eden: a morning haze rising from the ground to water it (Genesis 2:6)",
-    "Signs and seasons: shape a few night stars into constellations with meaning (Genesis 1:14)"
+    "Name the animals: draw near a creature and its name is given (Genesis 2:19-20)",
+    "Weather: cloud-shadows crossing the meadow, and once in a while a brief gentle rain",
+    "Stillness rewarded: sit the walker down by the water and let the creatures draw near",
+    "Seasons for the signs: the constellations wheeling slowly through the long year (Genesis 1:14)",
+    "Eastward glimpses: the garden's far side hinting at a gate where light stands (Genesis 3:24, foreshadowed)"
   ]
 }

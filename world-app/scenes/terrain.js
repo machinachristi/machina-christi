@@ -50,6 +50,31 @@ export function riverEdgeDist(x, z) {
   return Math.max(0, d - halfWidth);
 }
 
+// The crossing: six stepping stones ford the river north of the sacred
+// trees, where a walk from the heart of the garden meets the water. They
+// live in the height function itself, so the walker truly climbs onto them.
+// Their whole footprint sits between two terrain grid columns (x ≈ 7.97 and
+// 10.63 at 64 segments over 170), so no ground vertex ever lands on a stone
+// — the mesh stays smooth and the stones render as their own geometry.
+export const CROSSING = [
+  { x: 9.15, z: 15.9 },
+  { x: 9.50, z: 16.9 },
+  { x: 9.20, z: 17.9 },
+  { x: 9.45, z: 18.9 },
+  { x: 9.10, z: 19.9 },
+  { x: 9.40, z: 20.9 },
+];
+const STONE_TOP = -0.18;   // proud of the ripples (crest ≈ -0.4), below the banks
+
+function crossingLift(x, z) {
+  let h = -Infinity;
+  for (const s of CROSSING) {
+    const d = Math.hypot(x - s.x, z - s.z);
+    if (d < 0.9) h = Math.max(h, STONE_TOP - 1.4 * smoothstep(0.38, 0.9, d));
+  }
+  return h;
+}
+
 export function heightAt(x, z) {
   // Rolling meadow.
   let h = 1.5 * Math.sin(x * 0.085) * Math.cos(z * 0.07)
@@ -65,6 +90,10 @@ export function heightAt(x, z) {
   // The riverbed — one course through the garden, four heads past the
   // parting — blended smoothly into the banks.
   h = lerp(-1.3, h, smoothstep(0, 3.4, riverEdgeDist(x, z)));
+
+  // The stepping stones of the crossing rise from the bed (cheap gate box
+  // first — heightAt is called for every mesh vertex and every footstep).
+  if (x > 8 && x < 10.7 && z > 14.8 && z < 22) h = Math.max(h, crossingLift(x, z));
 
   return h;
 }
@@ -111,6 +140,29 @@ export function createTerrain(scene, rng) {
 
   const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
   scene.add(mesh);
+
+  // The crossing's stones as seen: one instanced mesh of low seven-sided
+  // drums, each turned and squashed a little, tops flush with the height
+  // function's plateaus so feet and stone always agree.
+  const stones = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.52, 0.66, 1.24, 7),
+    new THREE.MeshLambertMaterial({ color: 0xB3A78D, flatShading: true }),
+    CROSSING.length,
+  );
+  {
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const s = new THREE.Vector3();
+    for (let i = 0; i < CROSSING.length; i++) {
+      const c = CROSSING[i];
+      e.set(0, (i * 2.39) % (Math.PI * 2), 0);
+      s.set(1 + (i % 3) * 0.08, 1, 0.92 + ((i + 1) % 3) * 0.08);
+      m.compose(new THREE.Vector3(c.x, STONE_TOP - 0.62, c.z), q.setFromEuler(e), s);
+      stones.setMatrixAt(i, m);
+    }
+  }
+  scene.add(stones);
 
   return { mesh, heightAt, riverZ, radius: GARDEN_RADIUS };
 }

@@ -145,19 +145,59 @@ test.describe('the garden loads', () => {
     }
   });
 
-  test('the ambience is present, polite, and mutable', async ({ page }) => {
+  test('the ambience is quiet until invited, and the toggle invites it', async ({ page }) => {
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
     const s0 = await frame.evaluate(() => window.__world.getState().sound);
     expect(typeof s0.supported).toBe('boolean');
-    expect(s0.muted).toBe(false);            // fresh visit: sound is welcome
+    expect(s0.muted).toBe(true);             // fresh visit: Eden is silent until asked
 
-    // The corner toggle exists, and muting persists for the next visit.
+    // The corner toggle exists, and inviting sound persists for next visit.
     await expect(frame.locator('.sound')).toBeVisible();
-    const s1 = await frame.evaluate(() => window.__world.setMuted(true));
-    expect(s1.muted).toBe(true);
-    expect(await frame.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
+    const s1 = await frame.evaluate(() => window.__world.setMuted(false));
+    expect(s1.muted).toBe(false);
+    expect(await frame.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
+  });
+
+  test('stepping stones ford the river at the crossing', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const crossing = await frame.evaluate(() => window.__world.getState().crossing);
+    expect(crossing.length).toBeGreaterThanOrEqual(5);
+    // Every stone stands proud of the water (surface ≈ -0.5, ripples to -0.4)…
+    for (const stone of crossing) {
+      const pos = await frame.evaluate(
+        ([x, z]) => window.__world.teleport(x, z),
+        [stone.x, stone.z],
+      );
+      expect(pos.y).toBeGreaterThan(-0.42);
+    }
+    // …while beside the crossing the river is still a river.
+    const wet = await frame.evaluate(() => window.__world.teleport(4, 15.9));
+    expect(wet.y).toBeLessThan(-0.9);
+  });
+
+  test('signs in the night sky, and the flyers roost at dusk', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // The three figures the Scriptures name (Genesis 1:14; Job 9:9).
+    const state = await getState(page);
+    expect(state.constellations).toEqual(['the Bear', 'Orion', 'the Pleiades']);
+
+    // The garden's census: birds and doves aloft, cattle and lamb at pasture.
+    expect(state.fauna.flyers.length).toBe(5);
+    expect(state.fauna.flyers.filter(f => f.kind === 'dove').length).toBe(2);
+    expect(state.fauna.cattle).toBe(2);
+    expect(state.fauna.fish).toBe(5);
+
+    // When night falls, every flyer makes for the two trees to roost.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => {
+      const fauna = await frame.evaluate(() => window.__world.getState().fauna);
+      return fauna.flyers.every(f => f.mode === 'toRoost' || f.mode === 'roost');
+    }, { timeout: 5000 }).toBe(true);
   });
 
   test('?character=eve embodies Eve', async ({ page }) => {
@@ -198,13 +238,16 @@ test.describe('walking the garden', () => {
     const dot = (step.x * away.x + step.z * away.z) / (awayLen * moved);
     expect(dot).toBeGreaterThan(0.5);
 
-    // Lift the finger: the character comes to rest.
+    // Lift the finger: the character glides to rest. Watch 400ms windows
+    // until one is still — CI's software renderer dilates simulated time,
+    // so the glide takes longer there than on any real device.
     await page.mouse.up();
-    await page.waitForTimeout(500);
-    const s2 = await getState(page);
-    await page.waitForTimeout(400);
-    const s3 = await getState(page);
-    expect(dist2d(s3.pos, s2.pos)).toBeLessThan(0.08);
+    await expect.poll(async () => {
+      const a = await getState(page);
+      await page.waitForTimeout(400);
+      const b = await getState(page);
+      return dist2d(b.pos, a.pos);
+    }, { timeout: 10000 }).toBeLessThan(0.08);
 
     expect(errors).toEqual([]);
   });
@@ -248,9 +291,13 @@ test.describe('walking the garden', () => {
     expect(s0.companion).toBeTruthy();
     expect(s0.companion.character).not.toBe(s0.character);
 
-    await page.waitForTimeout(3000);
-    const s1 = await getState(page);
-    expect(dist2d(s1.companion.pos, s0.companion.pos)).toBeGreaterThan(0.3);
+    // The companion pauses a few seconds before each stroll, and CI's
+    // software renderer dilates simulated time (slow frames hit the dt
+    // cap) — so watch patiently for the stroll instead of sampling once.
+    await expect.poll(async () => {
+      const s1 = await getState(page);
+      return dist2d(s1.companion.pos, s0.companion.pos);
+    }, { timeout: 15000 }).toBeGreaterThan(0.3);
   });
 });
 
