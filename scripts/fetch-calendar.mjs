@@ -21,13 +21,35 @@ async function fetchYear(year) {
   return data.litcal;
 }
 
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function dayOfWeek(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return WEEKDAY_NAMES[new Date(y, m - 1, d).getDay()];
+}
+
+// The Sunday (YYYY-MM-DD) that starts dateStr's liturgical week — Ordinary
+// Time's week number turns over on Sundays, so grouping by this key lets us
+// borrow a weekday-name template from any other day in the same week.
+function weekStartKey(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - dt.getDay());
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 // One winning celebration per date: the highest-graded non-vigil entry.
 // Vigil Masses (evening-of-the-day-before anticipations) aren't "today's"
 // celebration for a daily-glance page, so they're excluded from consideration.
-// Ferial weekdays (grade 0) are still returned by the API alongside a memorial
-// on top of them, so when a date has both, the weekday's own name is kept as
-// weekday_name — this is what lets the Ordo page always show "Monday of the
-// 14th Week of Ordinary Time" even on days with a saint's memorial.
+//
+// Ferial weekdays (grade 0) are still returned by the API alongside optional
+// memorials (grade 2) on top of them, so those are kept as weekday_name —
+// this is what lets the Ordo page always show "Monday of the 14th Week of
+// Ordinary Time" even on a day with a saint's optional memorial. Obligatory
+// memorials and feasts fully replace the ferial in the API's own model (no
+// weekday sibling event returned at all), so for those, the weekday name is
+// reconstructed afterwards from another day in the same liturgical week that
+// does have one, swapping in the correct day-of-week word.
 function reduceToOnePerDate(events) {
   const byDate = new Map();
   for (const e of events) {
@@ -40,16 +62,44 @@ function reduceToOnePerDate(events) {
         grade: prev.grade ?? e.grade,
         grade_lcl: prev.grade_lcl ?? e.grade_lcl,
         weekday_name: e.name,
+        season: e.liturgical_season,
       });
     } else if (prev.grade === undefined || e.grade > prev.grade) {
-      byDate.set(date, { ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
+      byDate.set(date, { ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl, season: prev.season ?? e.liturgical_season });
     }
   }
+
+  // Sundays are their own celebration, not a suppressed ferial, so they're
+  // never given a synthesized weekday_name. For every other day missing one,
+  // borrow a template (word + template string) from elsewhere in the same
+  // week *and season* and substitute in this date's own day-of-week word.
+  // The season check matters right at a season boundary — e.g. Dec 26–31
+  // falls in the same Sunday-Saturday week as the preceding Advent weekdays,
+  // but is Christmastide, not Advent, so an Advent template must not leak in.
+  // Some seasons (e.g. the Christmas octave's "Nth Day of the Octave" naming)
+  // don't use a day-of-week word at all — those are simply left unfilled,
+  // which falls back to the previous (pre-synthesis) display.
+  const templatesByWeek = new Map();
+  for (const [date, entry] of byDate) {
+    const template = entry.grade === 0 ? entry.name : entry.weekday_name;
+    if (!template) continue;
+    const key = `${weekStartKey(date)}|${entry.season}`;
+    if (!templatesByWeek.has(key)) templatesByWeek.set(key, { word: dayOfWeek(date), template });
+  }
+  for (const [date, entry] of byDate) {
+    if (entry.grade === 0 || entry.weekday_name || dayOfWeek(date) === 'Sunday') continue;
+    const ref = templatesByWeek.get(`${weekStartKey(date)}|${entry.season}`);
+    if (!ref) continue;
+    const targetWord = dayOfWeek(date);
+    if (targetWord === ref.word || !ref.template.includes(ref.word)) continue;
+    entry.weekday_name = ref.template.replace(ref.word, targetWord);
+  }
+
   // Only keep weekday_name where it differs from the winning name — i.e.
   // where a memorial/feast/solemnity actually sits on top of a ferial day.
   const out = new Map();
   for (const [date, entry] of byDate) {
-    const { weekday_name, ...rest } = entry;
+    const { weekday_name, season, ...rest } = entry;
     out.set(date, weekday_name && weekday_name !== rest.name ? { ...rest, weekday_name } : rest);
   }
   return Object.fromEntries([...out.entries()].sort());
