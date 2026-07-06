@@ -131,15 +131,12 @@
 
     /* ── The day's celebration ─────────────────────────────────── */
     .rank {
-      display: inline-block;
+      display: block;
       font-size: 12px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: rgba(var(--violet), 0.95);
-      border: 1px solid rgba(var(--violet), 0.4);
-      border-radius: 999px;
-      padding: 4px 12px;
-      margin-bottom: 0.9em;
+      margin-bottom: 0.6em;
     }
     .celebration {
       font-size: clamp(20px, 5.5vw, 25px);
@@ -198,6 +195,12 @@
 
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
 
+    #saint:not(:empty) {
+      margin-top: 2.2em;
+      padding-top: 1.6em;
+      border-top: 1px solid rgba(201, 162, 39, 0.2);
+    }
+
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
 </head>
@@ -252,8 +255,12 @@
       // litcal (Sundays outrank most feasts, but aren't filed under their own
       // grade), which reads as a confusing label for a plain Sunday — so a
       // name containing "Sunday" always wins over the raw grade label.
+      // Grade 7 ("celebration with precedence over solemnities") covers days
+      // whose names speak for themselves — Christmas, Ash Wednesday, Good
+      // Friday, the Easter octave — where that internal label would only
+      // confuse, so those get no label at all.
       function rankLabel(grade, gradeLcl, name) {
-        if (grade === 0) return null;
+        if (grade === 0 || grade === 7) return null;
         if (/\bSunday\b/.test(name)) return 'Sunday';
         return gradeLcl.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase());
       }
@@ -306,30 +313,41 @@
             return;
           }
 
+          // weekday_name is present only when the calendar API itself says the
+          // ferial weekday is still the day's default celebration (optional
+          // memorials and Lenten commemorations). In that case the weekday
+          // stays up top and the memorial appears below the gospel link. On
+          // obligatory memorials, feasts, solemnities, and Sundays, the
+          // celebration replaces the weekday outright — so it takes the top
+          // spot itself, with its rank label above it.
+          const hasWeekday = !!entry.weekday_name;
           const label = rankLabel(entry.grade, entry.grade_lcl, entry.name);
+
           celebrationEl.innerHTML =
-            (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
-            `<p class="celebration">${escapeHtml(entry.name)}</p>` +
+            (hasWeekday
+              ? `<p class="celebration">${escapeHtml(entry.weekday_name)}</p>`
+              : (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
+                `<p class="celebration">${escapeHtml(entry.name)}</p>`) +
             gospelLink;
 
           const isSaint = /^Saints?\b/.test(entry.name);
-          if (!isSaint) {
-            saintEl.innerHTML = '';
-            return;
+          const bio = isSaint ? saints[entry.name] : null;
+
+          let feastHtml = '';
+          if (hasWeekday) {
+            feastHtml +=
+              (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
+              `<p class="celebration">${escapeHtml(entry.name)}</p>`;
           }
-          const bio = saints[entry.name];
-          if (bio) {
-            saintEl.innerHTML = `
-              <h2>Saint of the Day</h2>
-              <div class="saint">
-                <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
-                <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
-              </div>`;
-          } else {
-            saintEl.innerHTML = `
-              <h2>Saint of the Day</h2>
-              <p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
+          if (isSaint) {
+            feastHtml += bio
+              ? `<div class="saint">
+                  <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
+                  <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
+                </div>`
+              : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
           }
+          saintEl.innerHTML = feastHtml;
         });
       }
 

@@ -24,17 +24,40 @@ async function fetchYear(year) {
 // One winning celebration per date: the highest-graded non-vigil entry.
 // Vigil Masses (evening-of-the-day-before anticipations) aren't "today's"
 // celebration for a daily-glance page, so they're excluded from consideration.
+//
+// weekday_name is kept only when the API itself returns a ferial weekday
+// (grade 0) sibling alongside the winning celebration. That mirrors the
+// Church's own model: on an *optional* memorial the weekday is still the
+// day's default celebration (the memorial is a choice), so litcal returns
+// both; on obligatory memorials, feasts, and solemnities the celebration
+// replaces the weekday outright, litcal returns no ferial sibling, and no
+// weekday name is invented here — the page shows the celebration itself.
 function reduceToOnePerDate(events) {
   const byDate = new Map();
   for (const e of events) {
     if (e.is_vigil_mass) continue;
     const date = e.date.slice(0, 10);
-    const prev = byDate.get(date);
-    if (!prev || e.grade > prev.grade) {
-      byDate.set(date, { name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
+    const prev = byDate.get(date) || {};
+    if (e.grade === 0) {
+      byDate.set(date, {
+        name: prev.name ?? e.name,
+        grade: prev.grade ?? e.grade,
+        grade_lcl: prev.grade_lcl ?? e.grade_lcl,
+        weekday_name: e.name,
+      });
+    } else if (prev.grade === undefined || e.grade > prev.grade) {
+      byDate.set(date, { ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
     }
   }
-  return Object.fromEntries([...byDate.entries()].sort());
+
+  // Only keep weekday_name where it differs from the winning name — i.e.
+  // where a memorial actually sits on top of a still-in-force ferial day.
+  const out = new Map();
+  for (const [date, entry] of byDate) {
+    const { weekday_name, ...rest } = entry;
+    out.set(date, weekday_name && weekday_name !== rest.name ? { ...rest, weekday_name } : rest);
+  }
+  return Object.fromEntries([...out.entries()].sort());
 }
 
 async function main() {
