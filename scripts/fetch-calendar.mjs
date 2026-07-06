@@ -87,8 +87,10 @@ function reduceToOnePerDate(events) {
   for (const [date, entry] of byDate) {
     const template = entry.grade === 0 ? entry.name : entry.weekday_name;
     if (!template) continue;
+    const word = dayOfWeek(date);
+    if (!template.includes(word)) continue; // e.g. "5th Day of the Octave of Christmas" — not substitutable
     const key = `${weekStartKey(date)}|${entry.season}`;
-    if (!templatesByWeek.has(key)) templatesByWeek.set(key, { word: dayOfWeek(date), template });
+    if (!templatesByWeek.has(key)) templatesByWeek.set(key, { word, template });
   }
   for (const [date, entry] of byDate) {
     if (entry.grade === 0 || entry.grade >= 6 || entry.weekday_name || dayOfWeek(date) === 'Sunday') continue;
