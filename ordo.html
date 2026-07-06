@@ -131,15 +131,12 @@
 
     /* ── The day's celebration ─────────────────────────────────── */
     .rank {
-      display: inline-block;
+      display: block;
       font-size: 12px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: rgba(var(--violet), 0.95);
-      border: 1px solid rgba(var(--violet), 0.4);
-      border-radius: 999px;
-      padding: 4px 12px;
-      margin-bottom: 0.9em;
+      margin-bottom: 0.6em;
     }
     .celebration {
       font-size: clamp(20px, 5.5vw, 25px);
@@ -197,6 +194,12 @@
     .saint .attribution a { color: inherit; }
 
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+
+    #saint:not(:empty) {
+      margin-top: 2.2em;
+      padding-top: 1.6em;
+      border-top: 1px solid rgba(201, 162, 39, 0.2);
+    }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
@@ -306,30 +309,39 @@
             return;
           }
 
+          // Days with a memorial/feast on top of a ferial weekday carry a
+          // distinct weekday_name — keep the top line always reading as the
+          // plain weekday, and show the celebration below the gospel link
+          // instead. Sundays/solemnities have no separate weekday underneath,
+          // so they keep the celebration name up top as before.
+          const hasWeekday = !!entry.weekday_name;
           const label = rankLabel(entry.grade, entry.grade_lcl, entry.name);
+
           celebrationEl.innerHTML =
-            (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
-            `<p class="celebration">${escapeHtml(entry.name)}</p>` +
+            (hasWeekday
+              ? `<p class="celebration">${escapeHtml(entry.weekday_name)}</p>`
+              : (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
+                `<p class="celebration">${escapeHtml(entry.name)}</p>`) +
             gospelLink;
 
           const isSaint = /^Saints?\b/.test(entry.name);
-          if (!isSaint) {
-            saintEl.innerHTML = '';
-            return;
+          const bio = isSaint ? saints[entry.name] : null;
+
+          let feastHtml = '';
+          if (hasWeekday) {
+            feastHtml +=
+              (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
+              `<p class="celebration">${escapeHtml(entry.name)}</p>`;
           }
-          const bio = saints[entry.name];
-          if (bio) {
-            saintEl.innerHTML = `
-              <h2>Saint of the Day</h2>
-              <div class="saint">
-                <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
-                <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
-              </div>`;
-          } else {
-            saintEl.innerHTML = `
-              <h2>Saint of the Day</h2>
-              <p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
+          if (isSaint) {
+            feastHtml += bio
+              ? `<div class="saint">
+                  <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
+                  <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
+                </div>`
+              : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
           }
+          saintEl.innerHTML = feastHtml;
         });
       }
 

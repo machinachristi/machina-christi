@@ -24,17 +24,35 @@ async function fetchYear(year) {
 // One winning celebration per date: the highest-graded non-vigil entry.
 // Vigil Masses (evening-of-the-day-before anticipations) aren't "today's"
 // celebration for a daily-glance page, so they're excluded from consideration.
+// Ferial weekdays (grade 0) are still returned by the API alongside a memorial
+// on top of them, so when a date has both, the weekday's own name is kept as
+// weekday_name — this is what lets the Ordo page always show "Monday of the
+// 14th Week of Ordinary Time" even on days with a saint's memorial.
 function reduceToOnePerDate(events) {
   const byDate = new Map();
   for (const e of events) {
     if (e.is_vigil_mass) continue;
     const date = e.date.slice(0, 10);
-    const prev = byDate.get(date);
-    if (!prev || e.grade > prev.grade) {
-      byDate.set(date, { name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
+    const prev = byDate.get(date) || {};
+    if (e.grade === 0) {
+      byDate.set(date, {
+        name: prev.name ?? e.name,
+        grade: prev.grade ?? e.grade,
+        grade_lcl: prev.grade_lcl ?? e.grade_lcl,
+        weekday_name: e.name,
+      });
+    } else if (prev.grade === undefined || e.grade > prev.grade) {
+      byDate.set(date, { ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
     }
   }
-  return Object.fromEntries([...byDate.entries()].sort());
+  // Only keep weekday_name where it differs from the winning name — i.e.
+  // where a memorial/feast/solemnity actually sits on top of a ferial day.
+  const out = new Map();
+  for (const [date, entry] of byDate) {
+    const { weekday_name, ...rest } = entry;
+    out.set(date, weekday_name && weekday_name !== rest.name ? { ...rest, weekday_name } : rest);
+  }
+  return Object.fromEntries([...out.entries()].sort());
 }
 
 async function main() {
