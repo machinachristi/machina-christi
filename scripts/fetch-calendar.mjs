@@ -70,15 +70,19 @@ function reduceToOnePerDate(events) {
   }
 
   // Sundays are their own celebration, not a suppressed ferial, so they're
-  // never given a synthesized weekday_name. For every other day missing one,
-  // borrow a template (word + template string) from elsewhere in the same
-  // week *and season* and substitute in this date's own day-of-week word.
-  // The season check matters right at a season boundary — e.g. Dec 26–31
-  // falls in the same Sunday-Saturday week as the preceding Advent weekdays,
-  // but is Christmastide, not Advent, so an Advent template must not leak in.
-  // Some seasons (e.g. the Christmas octave's "Nth Day of the Octave" naming)
-  // don't use a day-of-week word at all — those are simply left unfilled,
-  // which falls back to the previous (pre-synthesis) display.
+  // never given a synthesized weekday_name — and neither are solemnities
+  // (grade 6) or the tier above them (grade 7: the Triduum, Christmas, etc.).
+  // Those outrank feasts/memorials enough that, like a Sunday, the day simply
+  // *is* the solemnity — noting the ferial week underneath would be pedantic
+  // rather than informative. For everything below that (feasts, obligatory
+  // and optional memorials), borrow a template (word + template string) from
+  // elsewhere in the same week *and season* and substitute in this date's own
+  // day-of-week word. The season check matters right at a season boundary —
+  // e.g. Dec 26–31 falls in the same Sunday-Saturday week as the preceding
+  // Advent weekdays, but is Christmastide, not Advent, so an Advent template
+  // must not leak in. Some seasons (e.g. the Christmas octave's "Nth Day of
+  // the Octave" naming) don't use a day-of-week word at all — those are
+  // simply left unfilled, which falls back to the previous display.
   const templatesByWeek = new Map();
   for (const [date, entry] of byDate) {
     const template = entry.grade === 0 ? entry.name : entry.weekday_name;
@@ -87,7 +91,7 @@ function reduceToOnePerDate(events) {
     if (!templatesByWeek.has(key)) templatesByWeek.set(key, { word: dayOfWeek(date), template });
   }
   for (const [date, entry] of byDate) {
-    if (entry.grade === 0 || entry.weekday_name || dayOfWeek(date) === 'Sunday') continue;
+    if (entry.grade === 0 || entry.grade >= 6 || entry.weekday_name || dayOfWeek(date) === 'Sunday') continue;
     const ref = templatesByWeek.get(`${weekStartKey(date)}|${entry.season}`);
     if (!ref) continue;
     const targetWord = dayOfWeek(date);
