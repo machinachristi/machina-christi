@@ -340,10 +340,12 @@
               `<p class="celebration">${escapeHtml(entry.name)}</p>`;
           }
           if (isSaint) {
+            const sourceName = bio && bio.source_name ? bio.source_name : 'Butler&rsquo;s Lives of the Saints';
+            const sourceSuffix = bio && bio.source_name ? '' : ' (1894)';
             feastHtml += bio
               ? `<div class="saint">
                   <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
-                  <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">Butler&rsquo;s Lives of the Saints</a> (1894)</p>
+                  <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">${sourceName}</a>${sourceSuffix}</p>
                 </div>`
               : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
           }
