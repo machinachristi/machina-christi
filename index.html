@@ -145,6 +145,12 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
+    /* A clone of the far gate, planted at the opposite end of the strip so
+       swiping past Camino or Ordo keeps going instead of hitting a wall.
+       Invisible to assistive tech; JS jumps to the real gate once the
+       swipe settles, so the loop is never seen, only felt. */
+    .portal.is-clone { pointer-events: none; }
+
     /* ── A portal ──────────────────────────────────────────────
        Each experience is one narrow gate: arch, emblem, name,
        a word of description, and the cue to enter. To add a new
@@ -463,47 +469,80 @@
     (() => {
       'use strict';
 
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduced  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const strip    = document.querySelector('.strip');
       const gallery  = document.querySelector('.gallery');
       const waymarks = document.querySelector('.waymarks');
       const portals  = Array.from(document.querySelectorAll('.portal'));
 
-      let active = -1;
+      // The way loops: plant a silent clone of the last gate before the
+      // first, and of the first gate after the last. Whatever gates exist
+      // (today four, tomorrow more), swiping past either end lands on a
+      // clone standing exactly where the real gate would be — then, once
+      // the swipe settles, we jump to the real gate with no animation, so
+      // the seam is never seen. Every index below is a *slot* index into
+      // `slots`; `slotGate` maps each slot back to its real gate.
+      const headClone = portals[portals.length - 1].cloneNode(true);
+      const tailClone  = portals[0].cloneNode(true);
+      [headClone, tailClone].forEach(c => {
+        c.setAttribute('aria-hidden', 'true');
+        c.removeAttribute('aria-label');
+        c.tabIndex = -1;
+        c.classList.add('is-clone');
+      });
+      strip.insertBefore(headClone, strip.firstChild);
+      strip.appendChild(tailClone);
+
+      const slots    = [headClone, ...portals, tailClone];
+      const slotGate = [portals.length - 1, ...portals.map((_, i) => i), 0];
+      const firstRealSlot = 1;
+      const lastRealSlot  = slots.length - 2;
+
+      let active = -1;       // index into `portals` — the logical gate
+      let currentSlot = -1;  // index into `slots` — where the strip actually sits
       let leaving = false;
       let prevBtn = null, nextBtn = null;
+      let settleTimer = null;
 
       /* ── Moving along the way ───────────────────────────────── */
-      function center(i, instant) {
-        const p = portals[i];
+      function centerSlot(slot, instant) {
+        const p = slots[slot];
         strip.scrollTo({
           left: p.offsetLeft + p.offsetWidth / 2 - strip.clientWidth / 2,
           behavior: (reduced || instant) ? 'auto' : 'smooth',
         });
       }
 
-      function nearest() {
+      function nearestSlot() {
         const mid = strip.scrollLeft + strip.clientWidth / 2;
         let best = 0, bestDist = Infinity;
-        portals.forEach((p, i) => {
+        slots.forEach((p, i) => {
           const d = Math.abs(p.offsetLeft + p.offsetWidth / 2 - mid);
           if (d < bestDist) { bestDist = d; best = i; }
         });
         return best;
       }
 
-      function setActive(i) {
-        if (i === active) return;
-        active = i;
-        portals.forEach((p, j) => p.classList.toggle('is-active', j === i));
+      function setActiveSlot(slot) {
+        if (slot !== currentSlot) {
+          currentSlot = slot;
+          slots.forEach((p, j) => p.classList.toggle('is-active', j === slot));
+        }
+        const gate = slotGate[slot];
+        if (gate === active) return;
+        active = gate;
         dots.forEach((d, j) => {
-          if (j === i) d.setAttribute('aria-current', 'true');
+          if (j === gate) d.setAttribute('aria-current', 'true');
           else d.removeAttribute('aria-current');
         });
-        if (prevBtn) {
-          prevBtn.disabled = i <= 0;
-          nextBtn.disabled = i >= portals.length - 1;
-        }
+      }
+
+      // Once a swipe settles on a clone, hop to the real gate it stands in
+      // for. The clone and the real gate occupy the same screen position,
+      // so setting scrollLeft directly (no smooth animation) is invisible.
+      function settle() {
+        if (currentSlot === 0) { centerSlot(lastRealSlot, true); setActiveSlot(lastRealSlot); }
+        else if (currentSlot === slots.length - 1) { centerSlot(firstRealSlot, true); setActiveSlot(firstRealSlot); }
       }
 
       // The scroller drives everything: one rAF-coalesced listener,
@@ -514,8 +553,10 @@
         ticking = true;
         requestAnimationFrame(() => {
           ticking = false;
-          setActive(nearest());
+          setActiveSlot(nearestSlot());
         });
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(settle, 120);
       }
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
@@ -525,7 +566,7 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.setAttribute('aria-label', 'Go to ' + p.querySelector('.portal__title').textContent.trim());
-        b.addEventListener('click', () => center(i));
+        b.addEventListener('click', () => centerSlot(i + 1));
         waymarks.appendChild(b);
         return b;
       });
@@ -543,10 +584,11 @@
           b.setAttribute('aria-label', label);
           b.textContent = glyph;
           b.addEventListener('click', () =>
-            center(Math.max(0, Math.min(portals.length - 1, active + (dir === 'next' ? 1 : -1)))));
+            centerSlot(Math.max(0, Math.min(slots.length - 1, currentSlot + (dir === 'next' ? 1 : -1)))));
           gallery.appendChild(b);
           return b;
         };
+        // The way loops, so neither arrow is ever a dead end.
         prevBtn = makeArrow('prev', 'Previous experience', '‹');
         nextBtn = makeArrow('next', 'Next experience', '›');
 
@@ -578,7 +620,7 @@
           if (!dragging) return;
           dragging = false;
           strip.classList.remove('dragging');
-          center(nearest());
+          centerSlot(nearestSlot());
         };
         strip.addEventListener('pointerup', endDrag);
         strip.addEventListener('pointercancel', endDrag);
@@ -604,19 +646,19 @@
           e.preventDefault();
           if (leaving) return;
           if (e.detail === 0) { enter(p); return; }        // keyboard activation
-          if (i !== active) { center(i); return; }          // a side gate: step up to it first
+          if (i !== active) { centerSlot(i + 1); return; }  // a side gate: step up to it first
           enter(p);
         });
         // Tabbing to a gate brings it to the center of the way.
-        p.addEventListener('focusin', () => { if (!leaving) center(i); });
+        p.addEventListener('focusin', () => { if (!leaving) centerSlot(i + 1); });
       });
 
       /* ── Arrow keys walk the gallery ────────────────────────── */
       document.addEventListener('keydown', e => {
         if (leaving) return;
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-        const next = Math.max(0, Math.min(portals.length - 1, active + (e.key === 'ArrowRight' ? 1 : -1)));
-        if (next !== active) { e.preventDefault(); center(next); }
+        const next = Math.max(0, Math.min(slots.length - 1, currentSlot + (e.key === 'ArrowRight' ? 1 : -1)));
+        if (next !== currentSlot) { e.preventDefault(); centerSlot(next); }
       });
 
       /* ── Housekeeping ───────────────────────────────────────── */
@@ -628,13 +670,14 @@
         document.body.classList.remove('leaving');
         document.body.classList.add('lit');
         portals.forEach(p => p.classList.remove('opening'));
-        setActive(nearest());
+        setActiveSlot(nearestSlot());
+        settle();
       });
 
       // Open on Eden — the middle gate — so either neighbor is one swipe away.
-      const start = Math.min(1, portals.length - 1);
-      center(start, true);
-      setActive(start);
+      const startGate = Math.min(1, portals.length - 1);
+      centerSlot(startGate + 1, true);
+      setActiveSlot(startGate + 1);
 
       // Arrival: two frames so the transition from the unlit state applies.
       requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('lit')));
