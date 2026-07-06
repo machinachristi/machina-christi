@@ -91,31 +91,32 @@
     }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
 
-    /* ── Date rail: the day, with quiet prev/next stepping ────── */
+    /* ── Date rail: the day, with quiet prev/next stepping below it ──── */
     .daterail {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 1.8em;
+      text-align: center;
     }
     .daterail .date {
-      font-size: clamp(16px, 4.4vw, 19px);
+      font-size: clamp(17px, 5vw, 22px);
       letter-spacing: 0.02em;
       color: var(--gold-soft);
     }
-    .daterail nav { display: flex; gap: 6px; }
+    .daterail nav { display: flex; align-items: center; gap: clamp(10px, 3vw, 16px); }
     .daterail a {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
+      width: clamp(30px, 8vw, 34px);
+      height: clamp(30px, 8vw, 34px);
       border-radius: 50%;
       border: 1px solid rgba(201, 162, 39, 0.3);
       color: rgba(232, 213, 163, 0.7);
       text-decoration: none;
-      font-size: 17px;
+      font-size: clamp(15px, 4vw, 17px);
       transition: border-color 0.25s ease, color 0.25s ease;
     }
     .daterail a:hover, .daterail a:focus-visible { border-color: rgba(201, 162, 39, 0.7); color: #fff; outline: none; }
@@ -204,7 +205,6 @@
   <div class="wrap">
     <a class="back" href="index.html">&lsaquo; home</a>
     <h1>Ordo</h1>
-    <p>Today in the Church: the day's Gospel, and — on a feast, memorial, or solemnity — the saint of the day, briefly told from Butler's <cite>Lives of the Saints</cite> (1894).</p>
 
     <div class="daterail">
       <span class="date" id="date-label">&hellip;</span>
