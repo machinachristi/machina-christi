@@ -145,6 +145,13 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
+    /* The way loops: swiping past Camino or Ordo doesn't scroll through
+       to a preview of the other end (that would spoil it, and looks like
+       a stray duplicate card) — the strip fades out, jumps, and fades
+       back in already standing at the far gate. */
+    .strip { transition: opacity 0.16s ease; }
+    .strip.fading { opacity: 0; }
+
     /* ── A portal ──────────────────────────────────────────────
        Each experience is one narrow gate: arch, emblem, name,
        a word of description, and the cue to enter. To add a new
@@ -378,7 +385,7 @@
     /* Respect reduced-motion: the room is simply there, already lit. */
     @media (prefers-reduced-motion: reduce) {
       body::before { animation: none; }
-      .hero, .gallery { transition: none; }
+      .hero, .gallery, .strip { transition: none; }
       .portal { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
       body { transition: opacity 0.15s ease 0s; }
     }
@@ -463,7 +470,7 @@
     (() => {
       'use strict';
 
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduced  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const strip    = document.querySelector('.strip');
       const gallery  = document.querySelector('.gallery');
       const waymarks = document.querySelector('.waymarks');
@@ -471,6 +478,7 @@
 
       let active = -1;
       let leaving = false;
+      let wrapping = false;
       let prevBtn = null, nextBtn = null;
 
       /* ── Moving along the way ───────────────────────────────── */
@@ -500,17 +508,13 @@
           if (j === i) d.setAttribute('aria-current', 'true');
           else d.removeAttribute('aria-current');
         });
-        if (prevBtn) {
-          prevBtn.disabled = i <= 0;
-          nextBtn.disabled = i >= portals.length - 1;
-        }
       }
 
       // The scroller drives everything: one rAF-coalesced listener,
       // no idle work when the page is at rest.
       let ticking = false;
       function onScroll() {
-        if (ticking) return;
+        if (ticking || wrapping) return;
         ticking = true;
         requestAnimationFrame(() => {
           ticking = false;
@@ -519,6 +523,35 @@
       }
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
+
+      // The way loops: past Ordo is Camino again, past Camino is Ordo.
+      // Rather than scroll through to a peek of the far gate first (which
+      // would spoil it and briefly show what looks like a stray duplicate
+      // card), a swipe past either end is a quick cut — fade out, jump,
+      // fade in already standing at the other end — same beat as any other
+      // step, just landing on the gate that closes the loop.
+      const WRAP_FADE = 140;
+      function wrapTo(i) {
+        if (leaving || wrapping) return;
+        wrapping = true;
+        strip.classList.add('fading');
+        setTimeout(() => {
+          center(i, true);
+          setActive(i);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            strip.classList.remove('fading');
+            wrapping = false;
+          }));
+        }, reduced ? 0 : WRAP_FADE);
+      }
+
+      // One step in either direction; off the end, wrap instead of stopping.
+      function step(delta) {
+        const next = active + delta;
+        if (next < 0) { wrapTo(portals.length - 1); return; }
+        if (next >= portals.length) { wrapTo(0); return; }
+        center(next);
+      }
 
       /* ── Waymark dots, one per gate ─────────────────────────── */
       const dots = portals.map((p, i) => {
@@ -542,11 +575,11 @@
           b.className = 'arrow arrow--' + dir;
           b.setAttribute('aria-label', label);
           b.textContent = glyph;
-          b.addEventListener('click', () =>
-            center(Math.max(0, Math.min(portals.length - 1, active + (dir === 'next' ? 1 : -1)))));
+          b.addEventListener('click', () => step(dir === 'next' ? 1 : -1));
           gallery.appendChild(b);
           return b;
         };
+        // The way loops, so neither arrow is ever a dead end.
         prevBtn = makeArrow('prev', 'Previous experience', '‹');
         nextBtn = makeArrow('next', 'Next experience', '›');
 
@@ -557,8 +590,9 @@
         // and the portals would stop responding to clicks entirely.)
         let down = false, dragging = false, dragged = false, startX = 0, startLeft = 0;
         const THRESHOLD = 6;
+        const OVERSCROLL = 56; // dragged this far past either end: wrap instead of stop
         strip.addEventListener('pointerdown', e => {
-          if (e.pointerType !== 'mouse' || e.button !== 0) return;
+          if (wrapping || e.pointerType !== 'mouse' || e.button !== 0) return;
           down = true; dragging = false; dragged = false;
           startX = e.clientX; startLeft = strip.scrollLeft;
         });
@@ -571,13 +605,20 @@
             strip.classList.add('dragging');
             strip.setPointerCapture(e.pointerId);
           }
-          strip.scrollLeft = startLeft - dx;
+          const max = strip.scrollWidth - strip.clientWidth;
+          const target = startLeft - dx;
+          if (target < -OVERSCROLL) { stopDrag(); wrapTo(portals.length - 1); return; }
+          if (target > max + OVERSCROLL) { stopDrag(); wrapTo(0); return; }
+          strip.scrollLeft = Math.max(0, Math.min(max, target));
         });
-        const endDrag = () => {
+        const stopDrag = () => {
           down = false;
-          if (!dragging) return;
           dragging = false;
           strip.classList.remove('dragging');
+        };
+        const endDrag = () => {
+          if (!dragging) { down = false; return; }
+          stopDrag();
           center(nearest());
         };
         strip.addEventListener('pointerup', endDrag);
@@ -586,6 +627,60 @@
         strip.addEventListener('click', e => {
           if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; }
         }, true);
+      }
+
+      // Touch: the browser already handles panning and snapping, so we
+      // only watch for a swipe that *starts* already resting at one end
+      // and keeps going outward past a threshold — that's a deliberate
+      // "continue past the edge", not just arriving there.
+      {
+        const OVERSCROLL = 56;
+        let touchStartX = 0, touchStartLeft = 0, touchMax = 0, touchWrapped = false, touching = false;
+        strip.addEventListener('touchstart', e => {
+          if (wrapping || e.touches.length !== 1) { touching = false; return; }
+          touching = true; touchWrapped = false;
+          touchStartX = e.touches[0].clientX;
+          touchStartLeft = strip.scrollLeft;
+          touchMax = strip.scrollWidth - strip.clientWidth;
+        }, { passive: true });
+        strip.addEventListener('touchmove', e => {
+          if (!touching || touchWrapped || wrapping) return;
+          const dx = e.touches[0].clientX - touchStartX;
+          if (touchStartLeft <= 0 && dx > OVERSCROLL) {
+            touchWrapped = true;
+            wrapTo(portals.length - 1);
+          } else if (touchStartLeft >= touchMax - 1 && -dx > OVERSCROLL) {
+            touchWrapped = true;
+            wrapTo(0);
+          }
+        }, { passive: true });
+        strip.addEventListener('touchend', () => { touching = false; }, { passive: true });
+        strip.addEventListener('touchcancel', () => { touching = false; }, { passive: true });
+      }
+
+      // Trackpad: a two-finger swipe fires wheel events with deltaX rather
+      // than touch or pointer events, so it never reached the checks above
+      // — the strip just clamped at the edge and stopped. Once already
+      // clamped, wheel deltas that keep pushing the same direction add up
+      // to the same "keep going past the edge" intent.
+      {
+        const OVERSCROLL = 80;
+        let wheelAccum = 0;
+        let wheelResetTimer = null;
+        strip.addEventListener('wheel', e => {
+          if (wrapping) return;
+          const max = strip.scrollWidth - strip.clientWidth;
+          const pushingBack    = strip.scrollLeft <= 0 && e.deltaX < 0;
+          const pushingForward = strip.scrollLeft >= max - 1 && e.deltaX > 0;
+          if (!pushingBack && !pushingForward) { wheelAccum = 0; return; }
+          wheelAccum += Math.abs(e.deltaX);
+          clearTimeout(wheelResetTimer);
+          wheelResetTimer = setTimeout(() => { wheelAccum = 0; }, 200);
+          if (wheelAccum > OVERSCROLL) {
+            wheelAccum = 0;
+            wrapTo(pushingBack ? portals.length - 1 : 0);
+          }
+        }, { passive: true });
       }
 
       /* ── Walking through a gate ─────────────────────────────── */
@@ -613,10 +708,10 @@
 
       /* ── Arrow keys walk the gallery ────────────────────────── */
       document.addEventListener('keydown', e => {
-        if (leaving) return;
+        if (leaving || wrapping) return;
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-        const next = Math.max(0, Math.min(portals.length - 1, active + (e.key === 'ArrowRight' ? 1 : -1)));
-        if (next !== active) { e.preventDefault(); center(next); }
+        e.preventDefault();
+        step(e.key === 'ArrowRight' ? 1 : -1);
       });
 
       /* ── Housekeeping ───────────────────────────────────────── */
@@ -625,8 +720,10 @@
       window.addEventListener('pageshow', e => {
         if (!e.persisted) return;
         leaving = false;
+        wrapping = false;
         document.body.classList.remove('leaving');
         document.body.classList.add('lit');
+        strip.classList.remove('fading');
         portals.forEach(p => p.classList.remove('opening'));
         setActive(nearest());
       });
