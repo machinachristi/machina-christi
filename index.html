@@ -658,6 +658,31 @@
         strip.addEventListener('touchcancel', () => { touching = false; }, { passive: true });
       }
 
+      // Trackpad: a two-finger swipe fires wheel events with deltaX rather
+      // than touch or pointer events, so it never reached the checks above
+      // — the strip just clamped at the edge and stopped. Once already
+      // clamped, wheel deltas that keep pushing the same direction add up
+      // to the same "keep going past the edge" intent.
+      {
+        const OVERSCROLL = 80;
+        let wheelAccum = 0;
+        let wheelResetTimer = null;
+        strip.addEventListener('wheel', e => {
+          if (wrapping) return;
+          const max = strip.scrollWidth - strip.clientWidth;
+          const pushingBack    = strip.scrollLeft <= 0 && e.deltaX < 0;
+          const pushingForward = strip.scrollLeft >= max - 1 && e.deltaX > 0;
+          if (!pushingBack && !pushingForward) { wheelAccum = 0; return; }
+          wheelAccum += Math.abs(e.deltaX);
+          clearTimeout(wheelResetTimer);
+          wheelResetTimer = setTimeout(() => { wheelAccum = 0; }, 200);
+          if (wheelAccum > OVERSCROLL) {
+            wheelAccum = 0;
+            wrapTo(pushingBack ? portals.length - 1 : 0);
+          }
+        }, { passive: true });
+      }
+
       /* ── Walking through a gate ─────────────────────────────── */
       function enter(portal) {
         if (leaving) return;
