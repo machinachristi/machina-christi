@@ -255,8 +255,12 @@
       // litcal (Sundays outrank most feasts, but aren't filed under their own
       // grade), which reads as a confusing label for a plain Sunday — so a
       // name containing "Sunday" always wins over the raw grade label.
+      // Grade 7 ("celebration with precedence over solemnities") covers days
+      // whose names speak for themselves — Christmas, Ash Wednesday, Good
+      // Friday, the Easter octave — where that internal label would only
+      // confuse, so those get no label at all.
       function rankLabel(grade, gradeLcl, name) {
-        if (grade === 0) return null;
+        if (grade === 0 || grade === 7) return null;
         if (/\bSunday\b/.test(name)) return 'Sunday';
         return gradeLcl.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase());
       }
@@ -309,11 +313,13 @@
             return;
           }
 
-          // Days with a memorial/feast on top of a ferial weekday carry a
-          // distinct weekday_name — keep the top line always reading as the
-          // plain weekday, and show the celebration below the gospel link
-          // instead. Sundays/solemnities have no separate weekday underneath,
-          // so they keep the celebration name up top as before.
+          // weekday_name is present only when the calendar API itself says the
+          // ferial weekday is still the day's default celebration (optional
+          // memorials and Lenten commemorations). In that case the weekday
+          // stays up top and the memorial appears below the gospel link. On
+          // obligatory memorials, feasts, solemnities, and Sundays, the
+          // celebration replaces the weekday outright — so it takes the top
+          // spot itself, with its rank label above it.
           const hasWeekday = !!entry.weekday_name;
           const label = rankLabel(entry.grade, entry.grade_lcl, entry.name);
 
