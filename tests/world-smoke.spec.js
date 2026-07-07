@@ -369,6 +369,66 @@ test.describe('the garden loads', () => {
     expect(Math.hypot(p.x - 3.4, p.z - 0.8)).toBeLessThan(6);
   });
 
+  test('the water answers: reflections lie on it, and a wading step rings (v9)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Bank trees lay their impressions on the surface (the seeded scatter
+    // puts a deterministic handful of trees near enough the water).
+    const s0 = await getState(page);
+    expect(s0.reflections).toBeGreaterThanOrEqual(1);
+
+    // Dry-footed, the water is unrung.
+    expect(s0.wake.rings).toBe(0);
+
+    // Step into the river's wadable stretch: rings widen where the step met
+    // the water (they ease out over ~1.3s, so poll — never a single sample).
+    await frame.evaluate(() => window.__world.teleport(-20, 6));
+    await expect.poll(async () => (await getState(page)).wake.rings, { timeout: 5000 }).toBeGreaterThan(0);
+
+    // Back on dry land the last rings widen away and the water settles.
+    await frame.evaluate(() => window.__world.teleport(30, -30));
+    await expect.poll(async () => (await getState(page)).wake.rings, { timeout: 5000 }).toBe(0);
+
+    // The reflections, the wake, and all the rest still inside budget.
+    expect(s0.render.calls).toBeLessThan(200);
+    expect(s0.render.triangles).toBeLessThan(150000);
+  });
+
+  test('blossom rides the golden hours, and thins at plain noon (v9)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // The hour before sunset: the garden blooms hardest.
+    await frame.evaluate(() => window.__world.setTime('evening'));
+    await expect.poll(async () => (await getState(page)).petals.golden, { timeout: 5000 }).toBeGreaterThan(0.5);
+    await expect.poll(async () => (await getState(page)).petals.drifting, { timeout: 10000 }).toBeGreaterThan(5);
+
+    // Plain noon: the golden factor falls away (petals already loosed may
+    // still be drifting down — only the hour's generosity is asserted).
+    await frame.evaluate(() => window.__world.setTime('noon'));
+    await expect.poll(async () => (await getState(page)).petals.golden, { timeout: 5000 }).toBeLessThan(0.1);
+  });
+
+  test('at first light the dew glints and the keeper is hinted; noon clears both (v9)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Dawn: the meadow's beads catch the light, and above the eastern gate
+    // the wing-like sweeps gather (never a figure, only a factor here).
+    await frame.evaluate(() => window.__world.setTime('dawn'));
+    await expect.poll(async () => (await getState(page)).dew.glint, { timeout: 5000 }).toBeGreaterThan(0.5);
+    await expect.poll(async () => (await getState(page)).gate.keeper, { timeout: 5000 }).toBeGreaterThan(0.5);
+
+    // By noon the dew has dried and the keeper has withdrawn.
+    await frame.evaluate(() => window.__world.setTime('noon'));
+    await expect.poll(async () => (await getState(page)).dew.glint, { timeout: 5000 }).toBeLessThan(0.05);
+    await expect.poll(async () => (await getState(page)).gate.keeper, { timeout: 5000 }).toBeLessThan(0.05);
+
+    // The dew is a real (seeded) field of beads, not an empty cloud.
+    expect((await getState(page)).dew.beads).toBeGreaterThan(100);
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');

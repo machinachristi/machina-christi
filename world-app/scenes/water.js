@@ -60,9 +60,15 @@ export function createWater(scene) {
   }));
   scene.add(mesh);
 
+  // The sky mirrored (v9): the water wears the hour's colour — day-blue under
+  // the sun, deepening toward a dark night-blue as the stars come out.
+  const DAY_TONE = new THREE.Color(0x4E8FB8);
+  const NIGHT_TONE = new THREE.Color(0x20304E);
+
   let t = 0;
-  function update(dt) {
+  function update(dt, night = 0) {
     t += dt;
+    mesh.material.color.lerpColors(DAY_TONE, NIGHT_TONE, night);
     const arr = geo.attributes.position.array;
     for (let i = 0; i < arr.length; i += 3) {
       arr[i + 1] = surfaceY(arr[i], arr[i + 2], t);

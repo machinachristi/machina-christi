@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -49,13 +49,19 @@
       "date": "2026-07-07",
       "focus": "stillness, the banks, and the east",
       "summary": "The garden rewards stillness now: stand quiet a moment by the water and the walker settles down to sit, and the shyer creatures forget their wariness and draw near — a fish rises from the deep to hang just under the ripples at your feet, a butterfly or two comes to hover close — and the first touch of movement rises again and lets them go. The banks have grown soft with reeds and rushes: clumps of tall green blades stand along the water's edge and lean together on the wind, and the river now carries on the ear from farther off, murmuring a good stretch of meadow away so that it is heard before it is seen. Far to the east, where the risen rim melts into the fog and the river's heads pass out of the garden, a gate of pale stone now stands with a quiet standing light between its pillars, brightest at night — a hush of what will one day keep the way (Genesis 3:24). And rarely, and only near the Tree of the Knowledge of Good and Evil, something long and quiet stirs the grass at the dark tree's foot and is gone again — never named, never fully shown (Genesis 3:1)."
+    },
+    {
+      "version": 9,
+      "date": "2026-07-07",
+      "focus": "the water answering",
+      "summary": "The river answers what stands over it now: its surface wears the hour's colour — day-blue under the sun, deepening to a dark night-blue as the stars come out — the trees on its banks lay dark trembling impressions beside them, and the eastern gate's standing light stretches a golden glint down the two channels that pass its island, burning brightest at night. The walker leaves a wake: where a step meets the water a foam-white ring widens and fades into the river's own blue, wading slows the stride as the water takes its share, and the reeds along the banks lean away from whoever passes among them and spring gently back behind. The garden blooms on the wind: petals loosed from the planted trees drift east and settle into the grass, thickest in the golden hours of morning and evening. Through the last watch of the night the meadow gathers dew, and at first light the whole face of the ground glints with it until a little after the mist has burnt away (Genesis 2:6). And at that same hour, as the east brightens behind the gate, two faint wing-like sweeps of light gather above the standing flame and are gone again by mid-morning — the keeper hinted, never shown (Genesis 3:24)."
     }
   ],
   "next": [
-    "Reflections on the water: the sky, the trees, and the eastern gate mirrored in the river's slow surface",
-    "The walker's wake: grass that bends underfoot and rings that widen where a step meets the water",
-    "Blossom on the wind: petals loosed from the flowering trees, drifting thickest in the golden hours",
-    "Dew at first light: the morning grass beaded and glinting as the mist burns away",
-    "The gate drawn nearer: as the east brightens, the first faint hint of the keeper set to guard the way (Genesis 3:24)"
+    "The cool of the day: at evening a wind walks the garden — the trees bow together as it passes, and the walker hears it move among them (Genesis 3:8, foreshadowed)",
+    "The spring of Eden: west of the garden, the place where the river rises — welling water among wet stones, and the course's first murmur (Genesis 2:10)",
+    "Fruit in season: figs and pomegranates ripening on a few of the planted trees, each named as the walker draws near",
+    "A flock begun: the lamb finds companions, and the cattle low softly to one another at dusk",
+    "Footprints on the banks: the sandy verge takes the walker's steps for a little while, and the river smooths them away"
   ]
 }
