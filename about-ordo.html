@@ -89,7 +89,25 @@
       margin: 0.7em 0 1.1em;
       background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
     }
+    h2 {
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 3em 0 1.1em;
+      padding-bottom: 0.8em;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+    }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+
+    .ranks { list-style: none; max-width: 62ch; }
+    .ranks li { margin-bottom: 1em; color: rgba(232, 213, 163, 0.72); }
+    .ranks .term {
+      color: var(--gold-soft);
+      letter-spacing: 0.06em;
+    }
+    .ranks .term::after { content: " \2014 "; color: rgba(232, 213, 163, 0.4); }
 
     a.enter {
       display: inline-block;
@@ -121,9 +139,22 @@
   <div class="wrap">
     <a class="back" href="about.html">&lsaquo; about</a>
     <h1>Ordo</h1>
-    <p>Ordo is the quietest room in the house: today in the Church, at a glance. A link to the day's Gospel reading, and — on a feast, memorial, or solemnity — the name of the saint the Church remembers, with a short life drawn from Alban Butler's <cite>Lives of the Saints</cite> (1894), now in the public domain.</p>
-    <p>The calendar comes from the General Roman Calendar; the Gospel text itself lives at USCCB, linked out rather than reproduced. Not every saint on the calendar has a matching entry yet — Butler wrote before many modern canonizations, and the page says so plainly rather than guessing.</p>
+    <p>Ordo is the quietest room in the house: today in the Church, at a glance. A link to the day's Gospel reading, and — on a solemnity, feast, or memorial — the name of the saint the Church remembers, with a short life you can read without leaving the page.</p>
+    <p>Most of those lives are drawn from Alban Butler's <cite>Lives of the Saints</cite> (1894), now in the public domain. Butler wrote before many modern canonizations, though, so where he is silent the life is taken instead from the Holy See's own words at <a href="https://www.vatican.va" target="_blank" rel="noopener">Vatican.va</a> — a papal homily, catechesis, or biography — and, failing that, retold from <a href="https://www.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a> in the Church's devotional voice. Every excerpt names its source and links back to it.</p>
+    <p>The calendar itself is the General Roman Calendar; the Gospel text lives at USCCB, linked out rather than reproduced.</p>
     <p><a class="enter" href="ordo.html">open today&rsquo;s page</a></p>
+
+    <h2>The shape of the year</h2>
+    <p>The Church keeps time by the life of Christ. The year turns through seasons — <em>Advent</em> and <em>Christmas</em>, <em>Lent</em> and <em>Easter</em>, with <em>Ordinary Time</em> between — each with its own colour and mood, so that over twelve months the whole mystery of salvation is lived through rather than merely recalled. Every Sunday is a little Easter; and threaded through the seasons are the days that remember the saints, the friends of God held up as proof that holiness is possible. Not all such days weigh the same, and the calendar ranks them.</p>
+
+    <h2>The ranks of the day</h2>
+    <ul class="ranks">
+      <li><span class="term">Solemnity</span>the highest rank, kept for the central mysteries of the faith and the greatest saints — Easter, Christmas, the Assumption, Saints Peter and Paul. A solemnity is celebrated with the fullest liturgy and can outrank the Sunday it falls on.</li>
+      <li><span class="term">Feast</span>a step below: a major event or saint honoured on a single day — the Apostles, the Evangelists, the Presentation of the Lord — but without displacing a Sunday of the greater seasons.</li>
+      <li><span class="term">Memorial</span>a saint the whole Church remembers on that day. The saint is named in the prayers, but the day keeps the character of the season around it.</li>
+      <li><span class="term">Optional memorial</span>a memorial the priest may keep or set aside — often several saints share the same date, and the day leaves the choice open.</li>
+    </ul>
+    <p>Days with no saint of rank are simply <em>weekdays</em> of the season — <em>feriae</em> — and on those Ordo shows only the Gospel.</p>
   </div>
 </body>
 </html>
