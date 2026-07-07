@@ -9,6 +9,7 @@ import { createCharacter } from './character.js';
 import { CameraRig } from './camera-rig.js';
 import { createControls } from './controls.js';
 import { createAmbience } from './audio.js';
+import { riverEdgeDist } from './scenes/terrain.js';
 import { mulberry32, breathe } from './util.js';
 
 const params = new URLSearchParams(location.search);
@@ -158,13 +159,39 @@ await breathe();
 // re-armed only after the walker has properly drawn away again.
 let reverent = false;
 
+// Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
+// the water a moment and the walker settles down to sit, and the shyer
+// creatures draw near; the first stir of input rises again. `forceSit` lets a
+// visit be seated on command (window.__world.sit) for a deliberate rest.
+const SIT_AFTER = 2.5;   // seconds of stillness by the water before sitting
+let stillFor = 0;
+let seated = false;
+let forceSit = false;
+
+function updateStillness(dt) {
+  const v = controls.vector();
+  const moving = Math.hypot(v.x, v.z) > 0.001;
+  if (moving) forceSit = false;   // the first touch of input always rises
+  const pos = character.group.position;
+  const edge = riverEdgeDist(pos.x, pos.z);
+  const byWater = edge > 0.2 && edge < 3.2;   // on the bank, not out in the water
+  if (moving || (!byWater && !forceSit)) stillFor = 0;
+  else stillFor += dt;
+  seated = forceSit || (byWater && stillFor >= SIT_AFTER);
+  character.setSitting(seated);
+}
+
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
+  updateStillness(dt);
   character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
   updateCompanion(dt);
   rig.update(dt);
-  const hour = garden.update(dt, character.group.position);
+  const lure = seated
+    ? { x: character.group.position.x, z: character.group.position.z }
+    : null;
+  const hour = garden.update(dt, character.group.position, lure);
   updateNamingCaption();
   ambience.update(dt, hour.night, character.group.position, hour.rain);
   if (garden.reverence > 0.6 && !reverent) {
@@ -217,6 +244,15 @@ window.__world = {
       // The naming (Genesis 2:19-20): the creature whose name is presently
       // given to the walker standing near it, or null apart from them all.
       naming: garden.named(),
+      // Stillness (Genesis 2:19): whether the walker sits at rest by the water.
+      stillness: { sitting: seated },
+      // The eastward gate of light (Genesis 3:24, foreshadowed).
+      gate: garden.gate,
+      // How many reed blades stand along the banks.
+      reeds: garden.reeds,
+      // The subtle presence near the Tree of Knowledge (Genesis 3:1): whether
+      // it presently stirs the grass, and where.
+      presence: garden.presence(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -241,6 +277,17 @@ window.__world = {
   setRain(v) {
     const hour = garden.setRain(v);
     return { rain: hour.rain };
+  },
+  // Sit the walker down where they stand (true) or rise again (false) — the
+  // deliberate form of the stillness the water invites. For tests and rest.
+  sit(on = true) {
+    forceSit = !!on;
+    return { sitting: forceSit };
+  },
+  // Call the subtle presence to stir the grass near the Tree of Knowledge
+  // now, rather than waiting on its own rare clock. For a glimpse, and tests.
+  stir() {
+    return garden.stir();
   },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without

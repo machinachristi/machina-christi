@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -43,12 +43,19 @@
       "date": "2026-07-05",
       "focus": "rain, seasons, and small wings",
       "summary": "The garden has weather now: each drifting cloud lays its shadow on the meadow, cast along the true line of the sun — long shade at the golden hours — and once in a while a brief gentle rain passes over, greying the light, hushing the birds, and pattering softly for those who have asked for sound; then it moves on and the colours return. The night sky keeps the seasons (Genesis 1:14): the whole firmament wheels slowly about its pole through a long year of days, its starting angle set by the visitor's own calendar, so the Bear, Orion, and the Pleiades stand where the season sets them. And small wings fill the blossoms: six butterflies in petal colours flit the flower band by day and fold their wings in the grass at dusk, while eight bees hum at two beds of flowers — heard as a low murmur by any walker who draws near — and every one of them, drawn near, is named: Parpar the butterfly, Devorah the bee."
+    },
+    {
+      "version": 8,
+      "date": "2026-07-07",
+      "focus": "stillness, the banks, and the east",
+      "summary": "The garden rewards stillness now: stand quiet a moment by the water and the walker settles down to sit, and the shyer creatures forget their wariness and draw near — a fish rises from the deep to hang just under the ripples at your feet, a butterfly or two comes to hover close — and the first touch of movement rises again and lets them go. The banks have grown soft with reeds and rushes: clumps of tall green blades stand along the water's edge and lean together on the wind, and the river now carries on the ear from farther off, murmuring a good stretch of meadow away so that it is heard before it is seen. Far to the east, where the risen rim melts into the fog and the river's heads pass out of the garden, a gate of pale stone now stands with a quiet standing light between its pillars, brightest at night — a hush of what will one day keep the way (Genesis 3:24). And rarely, and only near the Tree of the Knowledge of Good and Evil, something long and quiet stirs the grass at the dark tree's foot and is gone again — never named, never fully shown (Genesis 3:1)."
     }
   ],
   "next": [
-    "Stillness rewarded: sit the walker down by the water and let the creatures draw near",
-    "Eastward glimpses: the garden's far side hinting at a gate where light stands (Genesis 3:24, foreshadowed)",
-    "Reeds and rushes: the banks grown soft with swaying green, and the river heard before it is seen",
-    "A subtle presence: rarely, and only near the Tree of Knowledge, something long and quiet stirs the grass (Genesis 3:1, foreshadowed)"
+    "Reflections on the water: the sky, the trees, and the eastern gate mirrored in the river's slow surface",
+    "The walker's wake: grass that bends underfoot and rings that widen where a step meets the water",
+    "Blossom on the wind: petals loosed from the flowering trees, drifting thickest in the golden hours",
+    "Dew at first light: the morning grass beaded and glinting as the mist burns away",
+    "The gate drawn nearer: as the east brightens, the first faint hint of the keeper set to guard the way (Genesis 3:24)"
   ]
 }

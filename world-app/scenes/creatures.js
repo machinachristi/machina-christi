@@ -274,6 +274,8 @@ export function createCreatures(scene, rng) {
       wig: rng() * Math.PI * 2,
       bob: rng() * Math.PI * 2,
     };
+    loop.baseCx = loop.cx;   // its home anchor, to ease back to when the still walker leaves
+    loop.rise = 0;           // 0 normally → 1 drawn up near a seated watcher
     const x0 = loop.cx + Math.cos(loop.theta) * loop.lx;
     f.group.position.set(x0, -0.8, riverZ(x0) + Math.sin(loop.theta) * loop.lz);
     group.add(f.group);
@@ -390,8 +392,25 @@ export function createCreatures(scene, rng) {
 
   let t = 0;
   const orbitPoint = new THREE.Vector3();
-  function update(dt, night = 0, walker = null) {
+  // `lure`: where a still, seated walker sits by the water. When present the
+  // shyer creatures forget their wariness and draw near it — the fish rise
+  // and gather to the watcher, and a butterfly or two comes to hover close —
+  // and when it clears they ease back to their own lives (Genesis 2:19: the
+  // creatures came to the man). Every effect is reversible, so the garden
+  // returns to exactly itself once the walker rises.
+  function update(dt, night = 0, walker = null, lure = null) {
     t += dt;
+
+    // Choose the one fish nearest a lure to be the one that draws near; the
+    // rest keep to their loops. (Found before the fish loop so it can steer.)
+    let luredFish = null;
+    if (lure) {
+      let bestD = Infinity;
+      for (const f of fish) {
+        const d = Math.hypot(f.group.position.x - lure.x, f.group.position.z - lure.z);
+        if (d < bestD) { bestD = d; luredFish = f; }
+      }
+    }
 
     if (walker) {
       const near = nearestNamable(walker);
@@ -468,6 +487,17 @@ export function createCreatures(scene, rng) {
 
     for (const f of fish) {
       const o = f.loop;
+
+      // Drawn to a seated watcher: the nearest fish eases its loop's anchor
+      // toward the lure (kept within the wadable stretch) and rises so its
+      // back nears the surface; all others ease home and settle back down.
+      const drawn = f === luredFish;
+      // Keep a drawn fish's loop within the wadable stretch and well west of
+      // the crossing stones (x ≈ 9.1) — its far reach is cx + lx (lx ≤ 6).
+      const targetCx = drawn ? clamp(lure.x, -40, 1) : o.baseCx;
+      o.cx += (targetCx - o.cx) * clamp(dt * 0.6, 0, 1);
+      o.rise = damp(o.rise, drawn ? 1 : 0, 1.2, dt);
+
       o.theta += o.speed * dt;
       const nx = o.cx + Math.cos(o.theta) * o.lx;
       const nz = riverZ(nx) + Math.sin(o.theta) * o.lz;
@@ -482,8 +512,9 @@ export function createCreatures(scene, rng) {
       }
 
       // Glide below the surface (-0.5), dipping toward the bed (-1.3) and
-      // rising so the back just crests; never into the ground.
-      const y = -0.78 + Math.sin(o.theta * 3 + o.bob) * 0.22;
+      // rising so the back just crests; never into the ground. Drawn to a
+      // seated watcher (o.rise), it hangs shallower, just under the ripples.
+      const y = -0.78 + o.rise * 0.26 + Math.sin(o.theta * 3 + o.bob) * (0.22 - o.rise * 0.1);
       p.set(nx, Math.max(y, heightAt(nx, nz) + 0.12), nz);
 
       o.wig += dt * (6 + Math.abs(o.speed) * 4);
@@ -502,6 +533,13 @@ export function createCreatures(scene, rng) {
       }
       const p = B.group.position;
       if (B.mode === 'flit') {
+        // A butterfly close to a seated watcher lets its wandering target
+        // drift in toward them, so one or two come to hover near — and drifts
+        // free again the moment the lure clears.
+        if (lure && Math.hypot(p.x - lure.x, p.z - lure.z) < 11) {
+          B.target.x += (lure.x - B.target.x) * clamp(dt * 0.5, 0, 1);
+          B.target.z += (lure.z - B.target.z) * clamp(dt * 0.5, 0, 1);
+        }
         const dx = B.target.x - p.x, dz = B.target.z - p.z;
         const dist = Math.hypot(dx, dz);
         if (dist < 0.4 || (B.until -= dt) <= 0) {
@@ -585,7 +623,7 @@ export function createCreatures(scene, rng) {
     return {
       flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
       grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z })),
-      shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z })),
+      shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z, rise: f.loop.rise })),
       butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },
       cattle: 2,
