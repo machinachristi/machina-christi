@@ -69,26 +69,48 @@ export function createReeds(scene) {
     mesh.setColorAt(i, c);
   }
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  // Instances spread along the whole river; the base blade's bounding sphere
+  // sits at the origin, so leave culling off rather than trust it.
+  mesh.frustumCulled = false;
   scene.add(mesh);
 
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
+  const qYaw = new THREE.Quaternion();
+  const Y_AXIS = new THREE.Vector3(0, 1, 0);
   const e = new THREE.Euler();
   const p = new THREE.Vector3();
   const s = new THREE.Vector3();
 
   let t = 0;
-  function update(dt) {
+  // `walker` (v9, the walker's wake): reeds within arm's reach lean away from
+  // whoever passes among them, and spring gently back behind them.
+  function update(dt, walker = null) {
     t += dt;
     for (let i = 0; i < blades.length; i++) {
       const b = blades[i];
       // The reed leans on the wind: a slow base tilt plus a small quick tremor.
       const sway = b.lean + Math.sin(t * b.rate + b.phase) * 0.12
                  + Math.sin(t * 2.6 + b.phase) * 0.03;
-      e.set(sway, b.yaw, sway * 0.6);
+      let tx = 0, tz = 0;
+      if (walker) {
+        const dx = b.x - walker.x;
+        const dz = b.z - walker.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < 1.69) {   // within 1.3 of the walker
+          const d = Math.sqrt(d2) || 0.001;
+          const push = (1 - d / 1.3) * 0.55;
+          tx = (dz / d) * push;    // +x rotation leans the tip toward +z
+          tz = -(dx / d) * push;   // −z rotation leans the tip toward +x
+        }
+      }
+      // World-frame tilt applied after the blade's own yaw, so the lean away
+      // from the walker points the same way whichever way the blade faces.
+      e.set(sway + tx, 0, sway * 0.6 + tz);
+      q.setFromEuler(e).multiply(qYaw.setFromAxisAngle(Y_AXIS, b.yaw));
       p.set(b.x, b.y, b.z);
       s.set(1, b.h, 1);
-      m.compose(p, q.setFromEuler(e), s);
+      m.compose(p, q, s);
       mesh.setMatrixAt(i, m);
     }
     mesh.instanceMatrix.needsUpdate = true;

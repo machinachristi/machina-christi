@@ -13,6 +13,10 @@ import { createMist } from './mist.js';
 import { createReeds } from './reeds.js';
 import { createGate } from './gate.js';
 import { createPresence } from './presence.js';
+import { createReflections } from './reflections.js';
+import { createWake } from './wake.js';
+import { createPetals } from './petals.js';
+import { createDew } from './dew.js';
 import { breathe } from '../util.js';
 
 // Async, with a breath between the heavy build steps: the iframe shares the
@@ -39,6 +43,10 @@ export async function createGarden(scene, rng) {
   const reeds = createReeds(scene);
   const gate = createGate(scene);
   const presence = createPresence(scene);
+  const reflections = createReflections(scene, vegetation.treeSpots);
+  const wake = createWake(scene);
+  const petals = createPetals(scene, vegetation.treeSpots);
+  const dew = createDew(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -56,12 +64,16 @@ export async function createGarden(scene, rng) {
   // the creatures, who draw near it (see creatures.js).
   function update(dt, playerPos, lure = null) {
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
-    water.update(dt);
+    water.update(dt, hour.night);
     reverence = vegetation.update(dt, hour.night, playerPos);
     creatures.update(dt, hour.night, playerPos, lure);
-    reeds.update(dt);
-    gate.update(dt, hour.night);
+    reeds.update(dt, playerPos);
+    gate.update(dt, hour.night, hour.t);
     presence.update(dt);
+    reflections.update(dt, hour.night);
+    wake.update(dt, playerPos);
+    petals.update(dt, hour.t);
+    dew.update(dt, hour.t);
     mist.update(dt, hour.t);
     return hour;
   }
@@ -76,10 +88,14 @@ export async function createGarden(scene, rng) {
     constellations: sky.constellations,
     fauna: creatures.fauna,
     named: creatures.named,
-    gate: gate.position,
+    gate: gate.state,
     reeds: reeds.count,
     presence: presence.state,
     stir: presence.stir,
+    reflections: reflections.count,
+    wake: wake.state,
+    petals: petals.state,
+    dew: dew.state,
     get reverence() { return reverence; },
   };
 }

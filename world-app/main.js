@@ -246,10 +246,20 @@ window.__world = {
       naming: garden.named(),
       // Stillness (Genesis 2:19): whether the walker sits at rest by the water.
       stillness: { sitting: seated },
-      // The eastward gate of light (Genesis 3:24, foreshadowed).
-      gate: garden.gate,
+      // The eastward gate of light (Genesis 3:24, foreshadowed) — and how
+      // strongly the keeper is presently hinted above it (v9, dawn only).
+      gate: garden.gate(),
       // How many reed blades stand along the banks.
       reeds: garden.reeds,
+      // Reflections on the water (v9): how many bank trees lay an impression
+      // on the surface. (The gate's glint and the sky's tint are always on.)
+      reflections: garden.reflections,
+      // The walker's wake (v9): how many rings presently widen on the water.
+      wake: garden.wake(),
+      // Blossom on the wind (v9): petals adrift, and how golden the hour is.
+      petals: garden.petals(),
+      // Dew at first light (v9): how strongly the meadow presently glints.
+      dew: garden.dew(),
       // The subtle presence near the Tree of Knowledge (Genesis 3:1): whether
       // it presently stirs the grass, and where.
       presence: garden.presence(),

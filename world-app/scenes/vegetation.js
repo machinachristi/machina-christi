@@ -335,5 +335,7 @@ export function createVegetation(scene, rng) {
     return reverence;
   }
 
-  return { update };
+  // The planted trees' places, for anything that grows from or answers them
+  // (v9: petals loosed from the canopies, impressions mirrored on the water).
+  return { update, treeSpots };
 }

@@ -8,6 +8,7 @@
 
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
+import { smoothstep } from '../util.js';
 
 // Due east on the risen rim, on the dry island the two inner heads pass on
 // either side of. r ≈ 49 — inside the 50-unit walk bound, but only just.
@@ -81,10 +82,33 @@ export function createGate(scene) {
   lamp.position.y = 2.7;
   group.add(lamp);
 
+  // The keeper hinted (Genesis 3:24): as the east brightens toward dawn — the
+  // hour the sun rises behind the gate — two faint wing-like sweeps gather
+  // above the standing light and are gone again by mid-morning. Still only a
+  // shape of light: never a face, never a figure fully shown.
+  const keeperMat = new THREE.MeshLambertMaterial({
+    color: 0xF4E8C8,
+    emissive: 0xD8B96A,
+    emissiveIntensity: 0.8,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    flatShading: true,
+  });
+  const wings = [];
+  for (const sx of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.ConeGeometry(0.34, 2.7, 4), keeperMat);
+    wing.position.set(sx * 0.7, 3.4, -0.12);
+    wing.rotation.z = sx * 0.95;
+    group.add(wing);
+    wings.push(wing);
+  }
+  let keeper = 0;
+
   // The light stands quietly, but never quite still — a slow breath, and at
   // night it burns a little higher so the east is always faintly lit.
   let t = 0;
-  function update(dt, night = 0) {
+  function update(dt, night = 0, cycleT = 0) {
     t += dt;
     const flicker = 0.85 + Math.sin(t * 1.7) * 0.08 + Math.sin(t * 4.3) * 0.05;
     const rise = 1 + night * 0.9;
@@ -92,7 +116,21 @@ export function createGate(scene) {
     glow.material.opacity = (0.6 + 0.15 * Math.sin(t * 2.1)) * (0.7 + night * 0.5);
     lamp.intensity = 14 * flicker * rise;
     flame.scale.y = 0.96 + 0.06 * Math.sin(t * 3.1);
+
+    // The keeper's hour: gathering through the last watch, gone by morning.
+    keeper = cycleT > 0.5
+      ? smoothstep(0.945, 0.995, cycleT)
+      : 1 - smoothstep(0.05, 0.13, cycleT);
+    keeperMat.opacity = 0.34 * keeper * (0.85 + 0.15 * Math.sin(t * 1.3));
+    for (const wing of wings) {
+      wing.visible = keeper > 0.01;
+      wing.scale.y = 0.92 + 0.1 * Math.sin(t * 0.9);
+    }
   }
 
-  return { update, position: { x: GATE_POS.x, z: GATE_POS.z } };
+  function state() {
+    return { x: GATE_POS.x, z: GATE_POS.z, keeper };
+  }
+
+  return { update, state };
 }

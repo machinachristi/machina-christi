@@ -100,7 +100,9 @@ export function createCharacter({ eve = false } = {}) {
       group.rotation.y += shortestAngle(group.rotation.y, targetYaw) * (1 - Math.exp(-TURN_LAMBDA * dt));
     }
 
-    speed = damp(speed, mag * MAX_SPEED, 6, dt);
+    // Wading slows the stride: below the banks the water takes its share.
+    const wading = group.position.y < -0.6;
+    speed = damp(speed, mag * MAX_SPEED * (wading ? 0.6 : 1), 6, dt);
 
     // Walk along the facing direction — turning carves smooth arcs.
     if (speed > 0.01) {
