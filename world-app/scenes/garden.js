@@ -10,6 +10,9 @@ import { createVegetation, TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './veg
 import { createCreatures } from './creatures.js';
 import { createStones } from './stones.js';
 import { createMist } from './mist.js';
+import { createReeds } from './reeds.js';
+import { createGate } from './gate.js';
+import { createPresence } from './presence.js';
 import { breathe } from '../util.js';
 
 // Async, with a breath between the heavy build steps: the iframe shares the
@@ -31,6 +34,11 @@ export async function createGarden(scene, rng) {
   const creatures = createCreatures(scene, rng);
   const stones = createStones(scene);
   const mist = createMist(scene);
+  // These three each carry their own seeded stream, so building them shifts
+  // nothing already planted from the shared `rng` above.
+  const reeds = createReeds(scene);
+  const gate = createGate(scene);
+  const presence = createPresence(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -44,11 +52,16 @@ export async function createGarden(scene, rng) {
   // other way, so drawing near the sacred trees can be felt (reverence),
   // and drawing near a creature gives its name (the naming).
   let reverence = 0;
-  function update(dt, playerPos) {
+  // `lure`: the seat of a still walker by the water, or null — passed on to
+  // the creatures, who draw near it (see creatures.js).
+  function update(dt, playerPos, lure = null) {
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
     water.update(dt);
     reverence = vegetation.update(dt, hour.night, playerPos);
-    creatures.update(dt, hour.night, playerPos);
+    creatures.update(dt, hour.night, playerPos, lure);
+    reeds.update(dt);
+    gate.update(dt, hour.night);
+    presence.update(dt);
     mist.update(dt, hour.t);
     return hour;
   }
@@ -63,6 +76,10 @@ export async function createGarden(scene, rng) {
     constellations: sky.constellations,
     fauna: creatures.fauna,
     named: creatures.named,
+    gate: gate.position,
+    reeds: reeds.count,
+    presence: presence.state,
+    stir: presence.stir,
     get reverence() { return reverence; },
   };
 }

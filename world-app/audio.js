@@ -299,10 +299,13 @@ export function createAmbience() {
     acc = 0;
     const tc = ctx.currentTime;
 
-    // The river grows on the ear as the walker nears the water — gently.
+    // The river grows on the ear as the walker nears the water — and now it
+    // carries from farther off, so it is heard before it is seen: a faint
+    // brook still murmurs a good stretch of meadow away, swelling as the bank
+    // (and the swaying reeds along it) come into view.
     const d = riverEdgeDist(pos.x, pos.z);
-    const nearness = 1 - clamp(d / 16, 0, 1);
-    refs.waterGain.gain.setTargetAtTime(0.006 + 0.06 * Math.pow(nearness, 1.6), tc, 0.5);
+    const nearness = 1 - clamp(d / 26, 0, 1);
+    refs.waterGain.gain.setTargetAtTime(0.006 + 0.062 * Math.pow(nearness, 1.35), tc, 0.5);
 
     // The patter follows the shower; the bees are heard near their beds of
     // blossom, by day and in dry air.

@@ -80,10 +80,14 @@ export function createCharacter({ eve = false } = {}) {
   let speed = 0;
   let phase = 0;
   let idle = Math.random() * Math.PI * 2;
+  let sitting = false;
+  let seat = 0;             // 0 standing → 1 fully settled; damped, never a snap
 
   // move: camera-space input { x: right, z: forward, |v| ≤ 1 }.
   // camYaw: yaw of the camera's view line, from the rig.
   function update(dt, move, camYaw, heightAt, boundsRadius) {
+    // Seated, the figure neither walks nor turns — it rests where it is.
+    if (sitting) move = { x: 0, z: 0 };
     const mag = clamp(Math.hypot(move.x, move.z), 0, 1);
 
     if (mag > 0.001) {
@@ -130,7 +134,28 @@ export function createCharacter({ eve = false } = {}) {
     // At rest the arms settle just off the body.
     armL.rotation.z = 0.10 + Math.sin(idle * 1.7) * 0.015 * (1 - stride);
     armR.rotation.z = -0.10 - Math.sin(idle * 1.7) * 0.015 * (1 - stride);
+
+    // Sitting down by the water: hips fold so the legs reach forward along the
+    // ground, the torso settles and leans back a touch, and the hands come
+    // back to prop. Blended in and out of the walk pose so it reads as a slow,
+    // natural settling — not a snap between two stances.
+    seat = damp(seat, sitting ? 1 : 0, 6, dt);
+    if (seat > 0.001) {
+      const rest = 0.5 + Math.sin(idle * 1.1) * 0.03;   // faint breathing at rest
+      legL.rotation.x = legL.rotation.x * (1 - seat) + 1.5 * seat;
+      legR.rotation.x = legR.rotation.x * (1 - seat) + 1.5 * seat;
+      armL.rotation.x = armL.rotation.x * (1 - seat) + rest * seat;
+      armR.rotation.x = armR.rotation.x * (1 - seat) + rest * seat;
+      torso.position.y = torso.position.y * (1 - seat) + 0.62 * seat;
+      torso.rotation.x = torso.rotation.x * (1 - seat) + (-0.16) * seat;
+    }
   }
 
-  return { group, update, get speed() { return speed; } };
+  function setSitting(b) { sitting = !!b; }
+
+  return {
+    group, update, setSitting,
+    get speed() { return speed; },
+    get sitting() { return sitting; },
+  };
 }

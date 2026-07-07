@@ -304,6 +304,71 @@ test.describe('the garden loads', () => {
     await expect(frame.locator('.naming')).not.toHaveClass(/naming--shown/);
   });
 
+  test('stillness by the water: the walker sits, and a fish draws near (v8)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // A fresh visit stands; no fish is drawn up out of the deep.
+    const s0 = await getState(page);
+    expect(s0.stillness.sitting).toBe(false);
+    expect(s0.fauna.shoal.every(f => f.rise < 0.1)).toBe(true);
+
+    // Rest by the river's edge. Sitting is invited by stillness near the
+    // water and can also be asked for directly — use the deliberate form so
+    // the test doesn't hinge on wall-clock timing.
+    await frame.evaluate(() => window.__world.teleport(3, 13.6));
+    await frame.evaluate(() => window.__world.sit(true));
+    await expect.poll(async () => (await getState(page)).stillness.sitting, { timeout: 5000 }).toBe(true);
+
+    // Seated, a fish forgets its wariness and rises to hang near the watcher
+    // (rise eases in, so poll — never a single sample).
+    await expect.poll(async () => {
+      const shoal = (await getState(page)).fauna.shoal;
+      return Math.max(...shoal.map(f => f.rise));
+    }, { timeout: 10000 }).toBeGreaterThan(0.5);
+
+    // Rise again and the garden returns to itself: the fish sinks back down.
+    await frame.evaluate(() => window.__world.sit(false));
+    await expect.poll(async () => (await getState(page)).stillness.sitting).toBe(false);
+    await expect.poll(async () => {
+      const shoal = (await getState(page)).fauna.shoal;
+      return Math.max(...shoal.map(f => f.rise));
+    }, { timeout: 10000 }).toBeLessThan(0.1);
+  });
+
+  test('a gate of light stands to the east, and reeds line the banks (v8)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const s = await getState(page);
+
+    // The gate stands far to the east, on the risen rim near the walk's edge.
+    expect(s.gate.x).toBeGreaterThan(40);
+    expect(Math.hypot(s.gate.x, s.gate.z)).toBeGreaterThan(45);
+
+    // Reeds and rushes stand along the banks — a good stand of them.
+    expect(s.reeds).toBeGreaterThan(40);
+
+    // The east and its light, the reeds and their sway, all inside budget.
+    expect(s.render.calls).toBeLessThan(200);
+    expect(s.render.triangles).toBeLessThan(150000);
+  });
+
+  test('a subtle presence stirs the grass near the Tree of Knowledge (v8)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // It keeps to its own rare clock; a fresh visit shows no sign of it.
+    expect((await getState(page)).presence.active).toBe(false);
+
+    // Call it for a glimpse: it stirs the grass at the dark tree's foot.
+    await frame.evaluate(() => window.__world.stir());
+    await expect.poll(async () => (await getState(page)).presence.active, { timeout: 5000 }).toBe(true);
+
+    // And it keeps close to the Tree of the Knowledge of Good and Evil
+    // (at roughly x≈3.4, z≈0.8), never wandering off across the garden.
+    const p = (await getState(page)).presence;
+    expect(Math.hypot(p.x - 3.4, p.z - 0.8)).toBeLessThan(6);
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');
