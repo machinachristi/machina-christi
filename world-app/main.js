@@ -191,9 +191,9 @@ renderer.setAnimationLoop(() => {
   const lure = seated
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
-  const hour = garden.update(dt, character.group.position, lure);
+  const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y);
   updateNamingCaption();
-  ambience.update(dt, hour.night, character.group.position, hour.rain);
+  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind);
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
     ambience.chime();
@@ -263,6 +263,17 @@ window.__world = {
       // The subtle presence near the Tree of Knowledge (Genesis 3:1): whether
       // it presently stirs the grass, and where.
       presence: garden.presence(),
+      // The cool of the day (v10, Genesis 3:8 foreshadowed): how strongly
+      // the evening gust presently moves through the garden, 0..1.
+      wind: garden.wind,
+      // The spring of Eden (v10, Genesis 2:10): where the river is first found.
+      spring: garden.spring(),
+      // Footprints on the banks (v10, Genesis 2:15): how many presently
+      // linger in the sand.
+      footprints: garden.footprints(),
+      // Fruit in season (v10, Genesis 1:29): the fig and pomegranate trees
+      // that bear fruit, each namable like any living thing in the garden.
+      fruit: garden.fruit,
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

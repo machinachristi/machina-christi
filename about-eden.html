@@ -132,8 +132,28 @@
       color: rgba(var(--leaf), 0.85);
       margin-bottom: 0.4em;
     }
-    .entry h3 { font-weight: normal; font-size: 17px; letter-spacing: 0.03em; color: var(--gold-soft); margin: 0 0 0.35em; }
-    .entry p { margin: 0; font-size: 15px; color: rgba(232, 213, 163, 0.68); }
+    .entry h3 { font-weight: normal; font-size: 17px; letter-spacing: 0.03em; color: var(--gold-soft); margin: 0 0 0.5em; }
+    .entry__changes { list-style: none; margin: 0; padding: 0; }
+    .entry__changes li {
+      position: relative;
+      margin-bottom: 0.5em;
+      padding-left: 1.1em;
+      font-size: 15px;
+      color: rgba(232, 213, 163, 0.68);
+    }
+    .entry__changes li:last-child { margin-bottom: 0; }
+    .entry__changes li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: rgba(201, 162, 39, 0.55);
+    }
+    .entry__changes .verse {
+      color: var(--gold);
+      font-size: 0.86em;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
 
     #next-list { padding-left: 1.2em; color: rgba(232, 213, 163, 0.72); }
     #next-list li { margin-bottom: 0.6em; }
@@ -178,7 +198,9 @@
             <article class="entry">
               <p class="entry__meta">v${escapeHtml(e.version)} &middot; ${escapeHtml(e.date)}</p>
               <h3>${escapeHtml(e.focus)}</h3>
-              <p>${escapeHtml(e.summary)}</p>
+              <ul class="entry__changes">${(e.changes || []).map(c => `
+                <li>${escapeHtml(c.text)}${c.verse ? ` <span class="verse">(${escapeHtml(c.verse)})</span>` : ''}</li>`).join('')}
+              </ul>
             </article>`).join('')
           : '<p>Nothing logged yet.</p>';
 

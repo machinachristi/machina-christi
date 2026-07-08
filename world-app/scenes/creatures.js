@@ -173,7 +173,11 @@ function makeButterfly(tone) {
   return { group: g, wingL, wingR };
 }
 
-export function createCreatures(scene, rng) {
+// `staticNamables` (v10): spots that don't move but still answer the naming
+// — the fig and pomegranate trees (scenes/fruit.js) — each shaped like a
+// creature enough to share the one candidate list: `{ pos: {x,y,z}, name,
+// label, kind }`.
+export function createCreatures(scene, rng, staticNamables = []) {
   const group = new THREE.Group();
   scene.add(group);
 
@@ -253,6 +257,23 @@ export function createCreatures(scene, rng) {
         mode: 'graze', until: 3 + rng() * 5, target: null, phase: 0,
       });
     }
+  }
+
+  // A flock begun (Genesis 1:24): two more lambs join, so the first is no
+  // longer alone. Their own seeded stream, appended after every draw above,
+  // so the shared planting rng — and everything after it in this file —
+  // stays exactly as it was before they joined.
+  const flockRng = mulberry32(20260715);
+  for (let i = 0; i < 2; i++) {
+    const lamb2 = makeLamb();
+    const s2 = lambSpot(flockRng);
+    lamb2.group.position.set(s2.x, heightAt(s2.x, s2.z), s2.z);
+    group.add(lamb2.group);
+    grazers.push({
+      ...lamb2, spot: lambSpot, speed: 0.72, stepFreq: 7, dip: 0.95,
+      kind: 'lamb', name: 'Taleh', label: 'the lamb',
+      mode: 'graze', until: 2 + flockRng() * 3, target: null, phase: 0,
+    });
   }
 
   // ── Fish ──────────────────────────────────────────────────
@@ -387,6 +408,9 @@ export function createCreatures(scene, rng) {
     for (const f of fish) consider(f, 2.4, 4);
     for (const B of butterflies) consider(B, 2.0, 3);
     if (beeMesh.visible) for (const B of swarm) consider(B, 1.7, 2.6);
+    // Fruit in season (Genesis 1:29): hangs well above the walker's head, so
+    // it wants a generous vertical reach — the same idiom as a flyer's low pass.
+    for (const nm of staticNamables) consider(nm, 2.2, 6);
     return best;
   }
 
@@ -627,7 +651,7 @@ export function createCreatures(scene, rng) {
       butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },
       cattle: 2,
-      lamb: 1,
+      lamb: grazers.filter(G => G.kind === 'lamb').length,
       fish: fish.length,
     };
   }

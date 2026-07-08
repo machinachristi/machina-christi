@@ -7,6 +7,16 @@
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist } from './terrain.js';
 import { smoothstep, mulberry32 } from '../util.js';
+import { windOf, gustAt } from './wind.js';
+
+// A fixed lean direction for the wind — +X, the same way the gust's own
+// leading edge sweeps — so everything leans the same way at once, as one
+// body of moving air would, rather than each its own random direction.
+// (Rotating about -Z by a positive angle tips a point above the origin
+// toward +X; see the sway math in update() and swayCanopies() below.)
+const WIND_AXIS = new THREE.Vector3(0, 0, -1);
+const TREE_TILT = 0.16;    // radians at full gust, sacred trees (hinged at the ground)
+const CANOPY_TILT = 0.5;   // radians at full gust, background canopies (hinged at the trunk top)
 
 export const TREE_OF_LIFE_POS = new THREE.Vector3(-3.2, 0, -0.5);
 export const TREE_OF_KNOWLEDGE_POS = new THREE.Vector3(3.4, 0, 0.8);
@@ -37,24 +47,33 @@ function scatter(rng, count, rMin, rMax, minGap, taken = []) {
   return out;
 }
 
+// Returns each instance's base placement (ground point, lift above it, yaw,
+// scale) — unused by most callers, but it's what lets the wind (v10) later
+// re-lean a canopy from the ground up without disturbing its planting.
 function fillInstances(mesh, spots, rng, { yOf, scaleMin, scaleMax, colorA, colorB }) {
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const p = new THREE.Vector3();
   const s = new THREE.Vector3();
   const c = new THREE.Color();
+  const bases = [];
   for (let i = 0; i < spots.length; i++) {
     const sc = scaleMin + rng() * (scaleMax - scaleMin);
-    p.set(spots[i].x, yOf(spots[i], sc), spots[i].z);
-    q.setFromEuler(new THREE.Euler(0, rng() * Math.PI * 2, 0));
+    const yaw = rng() * Math.PI * 2;
+    const groundY = heightAt(spots[i].x, spots[i].z);
+    const y = yOf(spots[i], sc);
+    p.set(spots[i].x, y, spots[i].z);
+    q.setFromEuler(new THREE.Euler(0, yaw, 0));
     s.setScalar(sc);
     m.compose(p, q, s);
     mesh.setMatrixAt(i, m);
     c.copy(colorA).lerp(colorB, rng());
     mesh.setColorAt(i, c);
+    bases.push({ x: spots[i].x, z: spots[i].z, groundY, lift: y - groundY, yaw, scale: sc });
   }
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  return bases;
 }
 
 export function createVegetation(scene, rng) {
@@ -64,6 +83,9 @@ export function createVegetation(scene, rng) {
   // Kept in scope for the night: after dark the Tree of Life's lamp and
   // golden canopy brighten, and the motes turn firefly (see update()).
   let lifeLamp, lifeGold;
+  // Kept in scope for the cool of the day (v10): each sacred tree's own
+  // group, so the whole tree can bow from its root as the gust passes.
+  let lifeTreeGroup, knowledgeTreeGroup;
 
   // ── The two sacred trees, hand-shaped ─────────────────────
   // Tree of Life: pale trunk, golden triple canopy, its own warm light.
@@ -91,6 +113,7 @@ export function createVegetation(scene, rng) {
     group.add(t);
     lifeLamp = lamp;
     lifeGold = gold;
+    lifeTreeGroup = t;
   }
 
   // Tree of Knowledge: a leaning, twisted trunk, deep shadowed canopy,
@@ -130,6 +153,7 @@ export function createVegetation(scene, rng) {
     t.add(fruit);
     t.position.set(TREE_OF_KNOWLEDGE_POS.x, heightAt(TREE_OF_KNOWLEDGE_POS.x, TREE_OF_KNOWLEDGE_POS.z), TREE_OF_KNOWLEDGE_POS.z);
     group.add(t);
+    knowledgeTreeGroup = t;
   }
 
   // ── The planted garden: instanced trees, shrubs, flowers ──
@@ -159,18 +183,23 @@ export function createVegetation(scene, rng) {
   ];
   // Instance scales must mirror the trunk pass so canopies sit on their own
   // trunks — reuse the rng stream carefully by re-scattering scales per mesh.
+  // Each canopy's bases are kept for the cool of the day (v10): the trunks
+  // (a separate mesh) stay put, so only the canopies lean, hinged where each
+  // one's own trunk would meet it.
+  const canopySway = [];
   for (const def of canopyDefs) {
     const canopy = new THREE.InstancedMesh(
       def.geo,
       new THREE.MeshLambertMaterial({ flatShading: true }),
       def.spots.length,
     );
-    fillInstances(canopy, def.spots, rng, {
+    const bases = fillInstances(canopy, def.spots, rng, {
       yOf: (s2, sc) => heightAt(s2.x, s2.z) + def.lift * sc,
       scaleMin: 0.85, scaleMax: 1.5,
       colorA: new THREE.Color(def.a), colorB: new THREE.Color(def.b),
     });
     group.add(canopy);
+    canopySway.push({ mesh: canopy, bases });
   }
 
   const shrubSpots = scatter(rng, 26, 9, 48, 2.0, treeSpots);
@@ -289,6 +318,42 @@ export function createVegetation(scene, rng) {
   const leafP = new THREE.Vector3();
   const leafS = new THREE.Vector3();
 
+  // Scratch for the wind (v10) — reused every frame, never allocated per
+  // instance. `windQ` is the lean alone (world axes); `mixQ` composes it
+  // with an instance's own baked yaw so the blob still shows its planted
+  // facing while the whole thing leans one way, together, in world space.
+  const windQ = new THREE.Quaternion();
+  const yawQ = new THREE.Quaternion();
+  const mixQ = new THREE.Quaternion();
+  const liftVec = new THREE.Vector3();
+  const windM = new THREE.Matrix4();
+  const windP = new THREE.Vector3();
+  const windS = new THREE.Vector3();
+  const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+  // The cool of the day (Genesis 3:8, foreshadowed): re-lean every canopy
+  // instance from its own ground point as the evening gust's leading edge
+  // reaches it, then settle it back as the edge moves on. Skipped entirely
+  // outside the gust's window — by the time it fully fades every instance
+  // has already been written back to its resting lean of zero.
+  function swayCanopies(cycleT) {
+    for (const { mesh, bases } of canopySway) {
+      for (let i = 0; i < bases.length; i++) {
+        const b = bases[i];
+        const g = gustAt(cycleT, b.x);
+        windQ.setFromAxisAngle(WIND_AXIS, g * CANOPY_TILT);
+        yawQ.setFromAxisAngle(Y_AXIS, b.yaw);
+        mixQ.multiplyQuaternions(windQ, yawQ);
+        liftVec.set(0, b.lift, 0).applyQuaternion(windQ);
+        windP.set(b.x + liftVec.x, b.groundY + liftVec.y, b.z + liftVec.z);
+        windS.setScalar(b.scale);
+        windM.compose(windP, mixQ, windS);
+        mesh.setMatrixAt(i, windM);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
   let t = 0;
   // `night` (0 day → 1 full dark, from the sky's cycle): after sundown the
   // Tree of Life answers the dark — lamp and canopy brighten — and the
@@ -296,8 +361,16 @@ export function createVegetation(scene, rng) {
   // `playerPos`: the walker's position; drawing near either sacred tree
   // kindles a quiet reverence — the gold deepens, the motes lean brighter —
   // returned to the caller so the ambience can answer it too.
-  function update(dt, night = 0, playerPos = null) {
+  // `cycleT`: the sky's own clock, in [0,1) — all the cool of the day (v10)
+  // needs to know when and where the evening gust presently stands.
+  function update(dt, night = 0, playerPos = null, cycleT = 0.1) {
     t += dt;
+
+    // The two sacred trees bow together from the root as the gust passes —
+    // each at its own place, so the one it reaches first bows first.
+    lifeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_LIFE_POS.x) * TREE_TILT;
+    knowledgeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_KNOWLEDGE_POS.x) * TREE_TILT;
+    if (windOf(cycleT) > 0.001) swayCanopies(cycleT);
     const arr = moteGeo.attributes.position.array;
     for (let i = 0; i < MOTES; i++) {
       const s2 = moteSeed[i];
