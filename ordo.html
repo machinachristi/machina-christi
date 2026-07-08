@@ -296,6 +296,11 @@
         return calendarCache[year];
       }
 
+      // Renders are async (they await fetched data), so a quick prev/next
+      // flip can have two in flight at once; the sequence number lets the
+      // newest one win and any stale completion quietly stand down.
+      let renderSeq = 0;
+
       function render(d) {
         dateLabelEl.textContent = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -306,8 +311,15 @@
         todayLink.href = 'ordo.html';
         todayLink.style.visibility = toDateKey(d) === toDateKey(today) ? 'hidden' : 'visible';
 
+        const seq = ++renderSeq;
         const year = d.getFullYear();
-        Promise.all([calendarFor(year), saintsData]).then(([calendar, saints]) => {
+        // The celebration needs only the year's calendar (~40KB), so it paints
+        // the moment that file arrives; the saint's bio fills in below when
+        // the much larger saints.json (~120KB) lands. On a phone connection
+        // that's the difference between reading the day right away and
+        // watching "Loading…" while a bio you may not even need downloads.
+        calendarFor(year).then(calendar => {
+          if (seq !== renderSeq) return;
           if (!calendar) {
             celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}">day's Gospel at USCCB</a> directly.</p>`;
             saintEl.innerHTML = '';
@@ -341,7 +353,6 @@
             gospelLink;
 
           const isSaint = /^Saints?\b/.test(entry.name);
-          const bio = isSaint ? saints[entry.name] : null;
 
           let feastHtml = '';
           if (hasWeekday) {
@@ -349,17 +360,23 @@
               (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
               `<p class="celebration">${escapeHtml(entry.name)}</p>`;
           }
-          if (isSaint) {
+          // The feast block needs nothing beyond the calendar — show it now;
+          // the bio joins once saints.json has arrived (instant after the
+          // first load, since the parsed file is kept for the whole visit).
+          saintEl.innerHTML = feastHtml;
+          if (!isSaint) return;
+          saintsData.then(saints => {
+            if (seq !== renderSeq) return;
+            const bio = saints[entry.name] || null;
             const sourceName = bio && bio.source_name ? bio.source_name : 'Butler&rsquo;s Lives of the Saints';
             const sourceSuffix = bio && bio.source_name ? '' : ' (1894)';
-            feastHtml += bio
+            saintEl.innerHTML = feastHtml + (bio
               ? `<div class="saint">
                   <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
                   <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">${sourceName}</a>${sourceSuffix}</p>
                 </div>`
-              : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`;
-          }
-          saintEl.innerHTML = feastHtml;
+              : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`);
+          });
         });
       }
 

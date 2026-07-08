@@ -25,6 +25,15 @@
        fade only plays when JS can run it. Without JS the page renders fully
        visible and the portals are plain links in a native scroll-snap strip. -->
   <script>document.documentElement.classList.add('js');</script>
+  <!-- Every journey from this room goes through one of four doors — fetch
+       their pages (just the HTML, a few KB each; none of their data or 3D
+       payloads) while the visitor is still choosing, so the walk through a
+       gate lands on an already-delivered page. Browsers without prefetch
+       simply ignore these. -->
+  <link rel="prefetch" href="game.html" />
+  <link rel="prefetch" href="world.html" />
+  <link rel="prefetch" href="about.html" />
+  <link rel="prefetch" href="ordo.html" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 

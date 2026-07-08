@@ -129,6 +129,37 @@
       }
     }
   </script>
+  <!-- The whole module graph, declared up front. Without these hints the
+       browser discovers imports one level at a time — main.js, then the
+       scenes, then three.module, then three.core (the biggest file, found
+       last) — a serial waterfall of round trips before the garden can boot.
+       Preloading lets everything download in parallel from the first moment.
+       When adding a scene, add a line here too; forgetting one never breaks
+       anything — that file just loses its head start and is fetched on
+       discovery, as before. -->
+  <link rel="modulepreload" href="vendor/three.module.min.js" />
+  <link rel="modulepreload" href="vendor/three.core.min.js" />
+  <link rel="modulepreload" href="main.js" />
+  <link rel="modulepreload" href="util.js" />
+  <link rel="modulepreload" href="controls.js" />
+  <link rel="modulepreload" href="camera-rig.js" />
+  <link rel="modulepreload" href="character.js" />
+  <link rel="modulepreload" href="audio.js" />
+  <link rel="modulepreload" href="scenes/garden.js" />
+  <link rel="modulepreload" href="scenes/terrain.js" />
+  <link rel="modulepreload" href="scenes/sky.js" />
+  <link rel="modulepreload" href="scenes/water.js" />
+  <link rel="modulepreload" href="scenes/vegetation.js" />
+  <link rel="modulepreload" href="scenes/creatures.js" />
+  <link rel="modulepreload" href="scenes/stones.js" />
+  <link rel="modulepreload" href="scenes/mist.js" />
+  <link rel="modulepreload" href="scenes/reeds.js" />
+  <link rel="modulepreload" href="scenes/gate.js" />
+  <link rel="modulepreload" href="scenes/presence.js" />
+  <link rel="modulepreload" href="scenes/reflections.js" />
+  <link rel="modulepreload" href="scenes/wake.js" />
+  <link rel="modulepreload" href="scenes/petals.js" />
+  <link rel="modulepreload" href="scenes/dew.js" />
 </head>
 <body>
   <script type="module" src="main.js"></script>

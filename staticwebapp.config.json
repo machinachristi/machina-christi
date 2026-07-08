@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "route": "/world-app/vendor/*",
+      "headers": {
+        "Cache-Control": "public, max-age=2592000"
+      }
+    },
+    {
+      "route": "/assets/*",
+      "headers": {
+        "Cache-Control": "public, max-age=604800"
+      }
+    },
+    {
+      "route": "/ordo/*",
+      "headers": {
+        "Cache-Control": "public, max-age=3600"
+      }
+    }
+  ]
+}
