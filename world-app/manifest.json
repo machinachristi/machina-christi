@@ -1,67 +1,118 @@
 {
-  "version": 9,
+  "version": 10,
   "threeVersion": "0.185.1",
   "log": [
     {
       "version": 1,
       "date": "2026-07-03",
       "focus": "the garden planted",
-      "summary": "Eden exists, whole and simple: rolling meadow with a rim melting into fog, a river through the land, ~40 low-poly trees with the Tree of Life (golden, lit) and the Tree of the Knowledge of Good and Evil (dark, fruited) at the center, flowers, three birds, a grazing lamb, drifting light motes, and Adam (Eve via ?character=eve) walkable by one-finger drag with a following camera."
+      "changes": [
+        { "text": "A meadow, a river, and trees good for food take shape.", "verse": "Genesis 2:9" },
+        { "text": "The Tree of Life and the Tree of Knowledge stand at the garden's heart.", "verse": "Genesis 2:9" },
+        { "text": "Birds, a lamb, and drifting light fill it with quiet life.", "verse": "Genesis 1:24-25" },
+        { "text": "Adam — or Eve — can walk the garden for the first time.", "verse": "Genesis 2:7" }
+      ]
     },
     {
       "version": 2,
       "date": "2026-07-03",
       "focus": "the first companion",
-      "summary": "Adam and Eve are both in the garden now. You walk one; the other wanders the meadow on its own — pausing, choosing a new spot, walking there — so the garden always has someone else in it. Also: an explainer screen now greets visitors before the world loads, naming this as an AI-made, AI-tended rendition of Eden."
+      "changes": [
+        { "text": "Eve joins Adam in the garden; the other always wanders nearby.", "verse": "Genesis 2:18" },
+        { "text": "A word of welcome now greets every visitor at the gate.", "verse": null }
+      ]
     },
     {
       "version": 3,
       "date": "2026-07-04",
       "focus": "the waters",
-      "summary": "The river lives: its surface now flows downstream in low-poly ripples, and east of the garden the one course is parted and becomes four heads (Genesis 2:10) — channels that fan through the rim into the mist, with meadow islands between them. Five fish — one gold — swim the wadable stretch, gliding under the surface and rising to break it."
+      "changes": [
+        { "text": "The river parts east of the garden into four heads, fanning through the mist.", "verse": "Genesis 2:10" },
+        { "text": "Five fish — one gold — swim and rise in the shallows.", "verse": "Genesis 1:20" }
+      ]
     },
     {
       "version": 4,
       "date": "2026-07-04",
       "focus": "evening and morning",
-      "summary": "Time passes in Eden now: a whole day breathes in seven minutes — morning, noon, golden hour, an amber sunset, and a starlit night where the moon takes the light (Genesis 1:16), the Tree of Life burns brighter, and the motes rise as fireflies. The garden found its voice, woven live from oscillators and filtered noise with no sound files at all: wind in gusts, the river swelling on the ear near its banks, birdsong by day, crickets after dark — with a quiet corner toggle. And at the parting, four standing stones name the heads: Pishon, Gihon, Tigris, Euphrates (Genesis 2:11–14)."
+      "changes": [
+        { "text": "A whole day now passes in seven minutes, morning to starlit night.", "verse": "Genesis 1:5" },
+        { "text": "The moon takes the light after the sun sets.", "verse": "Genesis 1:16" },
+        { "text": "Four standing stones name the river's heads: Pishon, Gihon, Tigris, Euphrates.", "verse": "Genesis 2:11-14" },
+        { "text": "The garden finds its voice: wind, water, birdsong, and crickets, woven live.", "verse": null }
+      ]
     },
     {
       "version": 5,
       "date": "2026-07-05",
       "focus": "the garden filled",
-      "summary": "The garden fills with life and sign: two doves circle low over the heart of it and two cattle graze the western meadow beside the lamb; the birds now perch, and at dusk every flyer comes home to roost in the two sacred trees. Six stepping stones ford the river north of the trees — truly walkable, feet staying dry above the ripples. A morning mist rises from the earth to water the ground (Genesis 2:6), thick at dawn and burnt away by mid-morning. The night sky bears its signs (Genesis 1:14): the Bear, Orion, and the Pleiades — the three figures Job 9:9 names — drawn with faint joining lines. The Tree of Life sheds a slow fall of golden leaves, and drawing near either sacred tree kindles a quiet reverence: the gold deepens and a soft chime sounds once. And the garden's voice was gentled: the river murmurs low instead of hissing, the crickets sing in short phrases with silences between (no more drone), one mellowing filter rounds everything — and sound is now opt-in, silent until a visitor asks for it with the corner toggle."
+      "changes": [
+        { "text": "Doves and cattle graze and roost beside the lamb.", "verse": "Genesis 1:24-25" },
+        { "text": "A morning mist rises to water the ground.", "verse": "Genesis 2:6" },
+        { "text": "The night sky bears its signs: the Bear, Orion, and the Pleiades.", "verse": "Job 9:9" },
+        { "text": "Drawing near the Tree of Life kindles a quiet reverence.", "verse": "Genesis 3:22" },
+        { "text": "Sound becomes opt-in, and the garden's voice is gentled.", "verse": null }
+      ]
     },
     {
       "version": 6,
       "date": "2026-07-05",
       "focus": "the naming",
-      "summary": "Draw near any creature and its name is given (Genesis 2:19-20): a quiet caption rises at the foot of the screen — Taleh the lamb, Shor the ox, Yonah the dove, Tsippor the bird, Dag the fish — and fades again as you walk on. The names are the plain Hebrew ones, as the first tongue might have spoken them; a wing passing low overhead is a naming too. And one name is kept for the finders: somewhere in the river swims a fish that bears a name all its own."
+      "changes": [
+        { "text": "Draw near any creature and its Hebrew name is given — Taleh the lamb, Yonah the dove, and more.", "verse": "Genesis 2:19-20" }
+      ]
     },
     {
       "version": 7,
       "date": "2026-07-05",
       "focus": "rain, seasons, and small wings",
-      "summary": "The garden has weather now: each drifting cloud lays its shadow on the meadow, cast along the true line of the sun — long shade at the golden hours — and once in a while a brief gentle rain passes over, greying the light, hushing the birds, and pattering softly for those who have asked for sound; then it moves on and the colours return. The night sky keeps the seasons (Genesis 1:14): the whole firmament wheels slowly about its pole through a long year of days, its starting angle set by the visitor's own calendar, so the Bear, Orion, and the Pleiades stand where the season sets them. And small wings fill the blossoms: six butterflies in petal colours flit the flower band by day and fold their wings in the grass at dusk, while eight bees hum at two beds of flowers — heard as a low murmur by any walker who draws near — and every one of them, drawn near, is named: Parpar the butterfly, Devorah the bee."
+      "changes": [
+        { "text": "Clouds cast real shade, and a gentle rain sometimes passes over.", "verse": "Genesis 2:5" },
+        { "text": "The night sky wheels slowly through the seasons of a long year.", "verse": "Genesis 1:14" },
+        { "text": "Butterflies and bees fill the flowers, each named as they're found.", "verse": "Genesis 2:19-20" }
+      ]
     },
     {
       "version": 8,
       "date": "2026-07-07",
       "focus": "stillness, the banks, and the east",
-      "summary": "The garden rewards stillness now: stand quiet a moment by the water and the walker settles down to sit, and the shyer creatures forget their wariness and draw near — a fish rises from the deep to hang just under the ripples at your feet, a butterfly or two comes to hover close — and the first touch of movement rises again and lets them go. The banks have grown soft with reeds and rushes: clumps of tall green blades stand along the water's edge and lean together on the wind, and the river now carries on the ear from farther off, murmuring a good stretch of meadow away so that it is heard before it is seen. Far to the east, where the risen rim melts into the fog and the river's heads pass out of the garden, a gate of pale stone now stands with a quiet standing light between its pillars, brightest at night — a hush of what will one day keep the way (Genesis 3:24). And rarely, and only near the Tree of the Knowledge of Good and Evil, something long and quiet stirs the grass at the dark tree's foot and is gone again — never named, never fully shown (Genesis 3:1)."
+      "changes": [
+        { "text": "Stand still by the water and the shyer creatures draw near.", "verse": "Psalm 46:10" },
+        { "text": "Reeds grow soft along the river's banks.", "verse": null },
+        { "text": "A gate of pale stone stands far to the east, a hush of what will keep the way.", "verse": "Genesis 3:24" },
+        { "text": "Something unnamed stirs the grass near the Tree of Knowledge, and is gone.", "verse": "Genesis 3:1" }
+      ]
     },
     {
       "version": 9,
       "date": "2026-07-07",
       "focus": "the water answering",
-      "summary": "The river answers what stands over it now: its surface wears the hour's colour — day-blue under the sun, deepening to a dark night-blue as the stars come out — the trees on its banks lay dark trembling impressions beside them, and the eastern gate's standing light stretches a golden glint down the two channels that pass its island, burning brightest at night. The walker leaves a wake: where a step meets the water a foam-white ring widens and fades into the river's own blue, wading slows the stride as the water takes its share, and the reeds along the banks lean away from whoever passes among them and spring gently back behind. The garden blooms on the wind: petals loosed from the planted trees drift east and settle into the grass, thickest in the golden hours of morning and evening. Through the last watch of the night the meadow gathers dew, and at first light the whole face of the ground glints with it until a little after the mist has burnt away (Genesis 2:6). And at that same hour, as the east brightens behind the gate, two faint wing-like sweeps of light gather above the standing flame and are gone again by mid-morning — the keeper hinted, never shown (Genesis 3:24)."
+      "changes": [
+        { "text": "The river takes on the hour's colour, and the banks reflect in it.", "verse": "Genesis 1:2" },
+        { "text": "Every step through the water leaves a widening ring.", "verse": null },
+        { "text": "Petals drift from the trees and settle into the grass.", "verse": "Genesis 1:11-12" },
+        { "text": "Dew gathers overnight and glints at first light.", "verse": "Genesis 2:6" },
+        { "text": "Two sweeps of light gather above the eastern gate at dawn — the keeper, still hinted, never shown.", "verse": "Genesis 3:24" }
+      ]
+    },
+    {
+      "version": 10,
+      "date": "2026-07-08",
+      "focus": "the cool of the day",
+      "changes": [
+        { "text": "At evening a wind moves through the garden, and the trees bow as it passes.", "verse": "Genesis 3:8" },
+        { "text": "West of the garden, the river is found rising among wet stones.", "verse": "Genesis 2:10" },
+        { "text": "Figs and pomegranates ripen on a few trees, named as you draw near.", "verse": "Genesis 1:29" },
+        { "text": "The lamb finds two companions, and the cattle low softly at dusk.", "verse": "Genesis 1:24" },
+        { "text": "Footprints linger a while in the sandy banks, then fade.", "verse": "Genesis 2:15" }
+      ]
     }
   ],
   "next": [
-    "The cool of the day: at evening a wind walks the garden — the trees bow together as it passes, and the walker hears it move among them (Genesis 3:8, foreshadowed)",
-    "The spring of Eden: west of the garden, the place where the river rises — welling water among wet stones, and the course's first murmur (Genesis 2:10)",
-    "Fruit in season: figs and pomegranates ripening on a few of the planted trees, each named as the walker draws near",
-    "A flock begun: the lamb finds companions, and the cattle low softly to one another at dusk",
-    "Footprints on the banks: the sandy verge takes the walker's steps for a little while, and the river smooths them away"
+    "Fallen fig leaves lie sewn together at the foot of the dark tree — a small foreshadowing, easy to miss (Genesis 3:7, foreshadowed)",
+    "Gold and bdellium and onyx glint among the stones where the Pishon runs, the wealth of that land (Genesis 2:11-12)",
+    "The birds nest in the sacred trees' branches, and in time a chick or two of their own (Genesis 1:22)",
+    "On the seventh day the garden keeps a deeper rest — every creature stiller, even the wind at peace (Genesis 2:2-3)",
+    "The Tree of Life bears its own fruit in its season, not just gold leaves (Revelation 22:2, echoing)"
   ]
 }

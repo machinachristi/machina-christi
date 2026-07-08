@@ -12,6 +12,7 @@
 import { clamp, smoothstep } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { BEE_PATCHES } from './scenes/creatures.js';
+import { SPRING_POS } from './scenes/spring.js';
 
 const PREF_KEY = 'camino_sound';
 
@@ -28,6 +29,7 @@ export function createAmbience() {
   let acc = 0;            // update throttle — audio params need ~4Hz, not 60
   let birdIn = 2.0;       // seconds until the next possible chirp
   let cricketIn = 1.5;    // seconds until the next possible cricket phrase
+  let lowIn = 10.0;       // seconds until the next possible lowing
   let night = 0;
 
   // ── The toggle: a small pill in the world's corner ──
@@ -158,7 +160,18 @@ export function createAmbience() {
     bee.start();
     beeWobble.start();
 
-    refs = { windGain, waterGain, rainGain, beeGain };
+    // The spring's first murmur (Genesis 2:10): brighter than the river's
+    // low brook, heard only right where the water is first found rising.
+    const springBP = ctx.createBiquadFilter();
+    springBP.type = 'bandpass';
+    springBP.frequency.value = 1400;
+    springBP.Q.value = 0.8;
+    const springGain = ctx.createGain();
+    springGain.gain.value = 0;
+    loopNoise(noiseBuffer('rain')).connect(springBP);
+    springBP.connect(springGain).connect(master);
+
+    refs = { windGain, windFilter, waterGain, rainGain, beeGain, springGain };
     master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
@@ -226,6 +239,39 @@ export function createAmbience() {
     osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
   }
 
+  // A flock begun (Genesis 1:24): the cattle low softly to one another —
+  // one breathy, low-pitched tone that swells and settles, panned softly
+  // somewhere in the western meadow they keep to.
+  function low() {
+    const t0 = ctx.currentTime + 0.02;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    const base = 90 + Math.random() * 35;
+    osc.frequency.setValueAtTime(base, t0);
+    osc.frequency.linearRampToValueAtTime(base * 0.82, t0 + 0.9);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 340;
+    lp.Q.value = 0.6;
+    const g = ctx.createGain();
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.05, t0 + 0.18);
+    g.gain.linearRampToValueAtTime(0.035, t0 + 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0004, t0 + 1.1);
+    osc.connect(lp);
+    lp.connect(g);
+    if (pan) {
+      pan.pan.value = Math.random() * 1.6 - 0.8;
+      g.connect(pan).connect(master);
+    } else {
+      g.connect(master);
+    }
+    osc.start(t0);
+    osc.stop(t0 + 1.2);
+    osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
+  }
+
   // The reverence chime: two soft bell tones, a fifth apart, when a walker
   // draws near the sacred trees — felt more than heard.
   function chime() {
@@ -290,7 +336,7 @@ export function createAmbience() {
     }
   }
 
-  function update(dt, skyNight, pos, rain = 0) {
+  function update(dt, skyNight, pos, rain = 0, wind = 0) {
     night = skyNight;
     if (!refs || !ctx || ctx.state !== 'running' || muted) return;
     acc += dt;
@@ -299,6 +345,12 @@ export function createAmbience() {
     acc = 0;
     const tc = ctx.currentTime;
 
+    // The cool of the day (Genesis 3:8, foreshadowed): the wind bed swells
+    // and brightens as the evening gust passes over — heard moving through
+    // the garden, not just present in it.
+    refs.windGain.gain.setTargetAtTime(0.045 + 0.1 * wind, tc, 0.6);
+    refs.windFilter.frequency.setTargetAtTime(340 + 260 * wind, tc, 0.6);
+
     // The river grows on the ear as the walker nears the water — and now it
     // carries from farther off, so it is heard before it is seen: a faint
     // brook still murmurs a good stretch of meadow away, swelling as the bank
@@ -306,6 +358,12 @@ export function createAmbience() {
     const d = riverEdgeDist(pos.x, pos.z);
     const nearness = 1 - clamp(d / 26, 0, 1);
     refs.waterGain.gain.setTargetAtTime(0.006 + 0.062 * Math.pow(nearness, 1.35), tc, 0.5);
+
+    // The spring's murmur is a small discovery: heard only right at the
+    // place where the river rises, west of everything else in the garden.
+    const dSpring = Math.hypot(pos.x - SPRING_POS.x, pos.z - SPRING_POS.z);
+    const springNear = 1 - clamp((dSpring - 2) / 9, 0, 1);
+    refs.springGain.gain.setTargetAtTime(0.05 * Math.pow(springNear, 1.5), tc, 0.4);
 
     // The patter follows the shower; the bees are heard near their beds of
     // blossom, by day and in dry air.
@@ -327,6 +385,13 @@ export function createAmbience() {
     if (birdIn <= 0) {
       birdIn = 2.5 + Math.random() * 5.5;
       if (night < 0.45 && rain < 0.35) chirp();
+    }
+
+    // The cattle keep to dusk, the same watch the crickets take up after.
+    lowIn -= step;
+    if (lowIn <= 0) {
+      lowIn = 22 + Math.random() * 38;
+      if (night > 0.15 && night < 0.75 && rain < 0.35) low();
     }
   }
 

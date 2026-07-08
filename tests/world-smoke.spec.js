@@ -429,6 +429,75 @@ test.describe('the garden loads', () => {
     expect((await getState(page)).dew.beads).toBeGreaterThan(100);
   });
 
+  test('the cool of the day, and the spring found to the west (v10, Genesis 3:8; 2:10)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // By day the garden is still.
+    expect((await getState(page)).wind).toBeLessThan(0.05);
+
+    // At evening a gust rises — the whole garden still renders inside budget.
+    await frame.evaluate(() => window.__world.setTime('evening'));
+    await expect.poll(async () => (await getState(page)).wind, { timeout: 5000 }).toBeGreaterThan(0.5);
+    const s = await getState(page);
+    expect(s.render.calls).toBeLessThan(200);
+    expect(s.render.triangles).toBeLessThan(150000);
+
+    // By noon it has passed again.
+    await frame.evaluate(() => window.__world.setTime('noon'));
+    await expect.poll(async () => (await getState(page)).wind, { timeout: 5000 }).toBeLessThan(0.05);
+
+    // West of everything else, near the walk's own edge, the river is first found.
+    const spring = (await getState(page)).spring;
+    expect(spring.x).toBeLessThan(-40);
+    expect(Math.hypot(spring.x, spring.z)).toBeLessThan(50);
+  });
+
+  test('a flock begun, and fruit in season, named like any living thing (v10)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // The lamb has two companions now.
+    const fauna = (await getState(page)).fauna;
+    expect(fauna.lamb).toBe(3);
+    expect(fauna.grazers.filter(g => g.kind === 'lamb').length).toBe(3);
+
+    // A few of the planted trees bear fruit — figs and pomegranates.
+    const fruit = (await getState(page)).fruit;
+    expect(fruit.filter(f => f.kind === 'fig').length).toBe(3);
+    expect(fruit.filter(f => f.kind === 'pomegranate').length).toBe(3);
+
+    // Draw near one and it is named, the same as any living thing in the garden.
+    const pom = fruit.find(f => f.kind === 'pomegranate');
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z), [pom.pos.x, pom.pos.z]);
+    await expect.poll(async () => {
+      const naming = (await getState(page)).naming;
+      return naming && naming.name;
+    }, { timeout: 10000 }).toBe('Rimmon');
+  });
+
+  test('footprints linger a while on the sandy banks, then fade (v10, Genesis 2:15)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // A fresh visit shows no prints.
+    expect((await getState(page)).footprints.prints).toBe(0);
+
+    // Walk a stretch of the western bank — real sand, not the water itself
+    // (wading leaves the wake's own rings instead, v9).
+    await frame.evaluate(() => window.__world.teleport(-40, 11.22, Math.PI / 2));
+    for (let i = 1; i <= 6; i++) {
+      await frame.evaluate((n) => window.__world.teleport(-40 + n * 0.13, 11.22, Math.PI / 2), i);
+      await page.waitForTimeout(80);
+    }
+    await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 5000 }).toBeGreaterThan(0);
+
+    // Move well away; the bank forgets them after a while (poll — CI's
+    // software renderer dilates simulated time well past real, per house rule).
+    await frame.evaluate(() => window.__world.teleport(30, -30));
+    await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 20000 }).toBe(0);
+  });
+
   test('?character=eve embodies Eve', async ({ page }) => {
     await gotoWorldReady(page, '?character=eve');
     expect((await getState(page)).character).toBe('eve');

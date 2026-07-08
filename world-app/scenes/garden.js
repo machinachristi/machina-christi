@@ -17,6 +17,10 @@ import { createReflections } from './reflections.js';
 import { createWake } from './wake.js';
 import { createPetals } from './petals.js';
 import { createDew } from './dew.js';
+import { createSpring } from './spring.js';
+import { createFruit } from './fruit.js';
+import { createFootprints } from './footprints.js';
+import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
 // Async, with a breath between the heavy build steps: the iframe shares the
@@ -35,7 +39,11 @@ export async function createGarden(scene, rng) {
   await breathe();
   const vegetation = createVegetation(scene, rng);
   await breathe();
-  const creatures = createCreatures(scene, rng);
+  // Fruit in season (v10) picks a few of vegetation's own tree spots, so it
+  // must come after planting and before creatures — creatures.js folds its
+  // spots into the one naming candidate list.
+  const fruit = createFruit(scene, vegetation.treeSpots);
+  const creatures = createCreatures(scene, rng, fruit.spots);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -52,6 +60,11 @@ export async function createGarden(scene, rng) {
   const wake = createWake(scene);
   const petals = createPetals(scene, vegetation.treeSpots);
   const dew = createDew(scene);
+  await breathe();
+  // v10, each on its own seeded stream (spring) or none at all (footprints,
+  // purely event-driven): the spring of Eden, and the walker's own steps.
+  const spring = createSpring(scene);
+  const footprints = createFootprints(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -65,14 +78,18 @@ export async function createGarden(scene, rng) {
   // other way, so drawing near the sacred trees can be felt (reverence),
   // and drawing near a creature gives its name (the naming).
   let reverence = 0;
+  let windNow = 0;
   // `lure`: the seat of a still walker by the water, or null — passed on to
   // the creatures, who draw near it (see creatures.js).
-  function update(dt, playerPos, lure = null) {
+  // `facing`: the walker's yaw, radians — footprints alone need it, to point
+  // each print the way it was walking.
+  function update(dt, playerPos, lure = null, facing = 0) {
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
+    windNow = windOf(hour.t);
     water.update(dt, hour.night);
-    reverence = vegetation.update(dt, hour.night, playerPos);
+    reverence = vegetation.update(dt, hour.night, playerPos, hour.t);
     creatures.update(dt, hour.night, playerPos, lure);
-    reeds.update(dt, playerPos);
+    reeds.update(dt, playerPos, hour.t);
     gate.update(dt, hour.night, hour.t);
     presence.update(dt);
     reflections.update(dt, hour.night);
@@ -80,6 +97,8 @@ export async function createGarden(scene, rng) {
     petals.update(dt, hour.t);
     dew.update(dt, hour.t);
     mist.update(dt, hour.t);
+    spring.update(dt);
+    footprints.update(dt, playerPos, facing);
     return hour;
   }
 
@@ -101,6 +120,10 @@ export async function createGarden(scene, rng) {
     wake: wake.state,
     petals: petals.state,
     dew: dew.state,
+    spring: spring.state,
+    footprints: footprints.state,
+    fruit: fruit.spots,
     get reverence() { return reverence; },
+    get wind() { return windNow; },
   };
 }

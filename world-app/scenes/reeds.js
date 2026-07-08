@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { riverCourse, riverEdgeDist, heightAt } from './terrain.js';
 import { mulberry32 } from '../util.js';
+import { gustAt } from './wind.js';
 
 // The stretch of bank that falls within the seen garden; past this the river
 // runs on into the fog and reeds there would only be drawn for no one.
@@ -85,14 +86,19 @@ export function createReeds(scene) {
   let t = 0;
   // `walker` (v9, the walker's wake): reeds within arm's reach lean away from
   // whoever passes among them, and spring gently back behind them.
-  function update(dt, walker = null) {
+  // `cycleT` (v10, the cool of the day): as the evening gust's leading edge
+  // sweeps through, the same stand leans toward it and trembles harder —
+  // the first sign of the wind, seen at the water's edge before it's heard.
+  function update(dt, walker = null, cycleT = 0.1) {
     t += dt;
     for (let i = 0; i < blades.length; i++) {
       const b = blades[i];
-      // The reed leans on the wind: a slow base tilt plus a small quick tremor.
-      const sway = b.lean + Math.sin(t * b.rate + b.phase) * 0.12
-                 + Math.sin(t * 2.6 + b.phase) * 0.03;
-      let tx = 0, tz = 0;
+      const gust = gustAt(cycleT, b.x);
+      // The reed leans on the wind: a slow base tilt plus a small quick
+      // tremor, both swelling as the gust passes this stand.
+      const sway = b.lean + Math.sin(t * b.rate + b.phase) * (0.12 + gust * 0.22)
+                 + Math.sin(t * 2.6 + b.phase) * (0.03 + gust * 0.05);
+      let tx = 0, tz = -gust * 0.4;   // the gust itself leans every blade toward +x
       if (walker) {
         const dx = b.x - walker.x;
         const dz = b.z - walker.z;
@@ -100,8 +106,8 @@ export function createReeds(scene) {
         if (d2 < 1.69) {   // within 1.3 of the walker
           const d = Math.sqrt(d2) || 0.001;
           const push = (1 - d / 1.3) * 0.55;
-          tx = (dz / d) * push;    // +x rotation leans the tip toward +z
-          tz = -(dx / d) * push;   // −z rotation leans the tip toward +x
+          tx += (dz / d) * push;    // +x rotation leans the tip toward +z
+          tz += -(dx / d) * push;   // −z rotation leans the tip toward +x
         }
       }
       // World-frame tilt applied after the blade's own yaw, so the lean away
