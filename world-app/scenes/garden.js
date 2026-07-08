@@ -38,12 +38,17 @@ export async function createGarden(scene, rng) {
   const creatures = createCreatures(scene, rng);
   const stones = createStones(scene);
   const mist = createMist(scene);
-  // These three each carry their own seeded stream, so building them shifts
-  // nothing already planted from the shared `rng` above.
+  await breathe();
+  // The v8/v9 refinements each carry their own seeded stream, so building them
+  // shifts nothing already planted from the shared `rng` above. Yield between
+  // the clusters so their geometry-building doesn't block the main thread in
+  // one stretch — that freeze is what made entering feel slow.
   const reeds = createReeds(scene);
   const gate = createGate(scene);
+  await breathe();
   const presence = createPresence(scene);
   const reflections = createReflections(scene, vegetation.treeSpots);
+  await breathe();
   const wake = createWake(scene);
   const petals = createPetals(scene, vegetation.treeSpots);
   const dew = createDew(scene);
