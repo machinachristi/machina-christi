@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -350,6 +351,48 @@
           console.warn('world failed:', reason);
         }
       }
+    })();
+  </script>
+
+  <script>
+    // ── Warm the cache while the visitor reads the intro ──────────────
+    // The world's weight is three.js (a few hundred KB) plus the app's own
+    // modules; today none of it is fetched until "enter the garden" is
+    // tapped, so that tap is followed by a download the visitor waits out.
+    // Here we quietly prefetch the heavy, stable core while the intro copy
+    // is still being read — lowest priority, cancellable, and running
+    // nothing: no iframe, no WebGL, no audio, no handshake timers. The
+    // opt-in above still governs when the world *boots*; this only means
+    // that, by then, it is already downloaded. Skipped for visitors who
+    // have asked their browser to save data.
+    (function () {
+      const conn = navigator.connection;
+      if (conn && conn.saveData) return;
+
+      // three.js is the bulk (and separately long-cached); main.js is the
+      // entry that pulls the rest. The scene modules are small and ride the
+      // connection this warms — left to the iframe's own discovery, so there
+      // is no per-scene list here to keep in step with world-app/index.html.
+      const core = [
+        'world-app/index.html',
+        'world-app/vendor/three.module.min.js',
+        'world-app/vendor/three.core.min.js',
+        'world-app/main.js',
+      ];
+
+      function warm() {
+        for (const href of core) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = href;
+          document.head.appendChild(link);
+        }
+      }
+
+      // Wait for an idle moment so the intro paints first; fire within a
+      // second even on a busy thread, and fall back where rIC is absent.
+      if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 1000 });
+      else setTimeout(warm, 400);
     })();
   </script>
 </body>
