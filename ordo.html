@@ -283,6 +283,19 @@
         return key === todayKey ? 'ordo.html' : `ordo.html?date=${key}`;
       }
 
+      // Fetch each data file exactly once and keep the parsed result. saints.json
+      // is ~120KB; re-downloading and re-parsing it on every day change is what
+      // made the celebration lag behind the header. The calendar is cached per
+      // year, so paging within a year is instant after the first load.
+      const saintsData = fetch('./ordo/saints.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+      const calendarCache = {};
+      function calendarFor(year) {
+        if (!calendarCache[year]) {
+          calendarCache[year] = fetch(`./ordo/calendar-${year}.json`).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+        return calendarCache[year];
+      }
+
       function render(d) {
         dateLabelEl.textContent = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -294,10 +307,7 @@
         todayLink.style.visibility = toDateKey(d) === toDateKey(today) ? 'hidden' : 'visible';
 
         const year = d.getFullYear();
-        Promise.all([
-          fetch(`./ordo/calendar-${year}.json`).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch('./ordo/saints.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-        ]).then(([calendar, saints]) => {
+        Promise.all([calendarFor(year), saintsData]).then(([calendar, saints]) => {
           if (!calendar) {
             celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}">day's Gospel at USCCB</a> directly.</p>`;
             saintEl.innerHTML = '';
