@@ -73,3 +73,35 @@ jobs:
         env:
           CI: "true"
         run: npx playwright test -c tests/playwright.config.js
+
+  # Independent backstop for the unattended Eden weekly-update automation.
+  # That automation self-attests (in its own prompt) two guards before it
+  # auto-merges — a strict file-scope limit and a no-network/no-eval grep — but
+  # nothing outside the agent enforces them, and this repo pre-approves the exact
+  # push/auto-merge commands it uses. This job re-checks both guards from CI so a
+  # buggy or bypassed self-check still can't merge unreviewed.
+  #
+  # It ONLY applies to the automation's own branch convention (feat/world-* or
+  # feature/world-*); the gating lives inside the script, so on every other PR
+  # (and on push events) the job runs and passes trivially — safe to mark as a
+  # required check without ever blocking the user's manual work. Pure
+  # git-diff/grep in bash: no Playwright, no npm, no package.json at the root.
+  world_diff_guard_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: World Diff Guard
+    permissions:
+      contents: read
+    steps:
+      # Full history + the PR head commit itself (not the synthetic merge commit)
+      # so the guard can diff against the real merge-base with origin/main.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Enforce Eden diff-scope and malicious-pattern guards
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          git fetch --no-tags origin main
+          bash .github/scripts/world-diff-guard.sh origin/main HEAD
