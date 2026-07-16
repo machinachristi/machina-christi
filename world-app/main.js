@@ -274,6 +274,18 @@ window.__world = {
       // Fruit in season (v10, Genesis 1:29): the fig and pomegranate trees
       // that bear fruit, each namable like any living thing in the garden.
       fruit: garden.fruit,
+      // On the seventh day (v11, Genesis 2:2-3): which day of the visit this
+      // is, and whether it presently keeps the deeper rest.
+      sabbath: { day: garden.hour.day, active: garden.hour.sabbath },
+      // "When the morning stars sang together" (v11, Job 38:7): how strongly
+      // that swell presently sounds, 0 apart from it.
+      morningStars: garden.hour.morningStars,
+      // Gold, bdellium, and onyx where the Pishon runs (v11, Genesis 2:11-12):
+      // kept for the curious — a fixed count, planted once.
+      wealth: garden.wealth,
+      // The sacred trees' nests (v11, Genesis 1:22): how many chicks have
+      // shown themselves so far this visit.
+      nests: garden.nests(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -298,6 +310,13 @@ window.__world = {
   setRain(v) {
     const hour = garden.setRain(v);
     return { rain: hour.rain };
+  },
+  // Jump straight to a given day (1-indexed) — for tests, and the curious
+  // who don't want to wait six days for the seventh (v11, Genesis 2:2-3).
+  // `null` hands the count back to the real elapsed clock.
+  setDay(v) {
+    const hour = garden.setDay(v);
+    return { day: hour.day, sabbath: hour.sabbath };
   },
   // Sit the walker down where they stand (true) or rise again (false) — the
   // deliberate form of the stillness the water invites. For tests and rest.

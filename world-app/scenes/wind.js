@@ -4,6 +4,10 @@
 // on. Pure functions of the sky's own clock (no state, no seed of its own),
 // so every tree, the reeds, and the ambience all agree on exactly when and
 // where it moves without sharing anything but the hour.
+//
+// On the seventh day (v11, Genesis 2:2-3) "even the wind at peace": both
+// functions take an optional `sabbath` flag and simply hold still when it's
+// true — one place to still the gust, rather than gating every caller.
 
 import { clamp, smoothstep } from '../util.js';
 
@@ -13,7 +17,8 @@ const SPAN = 120;      // how far the leading edge sweeps, west to east, in worl
 
 // How strong the gust is overall right now, 0 (still) to 1 (full breath) —
 // one triangular pulse centred on the evening.
-export function windOf(t) {
+export function windOf(t, sabbath = false) {
+  if (sabbath) return 0;
   return Math.max(0, 1 - Math.abs(t - CENTER) / HALF);
 }
 
@@ -27,8 +32,8 @@ function frontOf(t) {
 // How strongly the gust presently touches position x: the overall breath,
 // shaped by a soft bump around the sweeping front — so a tree bows as the
 // front nears, most as it passes directly over it, and settles again after.
-export function gustAt(t, x) {
-  const w = windOf(t);
+export function gustAt(t, x, sabbath = false) {
+  const w = windOf(t, sabbath);
   if (w <= 0) return 0;
   const d = Math.abs(x - frontOf(t));
   return w * (1 - smoothstep(8, 26, d));

@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -106,13 +106,25 @@
         { "text": "The lamb finds two companions, and the cattle low softly at dusk.", "verse": "Genesis 1:24" },
         { "text": "Footprints linger a while in the sandy banks, then fade.", "verse": "Genesis 2:15" }
       ]
+    },
+    {
+      "version": 11,
+      "date": "2026-07-16",
+      "focus": "the seventh day",
+      "changes": [
+        { "text": "Fallen fig leaves lie sewn together at the foot of the dark tree.", "source": "Genesis 3:7" },
+        { "text": "Gold, bdellium, and onyx glint among the stones where the Pishon runs.", "source": "Genesis 2:11-12" },
+        { "text": "The birds nest in the sacred trees' branches, and in time a chick or two of their own.", "source": "Genesis 1:22" },
+        { "text": "On the seventh day the garden keeps a deeper rest — even the wind at peace.", "source": "Genesis 2:2-3" },
+        { "text": "The Tree of Life bears its own fruit in season, not just gold leaves.", "source": "Revelation 22:2" },
+        { "text": "At first light the morning stars sing together, just before the day quiets them.", "source": "Job 38:7" }
+      ]
     }
   ],
   "next": [
-    "Fallen fig leaves lie sewn together at the foot of the dark tree — a small foreshadowing, easy to miss (Genesis 3:7, foreshadowed)",
-    "Gold and bdellium and onyx glint among the stones where the Pishon runs, the wealth of that land (Genesis 2:11-12)",
-    "The birds nest in the sacred trees' branches, and in time a chick or two of their own (Genesis 1:22)",
-    "On the seventh day the garden keeps a deeper rest — every creature stiller, even the wind at peace (Genesis 2:2-3)",
-    "The Tree of Life bears its own fruit in its season, not just gold leaves (Revelation 22:2, echoing)"
+    "A tree stands apart by the river's edge, its leaf never withering, fruited every season (Psalm 1:3)",
+    "The valleys fill with young grain, and it sways together when the wind walks through (Psalm 65:13)",
+    "Goats keep to the rising rim, sure-footed among the high stones (Psalm 104:18)",
+    "An eagle circles high above the garden, and makes her nest higher still (Job 39:27)"
   ]
 }
