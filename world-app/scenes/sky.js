@@ -16,6 +16,7 @@ export const HORIZON = new THREE.Color(0xEAE4CB);   // the day horizon — scene
 
 const DAY_LENGTH = 420;   // one whole day, in seconds — a day breathes in seven minutes
 const YEAR_DAYS = 28;     // the long year: the signs wheel full circle in 28 of those days
+const WEEK_DAYS = 7;      // "on the seventh day God ended his work" (Genesis 2:2-3)
 // "Let them be for signs, and for seasons" (Genesis 1:14): the whole night
 // sky turns slowly about one pole, and its starting angle is set by the
 // visitor's real calendar date — the Bear stands where the season sets it.
@@ -61,6 +62,15 @@ function phaseOf(t) {
   if (t < 0.585) return 'evening';
   if (t < 0.68) return 'dusk';
   return 'night';
+}
+
+// "When the morning stars sang together" (Job 38:7): how strongly that
+// swell presently sounds, 0 apart from it, 1 right at the cycle's own dawn
+// instant (t wraps through 0) — a narrow window, well inside where the
+// stars are still faintly shown (STOPS keeps them lit at t=0.98..0.075).
+function dawnSingOf(t) {
+  const d = Math.min(t, 1 - t);   // distance to the wrap point, either side
+  return Math.max(0, 1 - d / 0.05);
 }
 
 // Where a body stands on the shared arc: `f` in [0,1] is its above-horizon
@@ -380,9 +390,13 @@ export function createSky(scene) {
   const sunV = new THREE.Vector3(), moonV = new THREE.Vector3();
   const num = { lightI: 0, hemiI: 0, glow: 0, stars: 0, moon: 0, night: 0 };
 
-  const state = { t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, rain: 0, wheel: wheel0, shade: shadeState };
+  const state = {
+    t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, rain: 0, wheel: wheel0, shade: shadeState,
+    day: 1, sabbath: false, morningStars: 0,
+  };
   let t = START_T;
   let elapsed = 0;
+  let dayOverride = null;   // setDay() override; null follows the real elapsed clock
 
   function apply() {
     // Bracketing keyframes (the list wraps: past the last stop, blend
@@ -457,8 +471,12 @@ export function createSky(scene) {
     hemi.groundColor.copy(hemiGround);
     hemi.intensity = num.hemiI;
 
-    // Stars breathe in with the dark, and faintly shimmer.
-    const twinkle = 0.92 + 0.08 * Math.sin(elapsed * 2.1);
+    // Stars breathe in with the dark, and faintly shimmer — swelling
+    // together for a few moments right at first light (Job 38:7).
+    const dawnSing = dawnSingOf(t);
+    state.morningStars = dawnSing;
+    const twinkle = 0.92 + 0.08 * Math.sin(elapsed * 2.1)
+      + dawnSing * 0.35 * (0.5 + 0.5 * Math.sin(elapsed * 5.0));
     stars.material.opacity = num.stars * twinkle;
     stars.visible = num.stars > 0.02;
     signStars.material.opacity = num.stars * twinkle;
@@ -478,6 +496,14 @@ export function createSky(scene) {
   function update(dt, walker = null) {
     elapsed += dt;
     t = (t + dt / DAY_LENGTH) % 1;
+
+    // On the seventh day the garden keeps a deeper rest (Genesis 2:2-3):
+    // count whole days elapsed (1-indexed, so a fresh visit begins on day
+    // one), and every seventh is the Sabbath. `setDay` overrides the count
+    // for tests and the curious, independent of the hour it presently is.
+    const dayIndex = dayOverride !== null ? dayOverride : Math.floor(elapsed / DAY_LENGTH);
+    state.day = dayIndex + 1;
+    state.sabbath = state.day % WEEK_DAYS === 0;
 
     // The shower clock: long dry spells, a brief gentle rain, eased edges.
     // A forced level (setRain) eases in faster, so tests never idle.
@@ -571,6 +597,17 @@ export function createSky(scene) {
     return state;
   }
 
+  // Jump straight to a given day (1-indexed) — for tests, and the curious
+  // who don't want to wait six days for the seventh. `null` hands the count
+  // back to the real elapsed clock.
+  function setDay(v) {
+    if (v === null || v === undefined) dayOverride = null;
+    else dayOverride = Math.max(0, Math.floor(v) - 1);
+    state.day = (dayOverride !== null ? dayOverride : Math.floor(elapsed / DAY_LENGTH)) + 1;
+    state.sabbath = state.day % WEEK_DAYS === 0;
+    return state;
+  }
+
   // Jump the clock — for tests, screenshots, and the curious console.
   // Accepts a named hour ('dawn'|'morning'|'noon'|'evening'|'dusk'|'night')
   // or a number in [0, 1).
@@ -583,5 +620,5 @@ export function createSky(scene) {
   }
 
   apply();
-  return { update, setTime, setRain, state, constellations: CONSTELLATIONS.map(c => c.name) };
+  return { update, setTime, setRain, setDay, state, constellations: CONSTELLATIONS.map(c => c.name) };
 }

@@ -20,6 +20,9 @@ import { createDew } from './dew.js';
 import { createSpring } from './spring.js';
 import { createFruit } from './fruit.js';
 import { createFootprints } from './footprints.js';
+import { createApron } from './apron.js';
+import { createWealth } from './wealth.js';
+import { createNests } from './nests.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -41,9 +44,10 @@ export async function createGarden(scene, rng) {
   await breathe();
   // Fruit in season (v10) picks a few of vegetation's own tree spots, so it
   // must come after planting and before creatures — creatures.js folds its
-  // spots into the one naming candidate list.
+  // spots into the one naming candidate list. The Tree of Life's own fruit
+  // (v11) joins that same list.
   const fruit = createFruit(scene, vegetation.treeSpots);
-  const creatures = createCreatures(scene, rng, fruit.spots);
+  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot]);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -65,6 +69,13 @@ export async function createGarden(scene, rng) {
   // purely event-driven): the spring of Eden, and the walker's own steps.
   const spring = createSpring(scene);
   const footprints = createFootprints(scene);
+  await breathe();
+  // v11, each its own seeded stream (or none, apron — a fixed cluster needs
+  // no per-frame update at all): the fig-leaf foreshadowing, the Pishon's
+  // wealth, and the sacred trees' nests.
+  const apron = createApron(scene);
+  const wealth = createWealth(scene);
+  const nests = createNests(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -85,10 +96,13 @@ export async function createGarden(scene, rng) {
   // each print the way it was walking.
   function update(dt, playerPos, lure = null, facing = 0) {
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
-    windNow = windOf(hour.t);
+    // On the seventh day (v11, Genesis 2:2-3) the wind holds still and every
+    // creature keeps a deeper rest — threaded through from the sky's own
+    // day count rather than each module guessing at it independently.
+    windNow = windOf(hour.t, hour.sabbath);
     water.update(dt, hour.night);
-    reverence = vegetation.update(dt, hour.night, playerPos, hour.t);
-    creatures.update(dt, hour.night, playerPos, lure);
+    reverence = vegetation.update(dt, hour.night, playerPos, hour.t, hour.sabbath);
+    creatures.update(dt, hour.night, playerPos, lure, hour.sabbath);
     reeds.update(dt, playerPos, hour.t);
     gate.update(dt, hour.night, hour.t);
     presence.update(dt);
@@ -99,6 +113,8 @@ export async function createGarden(scene, rng) {
     mist.update(dt, hour.t);
     spring.update(dt);
     footprints.update(dt, playerPos, facing);
+    wealth.update(dt);
+    nests.update(dt);
     return hour;
   }
 
@@ -106,6 +122,7 @@ export async function createGarden(scene, rng) {
     update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint,
     setTime: sky.setTime,
     setRain: sky.setRain,
+    setDay: sky.setDay,
     hour: sky.state,
     stones: stones.list,
     crossing: CROSSING,
@@ -123,6 +140,8 @@ export async function createGarden(scene, rng) {
     spring: spring.state,
     footprints: footprints.state,
     fruit: fruit.spots,
+    wealth: wealth.count,
+    nests: nests.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

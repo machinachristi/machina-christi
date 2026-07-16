@@ -422,8 +422,12 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // and when it clears they ease back to their own lives (Genesis 2:19: the
   // creatures came to the man). Every effect is reversible, so the garden
   // returns to exactly itself once the walker rises.
-  function update(dt, night = 0, walker = null, lure = null) {
+  // `sabbath` (v11, Genesis 2:2-3): on the seventh day every creature keeps
+  // a deeper rest — a flat multiplier on their own wandering rates, so nothing
+  // stops outright, everything only stiller.
+  function update(dt, night = 0, walker = null, lure = null, sabbath = false) {
     t += dt;
+    const REST = sabbath ? 0.4 : 1;
 
     // Choose the one fish nearest a lure to be the one that draws near; the
     // rest keep to their loops. (Found before the fish loop so it can steer.)
@@ -456,7 +460,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
       else if (night < 0.18 && b.mode === 'roost') b.mode = 'toFly';
 
       if (b.mode === 'fly') {
-        o.theta += o.speed * dt;
+        o.theta += o.speed * dt * REST;
         const x = o.cx + Math.cos(o.theta) * o.radius;
         const z = o.cz + Math.sin(o.theta) * o.radius;
         const y = o.height + Math.sin(o.theta * 2.3) * 0.8;
@@ -491,7 +495,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
       }
       if (b.mode === 'toFly') {
         // Rejoin the circuit where the orbit now stands, then resume it.
-        o.theta += o.speed * dt;
+        o.theta += o.speed * dt * REST;
         orbitPoint.set(
           o.cx + Math.cos(o.theta) * o.radius,
           o.height + Math.sin(o.theta * 2.3) * 0.8,
@@ -522,7 +526,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
       o.cx += (targetCx - o.cx) * clamp(dt * 0.6, 0, 1);
       o.rise = damp(o.rise, drawn ? 1 : 0, 1.2, dt);
 
-      o.theta += o.speed * dt;
+      o.theta += o.speed * dt * REST;
       const nx = o.cx + Math.cos(o.theta) * o.lx;
       const nz = riverZ(nx) + Math.sin(o.theta) * o.lz;
       const p = f.group.position;
@@ -570,7 +574,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
           B.target = flutterSpot();
           B.until = 6 + wingRng() * 8;
         } else {
-          const step = Math.min(dist, 1.15 * dt);
+          const step = Math.min(dist, 1.15 * dt * REST);
           p.x += (dx / dist) * step;
           p.z += (dz / dist) * step;
           const yaw = Math.atan2(dx, dz);
@@ -596,7 +600,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
     if (beeMesh.visible) {
       for (let i = 0; i < swarm.length; i++) {
         const B = swarm[i];
-        B.theta += B.rate * dt;
+        B.theta += B.rate * dt * REST;
         const r = B.r * (1 + 0.15 * Math.sin(t * 1.1 + B.bob));
         const x = B.patch.x + Math.cos(B.theta) * r;
         const z = B.patch.z + Math.sin(B.theta) * r;
@@ -624,7 +628,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
         const dist = Math.hypot(dx, dz);
         const targetYaw = Math.atan2(dx, dz);
         G.group.rotation.y += shortestAngle(G.group.rotation.y, targetYaw) * clamp(dt * 4, 0, 1);
-        const step = G.speed * dt;
+        const step = G.speed * dt * REST;
         p.x += Math.sin(G.group.rotation.y) * step;
         p.z += Math.cos(G.group.rotation.y) * step;
         p.y = heightAt(p.x, p.z);

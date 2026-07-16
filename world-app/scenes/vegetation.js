@@ -86,6 +86,8 @@ export function createVegetation(scene, rng) {
   // Kept in scope for the cool of the day (v10): each sacred tree's own
   // group, so the whole tree can bow from its root as the gust passes.
   let lifeTreeGroup, knowledgeTreeGroup;
+  // The Tree of Life's own fruit (v11), for the naming — see the return below.
+  let lifeFruitSpot;
 
   // ── The two sacred trees, hand-shaped ─────────────────────
   // Tree of Life: pale trunk, golden triple canopy, its own warm light.
@@ -106,6 +108,44 @@ export function createVegetation(scene, rng) {
       blob.scale.setScalar(s);
       t.add(blob);
     }
+
+    // Its own fruit in season, not just gold leaves (v11, Revelation 22:2,
+    // echoing): "which bare twelve manner of fruits" — a dozen small
+    // jewel-toned fruits hung among the gold, each a slightly different hue.
+    // Its own seeded stream: inserting these draws into the shared `rng`
+    // here would shift every planting after it, so this stays independent,
+    // the same idiom as the falling leaves below.
+    const lifeFruitRng = mulberry32(20260719);
+    const FRUIT_COUNT = 12;
+    const fruitMesh = new THREE.InstancedMesh(
+      new THREE.IcosahedronGeometry(0.1, 0),
+      new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x3A2A08, emissiveIntensity: 0.3 }),
+      FRUIT_COUNT,
+    );
+    {
+      const fA = new THREE.Color(0xE8C86A);
+      const fB = new THREE.Color(0xC65A6E);
+      const fm = new THREE.Matrix4();
+      const fq = new THREE.Quaternion();
+      const fp = new THREE.Vector3();
+      const fs = new THREE.Vector3();
+      const fc = new THREE.Color();
+      for (let i = 0; i < FRUIT_COUNT; i++) {
+        const a = (i / FRUIT_COUNT) * Math.PI * 2 + lifeFruitRng() * 0.4;
+        const rr = 1.0 + lifeFruitRng() * 0.9;
+        fp.set(Math.cos(a) * rr, 3.15 + lifeFruitRng() * 1.1, Math.sin(a) * rr * 0.85);
+        fq.setFromEuler(new THREE.Euler(lifeFruitRng() * Math.PI, lifeFruitRng() * Math.PI, lifeFruitRng() * Math.PI));
+        fs.setScalar(0.9 + lifeFruitRng() * 0.5);
+        fm.compose(fp, fq, fs);
+        fruitMesh.setMatrixAt(i, fm);
+        fc.copy(fA).lerp(fB, lifeFruitRng());
+        fruitMesh.setColorAt(i, fc);
+      }
+      fruitMesh.instanceMatrix.needsUpdate = true;
+      fruitMesh.instanceColor.needsUpdate = true;
+    }
+    t.add(fruitMesh);
+
     const lamp = new THREE.PointLight(0xFFD98A, 26, 15, 2);
     lamp.position.y = 3.6;
     t.add(lamp);
@@ -114,6 +154,10 @@ export function createVegetation(scene, rng) {
     lifeLamp = lamp;
     lifeGold = gold;
     lifeTreeGroup = t;
+    lifeFruitSpot = {
+      pos: { x: t.position.x, y: t.position.y + 3.6, z: t.position.z },
+      name: 'Peri', label: 'the fruit of the Tree of Life', kind: 'treeoflife',
+    };
   }
 
   // Tree of Knowledge: a leaning, twisted trunk, deep shadowed canopy,
@@ -336,11 +380,11 @@ export function createVegetation(scene, rng) {
   // reaches it, then settle it back as the edge moves on. Skipped entirely
   // outside the gust's window — by the time it fully fades every instance
   // has already been written back to its resting lean of zero.
-  function swayCanopies(cycleT) {
+  function swayCanopies(cycleT, sabbath) {
     for (const { mesh, bases } of canopySway) {
       for (let i = 0; i < bases.length; i++) {
         const b = bases[i];
-        const g = gustAt(cycleT, b.x);
+        const g = gustAt(cycleT, b.x, sabbath);
         windQ.setFromAxisAngle(WIND_AXIS, g * CANOPY_TILT);
         yawQ.setFromAxisAngle(Y_AXIS, b.yaw);
         mixQ.multiplyQuaternions(windQ, yawQ);
@@ -363,14 +407,16 @@ export function createVegetation(scene, rng) {
   // returned to the caller so the ambience can answer it too.
   // `cycleT`: the sky's own clock, in [0,1) — all the cool of the day (v10)
   // needs to know when and where the evening gust presently stands.
-  function update(dt, night = 0, playerPos = null, cycleT = 0.1) {
+  // `sabbath` (v11): the seventh day's deeper rest — passed straight through
+  // to wind.js, which holds the gust still when it's true.
+  function update(dt, night = 0, playerPos = null, cycleT = 0.1, sabbath = false) {
     t += dt;
 
     // The two sacred trees bow together from the root as the gust passes —
     // each at its own place, so the one it reaches first bows first.
-    lifeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_LIFE_POS.x) * TREE_TILT;
-    knowledgeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_KNOWLEDGE_POS.x) * TREE_TILT;
-    if (windOf(cycleT) > 0.001) swayCanopies(cycleT);
+    lifeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_LIFE_POS.x, sabbath) * TREE_TILT;
+    knowledgeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_KNOWLEDGE_POS.x, sabbath) * TREE_TILT;
+    if (windOf(cycleT, sabbath) > 0.001) swayCanopies(cycleT, sabbath);
     const arr = moteGeo.attributes.position.array;
     for (let i = 0; i < MOTES; i++) {
       const s2 = moteSeed[i];
@@ -410,5 +456,7 @@ export function createVegetation(scene, rng) {
 
   // The planted trees' places, for anything that grows from or answers them
   // (v9: petals loosed from the canopies, impressions mirrored on the water).
-  return { update, treeSpots };
+  // `lifeFruitSpot` (v11): the Tree of Life's own fruit, folded into the
+  // naming candidates the same way as fruit.js's fig and pomegranate spots.
+  return { update, treeSpots, lifeFruitSpot };
 }

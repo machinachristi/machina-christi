@@ -200,7 +200,7 @@
               <p class="entry__meta">v${escapeHtml(e.version)} &middot; ${escapeHtml(e.date)}</p>
               <h3>${escapeHtml(e.focus)}</h3>
               <ul class="entry__changes">${(e.changes || []).map(c => `
-                <li>${escapeHtml(c.text)}${c.verse ? ` <span class="verse">(${escapeHtml(c.verse)})</span>` : ''}</li>`).join('')}
+                <li>${escapeHtml(c.text)}${(c.source || c.verse) ? ` <span class="verse">(${escapeHtml(c.source || c.verse)})</span>` : ''}</li>`).join('')}
               </ul>
             </article>`).join('')
           : '<p>Nothing logged yet.</p>';
