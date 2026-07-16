@@ -274,6 +274,9 @@ window.__world = {
       // Fruit in season (v10, Genesis 1:29): the fig and pomegranate trees
       // that bear fruit, each namable like any living thing in the garden.
       fruit: garden.fruit,
+      // The tree apart at the river's bank (v12, Psalm 1:3): always fruited,
+      // named the same way as any living thing in the garden.
+      waterTree: garden.waterTree,
       // On the seventh day (v11, Genesis 2:2-3): which day of the visit this
       // is, and whether it presently keeps the deeper rest.
       sabbath: { day: garden.hour.day, active: garden.hour.sabbath },

@@ -23,6 +23,8 @@ import { createFootprints } from './footprints.js';
 import { createApron } from './apron.js';
 import { createWealth } from './wealth.js';
 import { createNests } from './nests.js';
+import { createWaterTree } from './watertree.js';
+import { createGrain } from './grain.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -47,7 +49,10 @@ export async function createGarden(scene, rng) {
   // spots into the one naming candidate list. The Tree of Life's own fruit
   // (v11) joins that same list.
   const fruit = createFruit(scene, vegetation.treeSpots);
-  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot]);
+  // v12 (Psalm 1:3): a tree apart at the river's bank, always fruited, joins
+  // the same one naming candidate list as every other fruit in the garden.
+  const waterTree = createWaterTree(scene);
+  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot]);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -76,6 +81,9 @@ export async function createGarden(scene, rng) {
   const apron = createApron(scene);
   const wealth = createWealth(scene);
   const nests = createNests(scene);
+  // v12 (Psalm 65:13): grain in two low valleys, still until the same
+  // evening gust that already bows the trees reaches them.
+  const grain = createGrain(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -115,6 +123,8 @@ export async function createGarden(scene, rng) {
     footprints.update(dt, playerPos, facing);
     wealth.update(dt);
     nests.update(dt);
+    waterTree.update(hour.t, hour.sabbath);
+    grain.update(hour.t, hour.sabbath);
     return hour;
   }
 
@@ -142,6 +152,7 @@ export async function createGarden(scene, rng) {
     fruit: fruit.spots,
     wealth: wealth.count,
     nests: nests.state,
+    waterTree: waterTree.spot,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

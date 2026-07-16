@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -119,12 +119,24 @@
         { "text": "The Tree of Life bears its own fruit in season, not just gold leaves.", "source": "Revelation 22:2" },
         { "text": "At first light the morning stars sing together, just before the day quiets them.", "source": "Job 38:7" }
       ]
+    },
+    {
+      "version": 12,
+      "date": "2026-07-16",
+      "focus": "planted by the waters",
+      "changes": [
+        { "text": "A tree stands apart at the river's bank, its leaf never withering, fruited every season.", "source": "Psalm 1:3" },
+        { "text": "The valleys fill with grain, swaying together the moment the evening wind walks through.", "source": "Psalm 65:13" },
+        { "text": "Goats keep the rising rim, sure-footed among the high stones.", "source": "Psalm 104:18" },
+        { "text": "An eagle circles high above the garden, and makes her nest higher still.", "source": "Job 39:27" },
+        { "text": "A hart keeps the riverside, panting after the water brooks.", "source": "Psalm 42:1" }
+      ]
     }
   ],
   "next": [
-    "A tree stands apart by the river's edge, its leaf never withering, fruited every season (Psalm 1:3)",
-    "The valleys fill with young grain, and it sways together when the wind walks through (Psalm 65:13)",
-    "Goats keep to the rising rim, sure-footed among the high stones (Psalm 104:18)",
-    "An eagle circles high above the garden, and makes her nest higher still (Job 39:27)"
+    "The rain leaves the sky clear and blue behind it, cloud by cloud, once its hour has passed (Job 26:8)",
+    "A quiet stream still waters the flock, and the sheep lie down beside it (Psalm 23:2)",
+    "Storks keep the fir trees for their house, high above every other nest (Psalm 104:17)",
+    "Locusts have no king, yet go forth all of them by bands across the meadow (Proverbs 30:27)"
   ]
 }

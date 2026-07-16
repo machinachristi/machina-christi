@@ -141,6 +141,107 @@ function cowSpot(rng) {
   return { x: -18, z: -8 };
 }
 
+// Goats keep the rising rim, sure-footed among the high stones (Psalm
+// 104:18) — the garden's outer band, where the ground climbs toward the fog.
+function goatSpot(rng) {
+  for (let i = 0; i < 40; i++) {
+    const a = rng() * Math.PI * 2;
+    const r = 36 + rng() * 11;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (riverEdgeDist(x, z) > 4) return { x, z };
+  }
+  return { x: -44, z: 12 };
+}
+
+// The hart keeps the riverside, panting after the water brooks (Psalm
+// 42:1) — a narrow band just off the bank, never far from the water.
+function hartSpot(rng) {
+  for (let i = 0; i < 40; i++) {
+    const x = (rng() * 2 - 1) * 34;
+    const z = (rng() * 2 - 1) * 20;
+    const d = riverEdgeDist(x, z);
+    if (d > 1.6 && d < 4.2) return { x, z };
+  }
+  return { x: -20, z: riverZ(-20) + 3 };
+}
+
+// A goat: a lighter, more sure-footed build than the lamb, small twisted
+// horns rather than wool ears.
+function makeGoat() {
+  const g = new THREE.Group();
+  const coat = new THREE.MeshLambertMaterial({ color: 0xB8AC97, flatShading: true });
+  const dark = new THREE.MeshLambertMaterial({ color: 0x5A5142, flatShading: true });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.4, 3, 7), coat);
+  body.rotation.z = Math.PI / 2;
+  body.position.y = 0.4;
+  g.add(body);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.52, 0.32);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), coat);
+  head.position.set(0, 0, 0.1);
+  headPivot.add(head);
+  const hornGeo = new THREE.ConeGeometry(0.03, 0.32, 4);
+  for (const sx of [-1, 1]) {
+    const horn = new THREE.Mesh(hornGeo, dark);
+    horn.position.set(sx * 0.07, 0.18, 0.02);
+    horn.rotation.set(-0.5, 0, sx * 0.35);
+    headPivot.add(horn);
+  }
+  g.add(headPivot);
+
+  const legGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.36, 5);
+  const legs = [];
+  for (const [lx, lz] of [[-0.11, 0.18], [0.11, 0.18], [-0.11, -0.18], [0.11, -0.18]]) {
+    const leg = new THREE.Mesh(legGeo, dark);
+    leg.position.set(lx, 0.18, lz);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  addShadow(g, 0.32);
+  return { group: g, headPivot, legs };
+}
+
+// A hart: a slighter, longer-legged build than the ox, a pair of small
+// antlers over a tapered muzzle.
+function makeHart() {
+  const g = new THREE.Group();
+  const hide = new THREE.MeshLambertMaterial({ color: 0x9C7A4E, flatShading: true });
+  const antlerMat = new THREE.MeshLambertMaterial({ color: 0x6B5B45, flatShading: true });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.5, 3, 7), hide);
+  body.rotation.z = Math.PI / 2;
+  body.position.y = 0.52;
+  g.add(body);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.68, 0.4);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.32, 6), hide);
+  head.rotation.x = Math.PI / 2;
+  head.position.set(0, 0, 0.12);
+  headPivot.add(head);
+  const antlerGeo = new THREE.ConeGeometry(0.025, 0.34, 4);
+  for (const sx of [-1, 1]) {
+    const antler = new THREE.Mesh(antlerGeo, antlerMat);
+    antler.position.set(sx * 0.06, 0.22, -0.02);
+    antler.rotation.set(-0.3, 0, sx * 0.5);
+    headPivot.add(antler);
+  }
+  g.add(headPivot);
+
+  const legGeo = new THREE.CylinderGeometry(0.032, 0.028, 0.5, 5);
+  const legs = [];
+  for (const [lx, lz] of [[-0.12, 0.24], [0.12, 0.24], [-0.12, -0.24], [0.12, -0.24]]) {
+    const leg = new THREE.Mesh(legGeo, hide);
+    leg.position.set(lx, 0.25, lz);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  addShadow(g, 0.4);
+  return { group: g, headPivot, legs };
+}
+
 // A fish: a low-poly body nosing forward along +z, with a tail fin that
 // sculls. Small enough that two cones read as life through the water.
 function makeFish(tone) {
@@ -232,6 +333,25 @@ export function createCreatures(scene, rng, staticNamables = []) {
     });
   }
 
+  // A lone eagle keeps the high air over the whole garden — apart from the
+  // census above (kept off `flyers` on purpose: its own much simpler cycle,
+  // not the five-flyer flock's), its wingbeat far slower and broader than
+  // any bird's — "doth the eagle mount up at thy command, and make her nest
+  // on high?" (Job 39:27). Its own seeded stream, own model.
+  const eagleRng = mulberry32(20260724);
+  const eagle = makeBird(0x5C4630);
+  eagle.group.scale.setScalar(2.4);
+  group.add(eagle.group);
+  const EAGLE_NEST = (() => {
+    const x = -38, z = -30;
+    return new THREE.Vector3(x, heightAt(x, z) + 22, z);
+  })();
+  const eagleOrbit = {
+    cx: 0, cz: 0, radius: 46, height: 30, speed: 0.05,
+    theta: eagleRng() * Math.PI * 2, flap: eagleRng() * Math.PI * 2,
+  };
+  let eagleMode = 'fly';   // fly | toNest | nest | toFly
+
   // ── The grazers: one lamb, two cattle ─────────────────────
   // All share one life: graze a while, wander to a new patch, graze again.
   const grazers = [];
@@ -273,6 +393,36 @@ export function createCreatures(scene, rng, staticNamables = []) {
       ...lamb2, spot: lambSpot, speed: 0.72, stepFreq: 7, dip: 0.95,
       kind: 'lamb', name: 'Taleh', label: 'the lamb',
       mode: 'graze', until: 2 + flockRng() * 3, target: null, phase: 0,
+    });
+  }
+
+  // Goats keep the rising rim, sure-footed among the high stones (Psalm
+  // 104:18); a lone hart keeps the riverside, panting after the water
+  // brooks (Psalm 42:1) — v12, its own seeded stream, appended after every
+  // draw above so nothing already grazing shifts.
+  const v12Rng = mulberry32(20260716);
+  for (let i = 0; i < 2; i++) {
+    const goat = makeGoat();
+    const s3 = goatSpot(v12Rng);
+    goat.group.position.set(s3.x, heightAt(s3.x, s3.z), s3.z);
+    goat.group.rotation.y = v12Rng() * Math.PI * 2;
+    group.add(goat.group);
+    grazers.push({
+      ...goat, spot: goatSpot, speed: 0.85, stepFreq: 8, dip: 0.6,
+      kind: 'goat', name: 'Ez', label: 'the goat',
+      mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
+    });
+  }
+  {
+    const hart = makeHart();
+    const s4 = hartSpot(v12Rng);
+    hart.group.position.set(s4.x, heightAt(s4.x, s4.z), s4.z);
+    hart.group.rotation.y = v12Rng() * Math.PI * 2;
+    group.add(hart.group);
+    grazers.push({
+      ...hart, spot: hartSpot, speed: 1.0, stepFreq: 8, dip: 0.5,
+      kind: 'hart', name: 'Ayal', label: 'the hart',
+      mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
     });
   }
 
@@ -510,6 +660,53 @@ export function createCreatures(scene, rng, staticNamables = []) {
           b.mode = 'fly';
           if (b.kind === 'dove') b.restIn = 18 + Math.abs(Math.cos(o.theta * 7)) * 26;
         }
+      }
+    }
+
+    // The eagle: its own much smaller cycle, apart from the flock above —
+    // a wide, slow circuit high over the whole garden by day, a glide home
+    // to its lofty nest at dusk (Job 39:27).
+    {
+      const o = eagleOrbit;
+      if (night > 0.45 && eagleMode !== 'nest' && eagleMode !== 'toNest') eagleMode = 'toNest';
+      else if (night < 0.18 && eagleMode === 'nest') eagleMode = 'toFly';
+
+      if (eagleMode === 'fly') {
+        o.theta += o.speed * dt * REST;
+        const x = o.cx + Math.cos(o.theta) * o.radius;
+        const z = o.cz + Math.sin(o.theta) * o.radius;
+        const y = o.height + Math.sin(o.theta * 1.6) * 1.2;
+        eagle.group.position.set(x, y, z);
+        const dir = Math.sign(o.speed);
+        eagle.group.rotation.y = Math.atan2(-Math.sin(o.theta) * dir, Math.cos(o.theta) * dir);
+        o.flap += dt * 2.6;
+        const flap = Math.sin(o.flap) * 0.4 + 0.15;
+        eagle.wingL.rotation.z = flap;
+        eagle.wingR.rotation.z = -flap;
+      } else if (eagleMode === 'toNest') {
+        const left = glideToward(eagle, EAGLE_NEST, dt);
+        o.flap += dt * 1.4;
+        const flap = Math.sin(o.flap) * 0.25 + 0.1;
+        eagle.wingL.rotation.z = flap;
+        eagle.wingR.rotation.z = -flap;
+        if (left < 0.3) { eagle.group.position.copy(EAGLE_NEST); eagleMode = 'nest'; }
+      } else if (eagleMode === 'nest') {
+        const settle = 1.1 + Math.sin(t * 1.6) * 0.03;
+        eagle.wingL.rotation.z = settle;
+        eagle.wingR.rotation.z = -settle;
+      } else if (eagleMode === 'toFly') {
+        o.theta += o.speed * dt * REST;
+        orbitPoint.set(
+          o.cx + Math.cos(o.theta) * o.radius,
+          o.height + Math.sin(o.theta * 1.6) * 1.2,
+          o.cz + Math.sin(o.theta) * o.radius,
+        );
+        const left = glideToward(eagle, orbitPoint, dt);
+        o.flap += dt * 2.6;
+        const flap = Math.sin(o.flap) * 0.4 + 0.15;
+        eagle.wingL.rotation.z = flap;
+        eagle.wingR.rotation.z = -flap;
+        if (left < 1.0) eagleMode = 'fly';
       }
     }
 
