@@ -371,6 +371,17 @@ export function createSky(scene) {
   let showerIn = 210 + rainRng() * 240;   // first shower keeps its distance
   let showerFor = 0;
 
+  // Job 26:8 — "he bindeth up the waters... the cloud is not rent under
+  // them": once a shower's hour has passed, the sky clears "cloud by
+  // cloud" rather than all at once. `clearGlow` spikes the moment rain
+  // genuinely clears and fades over CLEAR_DURATION; the cluster-drift loop
+  // below reads it to thin each cluster's puffs in a staggered wave, and
+  // apply() reads it to lean the palette a little crisper and bluer.
+  const CLEAR_DURATION = 22;
+  let clearTimer = 0;
+  let clearGlow = 0;
+  let wasRaining = false;
+
   // The one directional light both great lights take turns holding,
   // plus the ambient bounce of sky and ground.
   const greatLight = new THREE.DirectionalLight(0xFFF2D0, 2.35);
@@ -382,6 +393,8 @@ export function createSky(scene) {
   const CLOUD_EMISSIVE_NIGHT = new THREE.Color(0x1C2433);
   const CLOUD_EMISSIVE_RAIN = new THREE.Color(0x4E5661);
   const RAIN_GREY = new THREE.Color(0x9AA3AC);
+  const CLEAR_ZENITH = new THREE.Color(0x1665C9);
+  const CLEAR_HORIZON = new THREE.Color(0xCFEAFF);
 
   // Reused per-frame scratch — no allocation inside update().
   const cur = { horizon: new THREE.Color(), zenith: new THREE.Color(), light: new THREE.Color() };
@@ -392,7 +405,7 @@ export function createSky(scene) {
 
   const state = {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, rain: 0, wheel: wheel0, shade: shadeState,
-    day: 1, sabbath: false, morningStars: 0,
+    day: 1, sabbath: false, morningStars: 0, clearing: 0,
   };
   let t = START_T;
   let elapsed = 0;
@@ -424,6 +437,14 @@ export function createSky(scene) {
       num.hemiI *= 1 - 0.2 * rainLevel;
       num.glow *= 1 - 0.7 * rainLevel;
       num.stars *= 1 - 0.6 * rainLevel;
+    }
+
+    // The freshly-cleared sky (Job 26:8): a brief crisper, bluer palette
+    // right after a shower passes, fading back to the ordinary one.
+    if (clearGlow > 0.001) {
+      cur.zenith.lerp(CLEAR_ZENITH, 0.4 * clearGlow);
+      cur.horizon.lerp(CLEAR_HORIZON, 0.22 * clearGlow);
+      num.hemiI *= 1 + 0.12 * clearGlow;
     }
 
     // Repaint the dome and hand its horizon tone to the fog.
@@ -522,22 +543,34 @@ export function createSky(scene) {
     rainLevel = damp(rainLevel, target, rainForced !== null ? 1.1 : 0.25, dt);
     if (target === 0 && rainLevel < 0.001) rainLevel = 0;
 
+    // Edge-detect a shower's genuine end (real or forced) to start the
+    // clearing glow — never on a level that never really rose.
+    if (rainLevel > 0.05) wasRaining = true;
+    else if (wasRaining && rainLevel < 0.02) { clearTimer = CLEAR_DURATION; wasRaining = false; }
+    if (clearTimer > 0) clearTimer = Math.max(0, clearTimer - dt);
+    clearGlow = clearTimer / CLEAR_DURATION;
+
     apply();
 
     // The firmament wheels slowly about its pole through the long year.
     state.wheel = wheel0 + elapsed * WHEEL_RATE;
     celestial.quaternion.setFromAxisAngle(POLE, state.wheel);
 
-    // Each cluster drifts as one body; its puffs bob individually.
-    for (const cl of clusters) {
+    // Each cluster drifts as one body; its puffs bob individually. While the
+    // clearing glow lasts, the wave visits one cluster at a time (Job 26:8:
+    // "cloud by cloud") rather than thinning the whole sky in one breath.
+    for (let ci = 0; ci < clusters.length; ci++) {
+      const cl = clusters[ci];
       cl.driftX = ((cl.x + elapsed * 0.35 * cl.speed + 160) % 320) - 160;
+      const clearK = clamp(clearGlow * clusters.length - ci, 0, 1);
+      const puffScale = 1 - 0.4 * clearK;
       for (const puff of cl.puffs) {
         p.set(
           cl.driftX + puff.off.x + Math.sin(elapsed * 0.02 * cl.speed + puff.idx) * 6,
           cl.y + puff.off.y,
           cl.z + puff.off.z,
         );
-        m.compose(p, puff.quat, puff.scale);
+        m.compose(p, puff.quat, puffScale === 1 ? puff.scale : sc.copy(puff.scale).multiplyScalar(puffScale));
         clouds.setMatrixAt(puff.idx, m);
       }
     }
@@ -586,6 +619,7 @@ export function createSky(scene) {
     }
 
     state.rain = rainLevel;
+    state.clearing = clearGlow;
     return state;
   }
 

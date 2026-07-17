@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -131,12 +131,24 @@
         { "text": "An eagle circles high above the garden, and makes her nest higher still.", "source": "Job 39:27" },
         { "text": "A hart keeps the riverside, panting after the water brooks.", "source": "Psalm 42:1" }
       ]
+    },
+    {
+      "version": 13,
+      "date": "2026-07-17",
+      "focus": "after the rain, and the small and slow",
+      "changes": [
+        { "text": "The rain leaves the sky clear and blue behind it, cloud by cloud, once its hour has passed.", "source": "Job 26:8" },
+        { "text": "Sit still by the water a while, and the nearest lamb comes to lie down beside it.", "source": "Psalm 23:2" },
+        { "text": "A stork keeps her nest high in her own fir tree, above every other nest in the garden.", "source": "Psalm 104:17" },
+        { "text": "Locusts go forth by bands across the meadow, no king leading any of them.", "source": "Proverbs 30:27" },
+        { "text": "A creeping thing keeps close to the ground by the water's edge, slowest of all.", "source": "Genesis 1:24-25" }
+      ]
     }
   ],
   "next": [
-    "The rain leaves the sky clear and blue behind it, cloud by cloud, once its hour has passed (Job 26:8)",
-    "A quiet stream still waters the flock, and the sheep lie down beside it (Psalm 23:2)",
-    "Storks keep the fir trees for their house, high above every other nest (Psalm 104:17)",
-    "Locusts have no king, yet go forth all of them by bands across the meadow (Proverbs 30:27)"
+    "After the shower, low puddles glisten a while in the ground before the earth drinks them in (Psalm 65:10)",
+    "Wildflowers dot the meadow grass in quick dabs of color among the green (Genesis 1:11)",
+    "A wild ass ranges far and free over the plain, keeping its own distance from every path (Job 39:5-8)",
+    "The hart's fawn keeps close beside her, unsteady but quick to follow (Job 39:1)"
   ]
 }
