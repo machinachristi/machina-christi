@@ -713,7 +713,14 @@
           e.preventDefault();
           if (leaving) return;
           if (e.detail === 0) { enter(p); return; }        // keyboard activation
-          if (i !== active) { center(i); return; }          // a side gate: step up to it first
+          // Read the strip's live position rather than trust `active`, which only
+          // catches up via the scroll->rAF loop above and can still lag behind a
+          // just-settled swipe — that lag was making the just-landed gate eat its
+          // first tap. A tap that lands while the strip is still coasting past this
+          // gate correctly falls through to center() rather than entering early.
+          const centered = nearest();
+          if (i !== centered) { center(i); return; }         // a side gate: step up to it first
+          setActive(centered);
           enter(p);
         });
         // Tabbing to a gate brings it to the center of the way.
