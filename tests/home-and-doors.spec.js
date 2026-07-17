@@ -91,6 +91,34 @@ test.describe('home page', () => {
     await page.waitForURL('**/about.html');
   });
 
+  test('a tap on the gate you just swiped toward enters it, even mid-settle', async ({ page }) => {
+    await page.goto('/index.html');
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+
+    // Reproduce the beat right after a swipe: the strip is still coasting from
+    // Eden toward About and has covered only ~40% of the gap, so About is not yet
+    // the strict-nearest gate — Eden still is. `scroll-snap-type: x mandatory`
+    // snaps a programmatic scrollLeft straight back, so hold the in-between spot
+    // by turning snapping off for the beat, exactly the un-snapped state the strip
+    // sits in while a real momentum scroll settles.
+    await page.evaluate(() => {
+      const strip = document.querySelector('.strip');
+      const c = el => el.offsetLeft + el.offsetWidth / 2;
+      const eden  = document.querySelector('.portal--eden');
+      const about = document.querySelector('.portal--about');
+      const spacing = c(about) - c(eden);
+      strip.style.scrollSnapType = 'none';
+      strip.scrollLeft = c(eden) - strip.clientWidth / 2 + 0.4 * spacing;
+    });
+
+    // A genuine tap (detail: 1, so it isn't taken for keyboard activation) on the
+    // gate being settled onto must walk through. Under the old nearest()-only
+    // check this first tap was eaten by center() until the strip crossed the 50%
+    // mark — the "swipe, tap does nothing; wait, then tap works" bug.
+    await page.locator('.portal--about').dispatchEvent('click', { detail: 1, bubbles: true, cancelable: true });
+    await page.waitForURL('**/about.html');
+  });
+
   test('keyboard: Enter on a focused portal navigates', async ({ page }) => {
     await page.goto('/index.html');
     await page.locator('.portal--about').focus();

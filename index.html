@@ -713,14 +713,24 @@
           e.preventDefault();
           if (leaving) return;
           if (e.detail === 0) { enter(p); return; }        // keyboard activation
-          // Read the strip's live position rather than trust `active`, which only
-          // catches up via the scroll->rAF loop above and can still lag behind a
-          // just-settled swipe — that lag was making the just-landed gate eat its
-          // first tap. A tap that lands while the strip is still coasting past this
-          // gate correctly falls through to center() rather than entering early.
-          const centered = nearest();
-          if (i !== centered) { center(i); return; }         // a side gate: step up to it first
-          setActive(centered);
+          // Enter the gate you tapped as long as it's the one standing at the
+          // centre of the way — not a side gate peeking in at the edge. Comparing
+          // against nearest() put a knife-edge at the exact midpoint between two
+          // gates: right after a swipe, while the strip is still coasting to its
+          // snap point, the gate you'd aimed at reads as "not yet nearest" until it
+          // crosses the halfway mark, so your first tap got eaten by center() —
+          // hence "swipe, tap does nothing; wait, then tap works". Measure this
+          // gate's live distance from centre instead and enter once it's essentially
+          // the central gate (within 3/4 of a step). A settled neighbour always sits
+          // a full step out, so tap-a-side-gate-to-centre still holds; only a gate
+          // that far out steps up first.
+          const p1 = portals[Math.min(1, portals.length - 1)];
+          const spacing = Math.abs((p1.offsetLeft + p1.offsetWidth / 2)
+                                 - (portals[0].offsetLeft + portals[0].offsetWidth / 2)) || p.offsetWidth;
+          const mid  = strip.scrollLeft + strip.clientWidth / 2;
+          const dist = Math.abs(p.offsetLeft + p.offsetWidth / 2 - mid);
+          if (dist > spacing * 0.75) { center(i); return; }  // a side gate: step up to it first
+          setActive(i);
           enter(p);
         });
         // Tabbing to a gate brings it to the center of the way.
