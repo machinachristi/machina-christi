@@ -25,6 +25,8 @@ import { createWealth } from './wealth.js';
 import { createNests } from './nests.js';
 import { createWaterTree } from './watertree.js';
 import { createGrain } from './grain.js';
+import { createStorks } from './storks.js';
+import { createLocusts } from './locusts.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -52,7 +54,10 @@ export async function createGarden(scene, rng) {
   // v12 (Psalm 1:3): a tree apart at the river's bank, always fruited, joins
   // the same one naming candidate list as every other fruit in the garden.
   const waterTree = createWaterTree(scene);
-  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot]);
+  // v13 (Psalm 104:17): the stork's own nest, high in her own fir tree,
+  // joins the same list — built here so her spot is ready for it.
+  const storks = createStorks(scene);
+  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot]);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -84,6 +89,9 @@ export async function createGarden(scene, rng) {
   // v12 (Psalm 65:13): grain in two low valleys, still until the same
   // evening gust that already bows the trees reaches them.
   const grain = createGrain(scene);
+  // v13 (Proverbs 30:27): locust bands drift the open meadow, no king over
+  // any of them.
+  const locusts = createLocusts(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -125,6 +133,8 @@ export async function createGarden(scene, rng) {
     nests.update(dt);
     waterTree.update(hour.t, hour.sabbath);
     grain.update(hour.t, hour.sabbath);
+    storks.update(dt);
+    locusts.update(dt);
     return hour;
   }
 
@@ -153,6 +163,8 @@ export async function createGarden(scene, rng) {
     wealth: wealth.count,
     nests: nests.state,
     waterTree: waterTree.spot,
+    storks: storks.spot,
+    locusts: locusts.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

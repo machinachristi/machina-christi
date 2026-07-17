@@ -165,6 +165,18 @@ function hartSpot(rng) {
   return { x: -20, z: riverZ(-20) + 3 };
 }
 
+// A creeping thing keeps close to the dry ground by the water's edge
+// (Genesis 1:24-25) — never far, never fast.
+function tortoiseSpot(rng) {
+  for (let i = 0; i < 40; i++) {
+    const x = (rng() * 2 - 1) * 30;
+    const z = (rng() * 2 - 1) * 22;
+    const d = riverEdgeDist(x, z);
+    if (d > 1.8 && d < 5) return { x, z };
+  }
+  return { x: 14, z: riverZ(14) + 4 };
+}
+
 // A goat: a lighter, more sure-footed build than the lamb, small twisted
 // horns rather than wool ears.
 function makeGoat() {
@@ -239,6 +251,39 @@ function makeHart() {
   }
 
   addShadow(g, 0.4);
+  return { group: g, headPivot, legs };
+}
+
+// A creeping thing: a low domed shell over four stubby legs, a small head
+// poking out front — the least of the garden's creatures, and the slowest.
+function makeTortoise() {
+  const g = new THREE.Group();
+  const shell = new THREE.MeshLambertMaterial({ color: 0x5B6B3E, flatShading: true });
+  const skin = new THREE.MeshLambertMaterial({ color: 0x93A374, flatShading: true });
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 1.7),
+    shell,
+  );
+  dome.position.y = 0.14;
+  g.add(dome);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.14, 0.22);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5), skin);
+  head.position.z = 0.06;
+  headPivot.add(head);
+  g.add(headPivot);
+
+  const legGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.14, 5);
+  const legs = [];
+  for (const [lx, lz] of [[-0.15, 0.12], [0.15, 0.12], [-0.15, -0.12], [0.15, -0.12]]) {
+    const leg = new THREE.Mesh(legGeo, skin);
+    leg.position.set(lx, 0.07, lz);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  addShadow(g, 0.24);
   return { group: g, headPivot, legs };
 }
 
@@ -363,7 +408,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
     grazers.push({
       ...lamb, spot: lambSpot, speed: 0.72, stepFreq: 7, dip: 0.95,
       kind: 'lamb', name: 'Taleh', label: 'the lamb',
-      mode: 'graze', until: 2 + rng() * 3, target: null, phase: 0,
+      mode: 'graze', until: 2 + rng() * 3, target: null, phase: 0, rest: 0,
     });
     for (const tone of [0x9C6B4A, 0x7E5A3C]) {
       const cow = makeCow(tone);
@@ -392,7 +437,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
     grazers.push({
       ...lamb2, spot: lambSpot, speed: 0.72, stepFreq: 7, dip: 0.95,
       kind: 'lamb', name: 'Taleh', label: 'the lamb',
-      mode: 'graze', until: 2 + flockRng() * 3, target: null, phase: 0,
+      mode: 'graze', until: 2 + flockRng() * 3, target: null, phase: 0, rest: 0,
     });
   }
 
@@ -423,6 +468,23 @@ export function createCreatures(scene, rng, staticNamables = []) {
       ...hart, spot: hartSpot, speed: 1.0, stepFreq: 8, dip: 0.5,
       kind: 'hart', name: 'Ayal', label: 'the hart',
       mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
+    });
+  }
+
+  // A creeping thing keeps close to the ground, never far from the water
+  // (Genesis 1:24-25) — v13, its own seeded stream, appended after every
+  // draw above so nothing already grazing shifts.
+  const creepRng = mulberry32(20260727);
+  {
+    const tortoise = makeTortoise();
+    const s5 = tortoiseSpot(creepRng);
+    tortoise.group.position.set(s5.x, heightAt(s5.x, s5.z), s5.z);
+    tortoise.group.rotation.y = creepRng() * Math.PI * 2;
+    group.add(tortoise.group);
+    grazers.push({
+      ...tortoise, spot: tortoiseSpot, speed: 0.1, stepFreq: 2.2, dip: 0.25,
+      kind: 'tortoise', name: 'Remes', label: 'the creeping thing',
+      mode: 'graze', until: 6 + creepRng() * 8, target: null, phase: 0,
     });
   }
 
@@ -808,8 +870,67 @@ export function createCreatures(scene, rng, staticNamables = []) {
       beeMesh.instanceMatrix.needsUpdate = true;
     }
 
+    // A still walker by the water draws the nearest lamb to lie down close
+    // beside them (Psalm 23:2: "he maketh me to lie down... he leadeth me
+    // beside the still waters") — the same lure the fish and butterflies
+    // already answer, but only ever the one lamb nearest it.
+    let luredLamb = null;
+    if (lure) {
+      let bestD = Infinity;
+      for (const G of grazers) {
+        if (G.kind !== 'lamb') continue;
+        const d = Math.hypot(G.group.position.x - lure.x, G.group.position.z - lure.z);
+        if (d < bestD && d < 16) { bestD = d; luredLamb = G; }
+      }
+    }
+
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
+      if (G === luredLamb) {
+        // Ease toward a spot just beside the lure, on the drier side of the
+        // bank (never wading in), then settle low and still — reversible,
+        // so the flock returns to itself once the walker rises.
+        G.rest = damp(G.rest, 1, 1.2, dt);
+        const awayZ = Math.sign(lure.z - riverZ(lure.x)) || 1;
+        const tx = lure.x + 0.9, tz = lure.z + awayZ * 1.5;
+        const p = G.group.position;
+        const dx = tx - p.x, dz = tz - p.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.15) {
+          const targetYaw = Math.atan2(dx, dz);
+          G.group.rotation.y += shortestAngle(G.group.rotation.y, targetYaw) * clamp(dt * 4, 0, 1);
+          const step = Math.min(dist, G.speed * dt * REST);
+          p.x += (dx / dist) * step;
+          p.z += (dz / dist) * step;
+          G.phase += dt * G.stepFreq;
+          for (let i = 0; i < 4; i++) {
+            G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.45 * (1 - G.rest);
+          }
+        } else {
+          for (const leg of G.legs) leg.rotation.x = damp(leg.rotation.x, -1.1, 3, dt);
+        }
+        G.headPivot.rotation.x = Math.min(G.dip * 0.5, G.headPivot.rotation.x + dt * 1.2);
+        p.y = heightAt(p.x, p.z) - 0.16 * G.rest;
+        G.group.scale.y = 1 - 0.22 * G.rest;
+        G.mode = 'lie';
+        continue;
+      }
+      if (G.kind === 'lamb' && G.mode === 'lie') {
+        // The lure has cleared: rise before rejoining the graze/walk cycle.
+        G.rest = damp(G.rest, 0, 1.2, dt);
+        const p = G.group.position;
+        p.y = heightAt(p.x, p.z) - 0.16 * G.rest;
+        G.group.scale.y = 1 - 0.22 * G.rest;
+        for (const leg of G.legs) leg.rotation.x = damp(leg.rotation.x, 0, 3, dt);
+        if (G.rest < 0.02) {
+          G.rest = 0;
+          G.group.scale.y = 1;
+          G.mode = 'graze';
+          G.until = 2 + rng() * 3;
+        }
+        continue;
+      }
+
       G.until -= dt;
       if (G.mode === 'graze') {
         G.headPivot.rotation.x = Math.min(G.dip, G.headPivot.rotation.x + dt * 1.6);
@@ -847,7 +968,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
   function fauna() {
     return {
       flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
-      grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z })),
+      grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z, rest: G.rest || 0 })),
       shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z, rise: f.loop.rise })),
       butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },

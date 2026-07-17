@@ -227,8 +227,9 @@ window.__world = {
       // and how deep into night the world is.
       time: { t: garden.hour.t, phase: garden.hour.phase, night: garden.hour.night },
       // The weather (v7): how deep into a shower the garden is (0 dry → 1),
-      // and where each drifting cloud presently lays its shade.
-      weather: { rain: garden.hour.rain, shade: garden.hour.shade },
+      // and where each drifting cloud presently lays its shade. `clearing`
+      // (v13, Job 26:8) eases 1→0 in the minutes right after a shower passes.
+      weather: { rain: garden.hour.rain, shade: garden.hour.shade, clearing: garden.hour.clearing },
       // The signs' slow wheel through the long year (Genesis 1:14), radians.
       heavens: { wheel: garden.hour.wheel },
       // The ambience (audio.js): supported/muted/actually-running.
@@ -277,6 +278,12 @@ window.__world = {
       // The tree apart at the river's bank (v12, Psalm 1:3): always fruited,
       // named the same way as any living thing in the garden.
       waterTree: garden.waterTree,
+      // The stork's nest, high in her own fir tree (v13, Psalm 104:17):
+      // named the same way as any living thing in the garden.
+      storks: garden.storks,
+      // Locust bands adrift the meadow, no king over any of them (v13,
+      // Proverbs 30:27).
+      locusts: garden.locusts(),
       // On the seventh day (v11, Genesis 2:2-3): which day of the visit this
       // is, and whether it presently keeps the deeper rest.
       sabbath: { day: garden.hour.day, active: garden.hour.sabbath },
