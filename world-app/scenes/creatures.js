@@ -165,6 +165,19 @@ function hartSpot(rng) {
   return { x: -20, z: riverZ(-20) + 3 };
 }
 
+// The wild ass ranges free over the whole plain, "scorneth the multitude
+// of the city" (Job 39:5-8) — the widest range of any grazer, right out to
+// the garden's rim.
+function wildAssSpot(rng) {
+  for (let i = 0; i < 40; i++) {
+    const a = rng() * Math.PI * 2;
+    const r = 18 + rng() * 32;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (riverEdgeDist(x, z) > 3) return { x, z };
+  }
+  return { x: 42, z: -28 };
+}
+
 // A creeping thing keeps close to the dry ground by the water's edge
 // (Genesis 1:24-25) — never far, never fast.
 function tortoiseSpot(rng) {
@@ -251,6 +264,75 @@ function makeHart() {
   }
 
   addShadow(g, 0.4);
+  return { group: g, headPivot, legs };
+}
+
+// The wild ass: a rangier, plainer build than the hart — long pale ears,
+// no antlers, a stockier boxed muzzle built for going its own distance.
+function makeWildAss() {
+  const g = new THREE.Group();
+  const hide = new THREE.MeshLambertMaterial({ color: 0xA79176, flatShading: true });
+  const pale = new THREE.MeshLambertMaterial({ color: 0xD8CBB0, flatShading: true });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.52, 3, 7), hide);
+  body.rotation.z = Math.PI / 2;
+  body.position.y = 0.5;
+  g.add(body);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.66, 0.38);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.2, 0.32), hide);
+  head.position.set(0, 0, 0.12);
+  headPivot.add(head);
+  const earGeo = new THREE.ConeGeometry(0.045, 0.3, 4);
+  for (const sx of [-1, 1]) {
+    const ear = new THREE.Mesh(earGeo, pale);
+    ear.position.set(sx * 0.08, 0.2, 0.02);
+    ear.rotation.set(-0.15, 0, sx * 0.3);
+    headPivot.add(ear);
+  }
+  g.add(headPivot);
+
+  const legGeo = new THREE.CylinderGeometry(0.036, 0.032, 0.48, 5);
+  const legs = [];
+  for (const [lx, lz] of [[-0.13, 0.24], [0.13, 0.24], [-0.13, -0.24], [0.13, -0.24]]) {
+    const leg = new THREE.Mesh(legGeo, hide);
+    leg.position.set(lx, 0.24, lz);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  addShadow(g, 0.4);
+  return { group: g, headPivot, legs };
+}
+
+// A fawn: the hart's build at a fraction of the scale, no antlers yet —
+// "unsteady but quick to follow" (Job 39:1).
+function makeFawn() {
+  const g = new THREE.Group();
+  const hide = new THREE.MeshLambertMaterial({ color: 0xC9A876, flatShading: true });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.28, 3, 7), hide);
+  body.rotation.z = Math.PI / 2;
+  body.position.y = 0.3;
+  g.add(body);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.4, 0.24);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.18, 6), hide);
+  head.rotation.x = Math.PI / 2;
+  head.position.set(0, 0, 0.07);
+  headPivot.add(head);
+  g.add(headPivot);
+
+  const legGeo = new THREE.CylinderGeometry(0.02, 0.017, 0.28, 5);
+  const legs = [];
+  for (const [lx, lz] of [[-0.07, 0.14], [0.07, 0.14], [-0.07, -0.14], [0.07, -0.14]]) {
+    const leg = new THREE.Mesh(legGeo, hide);
+    leg.position.set(lx, 0.14, lz);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  addShadow(g, 0.22);
   return { group: g, headPivot, legs };
 }
 
@@ -458,17 +540,19 @@ export function createCreatures(scene, rng, staticNamables = []) {
       mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
     });
   }
+  let hartEntry;
   {
     const hart = makeHart();
     const s4 = hartSpot(v12Rng);
     hart.group.position.set(s4.x, heightAt(s4.x, s4.z), s4.z);
     hart.group.rotation.y = v12Rng() * Math.PI * 2;
     group.add(hart.group);
-    grazers.push({
+    hartEntry = {
       ...hart, spot: hartSpot, speed: 1.0, stepFreq: 8, dip: 0.5,
       kind: 'hart', name: 'Ayal', label: 'the hart',
       mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
-    });
+    };
+    grazers.push(hartEntry);
   }
 
   // A creeping thing keeps close to the ground, never far from the water
@@ -485,6 +569,35 @@ export function createCreatures(scene, rng, staticNamables = []) {
       ...tortoise, spot: tortoiseSpot, speed: 0.1, stepFreq: 2.2, dip: 0.25,
       kind: 'tortoise', name: 'Remes', label: 'the creeping thing',
       mode: 'graze', until: 6 + creepRng() * 8, target: null, phase: 0,
+    });
+  }
+
+  // The wild ass ranges free over the plain, keeping its own distance from
+  // every path (Job 39:5-8); the hart's fawn keeps close beside her,
+  // unsteady but quick to follow (Job 39:1) — v14, its own seeded stream,
+  // appended after every draw above so nothing already grazing shifts.
+  const v14Rng = mulberry32(20260730);
+  {
+    const wildAss = makeWildAss();
+    const s6 = wildAssSpot(v14Rng);
+    wildAss.group.position.set(s6.x, heightAt(s6.x, s6.z), s6.z);
+    wildAss.group.rotation.y = v14Rng() * Math.PI * 2;
+    group.add(wildAss.group);
+    grazers.push({
+      ...wildAss, spot: wildAssSpot, speed: 1.15, stepFreq: 8, dip: 0.5, wary: true,
+      kind: 'wildass', name: 'Pere', label: 'the wild ass',
+      mode: 'graze', until: 2 + v14Rng() * 3, target: null, phase: 0,
+    });
+  }
+  {
+    const fawn = makeFawn();
+    const fx = hartEntry.group.position.x + 0.7, fz = hartEntry.group.position.z + 0.7;
+    fawn.group.position.set(fx, heightAt(fx, fz), fz);
+    group.add(fawn.group);
+    grazers.push({
+      ...fawn, kind: 'fawn', name: 'Ofer', label: "the fawn",
+      speed: 1.3, stepFreq: 10, dip: 0, follow: hartEntry, wobble: v14Rng() * Math.PI * 2,
+      mode: 'follow', until: 0, target: null, phase: 0,
     });
   }
 
@@ -602,6 +715,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
   const NAME_DWELL = 0.35;
   let named = null;       // the creature whose name is presently given
   let candidate = null;   // the creature being dwelt toward
+  // How close the walker must come before a wary creature (the wild ass,
+  // Job 39:5-8) breaks off and puts ground between them.
+  const WARY_RADIUS = 6;
   let dwelt = 0;
 
   function nearestNamable(walker) {
@@ -886,6 +1002,59 @@ export function createCreatures(scene, rng, staticNamables = []) {
 
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
+      // The fawn never grazes on its own — it simply keeps close beside its
+      // mother, a little behind and to the side, with an unsteady wobble of
+      // its own (Job 39:1).
+      if (G.kind === 'fawn') {
+        const mother = G.follow.group.position;
+        const followYaw = G.follow.group.rotation.y;
+        const tx = mother.x - Math.sin(followYaw) * 0.9 + Math.sin(t * 3 + G.wobble) * 0.3;
+        const tz = mother.z - Math.cos(followYaw) * 0.9 + Math.cos(t * 2.6 + G.wobble) * 0.3;
+        const p = G.group.position;
+        const dx = tx - p.x, dz = tz - p.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.05) {
+          const targetYaw = Math.atan2(dx, dz);
+          G.group.rotation.y += shortestAngle(G.group.rotation.y, targetYaw) * clamp(dt * 5, 0, 1);
+          const step = Math.min(dist, G.speed * dt * REST * (dist > 2 ? 1.8 : 1));
+          p.x += (dx / dist) * step;
+          p.z += (dz / dist) * step;
+          G.phase += dt * G.stepFreq * 1.3;
+          for (let i = 0; i < 4; i++) {
+            G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.5;
+          }
+        } else {
+          for (const leg of G.legs) leg.rotation.x = damp(leg.rotation.x, 0, 3, dt);
+        }
+        p.y = heightAt(p.x, p.z);
+        continue;
+      }
+
+      // A wary creature (the wild ass) puts ground between itself and the
+      // walker the moment they come too close, then goes back to its own
+      // free range once they're clear (Job 39:5-8).
+      if (G.wary && walker) {
+        const dx0 = G.group.position.x - walker.x, dz0 = G.group.position.z - walker.z;
+        const d0 = Math.hypot(dx0, dz0);
+        if (d0 < WARY_RADIUS) {
+          const p = G.group.position;
+          const fleeYaw = Math.atan2(dx0, dz0);
+          G.group.rotation.y += shortestAngle(G.group.rotation.y, fleeYaw) * clamp(dt * 5, 0, 1);
+          const step = G.speed * 1.8 * dt * REST;
+          p.x += Math.sin(G.group.rotation.y) * step;
+          p.z += Math.cos(G.group.rotation.y) * step;
+          p.y = heightAt(p.x, p.z);
+          G.phase += dt * G.stepFreq * 1.6;
+          for (let i = 0; i < 4; i++) {
+            G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.5;
+          }
+          G.headPivot.rotation.x = Math.max(0, G.headPivot.rotation.x - dt * 2.2);
+          G.mode = 'walk';
+          G.until = 1.5;   // resume its own free range shortly after it's clear
+          continue;
+        }
+      }
+
       if (G === luredLamb) {
         // Ease toward a spot just beside the lure, on the drier side of the
         // bank (never wading in), then settle low and still — reversible,

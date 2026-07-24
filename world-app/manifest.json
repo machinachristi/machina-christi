@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -143,12 +143,24 @@
         { "text": "Locusts go forth by bands across the meadow, no king leading any of them.", "source": "Proverbs 30:27" },
         { "text": "A creeping thing keeps close to the ground by the water's edge, slowest of all.", "source": "Genesis 1:24-25" }
       ]
+    },
+    {
+      "version": 14,
+      "date": "2026-07-23",
+      "focus": "the bow in the cloud",
+      "changes": [
+        { "text": "After the shower, low puddles glisten a while before the ground drinks them in.", "source": "Psalm 65:10" },
+        { "text": "Wildflowers dot the meadow grass in quick dabs of color among the green.", "source": "Genesis 1:11" },
+        { "text": "A wild ass ranges far and free over the plain, keeping its own distance from every path.", "source": "Job 39:5-8" },
+        { "text": "The hart's fawn keeps close beside her, unsteady but quick to follow.", "source": "Job 39:1" },
+        { "text": "A rainbow eases faintly into the clearing sky once a shower has passed.", "source": "Genesis 9:13" }
+      ]
     }
   ],
   "next": [
-    "After the shower, low puddles glisten a while in the ground before the earth drinks them in (Psalm 65:10)",
-    "Wildflowers dot the meadow grass in quick dabs of color among the green (Genesis 1:11)",
-    "A wild ass ranges far and free over the plain, keeping its own distance from every path (Job 39:5-8)",
-    "The hart's fawn keeps close beside her, unsteady but quick to follow (Job 39:1)"
+    "A lion rests near the flock, at peace beside them, and the fear between them is not yet (Isaiah 11:6-7)",
+    "Cedars of Lebanon, full of sap, rise tall along the garden's northern rim (Psalm 104:16)",
+    "A spider's web catches the morning dew between two blades of grass (Proverbs 30:28)",
+    "Sparrows and swallows find a house for themselves among the sacred trees' own branches (Psalm 84:3)"
   ]
 }

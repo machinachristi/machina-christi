@@ -27,6 +27,9 @@ import { createWaterTree } from './watertree.js';
 import { createGrain } from './grain.js';
 import { createStorks } from './storks.js';
 import { createLocusts } from './locusts.js';
+import { createPuddles } from './puddles.js';
+import { createWildflowers } from './wildflowers.js';
+import { createRainbow } from './rainbow.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -92,6 +95,13 @@ export async function createGarden(scene, rng) {
   // v13 (Proverbs 30:27): locust bands drift the open meadow, no king over
   // any of them.
   const locusts = createLocusts(scene);
+  // v14: low puddles glisten after a shower (Psalm 65:10), wildflowers dot
+  // the meadow (Genesis 1:11 — no per-frame update at all, a fixed
+  // dressing), and a rainbow eases in with the same clearing glow the sky
+  // already carries once the rain has passed (Genesis 9:13).
+  const puddles = createPuddles(scene);
+  const wildflowers = createWildflowers(scene);
+  const rainbow = createRainbow(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -135,6 +145,8 @@ export async function createGarden(scene, rng) {
     grain.update(hour.t, hour.sabbath);
     storks.update(dt);
     locusts.update(dt);
+    puddles.update(dt, hour.rain);
+    rainbow.update(dt, hour.rain, hour.clearing, hour.sunElev, hour.sunAz);
     return hour;
   }
 
@@ -165,6 +177,9 @@ export async function createGarden(scene, rng) {
     waterTree: waterTree.spot,
     storks: storks.spot,
     locusts: locusts.state,
+    puddles: puddles.state,
+    wildflowers: wildflowers.count,
+    rainbow: rainbow.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

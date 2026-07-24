@@ -284,6 +284,15 @@ window.__world = {
       // Locust bands adrift the meadow, no king over any of them (v13,
       // Proverbs 30:27).
       locusts: garden.locusts(),
+      // Low puddles glisten a while after a shower (v14, Psalm 65:10):
+      // how full the ground presently stands.
+      puddles: garden.puddles(),
+      // Wildflowers dotting the meadow grass (v14, Genesis 1:11): a fixed
+      // count, planted once.
+      wildflowers: garden.wildflowers,
+      // A rainbow easing in with the sky's own clearing glow after a shower
+      // passes (v14, Genesis 9:13).
+      rainbow: garden.rainbow(),
       // On the seventh day (v11, Genesis 2:2-3): which day of the visit this
       // is, and whether it presently keeps the deeper rest.
       sabbath: { day: garden.hour.day, active: garden.hour.sabbath },

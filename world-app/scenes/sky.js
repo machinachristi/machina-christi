@@ -404,7 +404,7 @@ export function createSky(scene) {
   const num = { lightI: 0, hemiI: 0, glow: 0, stars: 0, moon: 0, night: 0 };
 
   const state = {
-    t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, rain: 0, wheel: wheel0, shade: shadeState,
+    t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
     day: 1, sabbath: false, morningStars: 0, clearing: 0,
   };
   let t = START_T;
@@ -512,6 +512,10 @@ export function createSky(scene) {
     state.phase = phaseOf(t);
     state.night = num.night;
     state.sunElev = sunV.y;
+    // The sun's compass heading (v14, Genesis 9:13's rainbow leans on it to
+    // stand opposite the light) — same atan2(x, z) convention as every
+    // other horizontal direction in the garden.
+    state.sunAz = Math.atan2(sunV.x, sunV.z);
   }
 
   function update(dt, walker = null) {
