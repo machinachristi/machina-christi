@@ -30,6 +30,8 @@ import { createLocusts } from './locusts.js';
 import { createPuddles } from './puddles.js';
 import { createWildflowers } from './wildflowers.js';
 import { createRainbow } from './rainbow.js';
+import { createCedars } from './cedars.js';
+import { createWeb } from './web.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -60,7 +62,16 @@ export async function createGarden(scene, rng) {
   // v13 (Psalm 104:17): the stork's own nest, high in her own fir tree,
   // joins the same list — built here so her spot is ready for it.
   const storks = createStorks(scene);
-  const creatures = createCreatures(scene, rng, [...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot]);
+  // v15: the sacred trees' nests are built before the creatures now, not
+  // after, so their keepers (Psalm 84:3) and the spiders at their webs
+  // (Proverbs 30:28) can join that one naming list too. Both carry their own
+  // seeded streams, so building them earlier shifts nothing already planted.
+  const nests = createNests(scene);
+  const web = createWeb(scene);
+  const creatures = createCreatures(scene, rng, [
+    ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
+    ...nests.spots, ...web.spots,
+  ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -84,11 +95,10 @@ export async function createGarden(scene, rng) {
   const footprints = createFootprints(scene);
   await breathe();
   // v11, each its own seeded stream (or none, apron — a fixed cluster needs
-  // no per-frame update at all): the fig-leaf foreshadowing, the Pishon's
-  // wealth, and the sacred trees' nests.
+  // no per-frame update at all): the fig-leaf foreshadowing and the Pishon's
+  // wealth. (The nests themselves now build further up, with the creatures.)
   const apron = createApron(scene);
   const wealth = createWealth(scene);
-  const nests = createNests(scene);
   // v12 (Psalm 65:13): grain in two low valleys, still until the same
   // evening gust that already bows the trees reaches them.
   const grain = createGrain(scene);
@@ -102,6 +112,9 @@ export async function createGarden(scene, rng) {
   const puddles = createPuddles(scene);
   const wildflowers = createWildflowers(scene);
   const rainbow = createRainbow(scene);
+  // v15: cedars stand along the northern rim (Psalm 104:16) — a fixed
+  // planting, no per-frame update at all, the same idiom as the wildflowers.
+  const cedars = createCedars(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -147,6 +160,7 @@ export async function createGarden(scene, rng) {
     locusts.update(dt);
     puddles.update(dt, hour.rain);
     rainbow.update(dt, hour.rain, hour.clearing, hour.sunElev, hour.sunAz);
+    web.update(dt, hour.t);
     return hour;
   }
 
@@ -180,6 +194,8 @@ export async function createGarden(scene, rng) {
     puddles: puddles.state,
     wildflowers: wildflowers.count,
     rainbow: rainbow.state,
+    cedars: cedars.count,
+    web: web.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

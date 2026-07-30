@@ -226,6 +226,10 @@ window.__world = {
       // The day's clock (see scenes/sky.js): t in [0,1), a named phase,
       // and how deep into night the world is.
       time: { t: garden.hour.t, phase: garden.hour.phase, night: garden.hour.night },
+      // The moon's own season (v15, Genesis 1:14): how far through the
+      // 28-day month she stands (0 full → 0.5 new), and how much of her is
+      // presently alight.
+      moon: garden.hour.moonPhase,
       // The weather (v7): how deep into a shower the garden is (0 dry → 1),
       // and where each drifting cloud presently lays its shade. `clearing`
       // (v13, Job 26:8) eases 1→0 in the minutes right after a shower passes.
@@ -303,8 +307,15 @@ window.__world = {
       // kept for the curious — a fixed count, planted once.
       wealth: garden.wealth,
       // The sacred trees' nests (v11, Genesis 1:22): how many chicks have
-      // shown themselves so far this visit.
+      // shown themselves so far this visit — and (v15, Psalm 84:3) each
+      // nest's own keeper, at home or off on a short errand.
       nests: garden.nests(),
+      // Cedars of Lebanon along the northern rim (v15, Psalm 104:16): a
+      // fixed count, planted once.
+      cedars: garden.cedars,
+      // Webs strung in the meadow grass, shown by the dew that catches on
+      // them (v15, Proverbs 30:28).
+      web: garden.web(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
