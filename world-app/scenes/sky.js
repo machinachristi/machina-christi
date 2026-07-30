@@ -131,8 +131,13 @@ export function createSky(scene) {
   sunGlow.scale.setScalar(120);
   scene.add(sunGlow);
 
+  // Only the moon's lit half is ever built (v15, Genesis 1:14) — a true
+  // hemisphere, capped toward +z, turned each frame to face however much of
+  // her the garden is given tonight. Seen edge-on it reads as a half moon,
+  // turned away it thins to a crescent and then to nothing at all, because
+  // the geometry really is only ever the half in the light.
   const moon = new THREE.Mesh(
-    new THREE.SphereGeometry(9, 10, 7),
+    new THREE.SphereGeometry(9, 14, 10, 0, Math.PI),
     new THREE.MeshBasicMaterial({ color: 0xEDF2F8, fog: false, transparent: true }),
   );
   scene.add(moon);
@@ -403,9 +408,16 @@ export function createSky(scene) {
   const sunV = new THREE.Vector3(), moonV = new THREE.Vector3();
   const num = { lightI: 0, hemiI: 0, glow: 0, stars: 0, moon: 0, night: 0 };
 
+  // The moon's own scratch (v15): where her lit half presently looks, and
+  // the axis her hemisphere is built about.
+  const moonLook = new THREE.Vector3();
+  const MOON_FACE = new THREE.Vector3(0, 0, 1);
+  const UP = new THREE.Vector3(0, 1, 0);
+  const moonPhase = { age: 0, lit: 1 };
+
   const state = {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
-    day: 1, sabbath: false, morningStars: 0, clearing: 0,
+    day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase,
   };
   let t = START_T;
   let elapsed = 0;
@@ -469,6 +481,20 @@ export function createSky(scene) {
     moon.position.copy(moonV).multiplyScalar(380);
     moonGlow.position.copy(moon.position);
 
+    // "Let them be for signs, and for seasons" (Genesis 1:14) — the moon
+    // waxes and wanes over the very same 28 days the signs take to wheel
+    // full circle, so the long year has a second hand on it. A fresh visit
+    // begins on day one under a full moon; `setDay` walks her through the
+    // month as surely as it walks the garden to its Sabbath.
+    const dayPos = dayOverride !== null ? dayOverride + t : elapsed / DAY_LENGTH;
+    moonPhase.age = ((dayPos / YEAR_DAYS) % 1 + 1) % 1;
+    const moonAngle = moonPhase.age * Math.PI * 2;
+    moonPhase.lit = (1 + Math.cos(moonAngle)) / 2;
+    // Her lit half faces the garden square-on when full, straight away from
+    // it when new, and swings between the two through the month.
+    moonLook.copy(moonV).multiplyScalar(-1).applyAxisAngle(UP, moonAngle);
+    moon.quaternion.setFromUnitVectors(MOON_FACE, moonLook.normalize());
+
     const sunUp = smoothstep(-0.045, 0.05, sunV.y);
     const moonUp = smoothstep(-0.045, 0.06, moonV.y);
     sun.material.opacity = sunUp;
@@ -479,7 +505,9 @@ export function createSky(scene) {
     sunGlow.visible = sunGlow.material.opacity > 0.01;
     moon.material.opacity = num.moon * moonUp;
     moon.visible = moon.material.opacity > 0.01;
-    moonGlow.material.opacity = num.moon * moonUp * 0.5;
+    // The halo answers how much of her is actually alight, so a thin crescent
+    // never glows like a full moon.
+    moonGlow.material.opacity = num.moon * moonUp * 0.5 * (0.25 + 0.75 * moonPhase.lit);
     moonGlow.visible = moonGlow.material.opacity > 0.01;
 
     // Whichever great light stands higher holds the directional light.

@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 15,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -155,12 +155,24 @@
         { "text": "The hart's fawn keeps close beside her, unsteady but quick to follow.", "source": "Job 39:1" },
         { "text": "A rainbow eases faintly into the clearing sky once a shower has passed.", "source": "Genesis 9:13" }
       ]
+    },
+    {
+      "version": 15,
+      "date": "2026-07-30",
+      "focus": "nothing here is afraid",
+      "changes": [
+        { "text": "A lion keeps company with the flock and lies down among them, and the fear between them is not yet.", "source": "Isaiah 11:6-7" },
+        { "text": "Cedars of Lebanon stand tall and full of sap along the garden's northern rim.", "source": "Psalm 104:16" },
+        { "text": "Webs strung in the meadow grass show themselves only while the morning dew is on them.", "source": "Proverbs 30:28" },
+        { "text": "A sparrow and a swallow keep the sacred trees' nests, off on short errands and always home again.", "source": "Psalm 84:3" },
+        { "text": "The moon waxes and wanes through the same twenty-eight days the signs take to wheel full circle.", "source": "Genesis 1:14" }
+      ]
     }
   ],
   "next": [
-    "A lion rests near the flock, at peace beside them, and the fear between them is not yet (Isaiah 11:6-7)",
-    "Cedars of Lebanon, full of sap, rise tall along the garden's northern rim (Psalm 104:16)",
-    "A spider's web catches the morning dew between two blades of grass (Proverbs 30:28)",
-    "Sparrows and swallows find a house for themselves among the sacred trees' own branches (Psalm 84:3)"
+    "Willows of the brook lean over the water where the river runs widest (Leviticus 23:40)",
+    "A quail comes up and covers the camp at evening, then settles into the grass (Exodus 16:13)",
+    "Ants gather their meat in the summer along a worn path of their own (Proverbs 6:6-8)",
+    "The garden's own shadow lengthens and swings round as the day wears on (Psalm 102:11)"
   ]
 }

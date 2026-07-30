@@ -336,6 +336,127 @@ function makeFawn() {
   return { group: g, headPivot, legs };
 }
 
+// Concatenate non-indexed geometries, painting each its own flat colour into
+// a shared vertex-colour attribute — so a creature built of many small parts
+// can still be drawn as one.
+function mergeColored(parts) {
+  let count = 0;
+  for (const part of parts) count += part.geo.attributes.position.count;
+  const posArr = new Float32Array(count * 3);
+  const colArr = new Float32Array(count * 3);
+  let v = 0;
+  for (const { geo, color } of parts) {
+    const n = geo.attributes.position.count;
+    posArr.set(geo.attributes.position.array, v * 3);
+    for (let i = 0; i < n; i++) {
+      colArr[(v + i) * 3] = color.r;
+      colArr[(v + i) * 3 + 1] = color.g;
+      colArr[(v + i) * 3 + 2] = color.b;
+    }
+    v += n;
+    geo.dispose();
+  }
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  merged.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+  merged.computeVertexNormals();   // non-indexed → true per-face normals
+  return merged;
+}
+
+// A lion: the heaviest build in the garden, a dark mane ringing a broad
+// head, a tufted tail — and nothing at all to be afraid of here (Isaiah
+// 11:6-7). Same bones as every other grazer, so it grazes "straw like the
+// ox" with the same head dip.
+//
+// Built more thriftily than its elders, though: the garden's establishing
+// shot already draws very nearly everything at once, so the lion's still
+// parts are merged into one geometry, its head into another, and its four
+// legs share a single instanced mesh — four draw calls for the whole beast
+// where the ox spends ten. `legs` still presents one object per leg with its
+// own `rotation.x`, so the walk animates exactly as every other creature's
+// does; `syncLegs()` is what writes those four angles into the instances.
+const LION_COAT = new THREE.Color(0xC9975A);
+const LION_MANE = new THREE.Color(0x8A5A2E);
+const LION_LEGS = [[-0.17, 0.28], [0.17, 0.28], [-0.17, -0.28], [0.17, -0.28]];
+
+function makeLion() {
+  const g = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    mergeColored([
+      {
+        geo: new THREE.CapsuleGeometry(0.3, 0.72, 3, 8).toNonIndexed()
+          .rotateZ(Math.PI / 2).translate(0, 0.6, 0),
+        color: LION_COAT,
+      },
+      {
+        geo: new THREE.CylinderGeometry(0.022, 0.022, 0.5, 5).toNonIndexed()
+          .rotateX(0.7).translate(0, 0.68, -0.52),
+        color: LION_COAT,
+      },
+      {
+        geo: new THREE.IcosahedronGeometry(0.06, 0).toNonIndexed()
+          .translate(0, 0.52, -0.68),
+        color: LION_MANE,
+      },
+    ]),
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+  );
+  g.add(body);
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0.74, 0.5);
+  const head = new THREE.Mesh(
+    mergeColored([
+      {
+        geo: new THREE.IcosahedronGeometry(0.3, 0).toNonIndexed().translate(0, 0, 0.04),
+        color: LION_MANE,
+      },
+      {
+        geo: new THREE.BoxGeometry(0.24, 0.22, 0.26).toNonIndexed().translate(0, 0, 0.24),
+        color: LION_COAT,
+      },
+      {
+        geo: new THREE.BoxGeometry(0.14, 0.11, 0.12).toNonIndexed().translate(0, -0.06, 0.4),
+        color: LION_COAT,
+      },
+    ]),
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+  );
+  headPivot.add(head);
+  g.add(headPivot);
+
+  const legMesh = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.062, 0.055, 0.5, 5),
+    new THREE.MeshLambertMaterial({ color: 0xC9975A, flatShading: true }),
+    LION_LEGS.length,
+  );
+  legMesh.frustumCulled = false;
+  g.add(legMesh);
+
+  // Stand-ins for four leg meshes: the walk writes `rotation.x` on these
+  // exactly as it does for every other creature, and syncLegs() lays them in.
+  const legs = LION_LEGS.map(() => ({ rotation: { x: 0 } }));
+  const legM = new THREE.Matrix4();
+  const legQ = new THREE.Quaternion();
+  const legP = new THREE.Vector3();
+  const legS = new THREE.Vector3(1, 1, 1);
+  const X_AXIS = new THREE.Vector3(1, 0, 0);
+  function syncLegs() {
+    for (let i = 0; i < LION_LEGS.length; i++) {
+      legP.set(LION_LEGS[i][0], 0.25, LION_LEGS[i][1]);
+      legQ.setFromAxisAngle(X_AXIS, legs[i].rotation.x);
+      legM.compose(legP, legQ, legS);
+      legMesh.setMatrixAt(i, legM);
+    }
+    legMesh.instanceMatrix.needsUpdate = true;
+  }
+  syncLegs();
+
+  addShadow(g, 0.5);
+  return { group: g, headPivot, legs, syncLegs };
+}
+
 // A creeping thing: a low domed shell over four stubby legs, a small head
 // poking out front — the least of the garden's creatures, and the slowest.
 function makeTortoise() {
@@ -601,6 +722,26 @@ export function createCreatures(scene, rng, staticNamables = []) {
     });
   }
 
+  // A lion keeps company with the flock, and the fear between them is not
+  // yet: "the calf and the young lion and the fatling together... and the
+  // lion shall eat straw like the ox" (Isaiah 11:6-7) — v15, its own seeded
+  // stream, appended after every draw above so nothing already grazing
+  // shifts. It never hunts and never flees: it simply keeps near the lambs,
+  // and lies down among them when it has caught them up.
+  const v15Rng = mulberry32(20260734);
+  {
+    const lion = makeLion();
+    const s7 = lambSpot(v15Rng);
+    lion.group.position.set(s7.x, heightAt(s7.x, s7.z), s7.z);
+    lion.group.rotation.y = v15Rng() * Math.PI * 2;
+    group.add(lion.group);
+    grazers.push({
+      ...lion, speed: 0.6, stepFreq: 5, dip: 0.5,
+      kind: 'lion', name: 'Aryeh', label: 'the lion',
+      mode: 'rest', until: 4 + v15Rng() * 6, target: null, phase: 0, rest: 0, graze: false,
+    });
+  }
+
   // ── Fish ──────────────────────────────────────────────────
   // Five fish — one gold — in the wadable stretch west of the crossing.
   // Each swims a slow elongated loop that follows the river's meander,
@@ -718,6 +859,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // How close the walker must come before a wary creature (the wild ass,
   // Job 39:5-8) breaks off and puts ground between them.
   const WARY_RADIUS = 6;
+  // How near the flock the lion is content to be before it lies down among
+  // them (Isaiah 11:6-7).
+  const LION_NEAR = 3.2;
   let dwelt = 0;
 
   function nearestNamable(walker) {
@@ -1000,8 +1144,60 @@ export function createCreatures(scene, rng, staticNamables = []) {
       }
     }
 
+    // Where the flock presently stands — the lion keeps to it (Isaiah
+    // 11:6-7). Averaged once, before the loop, so every lamb counts toward
+    // it whatever order they are walked in.
+    let flockX = 0, flockZ = 0, flockN = 0;
+    for (const G of grazers) {
+      if (G.kind !== 'lamb') continue;
+      flockX += G.group.position.x;
+      flockZ += G.group.position.z;
+      flockN++;
+    }
+    if (flockN) { flockX /= flockN; flockZ /= flockN; }
+
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
+      // The lion keeps company with the flock, and the fear between them is
+      // not yet (Isaiah 11:6-7). It never hunts the lambs and never startles
+      // at the walker: it follows the flock at an easy walk, lies down among
+      // them once it has caught them up, and takes its own straw like the ox.
+      if (G.kind === 'lion') {
+        const p = G.group.position;
+        const dx = flockX - p.x, dz = flockZ - p.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > LION_NEAR) {
+          G.rest = damp(G.rest, 0, 2.4, dt);
+          const targetYaw = Math.atan2(dx, dz);
+          G.group.rotation.y += shortestAngle(G.group.rotation.y, targetYaw) * clamp(dt * 3, 0, 1);
+          const step = Math.min(dist - LION_NEAR, G.speed * dt * REST);
+          p.x += Math.sin(G.group.rotation.y) * step;
+          p.z += Math.cos(G.group.rotation.y) * step;
+          G.phase += dt * G.stepFreq;
+          for (let i = 0; i < 4; i++) {
+            G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.4 * (1 - G.rest);
+          }
+          G.headPivot.rotation.x = Math.max(0, G.headPivot.rotation.x - dt * 2);
+          G.mode = 'walk';
+        } else {
+          G.rest = damp(G.rest, 1, 0.9, dt);
+          for (const leg of G.legs) leg.rotation.x = damp(leg.rotation.x, -1.15, 3, dt);
+          G.until -= dt;
+          if (G.until <= 0) {
+            G.graze = !G.graze;
+            G.until = (G.graze ? 3 : 7) + rng() * 5;
+          }
+          G.headPivot.rotation.x = G.graze
+            ? Math.min(G.dip, G.headPivot.rotation.x + dt * 1.2)
+            : Math.max(0, G.headPivot.rotation.x - dt * 1.2);
+          G.mode = 'rest';
+        }
+        p.y = heightAt(p.x, p.z) - 0.2 * G.rest;
+        G.group.scale.y = 1 - 0.24 * G.rest;
+        G.syncLegs();
+        continue;
+      }
+
       // The fawn never grazes on its own — it simply keeps close beside its
       // mother, a little behind and to the side, with an unsteady wobble of
       // its own (Job 39:1).
