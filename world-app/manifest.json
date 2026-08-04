@@ -1,5 +1,5 @@
 {
-  "version": 15,
+  "version": 16,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -167,12 +167,25 @@
         { "text": "A sparrow and a swallow keep the sacred trees' nests, off on short errands and always home again.", "source": "Psalm 84:3" },
         { "text": "The moon waxes and wanes through the same twenty-eight days the signs take to wheel full circle.", "source": "Genesis 1:14" }
       ]
+    },
+    {
+      "version": 16,
+      "date": "2026-08-04",
+      "focus": "as the day wears on",
+      "changes": [
+        { "text": "The garden's shadows draw out long toward evening and swing round with the sun.", "source": "Psalm 102:11" },
+        { "text": "Willows lean over the brook along the one wide stretch, their fronds hanging to the water.", "source": "Leviticus 23:40" },
+        { "text": "At evening a covey of quail comes up low over the meadow and settles into the grass till the dew lifts.", "source": "Exodus 16:13" },
+        { "text": "Ants keep one worn road between their hill and the grain, out empty and back laden, with no one directing them.", "source": "Proverbs 6:6-8" },
+        { "text": "The evening star follows the sun down, alight over the west before any other star is given.", "source": "Psalm 104:19" },
+        { "text": "Every grazing creature rebuilt to a quarter of its old drawing cost, so the garden has room to grow again.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Willows of the brook lean over the water where the river runs widest (Leviticus 23:40)",
-    "A quail comes up and covers the camp at evening, then settles into the grass (Exodus 16:13)",
-    "Ants gather their meat in the summer along a worn path of their own (Proverbs 6:6-8)",
-    "The garden's own shadow lengthens and swings round as the day wears on (Psalm 102:11)"
+    "Cranes pass over in their season, knowing their appointed time (Jeremiah 8:7)",
+    "Conies make their house in the high rocks, beside the goats (Proverbs 30:26)",
+    "A vine climbs one of the garden's trees and hangs its clusters low (Micah 4:4)",
+    "Leaves loosed from the trees drive before the evening wind (Psalm 1:4)"
   ]
 }

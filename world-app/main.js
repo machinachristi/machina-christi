@@ -316,6 +316,18 @@ window.__world = {
       // Webs strung in the meadow grass, shown by the dew that catches on
       // them (v15, Proverbs 30:28).
       web: garden.web(),
+      // Willows leaning over the brook where it runs widest (v16,
+      // Leviticus 23:40): a fixed count, planted once.
+      willows: garden.willows,
+      // The ants' worn road between their hill and the grain (v16,
+      // Proverbs 6:6-8): whether the column is presently at work.
+      ants: garden.ants(),
+      // Every tree's shadow, drawn out long toward evening and swinging
+      // round with the sun (v16, Psalm 102:11).
+      shadows: garden.shadows(),
+      // The evening star, alight over the west as the sun goes down (v16,
+      // Psalm 104:19), before any other star is given.
+      eveningStar: garden.hour.eveningStar,
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

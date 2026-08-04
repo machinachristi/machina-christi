@@ -19,6 +19,8 @@ import { clamp, damp, shortestAngle, mulberry32 } from '../util.js';
 // inside the flower band. Exported so the ambience can hum near them too.
 export const BEE_PATCHES = [{ x: 16, z: -10 }, { x: -11, z: -15 }];
 
+const X_AXIS = new THREE.Vector3(1, 0, 0);
+
 function makeBird(tone) {
   const g = new THREE.Group();
   const mat = new THREE.MeshLambertMaterial({ color: tone, flatShading: true });
@@ -34,82 +36,6 @@ function makeBird(tone) {
   return { group: g, wingL, wingR };
 }
 
-function makeLamb() {
-  const g = new THREE.Group();
-  const wool = new THREE.MeshLambertMaterial({ color: 0xEEE6D2, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.42, 3, 7), wool);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.42;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.55, 0.34);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), wool);
-  head.position.set(0, 0, 0.12);
-  headPivot.add(head);
-  const earGeo = new THREE.ConeGeometry(0.045, 0.14, 4);
-  for (const sx of [-1, 1]) {
-    const ear = new THREE.Mesh(earGeo, wool);
-    ear.position.set(sx * 0.12, 0.06, 0.1);
-    ear.rotation.z = sx * 1.25;
-    headPivot.add(ear);
-  }
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.34, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.12, 0.2], [0.12, 0.2], [-0.12, -0.2], [0.12, -0.2]]) {
-    const leg = new THREE.Mesh(legGeo, wool);
-    leg.position.set(lx, 0.17, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.36);
-  return { group: g, headPivot, legs };
-}
-
-// Cattle after the same idiom as the lamb, at pasture scale: a heavier
-// capsule body, a boxy head with a pale muzzle and small out-turned horns.
-function makeCow(tone) {
-  const g = new THREE.Group();
-  const hide = new THREE.MeshLambertMaterial({ color: tone, flatShading: true });
-  const pale = new THREE.MeshLambertMaterial({ color: 0xD8CBB4, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.85, 3, 8), hide);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.78;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 1.0, 0.62);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.4), hide);
-  head.position.set(0, 0, 0.14);
-  headPivot.add(head);
-  const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.16), pale);
-  muzzle.position.set(0, -0.07, 0.38);
-  headPivot.add(muzzle);
-  const hornGeo = new THREE.ConeGeometry(0.045, 0.22, 5);
-  for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(hornGeo, pale);
-    horn.position.set(sx * 0.2, 0.2, 0.08);
-    horn.rotation.z = sx * -0.9;
-    headPivot.add(horn);
-  }
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.07, 0.062, 0.6, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.22, 0.34], [0.22, 0.34], [-0.22, -0.34], [0.22, -0.34]]) {
-    const leg = new THREE.Mesh(legGeo, hide);
-    leg.position.set(lx, 0.3, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.62);
-  return { group: g, headPivot, legs };
-}
-
 // A soft blob shadow grounds a creature without shadow maps.
 function addShadow(g, r) {
   const shadow = new THREE.Mesh(
@@ -119,6 +45,120 @@ function addShadow(g, r) {
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.02;
   g.add(shadow);
+}
+
+// Every grazer shares one build: its still parts merged into a single
+// vertex-coloured geometry, its head merged into another on its own pivot,
+// its four legs sharing one instanced mesh, and a blob shadow — four draw
+// calls apiece, where the older hand-assembled builds spent nine or ten.
+// The garden's establishing shot draws very nearly the whole world at once,
+// so this is what keeps the whole herd inside the render budget.
+//
+// `legs` still presents one object per leg with its own `rotation.x`, so the
+// walk cycle animates exactly as it always did; `syncLegs()` is what writes
+// those four angles into the instances, once per frame.
+function makeGrazer({ body, head, headAt, legGeo, legAt, legY, legColor, shadow }) {
+  const g = new THREE.Group();
+  const lambert = () => new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+
+  g.add(new THREE.Mesh(mergeColored(body), lambert()));
+
+  const headPivot = new THREE.Group();
+  headPivot.position.set(headAt[0], headAt[1], headAt[2]);
+  headPivot.add(new THREE.Mesh(mergeColored(head), lambert()));
+  g.add(headPivot);
+
+  const legMesh = new THREE.InstancedMesh(
+    legGeo,
+    new THREE.MeshLambertMaterial({ color: legColor, flatShading: true }),
+    legAt.length,
+  );
+  legMesh.frustumCulled = false;   // instance transforms outrun the base bounds
+  g.add(legMesh);
+
+  const legs = legAt.map(() => ({ rotation: { x: 0 } }));
+  const legM = new THREE.Matrix4();
+  const legQ = new THREE.Quaternion();
+  const legP = new THREE.Vector3();
+  const legS = new THREE.Vector3(1, 1, 1);
+  function syncLegs() {
+    for (let i = 0; i < legAt.length; i++) {
+      legP.set(legAt[i][0], legY, legAt[i][1]);
+      legQ.setFromAxisAngle(X_AXIS, legs[i].rotation.x);
+      legM.compose(legP, legQ, legS);
+      legMesh.setMatrixAt(i, legM);
+    }
+    legMesh.instanceMatrix.needsUpdate = true;
+  }
+  syncLegs();
+
+  addShadow(g, shadow);
+  return { group: g, headPivot, legs, syncLegs };
+}
+
+const LAMB_WOOL = new THREE.Color(0xEEE6D2);
+
+function makeLamb() {
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.24, 0.42, 3, 7).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.42, 0),
+      color: LAMB_WOOL,
+    }],
+    head: [
+      {
+        geo: new THREE.SphereGeometry(0.14, 8, 6).toNonIndexed().translate(0, 0, 0.12),
+        color: LAMB_WOOL,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.045, 0.14, 4).toNonIndexed()
+          .rotateZ(sx * 1.25).translate(sx * 0.12, 0.06, 0.1),
+        color: LAMB_WOOL,
+      })),
+    ],
+    headAt: [0, 0.55, 0.34],
+    legGeo: new THREE.CylinderGeometry(0.035, 0.035, 0.34, 5),
+    legAt: [[-0.12, 0.2], [0.12, 0.2], [-0.12, -0.2], [0.12, -0.2]],
+    legY: 0.17,
+    legColor: 0xEEE6D2,
+    shadow: 0.36,
+  });
+}
+
+// Cattle after the same idiom as the lamb, at pasture scale: a heavier
+// capsule body, a boxy head with a pale muzzle and small out-turned horns.
+const COW_PALE = new THREE.Color(0xD8CBB4);
+
+function makeCow(tone) {
+  const hide = new THREE.Color(tone);
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.42, 0.85, 3, 8).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.78, 0),
+      color: hide,
+    }],
+    head: [
+      {
+        geo: new THREE.BoxGeometry(0.34, 0.3, 0.4).toNonIndexed().translate(0, 0, 0.14),
+        color: hide,
+      },
+      {
+        geo: new THREE.BoxGeometry(0.26, 0.18, 0.16).toNonIndexed().translate(0, -0.07, 0.38),
+        color: COW_PALE,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.045, 0.22, 5).toNonIndexed()
+          .rotateZ(sx * -0.9).translate(sx * 0.2, 0.2, 0.08),
+        color: COW_PALE,
+      })),
+    ],
+    headAt: [0, 1.0, 0.62],
+    legGeo: new THREE.CylinderGeometry(0.07, 0.062, 0.6, 5),
+    legAt: [[-0.22, 0.34], [0.22, 0.34], [-0.22, -0.34], [0.22, -0.34]],
+    legY: 0.3,
+    legColor: tone,
+    shadow: 0.62,
+  });
 }
 
 // A lamb wander target on open meadow south of the river.
@@ -192,148 +232,124 @@ function tortoiseSpot(rng) {
 
 // A goat: a lighter, more sure-footed build than the lamb, small twisted
 // horns rather than wool ears.
+const GOAT_COAT = new THREE.Color(0xB8AC97);
+const GOAT_DARK = new THREE.Color(0x5A5142);
+
 function makeGoat() {
-  const g = new THREE.Group();
-  const coat = new THREE.MeshLambertMaterial({ color: 0xB8AC97, flatShading: true });
-  const dark = new THREE.MeshLambertMaterial({ color: 0x5A5142, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.4, 3, 7), coat);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.4;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.52, 0.32);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), coat);
-  head.position.set(0, 0, 0.1);
-  headPivot.add(head);
-  const hornGeo = new THREE.ConeGeometry(0.03, 0.32, 4);
-  for (const sx of [-1, 1]) {
-    const horn = new THREE.Mesh(hornGeo, dark);
-    horn.position.set(sx * 0.07, 0.18, 0.02);
-    horn.rotation.set(-0.5, 0, sx * 0.35);
-    headPivot.add(horn);
-  }
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.36, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.11, 0.18], [0.11, 0.18], [-0.11, -0.18], [0.11, -0.18]]) {
-    const leg = new THREE.Mesh(legGeo, dark);
-    leg.position.set(lx, 0.18, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.32);
-  return { group: g, headPivot, legs };
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.2, 0.4, 3, 7).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.4, 0),
+      color: GOAT_COAT,
+    }],
+    head: [
+      {
+        geo: new THREE.SphereGeometry(0.13, 8, 6).toNonIndexed().translate(0, 0, 0.1),
+        color: GOAT_COAT,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.03, 0.32, 4).toNonIndexed()
+          .rotateZ(sx * 0.35).rotateX(-0.5).translate(sx * 0.07, 0.18, 0.02),
+        color: GOAT_DARK,
+      })),
+    ],
+    headAt: [0, 0.52, 0.32],
+    legGeo: new THREE.CylinderGeometry(0.032, 0.032, 0.36, 5),
+    legAt: [[-0.11, 0.18], [0.11, 0.18], [-0.11, -0.18], [0.11, -0.18]],
+    legY: 0.18,
+    legColor: 0x5A5142,
+    shadow: 0.32,
+  });
 }
 
 // A hart: a slighter, longer-legged build than the ox, a pair of small
 // antlers over a tapered muzzle.
+const HART_HIDE = new THREE.Color(0x9C7A4E);
+const HART_ANTLER = new THREE.Color(0x6B5B45);
+
 function makeHart() {
-  const g = new THREE.Group();
-  const hide = new THREE.MeshLambertMaterial({ color: 0x9C7A4E, flatShading: true });
-  const antlerMat = new THREE.MeshLambertMaterial({ color: 0x6B5B45, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.5, 3, 7), hide);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.52;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.68, 0.4);
-  const head = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.32, 6), hide);
-  head.rotation.x = Math.PI / 2;
-  head.position.set(0, 0, 0.12);
-  headPivot.add(head);
-  const antlerGeo = new THREE.ConeGeometry(0.025, 0.34, 4);
-  for (const sx of [-1, 1]) {
-    const antler = new THREE.Mesh(antlerGeo, antlerMat);
-    antler.position.set(sx * 0.06, 0.22, -0.02);
-    antler.rotation.set(-0.3, 0, sx * 0.5);
-    headPivot.add(antler);
-  }
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.032, 0.028, 0.5, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.12, 0.24], [0.12, 0.24], [-0.12, -0.24], [0.12, -0.24]]) {
-    const leg = new THREE.Mesh(legGeo, hide);
-    leg.position.set(lx, 0.25, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.4);
-  return { group: g, headPivot, legs };
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.22, 0.5, 3, 7).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.52, 0),
+      color: HART_HIDE,
+    }],
+    head: [
+      {
+        geo: new THREE.ConeGeometry(0.11, 0.32, 6).toNonIndexed()
+          .rotateX(Math.PI / 2).translate(0, 0, 0.12),
+        color: HART_HIDE,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.025, 0.34, 4).toNonIndexed()
+          .rotateZ(sx * 0.5).rotateX(-0.3).translate(sx * 0.06, 0.22, -0.02),
+        color: HART_ANTLER,
+      })),
+    ],
+    headAt: [0, 0.68, 0.4],
+    legGeo: new THREE.CylinderGeometry(0.032, 0.028, 0.5, 5),
+    legAt: [[-0.12, 0.24], [0.12, 0.24], [-0.12, -0.24], [0.12, -0.24]],
+    legY: 0.25,
+    legColor: 0x9C7A4E,
+    shadow: 0.4,
+  });
 }
 
 // The wild ass: a rangier, plainer build than the hart — long pale ears,
 // no antlers, a stockier boxed muzzle built for going its own distance.
+const ASS_HIDE = new THREE.Color(0xA79176);
+const ASS_PALE = new THREE.Color(0xD8CBB0);
+
 function makeWildAss() {
-  const g = new THREE.Group();
-  const hide = new THREE.MeshLambertMaterial({ color: 0xA79176, flatShading: true });
-  const pale = new THREE.MeshLambertMaterial({ color: 0xD8CBB0, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.52, 3, 7), hide);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.5;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.66, 0.38);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.2, 0.32), hide);
-  head.position.set(0, 0, 0.12);
-  headPivot.add(head);
-  const earGeo = new THREE.ConeGeometry(0.045, 0.3, 4);
-  for (const sx of [-1, 1]) {
-    const ear = new THREE.Mesh(earGeo, pale);
-    ear.position.set(sx * 0.08, 0.2, 0.02);
-    ear.rotation.set(-0.15, 0, sx * 0.3);
-    headPivot.add(ear);
-  }
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.036, 0.032, 0.48, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.13, 0.24], [0.13, 0.24], [-0.13, -0.24], [0.13, -0.24]]) {
-    const leg = new THREE.Mesh(legGeo, hide);
-    leg.position.set(lx, 0.24, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.4);
-  return { group: g, headPivot, legs };
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.24, 0.52, 3, 7).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.5, 0),
+      color: ASS_HIDE,
+    }],
+    head: [
+      {
+        geo: new THREE.BoxGeometry(0.18, 0.2, 0.32).toNonIndexed().translate(0, 0, 0.12),
+        color: ASS_HIDE,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.045, 0.3, 4).toNonIndexed()
+          .rotateZ(sx * 0.3).rotateX(-0.15).translate(sx * 0.08, 0.2, 0.02),
+        color: ASS_PALE,
+      })),
+    ],
+    headAt: [0, 0.66, 0.38],
+    legGeo: new THREE.CylinderGeometry(0.036, 0.032, 0.48, 5),
+    legAt: [[-0.13, 0.24], [0.13, 0.24], [-0.13, -0.24], [0.13, -0.24]],
+    legY: 0.24,
+    legColor: 0xA79176,
+    shadow: 0.4,
+  });
 }
 
 // A fawn: the hart's build at a fraction of the scale, no antlers yet —
 // "unsteady but quick to follow" (Job 39:1).
+const FAWN_HIDE = new THREE.Color(0xC9A876);
+
 function makeFawn() {
-  const g = new THREE.Group();
-  const hide = new THREE.MeshLambertMaterial({ color: 0xC9A876, flatShading: true });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.28, 3, 7), hide);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.3;
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.4, 0.24);
-  const head = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.18, 6), hide);
-  head.rotation.x = Math.PI / 2;
-  head.position.set(0, 0, 0.07);
-  headPivot.add(head);
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.02, 0.017, 0.28, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.07, 0.14], [0.07, 0.14], [-0.07, -0.14], [0.07, -0.14]]) {
-    const leg = new THREE.Mesh(legGeo, hide);
-    leg.position.set(lx, 0.14, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.22);
-  return { group: g, headPivot, legs };
+  return makeGrazer({
+    body: [{
+      geo: new THREE.CapsuleGeometry(0.13, 0.28, 3, 7).toNonIndexed()
+        .rotateZ(Math.PI / 2).translate(0, 0.3, 0),
+      color: FAWN_HIDE,
+    }],
+    head: [{
+      geo: new THREE.ConeGeometry(0.065, 0.18, 6).toNonIndexed()
+        .rotateX(Math.PI / 2).translate(0, 0, 0.07),
+      color: FAWN_HIDE,
+    }],
+    headAt: [0, 0.4, 0.24],
+    legGeo: new THREE.CylinderGeometry(0.02, 0.017, 0.28, 5),
+    legAt: [[-0.07, 0.14], [0.07, 0.14], [-0.07, -0.14], [0.07, -0.14]],
+    legY: 0.14,
+    legColor: 0xC9A876,
+    shadow: 0.22,
+  });
 }
 
 // Concatenate non-indexed geometries, painting each its own flat colour into
@@ -367,23 +383,12 @@ function mergeColored(parts) {
 // head, a tufted tail — and nothing at all to be afraid of here (Isaiah
 // 11:6-7). Same bones as every other grazer, so it grazes "straw like the
 // ox" with the same head dip.
-//
-// Built more thriftily than its elders, though: the garden's establishing
-// shot already draws very nearly everything at once, so the lion's still
-// parts are merged into one geometry, its head into another, and its four
-// legs share a single instanced mesh — four draw calls for the whole beast
-// where the ox spends ten. `legs` still presents one object per leg with its
-// own `rotation.x`, so the walk animates exactly as every other creature's
-// does; `syncLegs()` is what writes those four angles into the instances.
 const LION_COAT = new THREE.Color(0xC9975A);
 const LION_MANE = new THREE.Color(0x8A5A2E);
-const LION_LEGS = [[-0.17, 0.28], [0.17, 0.28], [-0.17, -0.28], [0.17, -0.28]];
 
 function makeLion() {
-  const g = new THREE.Group();
-
-  const body = new THREE.Mesh(
-    mergeColored([
+  return makeGrazer({
+    body: [
       {
         geo: new THREE.CapsuleGeometry(0.3, 0.72, 3, 8).toNonIndexed()
           .rotateZ(Math.PI / 2).translate(0, 0.6, 0),
@@ -399,15 +404,8 @@ function makeLion() {
           .translate(0, 0.52, -0.68),
         color: LION_MANE,
       },
-    ]),
-    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
-  );
-  g.add(body);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.74, 0.5);
-  const head = new THREE.Mesh(
-    mergeColored([
+    ],
+    head: [
       {
         geo: new THREE.IcosahedronGeometry(0.3, 0).toNonIndexed().translate(0, 0, 0.04),
         color: LION_MANE,
@@ -420,74 +418,39 @@ function makeLion() {
         geo: new THREE.BoxGeometry(0.14, 0.11, 0.12).toNonIndexed().translate(0, -0.06, 0.4),
         color: LION_COAT,
       },
-    ]),
-    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
-  );
-  headPivot.add(head);
-  g.add(headPivot);
-
-  const legMesh = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.062, 0.055, 0.5, 5),
-    new THREE.MeshLambertMaterial({ color: 0xC9975A, flatShading: true }),
-    LION_LEGS.length,
-  );
-  legMesh.frustumCulled = false;
-  g.add(legMesh);
-
-  // Stand-ins for four leg meshes: the walk writes `rotation.x` on these
-  // exactly as it does for every other creature, and syncLegs() lays them in.
-  const legs = LION_LEGS.map(() => ({ rotation: { x: 0 } }));
-  const legM = new THREE.Matrix4();
-  const legQ = new THREE.Quaternion();
-  const legP = new THREE.Vector3();
-  const legS = new THREE.Vector3(1, 1, 1);
-  const X_AXIS = new THREE.Vector3(1, 0, 0);
-  function syncLegs() {
-    for (let i = 0; i < LION_LEGS.length; i++) {
-      legP.set(LION_LEGS[i][0], 0.25, LION_LEGS[i][1]);
-      legQ.setFromAxisAngle(X_AXIS, legs[i].rotation.x);
-      legM.compose(legP, legQ, legS);
-      legMesh.setMatrixAt(i, legM);
-    }
-    legMesh.instanceMatrix.needsUpdate = true;
-  }
-  syncLegs();
-
-  addShadow(g, 0.5);
-  return { group: g, headPivot, legs, syncLegs };
+    ],
+    headAt: [0, 0.74, 0.5],
+    legGeo: new THREE.CylinderGeometry(0.062, 0.055, 0.5, 5),
+    legAt: [[-0.17, 0.28], [0.17, 0.28], [-0.17, -0.28], [0.17, -0.28]],
+    legY: 0.25,
+    legColor: 0xC9975A,
+    shadow: 0.5,
+  });
 }
 
 // A creeping thing: a low domed shell over four stubby legs, a small head
 // poking out front — the least of the garden's creatures, and the slowest.
+const TORTOISE_SHELL = new THREE.Color(0x5B6B3E);
+const TORTOISE_SKIN = new THREE.Color(0x93A374);
+
 function makeTortoise() {
-  const g = new THREE.Group();
-  const shell = new THREE.MeshLambertMaterial({ color: 0x5B6B3E, flatShading: true });
-  const skin = new THREE.MeshLambertMaterial({ color: 0x93A374, flatShading: true });
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 1.7),
-    shell,
-  );
-  dome.position.y = 0.14;
-  g.add(dome);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.14, 0.22);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5), skin);
-  head.position.z = 0.06;
-  headPivot.add(head);
-  g.add(headPivot);
-
-  const legGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.14, 5);
-  const legs = [];
-  for (const [lx, lz] of [[-0.15, 0.12], [0.15, 0.12], [-0.15, -0.12], [0.15, -0.12]]) {
-    const leg = new THREE.Mesh(legGeo, skin);
-    leg.position.set(lx, 0.07, lz);
-    g.add(leg);
-    legs.push(leg);
-  }
-
-  addShadow(g, 0.24);
-  return { group: g, headPivot, legs };
+  return makeGrazer({
+    body: [{
+      geo: new THREE.SphereGeometry(0.22, 8, 6, 0, Math.PI * 2, 0, Math.PI / 1.7)
+        .toNonIndexed().translate(0, 0.14, 0),
+      color: TORTOISE_SHELL,
+    }],
+    head: [{
+      geo: new THREE.SphereGeometry(0.07, 6, 5).toNonIndexed().translate(0, 0, 0.06),
+      color: TORTOISE_SKIN,
+    }],
+    headAt: [0, 0.14, 0.22],
+    legGeo: new THREE.CylinderGeometry(0.045, 0.04, 0.14, 5),
+    legAt: [[-0.15, 0.12], [0.15, 0.12], [-0.15, -0.12], [0.15, -0.12]],
+    legY: 0.07,
+    legColor: 0x93A374,
+    shadow: 0.24,
+  });
 }
 
 // A fish: a low-poly body nosing forward along +z, with a tail fin that
@@ -512,6 +475,28 @@ const WING_L = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).transla
 const WING_R = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).translate(0.095, 0, 0);
 const BUTTERFLY_BODY = new THREE.BoxGeometry(0.022, 0.022, 0.13);
 const BODY_MAT = new THREE.MeshLambertMaterial({ color: 0x3A3226, flatShading: true });
+
+// The quail's one hour of the day (Exodus 16:13), as a pure function of the
+// sky's own clock — no state, so it reads the same however the walker has
+// skipped about the cycle with __world.setTime(). The window opens at dusk
+// (t = 0.55) and runs 0.55 of a cycle, carrying across midnight into the
+// early morning; `landed` is how far the covey has come down out of the air,
+// `presence` how much of it is still here at all.
+const QUAIL_FROM = 0.55;    // dusk: "at even the quails came up"
+const QUAIL_SPAN = 0.55;    // through the night, gone as the dew lifts
+const QUAIL_FALL = 0.07;    // how long the coming-down itself takes
+const QUAIL_FLY_H = 4.2;    // how high they are when first seen
+const QUAIL_APPROACH = 7;   // how far back down their line they begin
+
+export function quailOf(t) {
+  const w = (t - QUAIL_FROM + 1) % 1;
+  if (w >= QUAIL_SPAN) return { presence: 0, landed: 1 };
+  const leaving = (w - (QUAIL_SPAN - 0.06)) / 0.06;
+  return {
+    presence: clamp(1 - leaving, 0, 1),
+    landed: clamp(w / QUAIL_FALL, 0, 1),
+  };
+}
 
 function makeButterfly(tone) {
   const g = new THREE.Group();
@@ -742,6 +727,65 @@ export function createCreatures(scene, rng, staticNamables = []) {
     });
   }
 
+  // ── The covey: quail at evening ───────────────────────────
+  // "At even the quails came up, and covered the camp: and in the morning
+  // the dew lay round about the host" (Exodus 16:13). They are a creature of
+  // one hour only: they come up out of the dusk low over the meadow, drop
+  // into the grass, keep there the whole night through, and are gone again
+  // by the time the morning dew has lifted — so the garden is never quite
+  // the same place after dark as it was before.
+  //
+  // Body and head merge into one geometry so the whole covey is a single
+  // instanced draw; a quail on the ground is mostly a plump body anyway.
+  const v16Rng = mulberry32(20260736);
+  const QUAIL_COUNT = 9;
+  const quailMesh = new THREE.InstancedMesh(
+    mergeColored([
+      {
+        geo: new THREE.ConeGeometry(0.13, 0.36, 6).toNonIndexed()
+          .rotateX(-Math.PI / 2).translate(0, 0, -0.04),
+        color: new THREE.Color(0x8A7350),
+      },
+      {
+        geo: new THREE.SphereGeometry(0.075, 6, 5).toNonIndexed().translate(0, 0.07, 0.17),
+        color: new THREE.Color(0x6B5636),
+      },
+      {
+        geo: new THREE.SphereGeometry(0.045, 5, 4).toNonIndexed().translate(0, 0.02, 0.24),
+        color: new THREE.Color(0xE4DAC2),
+      },
+    ]),
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+    QUAIL_COUNT,
+  );
+  quailMesh.frustumCulled = false;
+  quailMesh.visible = false;
+  group.add(quailMesh);
+
+  // The covey keeps one patch of meadow, close together — they cover ground
+  // rather than scatter over it.
+  const coveyHeart = lambSpot(v16Rng);
+  const covey = [];
+  for (let i = 0; i < QUAIL_COUNT; i++) {
+    const a = v16Rng() * Math.PI * 2;
+    const r = 0.6 + v16Rng() * 2.6;
+    const x = coveyHeart.x + Math.cos(a) * r;
+    const z = coveyHeart.z + Math.sin(a) * r;
+    covey.push({
+      kind: 'quail', name: 'Slav', label: 'the quail',
+      x, z, groundY: heightAt(x, z),
+      yaw: v16Rng() * Math.PI * 2,
+      bob: v16Rng() * Math.PI * 2,
+      // Each comes in on its own line and settles a beat apart from the rest.
+      lag: v16Rng() * 0.35,
+      pos: new THREE.Vector3(x, heightAt(x, z), z),
+    });
+  }
+  const quailM = new THREE.Matrix4();
+  const quailQ = new THREE.Quaternion();
+  const quailS = new THREE.Vector3(1, 1, 1);
+  const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
   // ── Fish ──────────────────────────────────────────────────
   // Five fish — one gold — in the wadable stretch west of the crossing.
   // Each swims a slow elongated loop that follows the river's meander,
@@ -880,6 +924,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
     for (const f of fish) consider(f, 2.4, 4);
     for (const B of butterflies) consider(B, 2.0, 3);
     if (beeMesh.visible) for (const B of swarm) consider(B, 1.7, 2.6);
+    // The covey, only while it is actually here — and only once it is down
+    // in the grass, since there is no naming a bird still overhead.
+    if (quailMesh.visible) for (const Q of covey) consider(Q, 2.0, 1.6);
     // Fruit in season (Genesis 1:29): hangs well above the walker's head, so
     // it wants a generous vertical reach — the same idiom as a flyer's low pass.
     for (const nm of staticNamables) consider(nm, 2.2, 6);
@@ -897,9 +944,35 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // `sabbath` (v11, Genesis 2:2-3): on the seventh day every creature keeps
   // a deeper rest — a flat multiplier on their own wandering rates, so nothing
   // stops outright, everything only stiller.
-  function update(dt, night = 0, walker = null, lure = null, sabbath = false) {
+  function update(dt, night = 0, walker = null, lure = null, sabbath = false, cycleT = 0.075) {
     t += dt;
     const REST = sabbath ? 0.4 : 1;
+
+    // The covey comes up at evening and keeps the grass till the dew lifts.
+    const quailHour = quailOf(cycleT);
+    quailMesh.visible = quailHour.presence > 0.02;
+    if (quailMesh.visible) {
+      for (let i = 0; i < covey.length; i++) {
+        const Q = covey[i];
+        // Each bird lands a beat after the one before it, so the covey comes
+        // down as a scatter rather than all together on one frame.
+        const down = clamp((quailHour.landed - Q.lag) / (1 - Q.lag), 0, 1);
+        const rise = 1 - down;
+        // Still in the air: back down its own line, and high.
+        Q.pos.set(
+          Q.x - Math.sin(Q.yaw) * QUAIL_APPROACH * rise,
+          Q.groundY + QUAIL_FLY_H * rise * rise + Math.sin(t * 2.2 + Q.bob) * 0.03 * down,
+          Q.z - Math.cos(Q.yaw) * QUAIL_APPROACH * rise,
+        );
+        quailM.compose(
+          Q.pos,
+          quailQ.setFromAxisAngle(Y_AXIS, Q.yaw),
+          quailS.set(1, 1, 1),
+        );
+        quailMesh.setMatrixAt(i, quailM);
+      }
+      quailMesh.instanceMatrix.needsUpdate = true;
+    }
 
     // Choose the one fish nearest a lure to be the one that draws near; the
     // rest keep to their loops. (Found before the fish loop so it can steer.)
@@ -1194,7 +1267,6 @@ export function createCreatures(scene, rng, staticNamables = []) {
         }
         p.y = heightAt(p.x, p.z) - 0.2 * G.rest;
         G.group.scale.y = 1 - 0.24 * G.rest;
-        G.syncLegs();
         continue;
       }
 
@@ -1326,6 +1398,11 @@ export function createCreatures(scene, rng, staticNamables = []) {
         }
       }
     }
+
+    // Every branch above writes leg angles onto stand-in objects; this is
+    // where they reach the instanced meshes. One pass after the loop, so no
+    // early `continue` can skip it.
+    for (const G of grazers) G.syncLegs();
   }
 
   // A census for the debug state and the smoke suite. Grazers and fish
@@ -1337,6 +1414,11 @@ export function createCreatures(scene, rng, staticNamables = []) {
       shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z, rise: f.loop.rise })),
       butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },
+      covey: {
+        count: covey.length,
+        here: quailMesh.visible,
+        birds: covey.map(Q => ({ x: Q.pos.x, y: Q.pos.y, z: Q.pos.z })),
+      },
       cattle: 2,
       lamb: grazers.filter(G => G.kind === 'lamb').length,
       fish: fish.length,
