@@ -25,6 +25,10 @@ const POLE = new THREE.Vector3(
 ).normalize();
 const WHEEL_RATE = (Math.PI * 2) / (YEAR_DAYS * DAY_LENGTH);
 const DAY_END = 0.62;     // sunset, as a fraction of the cycle; night runs to 1
+// How far behind the sun the evening star follows, along the same arc: far
+// enough that it burns a good while over the darkening west, near enough
+// that it still sets as part of his going down (Psalm 104:19).
+const EVENING_STAR_LAG = 0.22;
 const START_T = 0.075;    // every visit begins in morning light
 const ARC_TILT = 0.5;     // the sun's path leans, so noon light falls the way v1's did
 const SKY_R = 430;
@@ -144,6 +148,17 @@ export function createSky(scene) {
   const moonGlow = makeGlowSprite('rgba(214, 228, 248, 0.55)', 'rgba(198, 214, 240, 0.16)');
   moonGlow.scale.setScalar(60);
   scene.add(moonGlow);
+
+  // "He appointed the moon for seasons: the sun knoweth his going down"
+  // (Psalm 104:19) — the evening star, which follows the sun down the same
+  // arc a little way behind him. It is alight while the west is still pale
+  // and every other star is yet to be given, and it sets soon after he does:
+  // the one light that keeps the sun's own going down. The dawn has its
+  // answer to this already, in the morning stars that sing (Job 38:7).
+  const eveningStar = makeGlowSprite('rgba(255, 251, 238, 0.95)', 'rgba(226, 233, 250, 0.2)');
+  eveningStar.scale.setScalar(24);
+  scene.add(eveningStar);
+  const starV = new THREE.Vector3();
 
   // The stars, made also: one seeded Points cloud on the upper sphere, its
   // own rng stream so the garden's planting draws are untouched. Brightness
@@ -417,7 +432,7 @@ export function createSky(scene) {
 
   const state = {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
-    day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase,
+    day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase, eveningStar: 0,
   };
   let t = START_T;
   let elapsed = 0;
@@ -509,6 +524,17 @@ export function createSky(scene) {
     // never glows like a full moon.
     moonGlow.material.opacity = num.moon * moonUp * 0.5 * (0.25 + 0.75 * moonPhase.lit);
     moonGlow.visible = moonGlow.material.opacity > 0.01;
+
+    // The evening star keeps the sun's own arc, a little way behind him, so
+    // it is always already up when he sets and always follows him under.
+    // Its light is what the day's glare has been hiding: it comes out as
+    // `sunUp` falls, well before the palette gives any of the other stars.
+    arcInto(starV, fSun - EVENING_STAR_LAG);
+    eveningStar.position.copy(starV).multiplyScalar(360);
+    eveningStar.material.opacity =
+      smoothstep(-0.01, 0.07, starV.y) * (1 - sunUp) * (1 - 0.8 * rainLevel);
+    eveningStar.visible = eveningStar.material.opacity > 0.01;
+    state.eveningStar = eveningStar.visible ? eveningStar.material.opacity : 0;
 
     // Whichever great light stands higher holds the directional light.
     // The palette pinches lightI low around both handoffs, so the swing

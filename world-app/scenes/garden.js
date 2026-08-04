@@ -32,6 +32,9 @@ import { createWildflowers } from './wildflowers.js';
 import { createRainbow } from './rainbow.js';
 import { createCedars } from './cedars.js';
 import { createWeb } from './web.js';
+import { createWillows } from './willows.js';
+import { createAnts } from './ants.js';
+import { createShadows } from './shadows.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -68,9 +71,15 @@ export async function createGarden(scene, rng) {
   // seeded streams, so building them earlier shifts nothing already planted.
   const nests = createNests(scene);
   const web = createWeb(scene);
+  // v16: the willows of the brook (Leviticus 23:40) and the ants' own road
+  // (Proverbs 6:6-8) are built here too, before the creatures, so their
+  // spots fold into the one naming list. Both carry their own seeded
+  // streams, so building them here shifts nothing already planted.
+  const willows = createWillows(scene);
+  const ants = createAnts(scene);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
-    ...nests.spots, ...web.spots,
+    ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -115,6 +124,10 @@ export async function createGarden(scene, rng) {
   // v15: cedars stand along the northern rim (Psalm 104:16) — a fixed
   // planting, no per-frame update at all, the same idiom as the wildflowers.
   const cedars = createCedars(scene);
+  // v16 (Psalm 102:11): every tree's own shadow, drawn out long toward
+  // evening and swinging round with the sun. Needs vegetation's tree spots,
+  // so it comes after the planting.
+  const shadows = createShadows(scene, vegetation.treeSpots);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -141,7 +154,7 @@ export async function createGarden(scene, rng) {
     windNow = windOf(hour.t, hour.sabbath);
     water.update(dt, hour.night);
     reverence = vegetation.update(dt, hour.night, playerPos, hour.t, hour.sabbath);
-    creatures.update(dt, hour.night, playerPos, lure, hour.sabbath);
+    creatures.update(dt, hour.night, playerPos, lure, hour.sabbath, hour.t);
     reeds.update(dt, playerPos, hour.t);
     gate.update(dt, hour.night, hour.t);
     presence.update(dt);
@@ -161,6 +174,8 @@ export async function createGarden(scene, rng) {
     puddles.update(dt, hour.rain);
     rainbow.update(dt, hour.rain, hour.clearing, hour.sunElev, hour.sunAz);
     web.update(dt, hour.t);
+    ants.update(dt, hour.night);
+    shadows.update(dt, hour.sunElev, hour.sunAz, hour.rain);
     return hour;
   }
 
@@ -196,6 +211,9 @@ export async function createGarden(scene, rng) {
     rainbow: rainbow.state,
     cedars: cedars.count,
     web: web.state,
+    willows: willows.count,
+    ants: ants.state,
+    shadows: shadows.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };
