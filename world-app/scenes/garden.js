@@ -35,6 +35,11 @@ import { createWeb } from './web.js';
 import { createWillows } from './willows.js';
 import { createAnts } from './ants.js';
 import { createShadows } from './shadows.js';
+import { createVine } from './vine.js';
+import { createLeaves } from './leaves.js';
+import { createConies } from './conies.js';
+import { createCranes } from './cranes.js';
+import { createPalms } from './palms.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -77,9 +82,17 @@ export async function createGarden(scene, rng) {
   // streams, so building them here shifts nothing already planted.
   const willows = createWillows(scene);
   const ants = createAnts(scene);
+  // v17: the vine (Micah 4:4) climbs one of vegetation's own planted trees,
+  // and the conies (Proverbs 30:26) keep the goats' own rocky rim — both
+  // built here too, before the creatures, so their spots fold into the one
+  // naming list. Both carry their own seeded streams, so building them here
+  // shifts nothing already planted.
+  const vine = createVine(scene, vegetation.treeSpots);
+  const conies = createConies(scene);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
+    vine.spot, ...conies.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -128,6 +141,14 @@ export async function createGarden(scene, rng) {
   // evening and swinging round with the sun. Needs vegetation's tree spots,
   // so it comes after the planting.
   const shadows = createShadows(scene, vegetation.treeSpots);
+  // v17: leaves scud before the same evening wind that already bows the
+  // trees (Psalm 1:4), a skein of cranes crosses at their own appointed
+  // hour (Jeremiah 8:7), and palms stand apart on the open plain (Psalm
+  // 92:12, the freshly-generated idea this run) — cranes and palms carry
+  // no per-frame dependency on anything above, so they build here too.
+  const leaves = createLeaves(scene);
+  const cranes = createCranes(scene);
+  const palms = createPalms(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -176,6 +197,9 @@ export async function createGarden(scene, rng) {
     web.update(dt, hour.t);
     ants.update(dt, hour.night);
     shadows.update(dt, hour.sunElev, hour.sunAz, hour.rain);
+    conies.update(dt);
+    leaves.update(dt, hour.t, hour.sabbath);
+    cranes.update(dt, hour.t);
     return hour;
   }
 
@@ -214,6 +238,11 @@ export async function createGarden(scene, rng) {
     willows: willows.count,
     ants: ants.state,
     shadows: shadows.state,
+    vine: vine.spot,
+    conies: conies.state,
+    leaves: leaves.state,
+    cranes: cranes.state,
+    palms: palms.count,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };
