@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 17,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -180,12 +180,24 @@
         { "text": "The evening star follows the sun down, alight over the west before any other star is given.", "source": "Psalm 104:19" },
         { "text": "Every grazing creature rebuilt to a quarter of its old drawing cost, so the garden has room to grow again.", "source": null }
       ]
+    },
+    {
+      "version": 17,
+      "date": "2026-08-07",
+      "focus": "the appointed time",
+      "changes": [
+        { "text": "A skein of cranes crosses high overhead each morning, keeping their own appointed time.", "source": "Jeremiah 8:7" },
+        { "text": "Conies keep their houses among the high rocks beside the goats, and duck from sight now and then.", "source": "Proverbs 30:26" },
+        { "text": "A vine has climbed one of the garden's trees, its clusters hanging low and ready.", "source": "Micah 4:4" },
+        { "text": "At evening the loosened leaves scud before the same wind that bows the trees.", "source": "Psalm 1:4" },
+        { "text": "Here and there a palm tree stands, flourishing the way the righteous are said to.", "source": "Psalm 92:12" }
+      ]
     }
   ],
   "next": [
-    "Cranes pass over in their season, knowing their appointed time (Jeremiah 8:7)",
-    "Conies make their house in the high rocks, beside the goats (Proverbs 30:26)",
-    "A vine climbs one of the garden's trees and hangs its clusters low (Micah 4:4)",
-    "Leaves loosed from the trees drive before the evening wind (Psalm 1:4)"
+    "A wolf lies down beside the lamb, and neither is afraid (Isaiah 11:6)",
+    "Almond branches blossom white before any other tree wakes (Jeremiah 1:11)",
+    "The turtledove's voice sounds again in the land, answering the wind (Song of Solomon 2:12)",
+    "Frankincense trees stand fragrant on the garden's warmer slopes (Song of Solomon 4:14)"
   ]
 }
