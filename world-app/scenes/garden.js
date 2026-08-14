@@ -40,6 +40,9 @@ import { createLeaves } from './leaves.js';
 import { createConies } from './conies.js';
 import { createCranes } from './cranes.js';
 import { createPalms } from './palms.js';
+import { createAlmond } from './almond.js';
+import { createFrankincense } from './frankincense.js';
+import { createHyssop } from './hyssop.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -89,10 +92,23 @@ export async function createGarden(scene, rng) {
   // shifts nothing already planted.
   const vine = createVine(scene, vegetation.treeSpots);
   const conies = createConies(scene);
+  // v18: the almond (Jeremiah 1:11) and frankincense (Song of Solomon 4:14)
+  // stands, and the hyssop tucked among the rocky rim (1 Kings 4:33, the
+  // freshly-generated idea this run) — built here too, before the
+  // creatures, so their spots fold into the one naming list. Each carries
+  // its own seeded stream, so building them here shifts nothing already
+  // planted. The palms (v17, Psalm 92:12) move up alongside them: their
+  // spots were built but never folded into this list — fixed now, on the
+  // same idiom as everything else here.
+  const almond = createAlmond(scene);
+  const frankincense = createFrankincense(scene);
+  const hyssop = createHyssop(scene);
+  const palms = createPalms(scene);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
-    vine.spot, ...conies.spots,
+    vine.spot, ...conies.spots, ...palms.spots, ...almond.spots,
+    ...frankincense.spots, ...hyssop.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -142,13 +158,12 @@ export async function createGarden(scene, rng) {
   // so it comes after the planting.
   const shadows = createShadows(scene, vegetation.treeSpots);
   // v17: leaves scud before the same evening wind that already bows the
-  // trees (Psalm 1:4), a skein of cranes crosses at their own appointed
-  // hour (Jeremiah 8:7), and palms stand apart on the open plain (Psalm
-  // 92:12, the freshly-generated idea this run) — cranes and palms carry
-  // no per-frame dependency on anything above, so they build here too.
+  // trees (Psalm 1:4), and a skein of cranes crosses at their own appointed
+  // hour (Jeremiah 8:7) — cranes carry no per-frame dependency on anything
+  // above, so they build here too. (Palms now build earlier, alongside
+  // v18's own fixed plantings — see above.)
   const leaves = createLeaves(scene);
   const cranes = createCranes(scene);
-  const palms = createPalms(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -243,6 +258,9 @@ export async function createGarden(scene, rng) {
     leaves: leaves.state,
     cranes: cranes.state,
     palms: palms.count,
+    almond: almond.count,
+    frankincense: frankincense.count,
+    hyssop: hyssop.count,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

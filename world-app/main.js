@@ -328,6 +328,13 @@ window.__world = {
       // The evening star, alight over the west as the sun goes down (v16,
       // Psalm 104:19), before any other star is given.
       eveningStar: garden.hour.eveningStar,
+      // v18: the almond, first to blossom (Jeremiah 1:11), the frankincense
+      // on the warmer western slope (Song of Solomon 4:14), and the hyssop
+      // tucked among the rocky rim, least of all the trees (1 Kings 4:33) —
+      // each a fixed count, planted once.
+      almond: garden.almond,
+      frankincense: garden.frankincense,
+      hyssop: garden.hyssop,
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

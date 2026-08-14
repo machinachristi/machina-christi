@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -192,12 +192,24 @@
         { "text": "At evening the loosened leaves scud before the same wind that bows the trees.", "source": "Psalm 1:4" },
         { "text": "Here and there a palm tree stands, flourishing the way the righteous are said to.", "source": "Psalm 92:12" }
       ]
+    },
+    {
+      "version": 18,
+      "date": "2026-08-13",
+      "focus": "the least and the first",
+      "changes": [
+        { "text": "A wolf lies down beside the lamb, and neither is afraid.", "source": "Isaiah 11:6" },
+        { "text": "Almond branches blossom white on the eastern rise, first to wake of all the trees.", "source": "Jeremiah 1:11" },
+        { "text": "The turtledove's voice sounds again, answering the same wind that bows the trees.", "source": "Song of Solomon 2:12" },
+        { "text": "Frankincense trees stand fragrant on the garden's warmer western slope.", "source": "Song of Solomon 4:14" },
+        { "text": "Hyssop springs up among the high rocks, least of all the garden's trees.", "source": "1 Kings 4:33" }
+      ]
     }
   ],
   "next": [
-    "A wolf lies down beside the lamb, and neither is afraid (Isaiah 11:6)",
-    "Almond branches blossom white before any other tree wakes (Jeremiah 1:11)",
-    "The turtledove's voice sounds again in the land, answering the wind (Song of Solomon 2:12)",
-    "Frankincense trees stand fragrant on the garden's warmer slopes (Song of Solomon 4:14)"
+    "Lilies of the valley grow between the thorns, unhurried (Song of Solomon 2:2)",
+    "A raven, black-winged, is fed and wants for nothing (Job 38:41)",
+    "The fig tree's branch grows tender and puts forth leaves as summer draws near (Matthew 24:32)",
+    "Camphire blooms in clusters, its scent carrying on the same wind the turtledove answers (Song of Solomon 4:13)"
   ]
 }
