@@ -46,15 +46,23 @@ function mergeColored(parts) {
 
 // The eastern rise, where morning light first reaches — its own band, clear
 // of the gate (scenes/gate.js, further out at x≈49) and the cedars' northern
-// rim (scenes/cedars.js).
+// rim (scenes/cedars.js). Also clear of the flock's own grazing ground (the
+// lamb's lambSpot() in scenes/creatures.js ranges x∈[-24,24], z∈[-22,-2]) —
+// a static tree that lands inside a wandering grazer's own ground risks
+// standing close enough to be named in its place.
+function inFlockGround(x, z) {
+  return x > -28 && x < 28 && z > -26 && z < 2;
+}
+
 function almondSpot(rng) {
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     const a = (rng() - 0.5) * 1.0;   // a narrow band facing east
-    const r = 23 + rng() * 8;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r - 4;
-    if (riverEdgeDist(x, z) > 4) return { x, z };
+    const r = 30 + rng() * 8;
+    const z = Math.sin(a) * r + 10;   // biased well north of the flock's ground
+    const x = Math.cos(a) * r;
+    if (riverEdgeDist(x, z) > 4 && !inFlockGround(x, z)) return { x, z };
   }
-  return { x: 27, z: -3 };
+  return { x: 34, z: 14 };
 }
 
 export function createAlmond(scene) {

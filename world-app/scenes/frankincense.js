@@ -45,17 +45,23 @@ function mergeColored(parts) {
   return merged;
 }
 
-// The garden's warmer western slope — its own band, clear of the spring's
-// own rise further out (scenes/spring.js) and the palms' open southern
-// plain (scenes/palms.js).
+// The garden's warmer south-western slope — its own band, clear of the
+// spring's own rise further out (scenes/spring.js) and the palms' open
+// southern plain (scenes/palms.js). Also clear of the flock's own grazing
+// ground (the lamb's lambSpot() in scenes/creatures.js ranges x∈[-24,24],
+// z∈[-22,-2]) — a static tree that lands inside a wandering grazer's own
+// ground risks standing close enough to be named in its place.
+function inFlockGround(x, z) {
+  return x > -28 && x < 28 && z > -26 && z < 2;
+}
+
 function frankincenseSpot(rng) {
-  for (let i = 0; i < 40; i++) {
-    const a = Math.PI + (rng() - 0.5) * 1.1;
-    const r = 20 + rng() * 9;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (riverEdgeDist(x, z) > 4) return { x, z };
+  for (let i = 0; i < 60; i++) {
+    const x = -18 - rng() * 16;
+    const z = 14 + rng() * 15;
+    if (riverEdgeDist(x, z) > 4 && !inFlockGround(x, z)) return { x, z };
   }
-  return { x: -24, z: 2 };
+  return { x: -26, z: 20 };
 }
 
 export function createFrankincense(scene) {
