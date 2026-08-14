@@ -428,6 +428,50 @@ function makeLion() {
   });
 }
 
+// A wolf: the same bones as the lion, at leaner scale — a narrow head, no
+// mane — and nothing at all to dread here either: "the wolf also shall dwell
+// with the lamb" (Isaiah 11:6).
+const WOLF_COAT = new THREE.Color(0x8C8A86);
+const WOLF_DARK = new THREE.Color(0x5C5A56);
+
+function makeWolf() {
+  return makeGrazer({
+    body: [
+      {
+        geo: new THREE.CapsuleGeometry(0.2, 0.62, 3, 7).toNonIndexed()
+          .rotateZ(Math.PI / 2).translate(0, 0.42, 0),
+        color: WOLF_COAT,
+      },
+      {
+        geo: new THREE.CylinderGeometry(0.02, 0.02, 0.4, 5).toNonIndexed()
+          .rotateX(-0.3).translate(0, 0.5, -0.5),
+        color: WOLF_DARK,
+      },
+    ],
+    head: [
+      {
+        geo: new THREE.BoxGeometry(0.18, 0.18, 0.3).toNonIndexed().translate(0, 0, 0.12),
+        color: WOLF_COAT,
+      },
+      {
+        geo: new THREE.ConeGeometry(0.07, 0.18, 4).toNonIndexed().translate(0, 0, 0.3),
+        color: WOLF_DARK,
+      },
+      ...[-1, 1].map(sx => ({
+        geo: new THREE.ConeGeometry(0.05, 0.14, 4).toNonIndexed()
+          .rotateZ(sx * 1.1).translate(sx * 0.09, 0.11, 0.05),
+        color: WOLF_DARK,
+      })),
+    ],
+    headAt: [0, 0.5, 0.34],
+    legGeo: new THREE.CylinderGeometry(0.04, 0.038, 0.42, 5),
+    legAt: [[-0.13, 0.24], [0.13, 0.24], [-0.13, -0.24], [0.13, -0.24]],
+    legY: 0.21,
+    legColor: 0x8C8A86,
+    shadow: 0.4,
+  });
+}
+
 // A creeping thing: a low domed shell over four stubby legs, a small head
 // poking out front — the least of the garden's creatures, and the slowest.
 const TORTOISE_SHELL = new THREE.Color(0x5B6B3E);
@@ -724,6 +768,24 @@ export function createCreatures(scene, rng, staticNamables = []) {
       ...lion, speed: 0.6, stepFreq: 5, dip: 0.5,
       kind: 'lion', name: 'Aryeh', label: 'the lion',
       mode: 'rest', until: 4 + v15Rng() * 6, target: null, phase: 0, rest: 0, graze: false,
+    });
+  }
+
+  // "The wolf also shall dwell with the lamb" (Isaiah 11:6) — v18, its own
+  // seeded stream, appended after every draw above so nothing already
+  // grazing shifts. Same idiom as the lion exactly: it keeps near the flock
+  // and lies down among them once it has caught them up.
+  const v18Rng = mulberry32(20260813);
+  {
+    const wolf = makeWolf();
+    const s8 = lambSpot(v18Rng);
+    wolf.group.position.set(s8.x, heightAt(s8.x, s8.z), s8.z);
+    wolf.group.rotation.y = v18Rng() * Math.PI * 2;
+    group.add(wolf.group);
+    grazers.push({
+      ...wolf, speed: 0.68, stepFreq: 6, dip: 0.5,
+      kind: 'wolf', name: 'Zeev', label: 'the wolf',
+      mode: 'rest', until: 4 + v18Rng() * 6, target: null, phase: 0, rest: 0, graze: false,
     });
   }
 
@@ -1231,11 +1293,12 @@ export function createCreatures(scene, rng, staticNamables = []) {
 
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
-      // The lion keeps company with the flock, and the fear between them is
-      // not yet (Isaiah 11:6-7). It never hunts the lambs and never startles
-      // at the walker: it follows the flock at an easy walk, lies down among
-      // them once it has caught them up, and takes its own straw like the ox.
-      if (G.kind === 'lion') {
+      // The lion — and now the wolf too (v18, Isaiah 11:6) — keeps company
+      // with the flock, and the fear between them is not yet (Isaiah
+      // 11:6-7). Neither hunts the lambs nor startles at the walker: each
+      // follows the flock at an easy walk, lies down among them once it has
+      // caught them up, and takes its own straw like the ox.
+      if (G.kind === 'lion' || G.kind === 'wolf') {
         const p = G.group.position;
         const dx = flockX - p.x, dz = flockZ - p.z;
         const dist = Math.hypot(dx, dz);

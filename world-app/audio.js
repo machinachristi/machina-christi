@@ -30,6 +30,7 @@ export function createAmbience() {
   let birdIn = 2.0;       // seconds until the next possible chirp
   let cricketIn = 1.5;    // seconds until the next possible cricket phrase
   let lowIn = 10.0;       // seconds until the next possible lowing
+  let doveIn = 6.0;       // seconds until the next possible turtledove coo
   let night = 0;
 
   // ── The toggle: a small pill in the world's corner ──
@@ -272,6 +273,43 @@ export function createAmbience() {
     osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
   }
 
+  // The turtledove's voice, answering the wind (Song of Solomon 2:12: "the
+  // flowers appear on the earth... the time of the singing of birds is
+  // come, and the voice of the turtle is heard in our land") — three soft,
+  // low coos, only called up while the evening gust is really moving.
+  function coo() {
+    const t0 = ctx.currentTime + 0.02;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    const g = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 900;
+    lp.Q.value = 0.5;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const base = 320 + Math.random() * 40;
+    const notes = [1, 1.22, 0.9];
+    g.gain.setValueAtTime(0.0001, t0);
+    let tt = t0;
+    for (const mult of notes) {
+      osc.frequency.setValueAtTime(base * mult, tt);
+      g.gain.linearRampToValueAtTime(0.024, tt + 0.09);
+      g.gain.exponentialRampToValueAtTime(0.0006, tt + 0.34);
+      tt += 0.42;
+    }
+    osc.connect(lp);
+    lp.connect(g);
+    if (pan) {
+      pan.pan.value = Math.random() * 1.6 - 0.8;
+      g.connect(pan).connect(master);
+    } else {
+      g.connect(master);
+    }
+    osc.start(t0);
+    osc.stop(tt + 0.2);
+    osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
+  }
+
   // The reverence chime: two soft bell tones, a fifth apart, when a walker
   // draws near the sacred trees — felt more than heard.
   function chime() {
@@ -392,6 +430,14 @@ export function createAmbience() {
     if (lowIn <= 0) {
       lowIn = 22 + Math.random() * 38;
       if (night > 0.15 && night < 0.75 && rain < 0.35) low();
+    }
+
+    // The turtledove answers the wind: it only has cause to call while the
+    // evening gust is really moving through the garden (v10's own wind bed).
+    doveIn -= step;
+    if (doveIn <= 0) {
+      doveIn = 9 + Math.random() * 16;
+      if (wind > 0.3 && night < 0.4 && rain < 0.2) coo();
     }
   }
 
