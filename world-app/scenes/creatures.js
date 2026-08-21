@@ -629,6 +629,44 @@ export function createCreatures(scene, rng, staticNamables = []) {
   };
   let eagleMode = 'fly';   // fly | toNest | nest | toFly
 
+  // A raven, black-winged, on its own smaller circuit under the eagle's —
+  // "Who provideth for the raven his food? when his young ones cry unto God,
+  // they wander for lack of meat" (Job 38:41). The point of the raven in
+  // Scripture is that it is *fed*: it neither sows nor reaps nor keeps a
+  // storehouse, and it wants for nothing. So this one never hunts and never
+  // searches. It flies its circuit, drops to whichever provision is next in
+  // turn, is fed, and lifts off again — the food is simply always there.
+  // Its own seeded stream, its own model, kept off the flock's `flyers`
+  // census the same way the eagle is.
+  const ravenRng = mulberry32(20260815);
+  const raven = makeBird(0x24202A);
+  raven.group.scale.setScalar(1.2);
+  raven.name = 'Orev';
+  raven.label = 'the raven';
+  raven.kind = 'raven';
+  group.add(raven.group);
+  // Where it is fed: the two grain valleys (scenes/grain.js's own PATCHES)
+  // and the open ground under the fig (scenes/fig.js) — hardcoded here, the
+  // same way ants.js already reads the eastern grain patch, rather than
+  // reaching across modules for it.
+  const PROVISION = [
+    { x: -26, z: -22 },
+    { x: 21, z: -27 },
+    { x: 18, z: 6 },
+  ].map(sp => new THREE.Vector3(sp.x, heightAt(sp.x, sp.z) + 0.18, sp.z));
+  const RAVEN_ROOST = (() => {
+    const x = 30, z = 26;
+    return new THREE.Vector3(x, heightAt(x, z) + 9, z);
+  })();
+  const ravenOrbit = {
+    cx: 2, cz: -4, radius: 27, height: 12, speed: -0.11,
+    theta: ravenRng() * Math.PI * 2, flap: ravenRng() * Math.PI * 2,
+  };
+  let ravenMode = 'fly';   // fly | toFeed | feeding | toFly | toRoost | roost
+  let ravenFeedIn = 18 + ravenRng() * 30;
+  let ravenFeedFor = 0;
+  let ravenAt = Math.floor(ravenRng() * PROVISION.length);
+
   // ── The grazers: one lamb, two cattle ─────────────────────
   // All share one life: graze a while, wander to a new patch, graze again.
   const grazers = [];
@@ -982,6 +1020,10 @@ export function createCreatures(scene, rng, staticNamables = []) {
       }
     };
     for (const b of flyers) consider(b, 2.4, 9);
+    // The raven counts where the eagle does not: the eagle never leaves the
+    // high air, but the raven comes right down to the ground to be fed, and
+    // a bird at your feet is a bird you can name.
+    consider(raven, 2.4, 9);
     for (const G of grazers) consider(G, 2.6, 4);
     for (const f of fish) consider(f, 2.4, 4);
     for (const B of butterflies) consider(B, 2.0, 3);
@@ -1164,6 +1206,87 @@ export function createCreatures(scene, rng, staticNamables = []) {
         eagle.wingL.rotation.z = flap;
         eagle.wingR.rotation.z = -flap;
         if (left < 1.0) eagleMode = 'fly';
+      }
+    }
+
+    // The raven: a lower, quicker circuit than the eagle's, broken through
+    // the day by meals it never once has to look for (Job 38:41). It goes to
+    // the next provision in turn — not the nearest, not a chosen one — is
+    // fed there, and lifts off again.
+    {
+      const o = ravenOrbit;
+      if (night > 0.5 && ravenMode !== 'roost' && ravenMode !== 'toRoost') ravenMode = 'toRoost';
+      else if (night < 0.16 && ravenMode === 'roost') ravenMode = 'toFly';
+
+      if (ravenMode === 'fly') {
+        ravenFeedIn -= dt * REST;
+        if (ravenFeedIn <= 0) {
+          ravenAt = (ravenAt + 1) % PROVISION.length;
+          ravenMode = 'toFeed';
+        }
+        o.theta += o.speed * dt * REST;
+        const x = o.cx + Math.cos(o.theta) * o.radius;
+        const z = o.cz + Math.sin(o.theta) * o.radius;
+        const y = o.height + Math.sin(o.theta * 2.3) * 1.6;
+        raven.group.position.set(x, y, z);
+        const dir = Math.sign(o.speed);
+        raven.group.rotation.y = Math.atan2(-Math.sin(o.theta) * dir, Math.cos(o.theta) * dir);
+        o.flap += dt * 5.4;
+        const flap = Math.sin(o.flap) * 0.5 + 0.12;
+        raven.wingL.rotation.z = flap;
+        raven.wingR.rotation.z = -flap;
+      } else if (ravenMode === 'toFeed') {
+        const target = PROVISION[ravenAt];
+        const left = glideToward(raven, target, dt);
+        o.flap += dt * 4.2;
+        const flap = Math.sin(o.flap) * 0.42 + 0.1;
+        raven.wingL.rotation.z = flap;
+        raven.wingR.rotation.z = -flap;
+        if (left < 0.25) {
+          raven.group.position.copy(target);
+          ravenMode = 'feeding';
+          // No rng in the loop — the orbit's own angle stands in for one, so
+          // the meal's length varies without touching a seeded stream.
+          ravenFeedFor = 7 + Math.abs(Math.sin(o.theta * 5.1)) * 9;
+        }
+      } else if (ravenMode === 'feeding') {
+        ravenFeedFor -= dt * REST;
+        const target = PROVISION[ravenAt];
+        // Wings folded, head dipping to the food, turning slowly where it
+        // stands — nothing hurried about a bird that is provided for.
+        const fold = 1.05 + Math.sin(t * 2.6) * 0.06;
+        raven.wingL.rotation.z = fold;
+        raven.wingR.rotation.z = -fold;
+        raven.group.position.y = target.y + Math.max(0, Math.sin(t * 2.2)) * 0.07;
+        raven.group.rotation.y += dt * 0.3 * REST;
+        if (ravenFeedFor <= 0) {
+          ravenMode = 'toFly';
+          ravenFeedIn = 26 + Math.abs(Math.cos(o.theta * 3.7)) * 34;
+        }
+      } else if (ravenMode === 'toFly') {
+        o.theta += o.speed * dt * REST;
+        orbitPoint.set(
+          o.cx + Math.cos(o.theta) * o.radius,
+          o.height + Math.sin(o.theta * 2.3) * 1.6,
+          o.cz + Math.sin(o.theta) * o.radius,
+        );
+        const left = glideToward(raven, orbitPoint, dt);
+        o.flap += dt * 6.2;
+        const flap = Math.sin(o.flap) * 0.55 + 0.15;
+        raven.wingL.rotation.z = flap;
+        raven.wingR.rotation.z = -flap;
+        if (left < 1.0) ravenMode = 'fly';
+      } else if (ravenMode === 'toRoost') {
+        const left = glideToward(raven, RAVEN_ROOST, dt);
+        o.flap += dt * 3.4;
+        const flap = Math.sin(o.flap) * 0.3 + 0.1;
+        raven.wingL.rotation.z = flap;
+        raven.wingR.rotation.z = -flap;
+        if (left < 0.3) { raven.group.position.copy(RAVEN_ROOST); ravenMode = 'roost'; }
+      } else if (ravenMode === 'roost') {
+        const settle = 1.12 + Math.sin(t * 1.4) * 0.03;
+        raven.wingL.rotation.z = settle;
+        raven.wingR.rotation.z = -settle;
       }
     }
 
@@ -1481,6 +1604,12 @@ export function createCreatures(scene, rng, staticNamables = []) {
         count: covey.length,
         here: quailMesh.visible,
         birds: covey.map(Q => ({ x: Q.pos.x, y: Q.pos.y, z: Q.pos.z })),
+      },
+      raven: {
+        mode: ravenMode,
+        x: raven.group.position.x,
+        y: raven.group.position.y,
+        z: raven.group.position.z,
       },
       cattle: 2,
       lamb: grazers.filter(G => G.kind === 'lamb').length,

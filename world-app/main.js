@@ -335,6 +335,19 @@ window.__world = {
       almond: garden.almond,
       frankincense: garden.frankincense,
       hyssop: garden.hyssop,
+      // v19: the lilies standing among their thorns (Song of Solomon 2:2),
+      // the camphire orchard whose bloom stirs on the evening gust (Song of
+      // Solomon 4:13), the one fig tree that keeps the long year rather than
+      // the day (Matthew 24:32 — `leaf` 0 bare to 1 in full summer leaf),
+      // and the vapours that ascend through the heat of the middle day
+      // (Psalm 135:7).
+      lilies: garden.lilies,
+      camphire: garden.camphire,
+      fig: garden.fig(),
+      vapours: garden.vapours(),
+      // How far round the long 28-day year the garden presently stands, 0
+      // to 1 — what the fig's leaf is reading.
+      year: garden.hour.year,
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

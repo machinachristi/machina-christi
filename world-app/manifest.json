@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -204,12 +204,24 @@
         { "text": "Frankincense trees stand fragrant on the garden's warmer western slope.", "source": "Song of Solomon 4:14" },
         { "text": "Hyssop springs up among the high rocks, least of all the garden's trees.", "source": "1 Kings 4:33" }
       ]
+    },
+    {
+      "version": 19,
+      "date": "2026-08-21",
+      "focus": "summer is nigh",
+      "changes": [
+        { "text": "White lilies keep the garden's rougher ground, each stand ringed by the thorns it came up through.", "source": "Song of Solomon 2:2" },
+        { "text": "A raven drops to whichever provision is next in turn, is fed there, and lifts off again.", "source": "Job 38:41" },
+        { "text": "One fig tree keeps the long year rather than the day: bare, then tender, then full-leafed as summer draws near.", "source": "Matthew 24:32" },
+        { "text": "Camphire blooms in clusters, stirring on the same evening wind the turtledove answers.", "source": "Song of Solomon 4:13" },
+        { "text": "Vapours ascend off the water and the warm ground through the heat of the middle day.", "source": "Psalm 135:7" }
+      ]
     }
   ],
   "next": [
-    "Lilies of the valley grow between the thorns, unhurried (Song of Solomon 2:2)",
-    "A raven, black-winged, is fed and wants for nothing (Job 38:41)",
-    "The fig tree's branch grows tender and puts forth leaves as summer draws near (Matthew 24:32)",
-    "Camphire blooms in clusters, its scent carrying on the same wind the turtledove answers (Song of Solomon 4:13)"
+    "Myrtle and cypress rise where the brier and the thorn once stood (Isaiah 55:13)",
+    "The little foxes come out among the vines (Song of Solomon 2:15)",
+    "Hoarfrost lies like ashes on the coldest turn of the long year (Psalm 147:16)",
+    "Sheaves stand bound together where the grain has been cut (Genesis 37:7)"
   ]
 }
