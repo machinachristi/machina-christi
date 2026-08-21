@@ -432,7 +432,7 @@ export function createSky(scene) {
 
   const state = {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
-    day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase, eveningStar: 0,
+    day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase, eveningStar: 0, year: 0,
   };
   let t = START_T;
   let elapsed = 0;
@@ -502,7 +502,13 @@ export function createSky(scene) {
     // begins on day one under a full moon; `setDay` walks her through the
     // month as surely as it walks the garden to its Sabbath.
     const dayPos = dayOverride !== null ? dayOverride + t : elapsed / DAY_LENGTH;
-    moonPhase.age = ((dayPos / YEAR_DAYS) % 1 + 1) % 1;
+    // How far round the long year the garden presently stands, 0 to 1 — the
+    // moon's own age is simply this same turn seen from another angle, since
+    // she waxes and wanes once over exactly the same 28 days. Kept as its
+    // own field because what grows by the season (the fig's leaf, v19,
+    // Matthew 24:32) is watching the year, not the moon.
+    state.year = ((dayPos / YEAR_DAYS) % 1 + 1) % 1;
+    moonPhase.age = state.year;
     const moonAngle = moonPhase.age * Math.PI * 2;
     moonPhase.lit = (1 + Math.cos(moonAngle)) / 2;
     // Her lit half faces the garden square-on when full, straight away from

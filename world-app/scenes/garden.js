@@ -43,6 +43,10 @@ import { createPalms } from './palms.js';
 import { createAlmond } from './almond.js';
 import { createFrankincense } from './frankincense.js';
 import { createHyssop } from './hyssop.js';
+import { createLilies } from './lilies.js';
+import { createCamphire } from './camphire.js';
+import { createFig } from './fig.js';
+import { createVapours } from './vapours.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -104,11 +108,21 @@ export async function createGarden(scene, rng) {
   const frankincense = createFrankincense(scene);
   const hyssop = createHyssop(scene);
   const palms = createPalms(scene);
+  // v19: the lilies among their thorns (Song of Solomon 2:2), the camphire
+  // orchard (Song of Solomon 4:13), and the one fig tree that keeps the long
+  // year rather than the day (Matthew 24:32) — built here too, before the
+  // creatures, so their spots fold into the one naming list. Each carries
+  // its own seeded stream, so building them here shifts nothing already
+  // planted.
+  const lilies = createLilies(scene);
+  const camphire = createCamphire(scene);
+  const fig = createFig(scene);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
     vine.spot, ...conies.spots, ...palms.spots, ...almond.spots,
-    ...frankincense.spots, ...hyssop.spots,
+    ...frankincense.spots, ...hyssop.spots, ...lilies.spots,
+    ...camphire.spots, fig.spot,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -164,6 +178,10 @@ export async function createGarden(scene, rng) {
   // v18's own fixed plantings — see above.)
   const leaves = createLeaves(scene);
   const cranes = createCranes(scene);
+  // v19 (Psalm 135:7, the freshly-generated idea this run): vapours ascend
+  // off the water and the warm ground through the heat of the middle day —
+  // the mist's own opposite number, and no dependency on anything above it.
+  const vapours = createVapours(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -215,6 +233,9 @@ export async function createGarden(scene, rng) {
     conies.update(dt);
     leaves.update(dt, hour.t, hour.sabbath);
     cranes.update(dt, hour.t);
+    camphire.update(hour.t, hour.sabbath);
+    fig.update(hour.year);
+    vapours.update(dt, hour.t, hour.rain);
     return hour;
   }
 
@@ -261,6 +282,10 @@ export async function createGarden(scene, rng) {
     almond: almond.count,
     frankincense: frankincense.count,
     hyssop: hyssop.count,
+    lilies: lilies.count,
+    camphire: camphire.count,
+    fig: fig.state,
+    vapours: vapours.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };
