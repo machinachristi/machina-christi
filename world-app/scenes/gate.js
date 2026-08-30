@@ -8,7 +8,7 @@
 
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
-import { smoothstep } from '../util.js';
+import { mergeGeos, smoothstep } from '../util.js';
 
 // Due east on the risen rim, on the dry island the two inner heads pass on
 // either side of. r ≈ 49 — inside the 50-unit walk bound, but only just.
@@ -23,25 +23,28 @@ export function createGate(scene) {
   group.rotation.y = Math.atan2(GATE_POS.x, GATE_POS.z);
   scene.add(group);
 
-  const stone = new THREE.MeshLambertMaterial({ color: 0xC7BFA8, flatShading: true });
-
-  // Two pillars and a lintel across their tops.
+  // Two pillars and a lintel across their tops. Stone does not move, so
+  // (v20, cedars' idiom) the whole gateway is baked into one merged
+  // geometry: one draw call where there were three.
   const PILLAR_H = 5.4;
   const SPAN = 3.0;
+  const stoneParts = [{
+    geo: new THREE.BoxGeometry(SPAN + 1.0, 0.7, 0.9)
+      .toNonIndexed()
+      .translate(0, PILLAR_H + 0.15, 0),
+  }];
   for (const sx of [-1, 1]) {
-    const pillar = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.42, 0.55, PILLAR_H, 6),
-      stone,
-    );
-    pillar.position.set(sx * SPAN / 2, PILLAR_H / 2, 0);
-    group.add(pillar);
+    stoneParts.push({
+      geo: new THREE.CylinderGeometry(0.42, 0.55, PILLAR_H, 6)
+        .toNonIndexed()
+        .translate(sx * SPAN / 2, PILLAR_H / 2, 0),
+    });
   }
-  const lintel = new THREE.Mesh(
-    new THREE.BoxGeometry(SPAN + 1.0, 0.7, 0.9),
-    stone,
-  );
-  lintel.position.y = PILLAR_H + 0.15;
-  group.add(lintel);
+  group.add(new THREE.Mesh(
+    mergeGeos(stoneParts.map(part => part.geo)),
+    new THREE.MeshLambertMaterial({ color: 0xC7BFA8, flatShading: true }),
+  ));
+  for (const part of stoneParts) part.geo.dispose();
 
   // The standing light between the pillars: an upright, self-lit blade of
   // warm gold, kept deliberately abstract — a glow, never a figure. Its own
@@ -95,14 +98,18 @@ export function createGate(scene) {
     depthWrite: false,
     flatShading: true,
   });
-  const wings = [];
-  for (const sx of [-1, 1]) {
-    const wing = new THREE.Mesh(new THREE.ConeGeometry(0.34, 2.7, 4), keeperMat);
-    wing.position.set(sx * 0.7, 3.4, -0.12);
-    wing.rotation.z = sx * 0.95;
-    group.add(wing);
-    wings.push(wing);
-  }
+  // Both sweeps ride one instanced mesh (v20): they gather and fade together
+  // and always have, so there was never a reason for them to be two draws.
+  const WINGS = 2;
+  const wings = new THREE.InstancedMesh(new THREE.ConeGeometry(0.34, 2.7, 4), keeperMat, WINGS);
+  wings.frustumCulled = false;   // the gate sits far off scene-centre
+  wings.visible = false;
+  group.add(wings);
+  const wingM = new THREE.Matrix4();
+  const wingQ = new THREE.Quaternion();
+  const wingE = new THREE.Euler();
+  const wingP = new THREE.Vector3();
+  const wingS = new THREE.Vector3();
   let keeper = 0;
 
   // The light stands quietly, but never quite still — a slow breath, and at
@@ -122,9 +129,18 @@ export function createGate(scene) {
       ? smoothstep(0.945, 0.995, cycleT)
       : 1 - smoothstep(0.05, 0.13, cycleT);
     keeperMat.opacity = 0.34 * keeper * (0.85 + 0.15 * Math.sin(t * 1.3));
-    for (const wing of wings) {
-      wing.visible = keeper > 0.01;
-      wing.scale.y = 0.92 + 0.1 * Math.sin(t * 0.9);
+    wings.visible = keeper > 0.01;
+    if (wings.visible) {
+      const breath = 0.92 + 0.1 * Math.sin(t * 0.9);
+      for (let i = 0; i < WINGS; i++) {
+        const sx = i === 0 ? -1 : 1;
+        wingE.set(0, 0, sx * 0.95);
+        wingP.set(sx * 0.7, 3.4, -0.12);
+        wingS.set(1, breath, 1);
+        wingM.compose(wingP, wingQ.setFromEuler(wingE), wingS);
+        wings.setMatrixAt(i, wingM);
+      }
+      wings.instanceMatrix.needsUpdate = true;
     }
   }
 

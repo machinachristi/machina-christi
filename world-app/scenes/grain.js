@@ -9,7 +9,10 @@ import { heightAt, riverEdgeDist } from './terrain.js';
 import { windOf, gustAt } from './wind.js';
 import { mulberry32 } from '../util.js';
 
-const PATCHES = [
+// Exported since v20: the sheaves stand at the edge of these same two fields
+// (scenes/sheaves.js), and there should only ever be one account of where the
+// corn of the garden grows.
+export const PATCHES = [
   { cx: -26, cz: -22, r: 9 },
   { cx: 21, cz: -27, r: 8 },
 ];

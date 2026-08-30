@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist } from './terrain.js';
-import { smoothstep, mulberry32 } from '../util.js';
+import { mergeGeos, smoothstep, mulberry32 } from '../util.js';
 import { windOf, gustAt } from './wind.js';
 
 // A fixed lean direction for the wind — +X, the same way the gust's own
@@ -102,11 +102,16 @@ export function createVegetation(scene, rng) {
     const gold = new THREE.MeshLambertMaterial({
       color: 0xE8C86A, emissive: 0x8A6B1C, emissiveIntensity: 0.55, flatShading: true,
     });
-    for (const [dx, dy, dz, s] of [[0, 3.9, 0, 1.7], [-0.9, 3.2, 0.3, 1.05], [0.8, 3.35, -0.4, 1.15]]) {
-      const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), gold);
-      blob.position.set(dx, dy, dz);
-      blob.scale.setScalar(s);
-      t.add(blob);
+    // The three lobes of the golden canopy are one mesh from v20 on — a
+    // plain merge, no vertex colours, so the gold material itself carries
+    // over and its answer to the dark (see update) is untouched.
+    {
+      const lobes = [];
+      for (const [dx, dy, dz, s] of [[0, 3.9, 0, 1.7], [-0.9, 3.2, 0.3, 1.05], [0.8, 3.35, -0.4, 1.15]]) {
+        lobes.push(new THREE.IcosahedronGeometry(1, 0).scale(s, s, s).translate(dx, dy, dz));
+      }
+      t.add(new THREE.Mesh(mergeGeos(lobes), gold));
+      for (const lobe of lobes) lobe.dispose();
     }
 
     // Its own fruit in season, not just gold leaves (v11, Revelation 22:2,
@@ -164,24 +169,34 @@ export function createVegetation(scene, rng) {
   // and low-hanging fruit.
   {
     const t = new THREE.Group();
+    // Trunk segments and canopy lobes each merge into one mesh from v20 on
+    // — the twist of the trunk is baked into the geometry rather than held
+    // in three separate meshes' transforms, so the tree looks the same and
+    // costs two draws instead of five.
     const bark = new THREE.MeshLambertMaterial({ color: 0x4A3828, flatShading: true });
+    const segs = [];
     let y = 0;
     let lean = 0;
     for (const [h, r1, r2, tilt] of [[1.3, 0.34, 0.26, 0.22], [1.1, 0.26, 0.2, -0.3], [0.9, 0.2, 0.15, 0.26]]) {
-      const seg = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, h, 6), bark);
       lean += tilt;
-      seg.position.set(Math.sin(lean) * (y * 0.25 + 0.15), y + h / 2, 0);
-      seg.rotation.z = lean;
-      t.add(seg);
+      segs.push(
+        new THREE.CylinderGeometry(r2, r1, h, 6)
+          .toNonIndexed()
+          .rotateZ(lean)
+          .translate(Math.sin(lean) * (y * 0.25 + 0.15), y + h / 2, 0),
+      );
       y += h * 0.92;
     }
+    t.add(new THREE.Mesh(mergeGeos(segs), bark));
+    for (const seg of segs) seg.dispose();
+
     const canopyMat = new THREE.MeshLambertMaterial({ color: 0x2E5240, flatShading: true });
+    const lobes = [];
     for (const [dx, dy, dz, s] of [[0.5, 3.3, 0, 1.5], [-0.5, 2.9, 0.4, 1.0]]) {
-      const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), canopyMat);
-      blob.position.set(dx, dy, dz);
-      blob.scale.setScalar(s);
-      t.add(blob);
+      lobes.push(new THREE.IcosahedronGeometry(1, 0).scale(s, s, s).translate(dx, dy, dz));
     }
+    t.add(new THREE.Mesh(mergeGeos(lobes), canopyMat));
+    for (const lobe of lobes) lobe.dispose();
     const fruit = new THREE.InstancedMesh(
       new THREE.SphereGeometry(0.095, 7, 5),
       new THREE.MeshLambertMaterial({ color: 0xC4462F, emissive: 0x481008, emissiveIntensity: 0.4 }),
