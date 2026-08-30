@@ -348,6 +348,16 @@ window.__world = {
       // How far round the long 28-day year the garden presently stands, 0
       // to 1 — what the fig's leaf is reading.
       year: garden.hour.year,
+      // v20: the myrtle and the fir come up beside the thorn stands (Isaiah
+      // 55:13) and the sheaves stand bound at the field's edge (Genesis
+      // 37:7) — fixed counts, planted once. The little foxes keep the vine
+      // (Song of Solomon 2:15 — `out` 0 hidden to 1 abroad among it), and
+      // the hoarfrost lies on the coldest turn of the long year (Psalm
+      // 147:16 — `lay` 0 to 1, and 0 on every other day of it).
+      myrtle: garden.myrtle,
+      sheaves: garden.sheaves,
+      foxes: garden.foxes(),
+      hoarfrost: garden.hoarfrost(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

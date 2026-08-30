@@ -205,6 +205,22 @@ function hartSpot(rng) {
   return { x: -20, z: riverZ(-20) + 3 };
 }
 
+// Where a hart can put its head down to the water (v20, Psalm 42:1): straight
+// in from wherever it stands to the nearest bank, stopping just short of the
+// edge — never into the water, and always west of the parting, where the
+// course still runs as one and the bank is a bank rather than a sand spit.
+function brinkNear(x, z) {
+  const bx = clamp(x, -44, 18);
+  const cz = riverZ(bx);
+  const side = Math.sign(z - cz) || 1;
+  for (let i = 0; i < 60; i++) {
+    const bz = cz + side * (0.2 + i * 0.1);
+    const d = riverEdgeDist(bx, bz);
+    if (d > 0.3 && d < 0.8) return { x: bx, z: bz };
+  }
+  return { x: bx, z: cz + side * 4 };
+}
+
 // The wild ass ranges free over the whole plain, "scorneth the multitude
 // of the city" (Job 39:5-8) — the widest range of any grazer, right out to
 // the garden's rim.
@@ -739,6 +755,10 @@ export function createCreatures(scene, rng, staticNamables = []) {
       ...hart, spot: hartSpot, speed: 1.0, stepFreq: 8, dip: 0.5,
       kind: 'hart', name: 'Ayal', label: 'the hart',
       mode: 'graze', until: 2 + v12Rng() * 3, target: null, phase: 0,
+      // How long until she goes down to the water again (v20, Psalm 42:1).
+      // A fixed first thirst rather than a drawn one: every later thirst is
+      // drawn at runtime, so nothing here touches the planting stream.
+      thirst: 26,
     };
     grazers.push(hartEntry);
   }
@@ -1484,6 +1504,59 @@ export function createCreatures(scene, rng, staticNamables = []) {
         continue;
       }
 
+      // "As the hart panteth after the water brooks" (Psalm 42:1) — on her
+      // own long thirst the hart breaks off grazing, walks down to the
+      // nearest bank, and drinks there a good while with her head right
+      // down, lower than any graze, before going back to her own band. Her
+      // fawn keeps close beside her the whole way, so the pair of them go
+      // down to the water together (the fawn's branch above needs nothing
+      // added for that — it only ever follows where its mother has gone).
+      if (G.kind === 'hart') {
+        if (G.mode !== 'thirst' && G.mode !== 'drink') {
+          G.thirst -= dt;
+          if (G.thirst <= 0) {
+            G.mode = 'thirst';
+            G.target = brinkNear(G.group.position.x, G.group.position.z);
+            G.until = 45;   // generous cap; arrival ends the walk
+          }
+        }
+        if (G.mode === 'thirst') {
+          G.until -= dt;
+          const p = G.group.position;
+          const dx = G.target.x - p.x, dz = G.target.z - p.z;
+          const dist = Math.hypot(dx, dz);
+          const targetYaw = Math.atan2(dx, dz);
+          G.group.rotation.y += shortestAngle(G.group.rotation.y, targetYaw) * clamp(dt * 4, 0, 1);
+          const step = G.speed * dt * REST;
+          p.x += Math.sin(G.group.rotation.y) * step;
+          p.z += Math.cos(G.group.rotation.y) * step;
+          p.y = heightAt(p.x, p.z);
+          G.phase += dt * G.stepFreq;
+          for (let i = 0; i < 4; i++) {
+            G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.45;
+          }
+          G.headPivot.rotation.x = Math.max(0, G.headPivot.rotation.x - dt * 2.2);
+          if (dist < 0.4 || G.until <= 0) {
+            G.mode = 'drink';
+            G.until = 7 + rng() * 6;
+            for (const leg of G.legs) leg.rotation.x = 0;
+          }
+          continue;
+        }
+        if (G.mode === 'drink') {
+          G.until -= dt;
+          // Head right down to the water, deeper than she ever dips to graze.
+          G.headPivot.rotation.x = Math.min(1.05, G.headPivot.rotation.x + dt * 1.4);
+          for (const leg of G.legs) leg.rotation.x = damp(leg.rotation.x, 0, 3, dt);
+          if (G.until <= 0) {
+            G.mode = 'graze';
+            G.until = 2 + rng() * 3;
+            G.thirst = 70 + rng() * 80;
+          }
+          continue;
+        }
+      }
+
       // A wary creature (the wild ass) puts ground between itself and the
       // walker the moment they come too close, then goes back to its own
       // free range once they're clear (Job 39:5-8).
@@ -1596,7 +1669,13 @@ export function createCreatures(scene, rng, staticNamables = []) {
   function fauna() {
     return {
       flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
-      grazers: grazers.map(G => ({ kind: G.kind, x: G.group.position.x, z: G.group.position.z, rest: G.rest || 0 })),
+      // `mode` rides along from v20 so the hart's own thirst is legible from
+      // outside: 'graze' | 'walk' | 'thirst' (on her way down to the water)
+      // | 'drink' (Psalm 42:1), and whatever mode each other grazer keeps.
+      grazers: grazers.map(G => ({
+        kind: G.kind, x: G.group.position.x, z: G.group.position.z,
+        rest: G.rest || 0, mode: G.mode,
+      })),
       shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z, rise: f.loop.rise })),
       butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },

@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { heightAt, riverZ } from './terrain.js';
 import { gustAt } from './wind.js';
-import { mulberry32 } from '../util.js';
+import { mergeColored, mulberry32 } from '../util.js';
 
 const POS_X = -30;
 const BANK_OFFSET = 2.6;   // just outside the water's edge, hugging the bank
@@ -17,21 +17,28 @@ export function createWaterTree(scene) {
   const z = riverZ(POS_X) + BANK_OFFSET;
   const groundY = heightAt(POS_X, z);
 
+  // Wood and leaf alike bow as one body in the gust and never move apart
+  // from each other, so (v20, cedars' idiom) the whole tree bakes into a
+  // single merged, vertex-coloured geometry inside the group that leans:
+  // one draw call where there were four.
   const t = new THREE.Group();
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.24, 2.2, 6),
-    new THREE.MeshLambertMaterial({ color: 0x6E5738, flatShading: true }),
-  );
-  trunk.position.y = 1.1;
-  t.add(trunk);
-
-  const canopyMat = new THREE.MeshLambertMaterial({ color: 0x4C8F5A, flatShading: true });
+  const BARK = new THREE.Color(0x6E5738);
+  const LEAF = new THREE.Color(0x4C8F5A);
+  const parts = [{
+    geo: new THREE.CylinderGeometry(0.16, 0.24, 2.2, 6).toNonIndexed().translate(0, 1.1, 0),
+    color: BARK,
+  }];
   for (const [dx, dy, dz, s] of [[0, 2.7, 0, 1.25], [-0.55, 2.35, 0.35, 0.85], [0.5, 2.45, -0.3, 0.9]]) {
-    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), canopyMat);
-    blob.position.set(dx, dy, dz);
-    blob.scale.setScalar(s);
-    t.add(blob);
+    parts.push({
+      geo: new THREE.IcosahedronGeometry(1, 0).scale(s, s, s).translate(dx, dy, dz),
+      color: LEAF,
+    });
   }
+  t.add(new THREE.Mesh(
+    mergeColored(parts),
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+  ));
+  for (const part of parts) part.geo.dispose();
 
   // Fruit in every season — always hanging, nothing waits for a turn.
   const FRUIT_COUNT = 8;

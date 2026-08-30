@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
-import { mulberry32 } from '../util.js';
+import { mergeColored, mulberry32 } from '../util.js';
 
 const POS_X = -16, POS_Z = 30;
 const TREE_HEIGHT = 7.4;
@@ -18,24 +18,33 @@ export function createStorks(scene) {
   const groundY = heightAt(POS_X, POS_Z);
 
   const t = new THREE.Group();
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.34, TREE_HEIGHT * 0.62, 6),
-    new THREE.MeshLambertMaterial({ color: 0x5A4530, flatShading: true }),
-  );
-  trunk.position.y = TREE_HEIGHT * 0.31;
-  t.add(trunk);
 
-  // Fir tiers: three stacked cones, narrowing upward.
-  const firMat = new THREE.MeshLambertMaterial({ color: 0x2E5C3E, flatShading: true });
+  // The fir itself — trunk and three tiers narrowing upward. It neither
+  // moves nor grows, so (v20, cedars' idiom) the whole tree bakes into one
+  // merged, vertex-coloured geometry: one draw call where there were four.
+  const BARK = new THREE.Color(0x5A4530);
+  const FIR = new THREE.Color(0x2E5C3E);
+  const firParts = [{
+    geo: new THREE.CylinderGeometry(0.22, 0.34, TREE_HEIGHT * 0.62, 6)
+      .toNonIndexed()
+      .translate(0, TREE_HEIGHT * 0.31, 0),
+    color: BARK,
+  }];
   for (const tier of [
     { y: TREE_HEIGHT * 0.52, r: 1.5, h: 2.3 },
     { y: TREE_HEIGHT * 0.72, r: 1.15, h: 2.0 },
     { y: TREE_HEIGHT * 0.9, r: 0.75, h: 1.6 },
   ]) {
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(tier.r, tier.h, 7), firMat);
-    cone.position.y = tier.y;
-    t.add(cone);
+    firParts.push({
+      geo: new THREE.ConeGeometry(tier.r, tier.h, 7).toNonIndexed().translate(0, tier.y, 0),
+      color: FIR,
+    });
   }
+  t.add(new THREE.Mesh(
+    mergeColored(firParts),
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+  ));
+  for (const part of firParts) part.geo.dispose();
 
   // The nest: a flattened ring of twigs cradled just under the crown.
   const TWIGS = 14;
@@ -62,43 +71,63 @@ export function createStorks(scene) {
   t.add(nestMesh);
 
   // The stork herself: a tall, still white bird — long dark legs, a long
-  // neck, black wingtips, a spear of a red-orange beak.
-  const stork = new THREE.Group();
-  const white = new THREE.MeshLambertMaterial({ color: 0xF5F2E8, flatShading: true });
-  const dark = new THREE.MeshLambertMaterial({ color: 0x2A2A28, flatShading: true });
-  const beakMat = new THREE.MeshLambertMaterial({ color: 0xC65A2E, flatShading: true });
+  // neck, black wingtips, a spear of a red-orange beak. Only her neck ever
+  // moves, so (v20) she is two merged geometries rather than nine meshes:
+  // everything that holds still in one, and neck, head and beak in another
+  // on the pivot that dips them.
+  const PLUME = new THREE.Color(0xF5F2E8);
+  const WINGTIP = new THREE.Color(0x2A2A28);
+  const BEAK = new THREE.Color(0xC65A2E);
+  const lambert = () => new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.34, 3, 7), white);
-  body.rotation.z = Math.PI / 2;
-  body.position.y = 0.42;
-  stork.add(body);
+  const stork = new THREE.Group();
+  const stillParts = [{
+    geo: new THREE.CapsuleGeometry(0.16, 0.34, 3, 7)
+      .toNonIndexed()
+      .rotateZ(Math.PI / 2)
+      .translate(0, 0.42, 0),
+    color: PLUME,
+  }];
+  for (const sx of [-1, 1]) {
+    stillParts.push({
+      geo: new THREE.BoxGeometry(0.32, 0.02, 0.16)
+        .toNonIndexed()
+        .translate(sx * 0.2, 0.5, -0.02),
+      color: WINGTIP,
+    });
+    stillParts.push({
+      geo: new THREE.CylinderGeometry(0.025, 0.02, 0.36, 5)
+        .toNonIndexed()
+        .translate(sx * 0.06, 0.18, 0),
+      color: BEAK,
+    });
+  }
+  stork.add(new THREE.Mesh(mergeColored(stillParts), lambert()));
+  for (const part of stillParts) part.geo.dispose();
 
   const neckPivot = new THREE.Group();
   neckPivot.position.set(0, 0.55, 0.16);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.42, 5), white);
-  neck.position.y = 0.2;
-  neckPivot.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 7, 6), white);
-  head.position.y = 0.44;
-  neckPivot.add(head);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.22, 4), beakMat);
-  beak.rotation.x = Math.PI / 2;
-  beak.position.set(0, 0.44, 0.12);
-  neckPivot.add(beak);
+  const neckParts = [
+    {
+      geo: new THREE.CylinderGeometry(0.04, 0.05, 0.42, 5).toNonIndexed().translate(0, 0.2, 0),
+      color: PLUME,
+    },
+    {
+      geo: new THREE.SphereGeometry(0.075, 7, 6).toNonIndexed().translate(0, 0.44, 0),
+      color: PLUME,
+    },
+    {
+      geo: new THREE.ConeGeometry(0.025, 0.22, 4)
+        .toNonIndexed()
+        .rotateX(Math.PI / 2)
+        .translate(0, 0.44, 0.12),
+      color: BEAK,
+    },
+  ];
+  neckPivot.add(new THREE.Mesh(mergeColored(neckParts), lambert()));
+  for (const part of neckParts) part.geo.dispose();
   stork.add(neckPivot);
 
-  const wingGeo = new THREE.BoxGeometry(0.32, 0.02, 0.16);
-  for (const sx of [-1, 1]) {
-    const wing = new THREE.Mesh(wingGeo, dark);
-    wing.position.set(sx * 0.2, 0.5, -0.02);
-    stork.add(wing);
-  }
-  const legGeo = new THREE.CylinderGeometry(0.025, 0.02, 0.36, 5);
-  for (const sx of [-1, 1]) {
-    const leg = new THREE.Mesh(legGeo, beakMat);
-    leg.position.set(sx * 0.06, 0.18, 0);
-    stork.add(leg);
-  }
   stork.position.y = NEST_Y + 0.08;
   t.add(stork);
 

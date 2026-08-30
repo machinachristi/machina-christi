@@ -47,6 +47,10 @@ import { createLilies } from './lilies.js';
 import { createCamphire } from './camphire.js';
 import { createFig } from './fig.js';
 import { createVapours } from './vapours.js';
+import { createMyrtle } from './myrtle.js';
+import { createFoxes } from './foxes.js';
+import { createSheaves } from './sheaves.js';
+import { createHoarfrost } from './hoarfrost.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -117,12 +121,22 @@ export async function createGarden(scene, rng) {
   const lilies = createLilies(scene);
   const camphire = createCamphire(scene);
   const fig = createFig(scene);
+  // v20: the myrtle and the fir come up beside the lilies' own thorn stands
+  // (Isaiah 55:13), so they are built straight after them; the sheaves stand
+  // at the edge of the grain (Genesis 37:7); and the little foxes keep to
+  // the one vine (Song of Solomon 2:15). All three fold their spots into the
+  // one naming list, and each carries its own seeded stream, so building
+  // them here shifts nothing already planted.
+  const myrtle = createMyrtle(scene, lilies.spots);
+  const sheaves = createSheaves(scene);
+  const foxes = createFoxes(scene, vine.spot.pos);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
     vine.spot, ...conies.spots, ...palms.spots, ...almond.spots,
     ...frankincense.spots, ...hyssop.spots, ...lilies.spots,
-    ...camphire.spots, fig.spot,
+    ...camphire.spots, fig.spot, ...myrtle.spots, ...sheaves.spots,
+    ...foxes.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -182,6 +196,11 @@ export async function createGarden(scene, rng) {
   // off the water and the warm ground through the heat of the middle day —
   // the mist's own opposite number, and no dependency on anything above it.
   const vapours = createVapours(scene);
+  // v20 (Psalm 147:16, the freshly-generated idea's neighbour in the
+  // backlog): hoarfrost lies over the open grass on the coldest turn of the
+  // long year, through the last watch of the night only — no dependency on
+  // anything above it.
+  const hoarfrost = createHoarfrost(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -236,6 +255,8 @@ export async function createGarden(scene, rng) {
     camphire.update(hour.t, hour.sabbath);
     fig.update(hour.year);
     vapours.update(dt, hour.t, hour.rain);
+    foxes.update(dt, hour.t);
+    hoarfrost.update(dt, hour.year, hour.t);
     return hour;
   }
 
@@ -286,6 +307,10 @@ export async function createGarden(scene, rng) {
     camphire: camphire.count,
     fig: fig.state,
     vapours: vapours.state,
+    myrtle: myrtle.count,
+    sheaves: sheaves.count,
+    foxes: foxes.state,
+    hoarfrost: hoarfrost.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

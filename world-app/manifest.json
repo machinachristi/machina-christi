@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 20,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -216,12 +216,25 @@
         { "text": "Camphire blooms in clusters, stirring on the same evening wind the turtledove answers.", "source": "Song of Solomon 4:13" },
         { "text": "Vapours ascend off the water and the warm ground through the heat of the middle day.", "source": "Psalm 135:7" }
       ]
+    },
+    {
+      "version": 20,
+      "date": "2026-08-29",
+      "focus": "instead of the thorn",
+      "changes": [
+        { "text": "Beside every stand of briars a myrtle or a fir has come up, and the thorns are left standing under them.", "source": "Isaiah 55:13" },
+        { "text": "Two little foxes keep the vine, circling it in the low light and stopping to nose at the clusters.", "source": "Song of Solomon 2:15" },
+        { "text": "Bound sheaves stand upright at the edge of both fields, where the corn has been cut.", "source": "Genesis 37:7" },
+        { "text": "Hoarfrost lies scattered like ashes over the grass through the last watch of the coldest turn of the year.", "source": "Psalm 147:16" },
+        { "text": "The hart breaks off grazing on her own long thirst, goes down to the bank to drink, and her fawn goes with her.", "source": "Psalm 42:1" },
+        { "text": "The fir by the nest, the tree by the waters, the gateway's stone and both sacred trees each bake into one geometry — seventeen draw calls given back to the garden's budget.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Myrtle and cypress rise where the brier and the thorn once stood (Isaiah 55:13)",
-    "The little foxes come out among the vines (Song of Solomon 2:15)",
-    "Hoarfrost lies like ashes on the coldest turn of the long year (Psalm 147:16)",
-    "Sheaves stand bound together where the grain has been cut (Genesis 37:7)"
+    "The dove returns with an olive leaf, and an olive stands where she took it (Genesis 8:11)",
+    "Springs run down among the hills into the valleys (Psalm 104:10)",
+    "Mandrakes give a smell beside the vine (Song of Solomon 7:13)",
+    "Behemoth lies down under the shady trees, in the covert of the reed (Job 40:21-22)"
   ]
 }
