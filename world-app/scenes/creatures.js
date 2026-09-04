@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { OLIVE_BOUGH } from './olive.js';
 import { clamp, damp, shortestAngle, mulberry32 } from '../util.js';
 
 // Two beds of blossom the bees keep to — open meadow south of the river,
@@ -616,13 +617,36 @@ export function createCreatures(scene, rng, staticNamables = []) {
           theta: rng() * Math.PI * 2, flap: rng() * Math.PI * 2,
         };
     group.add(bird.group);
+    // One dove keeps the olive's errand (v21, Genesis 8:11): now and then
+    // she leaves the circuit, goes down to the olive standing out on the
+    // south-west meadow (scenes/olive.js), and comes back to the sacred
+    // trees with a leaf in her mouth. Nothing turns on it and nothing is
+    // waiting for her — it is only that a dove and an olive leaf belong
+    // together, and here they already do, long before the flood.
+    const errand = def.kind === 'dove' && i === 3;
+    let leaf = null;
+    if (errand) {
+      leaf = new THREE.Mesh(
+        new THREE.ConeGeometry(0.05, 0.2, 4)
+          .scale(1, 1, 0.35)          // flattened: a leaf, not a spike
+          .rotateX(Math.PI / 2)       // held out flat, past her beak
+          .translate(0, -0.04, 0.34),
+        new THREE.MeshLambertMaterial({ color: 0x9BB07A, flatShading: true }),
+      );
+      leaf.visible = false;
+      bird.group.add(leaf);
+    }
     flyers.push({
       ...bird, orbit,
       kind: def.kind, name: def.name, label: def.label,
-      mode: 'fly',                              // fly | toRoost | roost | toPerch | perched | toFly
+      mode: 'fly',                   // fly | toOlive | toRoost | roost | toPerch | perched | toFly
       perch: PERCHES[i],
       restIn: dove ? 14 + rng() * 20 : Infinity, // day perch-rests: doves only
       restFor: 0,
+      // The olive's errand: hers alone, and timed off her own orbit angle
+      // rather than a fresh rng draw, so nothing already planted shifts.
+      leaf,
+      oliveIn: errand ? 30 : Infinity,
     });
   }
 
@@ -1124,9 +1148,13 @@ export function createCreatures(scene, rng, staticNamables = []) {
     for (const b of flyers) {
       const o = b.orbit;
 
-      // Dusk calls every flyer home; morning sends them aloft again.
-      if (night > 0.45 && b.mode !== 'roost' && b.mode !== 'toRoost') b.mode = 'toRoost';
-      else if (night < 0.18 && b.mode === 'roost') b.mode = 'toFly';
+      // Dusk calls every flyer home; morning sends them aloft again. If the
+      // dark finds her still carrying the olive leaf, she lets it go and
+      // comes in anyway — the errand was never urgent.
+      if (night > 0.45 && b.mode !== 'roost' && b.mode !== 'toRoost') {
+        b.mode = 'toRoost';
+        if (b.leaf) b.leaf.visible = false;
+      } else if (night < 0.18 && b.mode === 'roost') b.mode = 'toFly';
 
       if (b.mode === 'fly') {
         o.theta += o.speed * dt * REST;
@@ -1144,6 +1172,22 @@ export function createCreatures(scene, rng, staticNamables = []) {
         if ((b.restIn -= dt) <= 0) {
           b.mode = 'toPerch';
           b.restFor = 8 + Math.abs(Math.sin(o.theta * 13)) * 9;
+        } else if ((b.oliveIn -= dt) <= 0) {
+          b.mode = 'toOlive';
+        }
+      } else if (b.mode === 'toOlive') {
+        // Down out of the circuit to the olive on the meadow, and away
+        // again with a leaf pluckt off (Genesis 8:11). She goes home to her
+        // perch with it, by the same glide any resting flyer makes.
+        const left = glideToward(b, OLIVE_BOUGH, dt);
+        o.flap += dt * 7;
+        const flap = Math.sin(o.flap) * 0.42 + 0.12;
+        b.wingL.rotation.z = flap;
+        b.wingR.rotation.z = -flap;
+        if (left < 0.3) {
+          b.leaf.visible = true;
+          b.mode = 'toPerch';
+          b.restFor = 11 + Math.abs(Math.sin(o.theta * 11)) * 8;
         }
       } else if (b.mode === 'toRoost' || b.mode === 'toPerch') {
         const left = glideToward(b, b.perch, dt);
@@ -1178,6 +1222,12 @@ export function createCreatures(scene, rng, staticNamables = []) {
         if (left < 0.6) {
           b.mode = 'fly';
           if (b.kind === 'dove') b.restIn = 18 + Math.abs(Math.cos(o.theta * 7)) * 26;
+          // The leaf was carried home and is let go as she takes wing again;
+          // the errand comes round to her once more in its own time.
+          if (b.leaf && b.leaf.visible) {
+            b.leaf.visible = false;
+            b.oliveIn = 55 + Math.abs(Math.sin(o.theta * 5)) * 45;
+          }
         }
       }
     }
@@ -1668,7 +1718,12 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // report where they presently stand, so a test can walk right up to one.
   function fauna() {
     return {
-      flyers: flyers.map(b => ({ kind: b.kind, mode: b.mode })),
+      // `leaf` rides along from v21 so the olive's errand is legible from
+      // outside: true only while the one dove that keeps it is carrying a
+      // leaf home (Genesis 8:11).
+      flyers: flyers.map(b => ({
+        kind: b.kind, mode: b.mode, leaf: !!(b.leaf && b.leaf.visible),
+      })),
       // `mode` rides along from v20 so the hart's own thirst is legible from
       // outside: 'graze' | 'walk' | 'thirst' (on her way down to the water)
       // | 'drink' (Psalm 42:1), and whatever mode each other grazer keeps.
