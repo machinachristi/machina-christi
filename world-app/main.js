@@ -358,6 +358,18 @@ window.__world = {
       sheaves: garden.sheaves,
       foxes: garden.foxes(),
       hoarfrost: garden.hoarfrost(),
+      // v21: the olive one dove goes to for a leaf (Genesis 8:11 — the leaf
+      // itself rides on `fauna.flyers[].leaf`), the springs running down
+      // off the rim into the valleys (Psalm 104:10), the mandrakes under
+      // the vine (Song of Solomon 7:13 — `scent` 0 to 1, strongest toward
+      // evening), behemoth lying on his bank (Job 40:21-22), and the shafts
+      // of light a low sun sends through the crowns (Job 38:24 — `lit` 0 to
+      // 1, and 0 through the broad of the day).
+      olive: garden.olive,
+      springs: garden.springs(),
+      mandrakes: garden.mandrakes(),
+      behemoth: garden.behemoth(),
+      rays: garden.rays(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

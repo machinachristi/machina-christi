@@ -1,5 +1,5 @@
 {
-  "version": 20,
+  "version": 21,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -229,12 +229,24 @@
         { "text": "The hart breaks off grazing on her own long thirst, goes down to the bank to drink, and her fawn goes with her.", "source": "Psalm 42:1" },
         { "text": "The fir by the nest, the tree by the waters, the gateway's stone and both sacred trees each bake into one geometry — seventeen draw calls given back to the garden's budget.", "source": null }
       ]
+    },
+    {
+      "version": 21,
+      "date": "2026-09-03",
+      "focus": "a leaf in her mouth",
+      "changes": [
+        { "text": "An olive stands apart on the south-west meadow, and one dove leaves the circuit now and then to go down to it and carry a leaf home in her mouth.", "source": "Genesis 8:11" },
+        { "text": "Springs break out of the rim and run down among the hills, each finding its own way by the fall of the land — some to a channel of the river, some into a hollow of the meadow.", "source": "Psalm 104:10" },
+        { "text": "Mandrakes keep the ground under the vine, and give their smell through the warm of the afternoon into the evening.", "source": "Song of Solomon 7:13" },
+        { "text": "Behemoth lies down on a bank the willows compass about, and does nothing all day but breathe and lift his head to the water.", "source": "Job 40:21-22" },
+        { "text": "While the sun is low the crowns part the light instead of stopping it, and shafts of it lie out long across the grass.", "source": "Job 38:24" }
+      ]
     }
   ],
   "next": [
-    "The dove returns with an olive leaf, and an olive stands where she took it (Genesis 8:11)",
-    "Springs run down among the hills into the valleys (Psalm 104:10)",
-    "Mandrakes give a smell beside the vine (Song of Solomon 7:13)",
-    "Behemoth lies down under the shady trees, in the covert of the reed (Job 40:21-22)"
+    "An owl of the desert keeps the night watch in the cedars, and is gone by morning (Psalm 102:6)",
+    "Where a spring runs into the river, deep calleth unto deep at the noise of the waterspouts (Psalm 42:7)",
+    "A ram caught in a thicket on the eastern rim (Genesis 22:13)",
+    "Poplar, hazel and chestnut set by the watering place (Genesis 30:37)"
   ]
 }

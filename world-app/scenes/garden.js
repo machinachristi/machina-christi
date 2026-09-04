@@ -51,6 +51,11 @@ import { createMyrtle } from './myrtle.js';
 import { createFoxes } from './foxes.js';
 import { createSheaves } from './sheaves.js';
 import { createHoarfrost } from './hoarfrost.js';
+import { createOlive } from './olive.js';
+import { createSprings } from './springs.js';
+import { createMandrakes } from './mandrakes.js';
+import { createBehemoth } from './behemoth.js';
+import { createRays } from './rays.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -130,13 +135,25 @@ export async function createGarden(scene, rng) {
   const myrtle = createMyrtle(scene, lilies.spots);
   const sheaves = createSheaves(scene);
   const foxes = createFoxes(scene, vine.spot.pos);
+  // v21: the olive one dove goes to for a leaf (Genesis 8:11), the springs
+  // broken out of the rim (Psalm 104:10), the mandrakes keeping the ground
+  // under the vine (Song of Solomon 7:13 — so they come after it), and
+  // behemoth lying on a bank the willows compass about (Job 40:21-22 — so
+  // he comes after them). All four fold their spots into the one naming
+  // list, and each carries its own seeded stream, so building them here
+  // shifts nothing already planted.
+  const olive = createOlive(scene);
+  const springs = createSprings(scene);
+  const mandrakes = createMandrakes(scene, vine.spot.pos);
+  const behemoth = createBehemoth(scene, willows.spots);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
     vine.spot, ...conies.spots, ...palms.spots, ...almond.spots,
     ...frankincense.spots, ...hyssop.spots, ...lilies.spots,
     ...camphire.spots, fig.spot, ...myrtle.spots, ...sheaves.spots,
-    ...foxes.spots,
+    ...foxes.spots, olive.spot, ...springs.spots, ...mandrakes.spots,
+    ...behemoth.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -201,6 +218,11 @@ export async function createGarden(scene, rng) {
   // long year, through the last watch of the night only — no dependency on
   // anything above it.
   const hoarfrost = createHoarfrost(scene);
+  // v21 (Job 38:24, the freshly-generated idea this run): where a low sun
+  // finds a gap in a crown the light comes through it and lies out across
+  // the grass — shadows.js's other half, and it needs the same tree spots,
+  // so it builds here beside it.
+  const rays = createRays(scene, vegetation.treeSpots);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -257,6 +279,10 @@ export async function createGarden(scene, rng) {
     vapours.update(dt, hour.t, hour.rain);
     foxes.update(dt, hour.t);
     hoarfrost.update(dt, hour.year, hour.t);
+    springs.update(dt, hour.rain);
+    mandrakes.update(dt, hour.t);
+    behemoth.update(dt, hour.night);
+    rays.update(dt, hour.sunElev, hour.sunAz, hour.rain);
     return hour;
   }
 
@@ -311,6 +337,11 @@ export async function createGarden(scene, rng) {
     sheaves: sheaves.count,
     foxes: foxes.state,
     hoarfrost: hoarfrost.state,
+    olive: olive.pos,
+    springs: springs.state,
+    mandrakes: mandrakes.state,
+    behemoth: behemoth.state,
+    rays: rays.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };
