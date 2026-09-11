@@ -56,6 +56,11 @@ import { createSprings } from './springs.js';
 import { createMandrakes } from './mandrakes.js';
 import { createBehemoth } from './behemoth.js';
 import { createRays } from './rays.js';
+import { createOwl } from './owl.js';
+import { createDeeps } from './deeps.js';
+import { createRam } from './ram.js';
+import { createRods } from './rods.js';
+import { createSeed } from './seed.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -146,6 +151,20 @@ export async function createGarden(scene, rng) {
   const springs = createSprings(scene);
   const mandrakes = createMandrakes(scene, vine.spot.pos);
   const behemoth = createBehemoth(scene, willows.spots);
+  // v22: where the one rill that finds the great river runs into it, deep
+  // calls to deep (Psalm 42:7 — so it comes after the springs); the ram held
+  // by his horns on the eastern rim (Genesis 22:13); and the poplar, hazel
+  // and chestnut standing over the watering place (Genesis 30:37). All three
+  // fold their spots into the one naming list, and each carries its own
+  // seeded stream, so building them here shifts nothing already planted.
+  const deeps = createDeeps(scene, springs.mouths);
+  const ram = createRam(scene);
+  const rods = createRods(scene);
+  // The cedars move up here from further down (v22): the owl keeps her night
+  // watch on their boughs, so the stand has to stand before she does. Their
+  // own seeded stream means building them earlier shifts nothing planted.
+  const cedars = createCedars(scene);
+  const owl = createOwl(scene, cedars.spots);
   const creatures = createCreatures(scene, rng, [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
@@ -153,7 +172,7 @@ export async function createGarden(scene, rng) {
     ...frankincense.spots, ...hyssop.spots, ...lilies.spots,
     ...camphire.spots, fig.spot, ...myrtle.spots, ...sheaves.spots,
     ...foxes.spots, olive.spot, ...springs.spots, ...mandrakes.spots,
-    ...behemoth.spots,
+    ...behemoth.spots, ...deeps.spots, ...ram.spots, ...rods.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -195,9 +214,6 @@ export async function createGarden(scene, rng) {
   const puddles = createPuddles(scene);
   const wildflowers = createWildflowers(scene);
   const rainbow = createRainbow(scene);
-  // v15: cedars stand along the northern rim (Psalm 104:16) — a fixed
-  // planting, no per-frame update at all, the same idiom as the wildflowers.
-  const cedars = createCedars(scene);
   // v16 (Psalm 102:11): every tree's own shadow, drawn out long toward
   // evening and swinging round with the sun. Needs vegetation's tree spots,
   // so it comes after the planting.
@@ -223,6 +239,10 @@ export async function createGarden(scene, rng) {
   // the grass — shadows.js's other half, and it needs the same tree spots,
   // so it builds here beside it.
   const rays = createRays(scene, vegetation.treeSpots);
+  // v22 (Genesis 1:11-12, the freshly-generated idea this run): the meadow
+  // stands full of seed, and it is the walker brushing past a head — not the
+  // hour and not the gust — that looses the down off it.
+  const seed = createSeed(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -283,6 +303,10 @@ export async function createGarden(scene, rng) {
     mandrakes.update(dt, hour.t);
     behemoth.update(dt, hour.night);
     rays.update(dt, hour.sunElev, hour.sunAz, hour.rain);
+    owl.update(dt, hour.night);
+    deeps.update(dt, hour.rain);
+    ram.update(dt, hour.sabbath);
+    seed.update(dt, playerPos, hour.t, hour.sabbath);
     return hour;
   }
 
@@ -342,6 +366,11 @@ export async function createGarden(scene, rng) {
     mandrakes: mandrakes.state,
     behemoth: behemoth.state,
     rays: rays.state,
+    owl: owl.state,
+    deeps: deeps.state,
+    ram: ram.state,
+    rods: rods.state,
+    seed: seed.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

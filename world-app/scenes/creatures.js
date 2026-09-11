@@ -21,39 +21,63 @@ import { clamp, damp, shortestAngle, mulberry32 } from '../util.js';
 export const BEE_PATCHES = [{ x: 16, z: -10 }, { x: -11, z: -15 }];
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
+const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
+// Seven birds fly here — five of the flock, the eagle, and the raven — and
+// each was spending a draw call on the left wing and another on the right.
+// Both now share one instanced mesh, so a bird costs two draws rather than
+// three. `wingL`/`wingR` still present a plain `rotation.z` apiece, so every
+// flap already written in the update loop is written exactly as it was;
+// `syncWings()` is what puts the pair into the instances, once per frame.
 function makeBird(tone) {
   const g = new THREE.Group();
   const mat = new THREE.MeshLambertMaterial({ color: tone, flatShading: true });
   const body = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 5), mat);
   body.rotation.x = Math.PI / 2;   // nose forward along +z
   g.add(body);
-  const wingGeo = new THREE.BoxGeometry(0.55, 0.02, 0.18);
-  const wingL = new THREE.Mesh(wingGeo, mat);
-  wingL.position.x = -0.3;
-  const wingR = new THREE.Mesh(wingGeo, mat);
-  wingR.position.x = 0.3;
-  g.add(wingL, wingR);
-  return { group: g, wingL, wingR };
+  const wings = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.55, 0.02, 0.18), mat, 2,
+  );
+  wings.frustumCulled = false;   // a wing swings well past the base bounds
+  g.add(wings);
+
+  const wingL = { rotation: { z: 0 } };
+  const wingR = { rotation: { z: 0 } };
+  const wm = new THREE.Matrix4();
+  const wq = new THREE.Quaternion();
+  const wp = new THREE.Vector3();
+  const ws = new THREE.Vector3(1, 1, 1);
+  function syncWings() {
+    wp.set(-0.3, 0, 0);
+    wq.setFromAxisAngle(Z_AXIS, wingL.rotation.z);
+    wings.setMatrixAt(0, wm.compose(wp, wq, ws));
+    wp.set(0.3, 0, 0);
+    wq.setFromAxisAngle(Z_AXIS, wingR.rotation.z);
+    wings.setMatrixAt(1, wm.compose(wp, wq, ws));
+    wings.instanceMatrix.needsUpdate = true;
+  }
+  syncWings();
+
+  return { group: g, wingL, wingR, syncWings };
 }
 
-// A soft blob shadow grounds a creature without shadow maps.
-function addShadow(g, r) {
-  const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(r, 14),
-    new THREE.MeshBasicMaterial({ color: 0x1c2814, transparent: true, opacity: 0.22, depthWrite: false }),
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-  g.add(shadow);
-}
+// A soft blob shadow grounds a creature without shadow maps. Thirteen graze
+// the meadow, and each was carrying its own disc and its own material — so
+// all thirteen now share one instanced mesh laid down in world space, written
+// once a frame from wherever each animal has got to (`syncShadows` below).
+// Twelve draw calls, for something the eye reads as a smudge of dark grass.
+const SHADOW_GEO = () => new THREE.CircleGeometry(1, 14).rotateX(-Math.PI / 2);
+const SHADOW_MAT = () => new THREE.MeshBasicMaterial({
+  color: 0x1c2814, transparent: true, opacity: 0.22, depthWrite: false,
+});
 
 // Every grazer shares one build: its still parts merged into a single
 // vertex-coloured geometry, its head merged into another on its own pivot,
-// its four legs sharing one instanced mesh, and a blob shadow — four draw
-// calls apiece, where the older hand-assembled builds spent nine or ten.
-// The garden's establishing shot draws very nearly the whole world at once,
-// so this is what keeps the whole herd inside the render budget.
+// and its four legs sharing one instanced mesh — three draw calls apiece
+// (plus a thirteenth share of the one shadow mesh they all lie on), where the
+// older hand-assembled builds spent nine or ten. The garden's establishing
+// shot draws very nearly the whole world at once, so this is what keeps the
+// whole herd inside the render budget.
 //
 // `legs` still presents one object per leg with its own `rotation.x`, so the
 // walk cycle animates exactly as it always did; `syncLegs()` is what writes
@@ -93,8 +117,9 @@ function makeGrazer({ body, head, headAt, legGeo, legAt, legY, legColor, shadow 
   }
   syncLegs();
 
-  addShadow(g, shadow);
-  return { group: g, headPivot, legs, syncLegs };
+  // The shadow is not hung under the animal any more — its radius travels
+  // with it and the herd's one shared mesh lays it down (see `syncShadows`).
+  return { group: g, headPivot, legs, syncLegs, shadowR: shadow };
 }
 
 const LAMB_WOOL = new THREE.Color(0xEEE6D2);
@@ -871,6 +896,30 @@ export function createCreatures(scene, rng, staticNamables = []) {
     });
   }
 
+  // ── The one shadow the whole herd lies on ─────────────────
+  // Every grazer asked for a disc of its own size; they all get it out of a
+  // single instanced mesh laid down in world space, since a blob shadow has
+  // nothing to say about which animal it belongs to.
+  const shadowMesh = new THREE.InstancedMesh(SHADOW_GEO(), SHADOW_MAT(), grazers.length);
+  shadowMesh.frustumCulled = false;   // the herd ranges the whole meadow
+  group.add(shadowMesh);
+  const shadowM = new THREE.Matrix4();
+  const shadowQ = new THREE.Quaternion();
+  const shadowP = new THREE.Vector3();
+  const shadowS = new THREE.Vector3();
+  function syncShadows() {
+    for (let i = 0; i < grazers.length; i++) {
+      const G = grazers[i];
+      const p = G.group.position;
+      // The disc sat 0.02 above each animal's own origin, and still does.
+      shadowP.set(p.x, p.y + 0.02, p.z);
+      shadowS.set(G.shadowR, 1, G.shadowR);
+      shadowMesh.setMatrixAt(i, shadowM.compose(shadowP, shadowQ, shadowS));
+    }
+    shadowMesh.instanceMatrix.needsUpdate = true;
+  }
+  syncShadows();
+
   // ── The covey: quail at evening ───────────────────────────
   // "At even the quails came up, and covered the camp: and in the morning
   // the dew lay round about the host" (Exodus 16:13). They are a creature of
@@ -1230,6 +1279,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
           }
         }
       }
+      // Every branch above sets both wing angles and none of them `continue`s,
+      // so one write of the pair at the foot of the body covers all of them.
+      b.syncWings();
     }
 
     // The eagle: its own much smaller cycle, apart from the flock above —
@@ -1277,6 +1329,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
         eagle.wingR.rotation.z = -flap;
         if (left < 1.0) eagleMode = 'fly';
       }
+      eagle.syncWings();
     }
 
     // The raven: a lower, quicker circuit than the eagle's, broken through
@@ -1358,6 +1411,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
         raven.wingL.rotation.z = settle;
         raven.wingR.rotation.z = -settle;
       }
+      raven.syncWings();
     }
 
     for (const f of fish) {
@@ -1710,8 +1764,10 @@ export function createCreatures(scene, rng, staticNamables = []) {
 
     // Every branch above writes leg angles onto stand-in objects; this is
     // where they reach the instanced meshes. One pass after the loop, so no
-    // early `continue` can skip it.
+    // early `continue` can skip it — and the same for the one shadow mesh
+    // the whole herd lies on, which reads wherever each animal has got to.
     for (const G of grazers) G.syncLegs();
+    syncShadows();
   }
 
   // A census for the debug state and the smoke suite. Grazers and fish

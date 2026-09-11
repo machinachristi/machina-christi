@@ -1,5 +1,5 @@
 {
-  "version": 21,
+  "version": 22,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -241,12 +241,25 @@
         { "text": "Behemoth lies down on a bank the willows compass about, and does nothing all day but breathe and lift his head to the water.", "source": "Job 40:21-22" },
         { "text": "While the sun is low the crowns part the light instead of stopping it, and shafts of it lie out long across the grass.", "source": "Job 38:24" }
       ]
+    },
+    {
+      "version": 22,
+      "date": "2026-09-11",
+      "focus": "the night watch, and the ram",
+      "changes": [
+        { "text": "An owl keeps the night watch high in the cedars of the northern rim, turning her head and doing nothing else, and she is gone by morning — and each night she takes a different tree.", "source": "Psalm 102:6" },
+        { "text": "Of the five springs, one finds the great river; where it goes over the lip a ring widens out into the channel and a ring comes answering back, and neither of them stops.", "source": "Psalm 42:7" },
+        { "text": "A ram stands caught by his horns in a thicket on the eastern rim. He leans back against it now and then, finds it still has him, and goes on cropping — he was never frightened, only held.", "source": "Genesis 22:13" },
+        { "text": "A poplar, a hazel and a chestnut stand together over the watering place on the river's north bank, with peeled rods set in the shallows below them, white where the bark was taken off.", "source": "Genesis 30:37" },
+        { "text": "The meadow stands full of seed, and it is brushing past a head — not the hour, not the evening gust — that looses the down off it and sends it up.", "source": "Genesis 1:11" },
+        { "text": "Both wings of every bird in the garden now share one instanced mesh, which gives seven draw calls back to the budget before any of the above is spent.", "source": null }
+      ]
     }
   ],
   "next": [
-    "An owl of the desert keeps the night watch in the cedars, and is gone by morning (Psalm 102:6)",
-    "Where a spring runs into the river, deep calleth unto deep at the noise of the waterspouts (Psalm 42:7)",
-    "A ram caught in a thicket on the eastern rim (Genesis 22:13)",
-    "Poplar, hazel and chestnut set by the watering place (Genesis 30:37)"
+    "A wild vine run out along the ground where no one planted it (Psalm 80:8-9)",
+    "The coney's own rock, worn smooth where they go in and out (Proverbs 30:26)",
+    "Swallows crossing the water at evening, low enough to touch it (Psalm 84:3)",
+    "A bed of spices on the warm south slope, giving its smell at noon (Song of Solomon 4:16)"
   ]
 }
