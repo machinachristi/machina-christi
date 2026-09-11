@@ -370,6 +370,18 @@ window.__world = {
       mandrakes: garden.mandrakes(),
       behemoth: garden.behemoth(),
       rays: garden.rays(),
+      // v22: the owl keeping the night watch in the cedars (Psalm 102:6 —
+      // `watching` 0 through the whole of the day), the place where a rill
+      // runs into the river and deep calls to deep (Psalm 42:7), the ram held
+      // by his horns on the eastern rim (Genesis 22:13), the poplar, hazel
+      // and chestnut over the watering place (Genesis 30:37), and the seed
+      // the walker's own passage looses out of the meadow (Genesis 1:11-12 —
+      // `adrift` is how much down is presently in the air).
+      owl: garden.owl(),
+      deeps: garden.deeps(),
+      ram: garden.ram(),
+      rods: garden.rods(),
+      seed: garden.seed(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

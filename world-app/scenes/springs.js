@@ -87,6 +87,24 @@ export function createSprings(scene) {
     courses.push(courseFrom(hx, hz, -Math.cos(a), -Math.sin(a)));
   }
 
+  // ── Where a rill finds the river ──────────────────────────
+  // A course stops the moment it reaches a channel, so a foot still short of
+  // one is a rill that simply soaked away in the meadow instead. Of the five
+  // presently broken out of the rim exactly one runs the whole way down —
+  // and that is the one place in the garden where deep calls to deep (v22,
+  // scenes/deeps.js). `dx`/`dz` is the way the water was going as it arrived.
+  const mouths = [];
+  for (const pts of courses) {
+    const foot = pts[pts.length - 1];
+    if (riverEdgeDist(foot.x, foot.z) > 0.6) continue;
+    const back = pts[Math.max(0, pts.length - 3)];
+    const dl = Math.hypot(foot.x - back.x, foot.z - back.z) || 1;
+    mouths.push({
+      x: foot.x, y: foot.y, z: foot.z,
+      dx: (foot.x - back.x) / dl, dz: (foot.z - back.z) / dl,
+    });
+  }
+
   // ── The courses, as seen ──────────────────────────────────
   // A ribbon of running water laid along each course, two triangles a step,
   // built non-indexed and hand-coloured so the whole lot merges into one
@@ -215,7 +233,7 @@ export function createSprings(scene) {
   }));
 
   return {
-    update, spots,
+    update, spots, mouths,
     count: COUNT,
     state: () => ({
       count: COUNT,

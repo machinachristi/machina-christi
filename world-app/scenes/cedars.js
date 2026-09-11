@@ -11,7 +11,7 @@
 
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist } from './terrain.js';
-import { mulberry32 } from '../util.js';
+import { mergeColored, mulberry32 } from '../util.js';
 
 const COUNT = 11;
 // Three broad tiers per cedar, each a flattened cone: wide and low at the
@@ -24,31 +24,6 @@ const TIERS = [
   { y: 0.70, r: 1.75, h: 2.00 },
   { y: 0.86, r: 1.20, h: 1.80 },
 ];
-
-// Concatenate non-indexed geometries, painting each one its own flat colour
-// into a shared vertex-colour attribute.
-function mergeColored(parts) {
-  let count = 0;
-  for (const part of parts) count += part.geo.attributes.position.count;
-  const posArr = new Float32Array(count * 3);
-  const colArr = new Float32Array(count * 3);
-  let v = 0;
-  for (const { geo, color } of parts) {
-    const n = geo.attributes.position.count;
-    posArr.set(geo.attributes.position.array, v * 3);
-    for (let i = 0; i < n; i++) {
-      colArr[(v + i) * 3] = color.r;
-      colArr[(v + i) * 3 + 1] = color.g;
-      colArr[(v + i) * 3 + 2] = color.b;
-    }
-    v += n;
-  }
-  const merged = new THREE.BufferGeometry();
-  merged.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-  merged.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
-  merged.computeVertexNormals();   // non-indexed → true per-face normals
-  return merged;
-}
 
 export function createCedars(scene) {
   // Own seeded stream: a stand on the far rim shifts nothing already planted.
@@ -107,5 +82,12 @@ export function createCedars(scene) {
   scene.add(stand);
   for (const part of parts) part.geo.dispose();
 
-  return { count: spots.length };
+  // The stand itself, for anything that wants to sit in it — the owl keeps
+  // her night watch on these boughs (v22, scenes/owl.js). `y` is the ground
+  // under each trunk; `height` is the tree's own, as planted.
+  const planted = spots.map(sp => ({
+    x: sp.x, z: sp.z, y: heightAt(sp.x, sp.z), height: sp.height,
+  }));
+
+  return { count: spots.length, spots: planted };
 }
