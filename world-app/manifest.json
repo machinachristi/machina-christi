@@ -1,5 +1,5 @@
 {
-  "version": 22,
+  "version": 23,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -254,12 +254,25 @@
         { "text": "The meadow stands full of seed, and it is brushing past a head — not the hour, not the evening gust — that looses the down off it and sends it up.", "source": "Genesis 1:11" },
         { "text": "Both wings of every bird in the garden now share one instanced mesh, which gives seven draw calls back to the budget before any of the above is spent.", "source": null }
       ]
+    },
+    {
+      "version": 23,
+      "date": "2026-09-17",
+      "focus": "there is hope of a tree",
+      "changes": [
+        { "text": "A vine no one planted has run out along the open meadow — three runners going out from one old root, taking hold again at every few nodes, and putting out tendrils for something to climb that was never set there.", "source": "Psalm 80:8-9" },
+        { "text": "Every coney now has the house the proverb gives it: a knot of rock standing behind it, a dark gap at the foot of it, and the threshold across that gap worn pale by a feeble folk going in and out of it.", "source": "Proverbs 30:26" },
+        { "text": "At evening the swallows come down onto the river and work it end to end in long low beats, and at the bottom of each beat one of them touches the water and leaves a ring widening behind it.", "source": "Psalm 84:3" },
+        { "text": "A bed of grey-green bushes keeps a slope on the south that falls away to the sun, and through the noon its smell flows out — northward, off the warm ground and away over the meadow.", "source": "Song of Solomon 4:16" },
+        { "text": "One tree in the garden is down, and out of the rim of the broken stock, close enough to the river to be within the scent of the water, tender shoots have come up. Through the whole turn of the year they thicken and draw back, but they never quite cease.", "source": "Job 14:7-9" },
+        { "text": "All six butterflies now share one instanced mesh for their twelve wings and another for their bodies, which gives sixteen draw calls back to the budget before any of the above is spent.", "source": null }
+      ]
     }
   ],
   "next": [
-    "A wild vine run out along the ground where no one planted it (Psalm 80:8-9)",
-    "The coney's own rock, worn smooth where they go in and out (Proverbs 30:26)",
-    "Swallows crossing the water at evening, low enough to touch it (Psalm 84:3)",
-    "A bed of spices on the warm south slope, giving its smell at noon (Song of Solomon 4:16)"
+    "A dove in the clefts of the rock, in the secret places of the stairs (Song of Solomon 2:14)",
+    "Lightning kindled in the shower, and the thunder a while after it (Job 38:25)",
+    "The ostrich that leaves her eggs in the earth and warms them in dust (Job 39:13-16)",
+    "The trees of the field clapping their hands as the evening wind goes by (Isaiah 55:12)"
   ]
 }
