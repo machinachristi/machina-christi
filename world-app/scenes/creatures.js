@@ -555,12 +555,15 @@ function makeFish(tone) {
   return { group: g, tail };
 }
 
-// A butterfly: two petal-toned wings hinged at a slip of a body. The wings
-// share two geometries across all butterflies; only the material tints.
-const WING_L = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).translate(-0.095, 0, 0);
-const WING_R = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2).translate(0.095, 0, 0);
+// A butterfly: two petal-toned wings hinged at a slip of a body. Since v23
+// all six ride two instanced meshes — one of twelve wings, one of six bodies
+// — instead of three meshes apiece, which is eighteen draw calls given back
+// to the garden's budget. The wing geometry is left centred on the hinge and
+// each wing's own ∓0.095 offset is carried in its instance matrix instead,
+// so the flap is the same rotation about the body it always was.
+const BUTTERFLY_WING = new THREE.PlaneGeometry(0.17, 0.12).rotateX(-Math.PI / 2);
+const WING_OUT = 0.095;
 const BUTTERFLY_BODY = new THREE.BoxGeometry(0.022, 0.022, 0.13);
-const BODY_MAT = new THREE.MeshLambertMaterial({ color: 0x3A3226, flatShading: true });
 
 // The quail's one hour of the day (Exodus 16:13), as a pure function of the
 // sky's own clock — no state, so it reads the same however the walker has
@@ -582,15 +585,6 @@ export function quailOf(t) {
     presence: clamp(1 - leaving, 0, 1),
     landed: clamp(w / QUAIL_FALL, 0, 1),
   };
-}
-
-function makeButterfly(tone) {
-  const g = new THREE.Group();
-  const mat = new THREE.MeshLambertMaterial({ color: tone, side: THREE.DoubleSide, flatShading: true });
-  const wingL = new THREE.Mesh(WING_L, mat);
-  const wingR = new THREE.Mesh(WING_R, mat);
-  g.add(wingL, wingR, new THREE.Mesh(BUTTERFLY_BODY, BODY_MAT));
-  return { group: g, wingL, wingR };
 }
 
 // `staticNamables` (v10): spots that don't move but still answer the naming
@@ -1030,19 +1024,67 @@ export function createCreatures(scene, rng, staticNamables = []) {
   }
 
   const BUTTERFLY_TONES = [0xE8D5A3, 0xC97BA2, 0xF2F2E9, 0xD98A5B, 0xC9A227, 0xEFE8DA];
+  const BUTTERFLIES = 6;
+  const wingMesh = new THREE.InstancedMesh(
+    BUTTERFLY_WING,
+    new THREE.MeshLambertMaterial({ side: THREE.DoubleSide, flatShading: true }),
+    BUTTERFLIES * 2,
+  );
+  const butterflyBodies = new THREE.InstancedMesh(
+    BUTTERFLY_BODY,
+    new THREE.MeshLambertMaterial({ color: 0x3A3226, flatShading: true }),
+    BUTTERFLIES,
+  );
+  // Both fields are spread over the whole flower band, so neither base
+  // geometry's bounding sphere covers where its instances actually are.
+  wingMesh.frustumCulled = false;
+  butterflyBodies.frustumCulled = false;
+  group.add(wingMesh, butterflyBodies);
+
   const butterflies = [];
-  for (let i = 0; i < 6; i++) {
-    const B = makeButterfly(BUTTERFLY_TONES[i]);
+  const tone = new THREE.Color();
+  for (let i = 0; i < BUTTERFLIES; i++) {
     const s0 = flutterSpot();
-    B.group.position.set(s0.x, Math.max(heightAt(s0.x, s0.z), -0.45) + 0.55, s0.z);
-    group.add(B.group);
+    tone.setHex(BUTTERFLY_TONES[i]);
+    wingMesh.setColorAt(i * 2, tone);
+    wingMesh.setColorAt(i * 2 + 1, tone);
     butterflies.push({
-      ...B, kind: 'butterfly', name: 'Parpar', label: 'the butterfly',
+      kind: 'butterfly', name: 'Parpar', label: 'the butterfly',
+      pos: new THREE.Vector3(s0.x, Math.max(heightAt(s0.x, s0.z), -0.45) + 0.55, s0.z),
+      yaw: 0,
+      tilt: 0.15,                              // how far the wings are presently up
       mode: 'flit',                            // flit by day | rest by night
       target: flutterSpot(), until: 6 + wingRng() * 8,
       flap: wingRng() * Math.PI * 2, bob: wingRng() * Math.PI * 2,
     });
   }
+  if (wingMesh.instanceColor) wingMesh.instanceColor.needsUpdate = true;
+
+  // Lay all six down onto the two instanced meshes: a body turned by its own
+  // yaw, and two wings hinged on the body and tilted ± the flap.
+  const bM = new THREE.Matrix4();
+  const bQ = new THREE.Quaternion();
+  const bE = new THREE.Euler();
+  const bP = new THREE.Vector3();
+  const bOut = new THREE.Vector3();
+  const bS = new THREE.Vector3(1, 1, 1);
+  function syncButterflies() {
+    for (let i = 0; i < BUTTERFLIES; i++) {
+      const B = butterflies[i];
+      bM.compose(B.pos, bQ.setFromEuler(bE.set(0, B.yaw, 0)), bS);
+      butterflyBodies.setMatrixAt(i, bM);
+      for (let w = 0; w < 2; w++) {
+        const side = w === 0 ? -1 : 1;
+        bQ.setFromEuler(bE.set(0, B.yaw, B.tilt * -side));
+        bOut.set(side * WING_OUT, 0, 0).applyQuaternion(bQ).add(B.pos);
+        bM.compose(bOut, bQ, bS);
+        wingMesh.setMatrixAt(i * 2 + w, bM);
+      }
+    }
+    butterflyBodies.instanceMatrix.needsUpdate = true;
+    wingMesh.instanceMatrix.needsUpdate = true;
+  }
+  syncButterflies();   // seat them before the first frame is drawn
 
   // The bees: one instanced mesh of golden specks, each circling its patch.
   // Radii are laddered so every patch keeps one bee close enough to its
@@ -1460,7 +1502,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
         B.target = flutterSpot();
         B.until = 6 + wingRng() * 8;
       }
-      const p = B.group.position;
+      const p = B.pos;
       if (B.mode === 'flit') {
         // A butterfly close to a seated watcher lets its wandering target
         // drift in toward them, so one or two come to hover near — and drifts
@@ -1479,23 +1521,20 @@ export function createCreatures(scene, rng, staticNamables = []) {
           p.x += (dx / dist) * step;
           p.z += (dz / dist) * step;
           const yaw = Math.atan2(dx, dz);
-          B.group.rotation.y += shortestAngle(B.group.rotation.y, yaw) * clamp(dt * 3, 0, 1);
+          B.yaw += shortestAngle(B.yaw, yaw) * clamp(dt * 3, 0, 1);
         }
         B.bob += dt * 2.6;
         p.y = Math.max(heightAt(p.x, p.z), -0.45) + 0.55 + Math.sin(B.bob) * 0.28;
         B.flap += dt * 13;
-        const flap = 0.15 + Math.sin(B.flap) * 0.85;
-        B.wingL.rotation.z = flap;
-        B.wingR.rotation.z = -flap;
+        B.tilt = 0.15 + Math.sin(B.flap) * 0.85;
       } else {
         // Settle to the grass; wings held upright, barely breathing.
         p.y = damp(p.y, Math.max(heightAt(p.x, p.z), -0.45) + 0.07, 2.2, dt);
         B.flap += dt * 1.4;
-        const fold = 1.15 + Math.sin(B.flap) * 0.1;
-        B.wingL.rotation.z = fold;
-        B.wingR.rotation.z = -fold;
+        B.tilt = 1.15 + Math.sin(B.flap) * 0.1;
       }
     }
+    syncButterflies();
 
     beeMesh.visible = night < 0.5;
     if (beeMesh.visible) {
@@ -1788,7 +1827,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
         rest: G.rest || 0, mode: G.mode,
       })),
       shoal: fish.map(f => ({ name: f.name, x: f.group.position.x, z: f.group.position.z, rise: f.loop.rise })),
-      butterflies: butterflies.map(B => ({ x: B.group.position.x, z: B.group.position.z, mode: B.mode })),
+      butterflies: butterflies.map(B => ({ x: B.pos.x, z: B.pos.z, mode: B.mode })),
       bees: { count: swarm.length, mode: beeMesh.visible ? 'hum' : 'home', patches: BEE_PATCHES },
       covey: {
         count: covey.length,

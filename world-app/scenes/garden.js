@@ -61,6 +61,11 @@ import { createDeeps } from './deeps.js';
 import { createRam } from './ram.js';
 import { createRods } from './rods.js';
 import { createSeed } from './seed.js';
+import { createWildVine } from './wildvine.js';
+import { createRocks } from './rocks.js';
+import { createSwallows } from './swallows.js';
+import { createSpices } from './spices.js';
+import { createStump } from './stump.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -160,6 +165,19 @@ export async function createGarden(scene, rng) {
   const deeps = createDeeps(scene, springs.mouths);
   const ram = createRam(scene);
   const rods = createRods(scene);
+  // v23: the wild vine that ran out along open meadow with no one to plant
+  // it (Psalm 80:8-9); the conies' own houses in the rock, worn pale at the
+  // doorway (Proverbs 30:26 — so they come after the conies, and are set
+  // from the homes those conies were already given); the bed of spices on
+  // the warm south slope (Song of Solomon 4:16); and the cut stump that
+  // sprouts again within the scent of water (Job 14:7-9, the freshly-
+  // generated idea this run). All four fold their spots into the one naming
+  // list, and each carries its own seeded stream, so building them here
+  // shifts nothing already planted.
+  const wildvine = createWildVine(scene);
+  const rocks = createRocks(scene, conies.homes);
+  const spices = createSpices(scene);
+  const stump = createStump(scene);
   // The cedars move up here from further down (v22): the owl keeps her night
   // watch on their boughs, so the stand has to stand before she does. Their
   // own seeded stream means building them earlier shifts nothing planted.
@@ -173,6 +191,7 @@ export async function createGarden(scene, rng) {
     ...camphire.spots, fig.spot, ...myrtle.spots, ...sheaves.spots,
     ...foxes.spots, olive.spot, ...springs.spots, ...mandrakes.spots,
     ...behemoth.spots, ...deeps.spots, ...ram.spots, ...rods.spots,
+    ...wildvine.spots, ...rocks.spots, ...spices.spots, ...stump.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -243,6 +262,10 @@ export async function createGarden(scene, rng) {
   // stands full of seed, and it is the walker brushing past a head — not the
   // hour and not the gust — that looses the down off it.
   const seed = createSeed(scene);
+  // v23 (Psalm 84:3): at evening the swallows come down onto the river and
+  // work it end to end, touching the water at the bottom of every beat. They
+  // ride the course itself, so they need nothing built above them.
+  const swallows = createSwallows(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -307,6 +330,9 @@ export async function createGarden(scene, rng) {
     deeps.update(dt, hour.rain);
     ram.update(dt, hour.sabbath);
     seed.update(dt, playerPos, hour.t, hour.sabbath);
+    swallows.update(dt, hour.t);
+    spices.update(dt, hour.t);
+    stump.update(hour.year);
     return hour;
   }
 
@@ -371,6 +397,11 @@ export async function createGarden(scene, rng) {
     ram: ram.state,
     rods: rods.state,
     seed: seed.state,
+    wildvine: wildvine.state,
+    rocks: rocks.state,
+    swallows: swallows.state,
+    spices: spices.state,
+    stump: stump.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

@@ -382,6 +382,11 @@ window.__world = {
       ram: garden.ram(),
       rods: garden.rods(),
       seed: garden.seed(),
+      wildvine: garden.wildvine(),
+      rocks: garden.rocks(),
+      swallows: garden.swallows(),
+      spices: garden.spices(),
+      stump: garden.stump(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
