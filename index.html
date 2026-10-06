@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -26,7 +26,7 @@
        fade only plays when JS can run it. Without JS the page renders fully
        visible and the portals are plain links in a native scroll-snap strip. -->
   <script>document.documentElement.classList.add('js');</script>
-  <!-- Every journey from this room goes through one of four doors — fetch
+  <!-- Every journey from this room goes through one of five doors — fetch
        their pages (just the HTML, a few KB each; none of their data or 3D
        payloads) while the visitor is still choosing, so the walk through a
        gate lands on an already-delivered page. Browsers without prefetch
@@ -35,6 +35,7 @@
   <link rel="prefetch" href="world.html" />
   <link rel="prefetch" href="about.html" />
   <link rel="prefetch" href="ordo.html" />
+  <link rel="prefetch" href="pray.html" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -45,6 +46,7 @@
       --amber:     255, 196, 92;   /* Camino — warm lamplight (rgb parts) */
       --leaf:      168, 205, 140;  /* Eden — living green */
       --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
+      --marian:    138, 170, 222;  /* Pray — Marian blue */
       --parchment: 216, 198, 170;  /* About — the written word */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
@@ -155,7 +157,7 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
-    /* The way loops: swiping past Camino or Ordo doesn't scroll through
+    /* The way loops: swiping past Camino or Pray doesn't scroll through
        to a preview of the other end (that would spoil it, and looks like
        a stray duplicate card) — the strip fades out, jumps, and fades
        back in already standing at the far gate. */
@@ -201,6 +203,7 @@
     .portal--camino { --glow: var(--amber); }
     .portal--eden   { --glow: var(--leaf); }
     .portal--ordo   { --glow: var(--violet); }
+    .portal--pray   { --glow: var(--marian); }
     .portal--about  { --glow: var(--parchment); }
 
     /* The light waiting past each threshold. */
@@ -470,6 +473,21 @@
         <span class="portal__title">Ordo</span>
         <span class="portal__desc">today in the Church</span>
       </a>
+
+      <a class="portal portal--pray" href="pray.html" aria-label="Enter Pray, prayers in Thai and English">
+        <span class="portal__halo" aria-hidden="true"></span>
+        <span class="portal__vignette" aria-hidden="true">
+          <svg viewBox="0 0 48 64">
+            <!-- a rosary: a loop of beads falling to a small cross -->
+            <path d="M24 35 C13 34 9.5 23 13 16 C16.5 9.5 31.5 9.5 35 16 C38.5 23 35 34 24 35" stroke-width="3.4" stroke-dasharray="0 5.3" />
+            <path d="M24 38.5 V44" />
+            <path d="M24 47 V58" />
+            <path d="M19.5 51 H28.5" />
+          </svg>
+        </span>
+        <span class="portal__title">Pray</span>
+        <span class="portal__desc">prayers in Thai &amp; English</span>
+      </a>
     </div>
 
     <p class="hint">Tap a gate to enter</p>
@@ -534,7 +552,7 @@
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
 
-      // The way loops: past Ordo is Camino again, past Camino is Ordo.
+      // The way loops: past Pray is Camino again, past Camino is Pray.
       // Rather than scroll through to a peek of the far gate first (which
       // would spoil it and briefly show what looks like a stray duplicate
       // card), a swipe past either end is a quick cut — fade out, jump,

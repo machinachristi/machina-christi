@@ -5,19 +5,21 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="About Machina Christi — the site, the runner, the garden, today in the Church, and prayers in Thai and English." />
+  <meta name="description" content="Pray — classic Catholic prayers in Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://machinachristi.com/about.html" />
-  <meta property="og:title" content="About Machina Christi" />
-  <meta property="og:description" content="The site, the runner, the garden, today in the Church, and prayers in Thai and English — and the story behind them." />
+  <meta property="og:url" content="https://machinachristi.com/pray.html" />
+  <meta property="og:title" content="Pray · Machina Christi" />
+  <meta property="og:description" content="Classic Catholic prayers in Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
   <meta name="twitter:card" content="summary_large_image" />
-  <title>About · Machina Christi</title>
+  <title>Pray · Machina Christi</title>
+  <!-- The one prayer page a card leads to — fetch it while the list is read. -->
+  <link rel="prefetch" href="prayer.html" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -25,14 +27,20 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --leaf:      168, 205, 140;
+      --marian:    138, 170, 222;  /* Pray — Marian blue */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      /* The serif above has no Thai glyphs; these are system Thai faces on
+         iPhone/Mac, Android, and Windows — nothing to download. Looped faces
+         come first: the small loops on letters like บ ข ภ are how Thai is
+         taught, and the loopless modern style makes look-alikes harder to
+         tell apart for a learner. */
+      --thai:      Thonburi, "Noto Sans Thai Looped", "Noto Serif Thai", Tahoma, "Leelawadee UI", "Noto Sans Thai", sans-serif;
     }
 
     html, body { min-height: 100dvh; }
     body {
       background:
-        radial-gradient(120% 60% at 50% 0%, rgba(120, 92, 48, 0.2), transparent 60%),
+        radial-gradient(120% 60% at 50% 0%, rgba(var(--marian), 0.13), transparent 60%),
         var(--bg);
       background-attachment: fixed;
       color: var(--gold-soft);
@@ -55,6 +63,8 @@
       animation: drift 16s ease-in-out infinite alternate;
     }
     @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    :lang(th) { font-family: var(--thai); }
 
     .wrap {
       max-width: 620px;
@@ -82,24 +92,31 @@
       text-transform: uppercase;
       color: var(--gold);
     }
+    /* The same word in Thai, quietly beneath the name. */
+    .subtitle {
+      display: block;
+      font-size: clamp(18px, 5vw, 22px);
+      color: rgba(var(--marian), 0.9);
+      line-height: 1.6;
+    }
     /* A thin gold rule beneath the heading, like a line ruled in an old book. */
-    h1::after {
+    .subtitle::after {
       content: "";
       display: block;
       width: 72px;
       height: 1px;
-      margin: 0.7em 0 1.1em;
+      margin: 0.8em 0 1.2em;
       background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
     }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
 
-    .cards { display: flex; flex-direction: column; gap: 16px; margin-top: 2.2em; }
+    .cards { list-style: none; display: flex; flex-direction: column; gap: 16px; margin-top: 2.2em; }
     .card {
       position: relative;
       display: block;
       text-decoration: none;
       color: inherit;
-      padding: 20px 52px 20px 24px;
+      padding: 18px 52px 18px 24px;
       border: 1px solid rgba(201, 162, 39, 0.28);
       border-radius: 14px;
       background: rgba(201, 162, 39, 0.04);
@@ -118,7 +135,7 @@
     .card:hover, .card:focus-visible {
       border-color: rgba(201, 162, 39, 0.7);
       background: rgba(201, 162, 39, 0.08);
-      box-shadow: 0 0 34px -12px rgba(255, 196, 92, 0.3);
+      box-shadow: 0 0 34px -12px rgba(var(--marian), 0.4);
       outline: none;
     }
     .card:hover::after, .card:focus-visible::after { color: var(--gold-soft); }
@@ -128,9 +145,17 @@
       letter-spacing: 0.26em;
       text-transform: uppercase;
       color: var(--gold-soft);
-      margin-bottom: 0.4em;
+    }
+    .card .th {
+      display: block;
+      font-size: 19px;
+      line-height: 1.7;
+      color: var(--gold-soft);
+      margin: 0.15em 0 0.1em;
     }
     .card p { margin: 0; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
+
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
@@ -138,27 +163,43 @@
 <body>
   <div class="wrap">
     <a class="back" href="index.html">&lsaquo; home</a>
-    <h1>About</h1>
-    <p>Machina Christi is a small, growing collection of experiences, built one conversation at a time. This is home base for the story behind them — what they are, why they exist, and how they keep changing.</p>
+    <h1>Pray</h1>
+    <span class="subtitle" lang="th">ภาวนา</span>
+    <p>Classic Catholic prayers in Thai and English, set side by side line by line. Read them together, see how each phrase is said, and listen in either language.</p>
 
-    <div class="cards">
-      <a class="card" href="about-camino.html">
-        <h2>Camino</h2>
-        <p>An endless runner about walking the narrow way.</p>
-      </a>
-      <a class="card" href="about-eden.html">
-        <h2>Eden</h2>
-        <p>A living 3D garden, refined over time.</p>
-      </a>
-      <a class="card" href="about-ordo.html">
-        <h2>Ordo</h2>
-        <p>Today in the Church: the day&rsquo;s gospel, and the saint of the day from Butler&rsquo;s Lives of the Saints.</p>
-      </a>
-      <a class="card" href="about-pray.html">
-        <h2>Pray</h2>
-        <p>Classic prayers in Thai and English, side by side &mdash; because God can be honored in every language.</p>
-      </a>
-    </div>
+    <ul class="cards" id="prayers">
+      <li><p class="notice">Loading&hellip;</p></li>
+    </ul>
   </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      const list = document.getElementById('prayers');
+
+      // Every prayer lives in one data file — adding a new one there is all it
+      // takes for it to appear here, and on its own page.
+      fetch('./pray/prayers.json')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          list.innerHTML = data.prayers.map(p => `
+            <li>
+              <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
+                <h2>${escapeHtml(p.title)}</h2>
+                <span class="th" lang="th">${escapeHtml(p.title_th)}</span>
+                ${p.about ? `<p>${escapeHtml(p.about)}</p>` : ''}
+              </a>
+            </li>`).join('');
+        })
+        .catch(() => {
+          list.innerHTML = '<li><p class="notice">The prayers couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
+        });
+    })();
+  </script>
 </body>
 </html>

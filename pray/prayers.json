@@ -1,0 +1,201 @@
+{
+  "prayers": [
+    {
+      "id": "sign-of-the-cross",
+      "title": "The Sign of the Cross",
+      "title_th": "เครื่องหมายกางเขน",
+      "about": "begin and end every prayer",
+      "lines": [
+        {
+          "th": "เดชะพระนามพระบิดา",
+          "rom": "dee-chá phrá-naam phrá-bì-daa",
+          "en": "In the name of the Father,",
+          "lit": "by the power of the name of the Father"
+        },
+        {
+          "th": "และพระบุตร",
+          "rom": "láe phrá-bùt",
+          "en": "and of the Son,"
+        },
+        {
+          "th": "และพระจิต",
+          "rom": "láe phrá-jìt",
+          "en": "and of the Holy Spirit.",
+          "lit": "and of the Spirit"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%AD%E0%B8%8D%E0%B9%80%E0%B8%8A%E0%B8%8D%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%88%E0%B8%95%E0%B9%80%E0%B8%88%E0%B8%B2"
+      }
+    },
+    {
+      "id": "our-father",
+      "title": "The Our Father",
+      "title_th": "บทข้าแต่พระบิดา",
+      "about": "the prayer Jesus taught us",
+      "lines": [
+        {
+          "th": "ข้าแต่พระบิดาของข้าพเจ้าทั้งหลาย",
+          "rom": "khâa-dtàe phrá-bì-daa khǎwng khâa-phá-jâo tháng-lǎai",
+          "en": "Our Father,",
+          "lit": "O Father of us all"
+        },
+        {
+          "th": "พระองค์สถิตในสวรรค์",
+          "rom": "phrá-ong sà-thìt nai sà-wǎn",
+          "en": "who art in heaven,",
+          "lit": "You dwell in heaven"
+        },
+        {
+          "th": "พระนามพระองค์จงเป็นที่สักการะ",
+          "rom": "phrá-naam phrá-ong jong bpen thîi sàk-gaa-rá",
+          "en": "hallowed be thy name;",
+          "lit": "may Your name be revered"
+        },
+        {
+          "th": "พระอาณาจักรจงมาถึง",
+          "rom": "phrá-aa-naa-jàk jong maa thǔeng",
+          "en": "thy kingdom come;",
+          "lit": "may Your kingdom arrive"
+        },
+        {
+          "th": "พระประสงค์จงสำเร็จในแผ่นดินเหมือนในสวรรค์",
+          "rom": "phrá-bprà-sǒng jong sǎm-rèt nai phàen-din mǔean nai sà-wǎn",
+          "en": "thy will be done on earth as it is in heaven.",
+          "lit": "may Your will be fulfilled on earth as in heaven"
+        },
+        {
+          "th": "โปรดประทานอาหารประจำวัน แก่ข้าพเจ้าทั้งหลายในวันนี้",
+          "rom": "bpròot bprà-thaan aa-hǎan bprà-jam-wan gàe khâa-phá-jâo tháng-lǎai nai wan níi",
+          "en": "Give us this day our daily bread,",
+          "lit": "please grant us our daily food today"
+        },
+        {
+          "th": "โปรดประทานอภัยแก่ข้าพเจ้า เหมือนข้าพเจ้าให้อภัยแก่ผู้อื่น",
+          "rom": "bpròot bprà-thaan à-phai gàe khâa-phá-jâo, mǔean khâa-phá-jâo hâi à-phai gàe phûu ùen",
+          "en": "and forgive us our trespasses, as we forgive those who trespass against us;",
+          "lit": "please grant me pardon, as I grant pardon to others"
+        },
+        {
+          "th": "โปรดช่วยข้าพเจ้าไม่ให้แพ้การผจญ",
+          "rom": "bpròot chûai khâa-phá-jâo mâi hâi pháe gaan phà-jon",
+          "en": "and lead us not into temptation,",
+          "lit": "please help me not to be overcome by temptation"
+        },
+        {
+          "th": "แต่โปรดช่วยให้พ้นจากความชั่วร้ายเทอญ",
+          "rom": "dtàe bpròot chûai hâi phón jàak khwaam chûa-ráai thoen",
+          "en": "but deliver us from evil.",
+          "lit": "but please help me escape from evil (เทอญ is a solemn “so be it”)"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%82%E0%B8%B2%E0%B9%81%E0%B8%95%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%94%E0%B8%B2"
+      }
+    },
+    {
+      "id": "hail-mary",
+      "title": "The Hail Mary",
+      "title_th": "บทวันทามารีย์",
+      "about": "the angel’s greeting",
+      "lines": [
+        {
+          "th": "วันทามารีย์ เปี่ยมด้วยพระหรรษทาน",
+          "rom": "wan-thaa maa-rii, bpìam dûai phrá-hǎn-sà-thaan",
+          "en": "Hail Mary, full of grace,",
+          "lit": "Hail Mary, brimming with grace"
+        },
+        {
+          "th": "พระเจ้าสถิตกับท่าน",
+          "rom": "phrá-jâo sà-thìt gàp thâan",
+          "en": "the Lord is with thee.",
+          "lit": "God dwells with you"
+        },
+        {
+          "th": "ผู้ได้รับพระพรกว่าสตรีใดๆ",
+          "rom": "phûu dâi-ráp phrá-phawn gwàa sàt-dtrii dai-dai",
+          "en": "Blessed art thou among women,",
+          "lit": "you who are blessed above all women"
+        },
+        {
+          "th": "และพระเยซูโอรสของท่าน ทรงได้รับพระพรยิ่งนัก",
+          "rom": "láe phrá-yee-suu oo-rót khǎwng thâan, song dâi-ráp phrá-phawn yîng nák",
+          "en": "and blessed is the fruit of thy womb, Jesus.",
+          "lit": "and Jesus, your Son, is most greatly blessed"
+        },
+        {
+          "th": "สันตะมารีย์ พระมารดาพระเจ้า",
+          "rom": "sǎn-dtà maa-rii, phrá-maan-daa phrá-jâo",
+          "en": "Holy Mary, Mother of God,"
+        },
+        {
+          "th": "โปรดภาวนาเพื่อลูกทั้งหลายผู้เป็นคนบาป",
+          "rom": "bpròot phaa-wá-naa phûea lûuk tháng-lǎai phûu bpen khon bàap",
+          "en": "pray for us sinners,",
+          "lit": "please pray for us, your children, who are sinners"
+        },
+        {
+          "th": "บัดนี้และเมื่อจะตาย",
+          "rom": "bàt-níi láe mûea jà dtaai",
+          "en": "now and at the hour of our death.",
+          "lit": "now and when we are about to die"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%A7%E0%B8%99%E0%B8%97%E0%B8%B2%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%A2"
+      }
+    },
+    {
+      "id": "o-blood-and-water",
+      "title": "O Blood and Water",
+      "title_th": "โอ้ พระโลหิตและน้ำ",
+      "about": "the Divine Mercy prayer at three o’clock",
+      "lines": [
+        {
+          "th": "โอ้ พระโลหิตและน้ำ",
+          "rom": "ôo phrá-loo-hìt láe nám",
+          "en": "O Blood and Water,"
+        },
+        {
+          "th": "ซึ่งหลั่งไหลมาจากพระหฤทัยของพระเยซูเจ้า",
+          "rom": "sûeng làng-lǎi maa jàak phrá-hà-rúe-thai khǎwng phrá-yee-suu-jâo",
+          "en": "which gushed forth from the Heart of Jesus"
+        },
+        {
+          "th": "เป็นท่อธารพระเมตตาเพื่อลูกทั้งหลาย",
+          "rom": "bpen thâw-thaan phrá-mêet-dtaa phûea lûuk tháng-lǎai",
+          "en": "as a fount of mercy for us,",
+          "lit": "a stream of mercy for us, your children"
+        },
+        {
+          "th": "ลูกวางใจในพระองค์",
+          "rom": "lûuk waang-jai nai phrá-ong",
+          "en": "I trust in You!",
+          "lit": "I, your child, trust in You"
+        }
+      ],
+      "source": {
+        "name": "Thai Divine Mercy prayers (บทภาวนาพระเมตตา), via thCath",
+        "url": "https://thcath.com/pray/html/p42.php?pray=4"
+      }
+    }
+  ]
+}
