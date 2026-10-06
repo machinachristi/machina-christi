@@ -31,6 +31,7 @@ export function createAmbience() {
   let cricketIn = 1.5;    // seconds until the next possible cricket phrase
   let lowIn = 10.0;       // seconds until the next possible lowing
   let doveIn = 6.0;       // seconds until the next possible turtledove coo
+  let clapIn = 1.0;       // seconds until the trees may next clap their hands
   let night = 0;
 
   // ── The toggle: a small pill in the world's corner ──
@@ -172,7 +173,12 @@ export function createAmbience() {
     loopNoise(noiseBuffer('rain')).connect(springBP);
     springBP.connect(springGain).connect(master);
 
-    refs = { windGain, windFilter, waterGain, rainGain, beeGain, springGain };
+    // Kept for the one-shot sounds that want a burst of noise of their own:
+    // the trees' clapping (a dry rustle) and the thunder (a deep roll).
+    const rustleBuf = noiseBuffer('rain');
+    const rollBuf = noiseBuffer('deep');
+
+    refs = { windGain, windFilter, waterGain, rainGain, beeGain, springGain, rustleBuf, rollBuf };
     master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
@@ -310,6 +316,78 @@ export function createAmbience() {
     osc.onended = () => { osc.disconnect(); lp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
   }
 
+  // "All the trees of the field shall clap their hands" (Isaiah 55:12) — as
+  // the evening gust goes through, the leaves strike together in short dry
+  // claps: two to four quick bursts of bright noise, panned to wherever this
+  // tree happens to stand.
+  function clap(level) {
+    const t0 = ctx.currentTime + 0.02;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2200 + Math.random() * 1400;
+    bp.Q.value = 0.9;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const src = ctx.createBufferSource();
+    src.buffer = refs.rustleBuf;
+    const n = 2 + Math.floor(Math.random() * 3);
+    let tt = t0;
+    for (let i = 0; i < n; i++) {
+      g.gain.linearRampToValueAtTime(0.03 * level, tt + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0004, tt + 0.06);
+      tt += 0.07 + Math.random() * 0.07;
+    }
+    src.connect(bp);
+    bp.connect(g);
+    if (pan) {
+      pan.pan.value = Math.random() * 1.8 - 0.9;
+      g.connect(pan).connect(master);
+    } else {
+      g.connect(master);
+    }
+    src.start(t0, Math.random() * 1.5);
+    src.stop(tt + 0.1);
+    src.onended = () => { src.disconnect(); bp.disconnect(); g.disconnect(); if (pan) pan.disconnect(); };
+  }
+
+  // "A way for the lightning of thunder" (Job 38:25): the roll comes a while
+  // after the flash — `delay` seconds — and the farther off the strike, the
+  // later and the softer it is. Deep noise under a low lowpass, swelling in
+  // and rolling away over a few seconds.
+  function thunder(delay = 3, dist = 80) {
+    if (!ctx || ctx.state !== 'running' || muted || !refs) return;
+    const t0 = ctx.currentTime + delay;
+    const loud = 0.22 * clamp(80 / dist, 0.5, 1.2);
+    const src = ctx.createBufferSource();
+    src.buffer = refs.rollBuf;
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(260, t0);
+    lp.frequency.exponentialRampToValueAtTime(90, t0 + 3.6);
+    lp.Q.value = 0.7;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(loud, t0 + 0.25);
+    g.gain.linearRampToValueAtTime(loud * 0.55, t0 + 0.9);
+    g.gain.linearRampToValueAtTime(loud * 0.8, t0 + 1.5);
+    g.gain.exponentialRampToValueAtTime(0.0004, t0 + 4.2);
+    src.connect(lp);
+    lp.connect(g).connect(master);
+    src.start(t0, Math.random() * 1.5);
+    src.stop(t0 + 4.4);
+    src.onended = () => { src.disconnect(); lp.disconnect(); g.disconnect(); };
+  }
+
+  // "Let me hear thy voice" (Song of Solomon 2:14): the dove in the cleft
+  // calls once each time she steps out to the walker — the turtledove's own
+  // coo, but given on being asked rather than called up by the wind.
+  function call() {
+    if (!ctx || ctx.state !== 'running' || muted || !refs) return;
+    coo();
+  }
+
   // The reverence chime: two soft bell tones, a fifth apart, when a walker
   // draws near the sacred trees — felt more than heard.
   function chime() {
@@ -439,6 +517,14 @@ export function createAmbience() {
       doveIn = 9 + Math.random() * 16;
       if (wind > 0.3 && night < 0.4 && rain < 0.2) coo();
     }
+
+    // The trees clap their hands while the gust is really going through
+    // them — quicker the stronger it blows (Isaiah 55:12).
+    clapIn -= step;
+    if (clapIn <= 0) {
+      clapIn = 0.25 + Math.random() * (1.4 - wind);
+      if (wind > 0.25 && rain < 0.5) clap(wind);
+    }
   }
 
   function state() {
@@ -449,5 +535,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, state };
+  return { update, setMuted, chime, thunder, call, state };
 }

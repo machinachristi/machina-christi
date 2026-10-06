@@ -66,6 +66,10 @@ import { createRocks } from './rocks.js';
 import { createSwallows } from './swallows.js';
 import { createSpices } from './spices.js';
 import { createStump } from './stump.js';
+import { createCleft } from './cleft.js';
+import { createHoney } from './honey.js';
+import { createOstrich } from './ostrich.js';
+import { createLightning } from './lightning.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -178,6 +182,17 @@ export async function createGarden(scene, rng) {
   const rocks = createRocks(scene, conies.homes);
   const spices = createSpices(scene);
   const stump = createStump(scene);
+  // v24: the dove in the clefts of the rock, in the secret places of the
+  // stairs (Song of Solomon 2:14); the honey the same rock keeps in a hollow
+  // of its far shoulder (Psalm 81:16, the freshly-generated idea this run —
+  // so it comes after the rock, which says where the hollow is); and the
+  // ostrich ranging the south with her eggs left in the dust behind her
+  // (Job 39:13-16). All three fold their spots into the one naming list,
+  // and each carries its own seeded stream, so building them here shifts
+  // nothing already planted.
+  const cleft = createCleft(scene);
+  const honey = createHoney(scene, cleft.honey);
+  const ostrich = createOstrich(scene);
   // The cedars move up here from further down (v22): the owl keeps her night
   // watch on their boughs, so the stand has to stand before she does. Their
   // own seeded stream means building them earlier shifts nothing planted.
@@ -192,6 +207,7 @@ export async function createGarden(scene, rng) {
     ...foxes.spots, olive.spot, ...springs.spots, ...mandrakes.spots,
     ...behemoth.spots, ...deeps.spots, ...ram.spots, ...rods.spots,
     ...wildvine.spots, ...rocks.spots, ...spices.spots, ...stump.spots,
+    ...cleft.spots, ...honey.spots, ...ostrich.spots,
   ]);
   const stones = createStones(scene);
   const mist = createMist(scene);
@@ -266,6 +282,9 @@ export async function createGarden(scene, rng) {
   // work it end to end, touching the water at the bottom of every beat. They
   // ride the course itself, so they need nothing built above them.
   const swallows = createSwallows(scene);
+  // v24 (Job 38:25): lightning kindled far off in the heaviest of a shower,
+  // and the thunder a while after it. It reads only the sky's own rain.
+  const lightning = createLightning(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -333,6 +352,10 @@ export async function createGarden(scene, rng) {
     swallows.update(dt, hour.t);
     spices.update(dt, hour.t);
     stump.update(hour.year);
+    cleft.update(dt, playerPos);
+    honey.update(dt, hour.night, hour.rain);
+    ostrich.update(dt, hour.sabbath);
+    lightning.update(dt, hour.rain);
     return hour;
   }
 
@@ -402,6 +425,10 @@ export async function createGarden(scene, rng) {
     swallows: swallows.state,
     spices: spices.state,
     stump: stump.state,
+    cleft: cleft.state,
+    honey: honey.state,
+    ostrich: ostrich.state,
+    lightning: lightning.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

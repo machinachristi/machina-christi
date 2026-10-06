@@ -159,6 +159,12 @@ await breathe();
 // re-armed only after the walker has properly drawn away again.
 let reverent = false;
 
+// The thunder and the dove's answer are both counted in the garden and
+// heard here: each new strike sends a roll after it (Job 38:25), each time
+// the dove steps out she calls once (Song of Solomon 2:14).
+let heardStrikes = 0;
+let heardCalls = 0;
+
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
 // creatures draw near; the first stir of input rises again. `forceSit` lets a
@@ -199,6 +205,16 @@ renderer.setAnimationLoop(() => {
     ambience.chime();
   } else if (garden.reverence < 0.12) {
     reverent = false;
+  }
+  const bolt = garden.lightning();
+  if (bolt.strikes !== heardStrikes) {
+    heardStrikes = bolt.strikes;
+    ambience.thunder(1.2 + bolt.dist / 32, bolt.dist);
+  }
+  const dove = garden.cleft();
+  if (dove.calls !== heardCalls) {
+    heardCalls = dove.calls;
+    ambience.call();
   }
   renderer.render(scene, camera);
 
@@ -387,6 +403,16 @@ window.__world = {
       swallows: garden.swallows(),
       spices: garden.spices(),
       stump: garden.stump(),
+      // v24: the dove in the cleft of the rock (Song of Solomon 2:14 —
+      // `shown` 0 to 1 as she steps out to whoever has come near, `calls`
+      // how many times she has answered), the honey in the same rock (Psalm
+      // 81:16), the ostrich and her eggs (Job 39:13-16 — `passes` counts the
+      // times she has run straight past them), and the lightning in the
+      // heaviest of a shower (Job 38:25 — `strikes` so far, `flash` 0 to 1).
+      cleft: garden.cleft(),
+      honey: garden.honey(),
+      ostrich: garden.ostrich(),
+      lightning: garden.lightning(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
