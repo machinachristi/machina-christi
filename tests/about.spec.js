@@ -10,13 +10,14 @@ function watchErrors(page) {
 }
 
 test.describe('about hub', () => {
-  test('loads and links to both sub-pages', async ({ page }) => {
+  test('loads and links to every sub-page', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/about.html');
     await expect(page.locator('h1')).toContainText('About');
     await expect(page.locator('a[href="about-camino.html"]')).toBeVisible();
     await expect(page.locator('a[href="about-eden.html"]')).toBeVisible();
     await expect(page.locator('a[href="about-ordo.html"]')).toBeVisible();
+    await expect(page.locator('a[href="about-pray.html"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -49,6 +50,15 @@ test.describe('about sub-pages', () => {
     await page.goto('/about-ordo.html');
     await expect(page.locator('h1')).toContainText('Ordo');
     await expect(page.locator('a[href="ordo.html"]')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('about-pray loads cleanly and links to the prayers', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/about-pray.html');
+    await expect(page.locator('h1')).toContainText('Pray');
+    await expect(page.locator('a[href="pray.html"]')).toBeVisible();
+    await expect(page.locator('blockquote')).toHaveCount(2);
     expect(errors).toEqual([]);
   });
 

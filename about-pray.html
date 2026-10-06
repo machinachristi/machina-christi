@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="About Pray, the Machina Christi page of classic Catholic prayers in Thai and English — because God can be honored in every language." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/about-pray.html" />
+  <meta property="og:title" content="About Pray" />
+  <meta property="og:description" content="About Pray, the Machina Christi page of classic Catholic prayers in Thai and English — because God can be honored in every language." />
+  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>Pray · About · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --marian:    138, 170, 222;
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(var(--marian), 0.13), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.75;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      margin-bottom: 3em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 0.7em 0 1.1em;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+    h2 {
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 3em 0 1.1em;
+      padding-bottom: 0.8em;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+    }
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+    p a { color: inherit; }
+
+    /* The Church's own words, set apart. */
+    figure { margin: 0 0 1.6em; max-width: 62ch; }
+    blockquote {
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.82);
+      border-left: 2px solid rgba(var(--marian), 0.45);
+      padding-left: 1.1em;
+    }
+    figcaption {
+      font-size: 14px;
+      color: rgba(232, 213, 163, 0.52);
+      padding-left: calc(1.1em + 2px);
+      margin-top: 0.4em;
+    }
+    figcaption a { color: inherit; }
+
+    a.enter {
+      display: inline-block;
+      margin-top: 0.8em;
+      font-size: 14px;
+      letter-spacing: 0.24em;
+      text-indent: 0.24em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+      text-decoration: none;
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      padding: 12px 30px;
+      background: rgba(201, 162, 39, 0.06);
+      transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    }
+    a.enter:hover, a.enter:focus-visible {
+      border-color: rgba(201, 162, 39, 0.85);
+      background: rgba(201, 162, 39, 0.14);
+      color: #fff;
+      box-shadow: 0 0 30px -8px rgba(var(--marian), 0.45);
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="about.html">&lsaquo; about</a>
+    <h1>Pray</h1>
+    <p>Pray sets the classic prayers of the Church side by side in Thai and English, phrase by phrase: the Thai, a guide to saying it, and the English beneath, with a voice that can read either one aloud. It began as a way to learn to pray in Thai.</p>
+    <p>It rests on something much older: God can be honored in every language. At Pentecost, the crowds gathered in Jerusalem from every nation marveled: &ldquo;we hear them speaking in our own tongues of the mighty acts of God&rdquo; (<a href="https://bible.usccb.org/bible/acts/2" target="_blank" rel="noopener">Acts 2:11</a>). The Church has prayed that way ever since.</p>
+    <p><a class="enter" href="pray.html">open the prayers</a></p>
+
+    <h2>Every tongue</h2>
+    <figure>
+      <blockquote>In the living tradition of prayer, each Church proposes to its faithful, according to its historic, social, and cultural context, a language for prayer: words, melodies, gestures, iconography.</blockquote>
+      <figcaption>&mdash; <a href="https://www.vatican.va/content/catechism/en/part_four/section_one/chapter_two/article_2.html" target="_blank" rel="noopener">Catechism of the Catholic Church, 2663</a></figcaption>
+    </figure>
+    <figure>
+      <blockquote>Even in the liturgy, the Church has no wish to impose a rigid uniformity in matters which do not implicate the faith or the good of the whole community; rather does she respect and foster the genius and talents of the various races and peoples.</blockquote>
+      <figcaption>&mdash; <a href="https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19631204_sacrosanctum-concilium_en.html" target="_blank" rel="noopener">Second Vatican Council, <cite>Sacrosanctum Concilium</cite>, 37</a></figcaption>
+    </figure>
+    <p>So the Our Father prayed in Thai is the very prayer Christ taught, offered in another tongue: one faith, one Lord, many voices.</p>
+
+    <h2>The texts</h2>
+    <p>The Thai prayers are the 2010 texts of Thailand&rsquo;s Catholic Commission for Liturgy, the words prayed at Mass across Thailand today. O Blood and Water, which has no text from the Commission, is taken from the Thai Divine Mercy prayers. The English is the traditional wording. Each prayer names its source at the foot of its page.</p>
+  </div>
+</body>
+</html>
