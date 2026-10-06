@@ -1,5 +1,5 @@
 {
-  "version": 23,
+  "version": 24,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -267,12 +267,24 @@
         { "text": "One tree in the garden is down, and out of the rim of the broken stock, close enough to the river to be within the scent of the water, tender shoots have come up. Through the whole turn of the year they thicken and draw back, but they never quite cease.", "source": "Job 14:7-9" },
         { "text": "All six butterflies now share one instanced mesh for their twelve wings and another for their bodies, which gives sixteen draw calls back to the budget before any of the above is spent.", "source": null }
       ]
+    },
+    {
+      "version": 24,
+      "date": "2026-10-06",
+      "focus": "the clefts of the rock",
+      "changes": [
+        { "text": "On the south-western rim a rock goes up in ledges like a stair, and a dove keeps the cleft near the top of it. From the meadow she is hardly there; come up to the foot of the stair and she steps out to the lip of her ledge, turns her face to you, and calls once.", "source": "Song of Solomon 2:14" },
+        { "text": "In the heaviest of a shower, lightning is now and then kindled far off past the rim and the garden is lit by it for a moment — and the thunder comes a while after, softer and later the farther off it struck.", "source": "Job 38:25" },
+        { "text": "An ostrich ranges the whole south of the garden at a run, stands a while and pecks wherever she fetches up, and runs on. Her eggs lie half sunk in the warm dust of a scrape on the open meadow, and once every round she goes straight past them without slowing.", "source": "Job 39:13-16" },
+        { "text": "As the evening wind goes through, every tree in the meadow shivers quickly on top of its slow lean, each to its own beat, and the leaves are heard striking together in short dry claps.", "source": "Isaiah 55:12" },
+        { "text": "High on the warm shoulder of the dove's rock, wild bees have built in a hollow: pale-gold combs hang in the dark of it, the honey has run down over the lip of the stone, and the bees work the air in front of it by day.", "source": "Psalm 81:16" }
+      ]
     }
   ],
   "next": [
-    "A dove in the clefts of the rock, in the secret places of the stairs (Song of Solomon 2:14)",
-    "Lightning kindled in the shower, and the thunder a while after it (Job 38:25)",
-    "The ostrich that leaves her eggs in the earth and warms them in dust (Job 39:13-16)",
-    "The trees of the field clapping their hands as the evening wind goes by (Isaiah 55:12)"
+    "A mustard tree grown greater than all the herbs, with the birds lodging in its branches (Matthew 13:31-32)",
+    "The eagle stirring up her nest and fluttering over her young (Deuteronomy 32:11)",
+    "Manna lying small and round about on the ground when the morning dew is gone up (Exodus 16:14)",
+    "The first rain and the latter rain, each in its own season of the long year (Deuteronomy 11:14)"
   ]
 }

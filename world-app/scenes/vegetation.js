@@ -17,6 +17,11 @@ import { windOf, gustAt } from './wind.js';
 const WIND_AXIS = new THREE.Vector3(0, 0, -1);
 const TREE_TILT = 0.16;    // radians at full gust, sacred trees (hinged at the ground)
 const CANOPY_TILT = 0.5;   // radians at full gust, background canopies (hinged at the trunk top)
+// "All the trees of the field shall clap their hands" (Isaiah 55:12, v24): on
+// top of the slow lean, every canopy shivers quickly while the gust is on it
+// — each at its own beat, so the meadow claps rather than sways in step.
+const CLAP_TILT = 0.075;   // radians of quick shiver at full gust
+const CLAP_RATE = 13;      // radians per second
 
 export const TREE_OF_LIFE_POS = new THREE.Vector3(-3.2, 0, -0.5);
 export const TREE_OF_KNOWLEDGE_POS = new THREE.Vector3(3.4, 0, 0.8);
@@ -400,7 +405,8 @@ export function createVegetation(scene, rng) {
       for (let i = 0; i < bases.length; i++) {
         const b = bases[i];
         const g = gustAt(cycleT, b.x, sabbath);
-        windQ.setFromAxisAngle(WIND_AXIS, g * CANOPY_TILT);
+        const clap = Math.sin(t * CLAP_RATE + b.yaw * 5) * Math.sin(t * 2.1 + b.x) * CLAP_TILT;
+        windQ.setFromAxisAngle(WIND_AXIS, g * (CANOPY_TILT + clap));
         yawQ.setFromAxisAngle(Y_AXIS, b.yaw);
         mixQ.multiplyQuaternions(windQ, yawQ);
         liftVec.set(0, b.lift, 0).applyQuaternion(windQ);
