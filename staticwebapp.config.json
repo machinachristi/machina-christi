@@ -23,6 +23,12 @@
       "headers": {
         "Cache-Control": "public, max-age=3600"
       }
+    },
+    {
+      "route": "/pray/*",
+      "headers": {
+        "Cache-Control": "public, max-age=3600"
+      }
     }
   ]
 }

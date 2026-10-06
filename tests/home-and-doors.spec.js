@@ -25,24 +25,26 @@ async function forceGameOver(page) {
 }
 
 test.describe('home page', () => {
-  test('structure: four portals, labels, hrefs, waymarks', async ({ page }) => {
+  test('structure: five portals, labels, hrefs, waymarks', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
     expect(await page.title()).toBe('Machina Christi');
 
-    await expect(page.locator('.portal')).toHaveCount(4);
+    await expect(page.locator('.portal')).toHaveCount(5);
     await expect(page.locator('.portal--camino')).toHaveAttribute('href', 'game.html');
     await expect(page.locator('.portal--eden')).toHaveAttribute('href', 'world.html');
     await expect(page.locator('.portal--about')).toHaveAttribute('href', 'about.html');
     await expect(page.locator('.portal--ordo')).toHaveAttribute('href', 'ordo.html');
+    await expect(page.locator('.portal--pray')).toHaveAttribute('href', 'pray.html');
     await expect(page.locator('.portal--camino .portal__title')).toContainText('Camino');
     await expect(page.locator('.portal--eden .portal__title')).toContainText('Eden');
     await expect(page.locator('.portal--about .portal__title')).toContainText('About');
     await expect(page.locator('.portal--ordo .portal__title')).toContainText('Ordo');
+    await expect(page.locator('.portal--pray .portal__title')).toContainText('Pray');
 
     // One waymark dot per portal; Eden, the second gate, stands centered on
     // arrival, so its (second) dot is the current one.
-    await expect(page.locator('.waymarks button')).toHaveCount(4);
+    await expect(page.locator('.waymarks button')).toHaveCount(5);
     await expect(page.locator('.waymarks button').nth(1)).toHaveAttribute('aria-current', 'true');
 
     // The strip itself must be swipeable (its content overflows it)…
