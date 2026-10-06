@@ -58,7 +58,7 @@ test.describe('about sub-pages', () => {
     await page.goto('/about-pray.html');
     await expect(page.locator('h1')).toContainText('Pray');
     await expect(page.locator('a[href="pray.html"]')).toBeVisible();
-    await expect(page.locator('blockquote')).toHaveCount(2);
+    await expect(page.locator('blockquote')).toHaveCount(3);
     expect(errors).toEqual([]);
   });
 
