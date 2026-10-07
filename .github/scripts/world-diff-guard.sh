@@ -55,27 +55,37 @@ echo
 fail=0
 
 # --- Guard 1: file scope -------------------------------------------------------
-# Allowed: anything under world-app/, the root manifest.json, and about-eden.html.
+# Allowed: anything under world-app/, the root manifest.json, and about-eden.html,
+# plus NEW (added, never modified/deleted/renamed) smoke-test files named
+# tests/world-<name>.spec.js. Existing tests stay untouchable so an unattended
+# run can add coverage for what it builds but can never weaken a test to get
+# green.
 echo "== Guard 1: file scope =="
 ALLOWED_RE='^(world-app/|manifest\.json$|about-eden\.html$)'
+NEW_TEST_RE='^tests/world-[a-z0-9-]+\.spec\.js$'
 changed_count=0
 out_of_scope=""
-while IFS= read -r f; do
+new_tests=""
+while IFS=$'\t' read -r status f; do
   [ -z "$f" ] && continue
   changed_count=$((changed_count + 1))
-  if [[ ! "$f" =~ $ALLOWED_RE ]]; then
-    out_of_scope="${out_of_scope}${f}"$'\n'
+  if [[ "$f" =~ $ALLOWED_RE ]]; then
+    continue
+  elif [ "$status" = "A" ] && [[ "$f" =~ $NEW_TEST_RE ]]; then
+    new_tests="${new_tests}${f}"$'\n'
+  else
+    out_of_scope="${out_of_scope}${status} ${f}"$'\n'
   fi
-done < <(git diff --name-only "$BASE_SHA" "$HEAD_REF")
+done < <(git diff --name-status --no-renames "$BASE_SHA" "$HEAD_REF")
 
 if [ -n "$out_of_scope" ]; then
   echo "::error::feat/world-* PR changes files outside the allowed Eden scope."
-  echo "Allowed scope: world-app/**, manifest.json, about-eden.html"
-  echo "Out-of-scope file(s):"
+  echo "Allowed scope: world-app/**, manifest.json, about-eden.html, and NEW tests/world-*.spec.js files"
+  echo "Out-of-scope change(s) (status file):"
   printf '%s' "$out_of_scope" | sed 's/^/  /'
   fail=1
 else
-  echo "OK — all ${changed_count} changed file(s) are within world-app/**, manifest.json, about-eden.html"
+  echo "OK — all ${changed_count} changed file(s) are within scope"
 fi
 echo
 
@@ -97,6 +107,29 @@ if [ -n "$hits" ]; then
   fail=1
 else
   echo "OK — no disallowed network/eval/dynamic-import patterns in added lines"
+fi
+echo
+
+# A new spec file is code that runs on the CI runner (not just in a browser), so
+# it gets a stricter scan: no shelling out, env/secret reads, filesystem or raw
+# network access. Page-side work goes through page.evaluate(), which Guard 2
+# above already screens for fetch(/eval(/import(.
+echo "== Guard 3: new test files (runner-side code) =="
+TEST_PATTERN='child_process|process\.env|(^|[^[:alnum:]_])(exec|execSync|spawn|spawnSync|fork)[[:space:]]*\(|require[[:space:]]*\([[:space:]]*[^)]*\)|(^|[^[:alnum:]_])import[[:space:]]+[^;]*from|writeFile|appendFile|createWriteStream|unlink|rmSync|https?://|wss?://|(^|[^[:alnum:]_])(fetch|eval)[[:space:]]*\(|XMLHttpRequest|new[[:space:]]+Function[[:space:]]*\('
+test_hits=""
+while IFS= read -r tf; do
+  [ -z "$tf" ] && continue
+  lines="$(git diff "$BASE_SHA" "$HEAD_REF" -- "$tf" | grep '^+' | grep -v '^+++' || true)"
+  # The one require every spec needs.
+  h="$(printf '%s\n' "$lines" | grep -nE "$TEST_PATTERN" | grep -vF "require('@playwright/test')" | grep -vF 'require("@playwright/test")' || true)"
+  [ -n "$h" ] && test_hits="${test_hits}${tf}:"$'\n'"${h}"$'\n'
+done <<< "$new_tests"
+if [ -n "$test_hits" ]; then
+  echo "::error::Disallowed pattern in a new tests/world-*.spec.js file."
+  printf '%s' "$test_hits" | sed 's/^/  /'
+  fail=1
+else
+  echo "OK — new test files (if any) contain no runner-side shell/env/fs/network patterns"
 fi
 echo
 
