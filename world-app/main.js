@@ -125,8 +125,8 @@ function updateCompanion(dt) {
     }
   }
 
-  // camYaw = 0: `move` is already a world-space direction, not camera-space.
-  companion.update(dt, move, 0, garden.heightAt, garden.radius);
+  // camYaw = null: `move` is already a world-space direction, not camera-space.
+  companion.update(dt, move, null, garden.heightAt, garden.radius);
 }
 
 window.addEventListener('resize', () => {
@@ -190,6 +190,7 @@ function updateStillness(dt) {
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
+  controls.update(dt);
   updateStillness(dt);
   character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
   updateCompanion(dt);
@@ -235,6 +236,10 @@ window.__world = {
       pos: { x: character.group.position.x, y: character.group.position.y, z: character.group.position.z },
       cam: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       camDist: camera.position.distanceTo(character.group.position),
+      // How the walker presently goes (v25, Isaiah 40:31): `gait` is what the
+      // input asks for — 'still' | 'walk' | 'quick' — and `speed` the pace
+      // actually reached, m/s (eased toward that gait's own steady pace).
+      walk: { gait: character.gait, speed: character.speed },
       companion: {
         character: eve ? 'adam' : 'eve',
         pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
@@ -249,7 +254,12 @@ window.__world = {
       // The weather (v7): how deep into a shower the garden is (0 dry → 1),
       // and where each drifting cloud presently lays its shade. `clearing`
       // (v13, Job 26:8) eases 1→0 in the minutes right after a shower passes.
-      weather: { rain: garden.hour.rain, shade: garden.hour.shade, clearing: garden.hour.clearing },
+      // `season` (v25, Deuteronomy 11:14): how deep the long year stands in
+      // the first rain's season and in the latter rain's, 0..1 each.
+      weather: {
+        rain: garden.hour.rain, shade: garden.hour.shade, clearing: garden.hour.clearing,
+        season: garden.hour.season,
+      },
       // The signs' slow wheel through the long year (Genesis 1:14), radians.
       heavens: { wheel: garden.hour.wheel },
       // The ambience (audio.js): supported/muted/actually-running.
@@ -413,6 +423,14 @@ window.__world = {
       honey: garden.honey(),
       ostrich: garden.ostrich(),
       lightning: garden.lightning(),
+      // v25: the mustard grown into a tree, with the birds lodging in it
+      // (Matthew 13:31-32); the manna found lying as the dew goes up (Exodus
+      // 16:14 — `lay` 0 to 1, and 0 all through a sabbath); and the eagle's
+      // crag with her young in the nest (Deuteronomy 32:11 — `stir` 0 to 1
+      // while she hangs over them; her own mode rides on `fauna.eagle`).
+      mustard: garden.mustard(),
+      manna: garden.manna(),
+      eyrie: garden.eyrie(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -463,7 +481,12 @@ window.__world = {
   // where the follow camera settles — screenshots become composable.
   teleport(x, z, facing) {
     character.group.position.set(x, garden.heightAt(x, z), z);
-    if (typeof facing === 'number') character.group.rotation.y = facing;
+    if (typeof facing === 'number') {
+      character.group.rotation.y = facing;
+      // The camera's own slower yaw (v25) takes the new facing outright, so
+      // it settles in behind as promptly as it always did.
+      rig.yaw = facing;
+    }
     return this.getState().pos;
   },
   // Reads back a grid of drawing-buffer pixels right after an explicit

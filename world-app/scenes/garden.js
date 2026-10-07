@@ -70,6 +70,9 @@ import { createCleft } from './cleft.js';
 import { createHoney } from './honey.js';
 import { createOstrich } from './ostrich.js';
 import { createLightning } from './lightning.js';
+import { createMustard } from './mustard.js';
+import { createManna } from './manna.js';
+import { createEyrie } from './eyrie.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -193,6 +196,13 @@ export async function createGarden(scene, rng) {
   const cleft = createCleft(scene);
   const honey = createHoney(scene, cleft.honey);
   const ostrich = createOstrich(scene);
+  // v25: the mustard grown into a tree with the birds of the air lodging
+  // in it (Matthew 13:31-32), and the manna found lying on the meadow as the
+  // dew goes up (Exodus 16:14) — both built here, before the creatures, so
+  // their spots fold into the one naming list. Each carries its own seeded
+  // stream, so building them here shifts nothing already planted.
+  const mustard = createMustard(scene);
+  const manna = createManna(scene);
   // The cedars move up here from further down (v22): the owl keeps her night
   // watch on their boughs, so the stand has to stand before she does. Their
   // own seeded stream means building them earlier shifts nothing planted.
@@ -208,7 +218,13 @@ export async function createGarden(scene, rng) {
     ...behemoth.spots, ...deeps.spots, ...ram.spots, ...rods.spots,
     ...wildvine.spots, ...rocks.spots, ...spices.spots, ...stump.spots,
     ...cleft.spots, ...honey.spots, ...ostrich.spots,
+    ...mustard.spots, ...manna.spots,
   ]);
+  // v25 (Deuteronomy 32:11): the crag under the eagle's nest, and her two
+  // young in it. Built after the creatures because it answers to her — it
+  // is told each frame whether she is stirring them up — and on its own
+  // seeded stream, so nothing already planted shifts.
+  const eyrie = createEyrie(scene);
   const stones = createStones(scene);
   const mist = createMist(scene);
   await breathe();
@@ -356,6 +372,9 @@ export async function createGarden(scene, rng) {
     honey.update(dt, hour.night, hour.rain);
     ostrich.update(dt, hour.sabbath);
     lightning.update(dt, hour.rain);
+    mustard.update(dt);
+    manna.update(dt, hour.t, hour.sabbath);
+    eyrie.update(dt, creatures.eagleMode());
     return hour;
   }
 
@@ -429,6 +448,9 @@ export async function createGarden(scene, rng) {
     honey: honey.state,
     ostrich: ostrich.state,
     lightning: lightning.state,
+    mustard: mustard.state,
+    manna: manna.state,
+    eyrie: eyrie.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

@@ -1,5 +1,5 @@
 {
-  "version": 24,
+  "version": 25,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -279,12 +279,29 @@
         { "text": "As the evening wind goes through, every tree in the meadow shivers quickly on top of its slow lean, each to its own beat, and the leaves are heard striking together in short dry claps.", "source": "Isaiah 55:12" },
         { "text": "High on the warm shoulder of the dove's rock, wild bees have built in a hollow: pale-gold combs hang in the dark of it, the honey has run down over the lip of the stone, and the bees work the air in front of it by day.", "source": "Psalm 81:16" }
       ]
+    },
+    {
+      "version": 25,
+      "date": "2026-10-07",
+      "focus": "the steps ordered",
+      "changes": [
+        { "text": "Adam no longer walks faster or slower with every small movement of the thumb. Any drag is one steady walk, and only a drag pushed clearly out — or Shift on a keyboard — quickens him into a longer stride; whichever pace it is, it holds for as long as the finger does.", "source": "Psalm 37:23" },
+        { "text": "A drag or a key to the right now turns him to the right. Ever since the garden was first walked, right and left had been swapped on the screen, so he went off the opposite way to the thumb.", "source": "Isaiah 30:21" },
+        { "text": "A long drag no longer runs the thumb off the edge of the screen: the place it started now follows on behind the finger, and his heading is eased, so a nervous thumb no longer zigzags him across the grass.", "source": "Psalm 18:36" },
+        { "text": "The view swings round behind him more slowly than he turns, so a drag held to one side carves a wide, calm curve — about a quarter of the old turning rate — instead of spinning him on the spot; and a drag back toward the view walks him straight back toward it, where before it only turned him round and round where he stood.", "source": "Proverbs 4:26" },
+        { "text": "He slows to wade only in the river itself. The low dry hollows of the meadow used to slow him too, so his pace seemed to change for no reason on open grass.", "source": "Isaiah 40:31" },
+        { "text": "South of the meadow's heart a mustard has grown past every herb round it into a tree — many stems out of one root, a broad low crown yellow with its own small flowers — and the birds of the air lodge in it, turning on their twigs and hopping now and then from one to another.", "source": "Matthew 13:31-32" },
+        { "text": "The eagle's nest now stands on a crag of its own on the south-western rim, with two young in it. Before she leaves them in the morning, and once on every round of her day's circuit, she comes down and hangs over the nest beating her spread wings, and the young stretch up toward her until she goes.", "source": "Deuteronomy 32:11" },
+        { "text": "As the dew goes up in the morning, small white rounds are found lying in patches over the meadow, and by the heat of the noon they have melted away. Come up to a patch and it is named; on the seventh day there is none.", "source": "Exodus 16:14" },
+        { "text": "The long year now has its two seasons of rain: the first rain in the autumn turn and the latter rain in the spring, when the dry spells between showers shorten and the showers themselves run longer.", "source": "Deuteronomy 11:14" },
+        { "text": "Whenever a lamb sets out across the meadow it goes the first few strides in skips, all four feet off the grass at once, before it settles into a walk.", "source": "Psalm 114:4" }
+      ]
     }
   ],
   "next": [
-    "A mustard tree grown greater than all the herbs, with the birds lodging in its branches (Matthew 13:31-32)",
-    "The eagle stirring up her nest and fluttering over her young (Deuteronomy 32:11)",
-    "Manna lying small and round about on the ground when the morning dew is gone up (Exodus 16:14)",
-    "The first rain and the latter rain, each in its own season of the long year (Deuteronomy 11:14)"
+    "Easy start and stop for Adam: a gentle first step, a clean halt that never skates, tap the ground to walk there (he goes, and stops on arrival), and stopping of his own accord beside a creature he has come up to (Proverbs 16:9)",
+    "A hind sure-footed on the high places, picking her way along the lower ledges of the eagle's crag (Habakkuk 3:19)",
+    "Fields white already to harvest: the grain ripening from green to pale gold over the long year (John 4:35)",
+    "After a shower, the small rain lying on the tender herb — the meadow greener and brighter for a while where it fell (Deuteronomy 32:2)"
   ]
 }

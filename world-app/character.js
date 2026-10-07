@@ -7,8 +7,14 @@
 
 import * as THREE from 'three';
 import { clamp, damp, shortestAngle } from './util.js';
+import { riverEdgeDist } from './scenes/terrain.js';
 
-const MAX_SPEED = 3.6;      // m/s at full drag
+// Two gaits, not a continuous speed (v25, Psalm 37:23): any input is the
+// steady walk, and only a clearly extended drag (or Shift) the quickened
+// pace. Each pace holds constant for as long as the input does.
+const WALK_SPEED = 3.0;     // m/s, the steady walk
+const QUICK_SPEED = 4.6;    // m/s, the quickened pace (Isaiah 40:31)
+const STRIDE_REF = 3.6;     // the speed the stride animation was drawn for
 const TURN_LAMBDA = 9;      // how eagerly the body turns to face travel
 const WALK_FREQ = 3.1;      // stride cycles per second at full speed
 
@@ -83,8 +89,11 @@ export function createCharacter({ eve = false } = {}) {
   let sitting = false;
   let seat = 0;             // 0 standing → 1 fully settled; damped, never a snap
 
-  // move: camera-space input { x: right, z: forward, |v| ≤ 1 }.
-  // camYaw: yaw of the camera's view line, from the rig.
+  let gait = 'still';       // still | walk | quick — what the input asks for
+
+  // move: camera-space input { x: right, z: forward, |v| ≤ 1, quick? }.
+  // camYaw: yaw of the camera's view line, from the rig — or null when
+  // `move` is already a world-space direction (the companion's own walks).
   function update(dt, move, camYaw, heightAt, boundsRadius) {
     // Seated, the figure neither walks nor turns — it rests where it is.
     if (sitting) move = { x: 0, z: 0 };
@@ -93,16 +102,31 @@ export function createCharacter({ eve = false } = {}) {
     if (mag > 0.001) {
       // Rotate camera-space input into the world: "drag up" is always
       // "away from the camera", whichever way the body currently faces.
-      const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
-      const wx = cos * move.x + sin * move.z;
-      const wz = -sin * move.x + cos * move.z;
+      // The view's forward is (sin, cos) and — three.js's lookAt builds the
+      // camera's right as up × back — its right is (−cos, sin). Until v25
+      // the right was taken as (cos, −sin), so every drag or key to the
+      // right walked him off to the left of the screen and the reverse
+      // (Isaiah 30:21: "when ye turn to the right hand, and when ye turn to
+      // the left").
+      let wx = move.x, wz = move.z;
+      if (camYaw !== null) {
+        const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
+        wx = -cos * move.x + sin * move.z;
+        wz = sin * move.x + cos * move.z;
+      }
       const targetYaw = Math.atan2(wx, wz);
       group.rotation.y += shortestAngle(group.rotation.y, targetYaw) * (1 - Math.exp(-TURN_LAMBDA * dt));
     }
 
     // Wading slows the stride: below the banks the water takes its share.
-    const wading = group.position.y < -0.6;
-    speed = damp(speed, mag * MAX_SPEED * (wading ? 0.6 : 1), 6, dt);
+    // Only in the water itself (wake.js's own test) — a dry hollow that
+    // merely lies low used to slow him too, which read as his pace changing
+    // for no reason on open grass (v25).
+    const wading = group.position.y < -0.6
+      && riverEdgeDist(group.position.x, group.position.z) <= 0;
+    gait = mag > 0.001 ? (move.quick ? 'quick' : 'walk') : 'still';
+    const pace = gait === 'quick' ? QUICK_SPEED : WALK_SPEED;
+    speed = damp(speed, mag * pace * (wading ? 0.6 : 1), 6, dt);
 
     // Walk along the facing direction — turning carves smooth arcs.
     if (speed > 0.01) {
@@ -119,7 +143,8 @@ export function createCharacter({ eve = false } = {}) {
     group.position.y = heightAt(group.position.x, group.position.z);
 
     // Stride: limbs swing opposite pairs; a light bob; a slight lean forward.
-    const stride = speed / MAX_SPEED;
+    // The quickened pace lengthens and quickens the stride past the walk's.
+    const stride = Math.min(speed / STRIDE_REF, 1.3);
     phase += dt * WALK_FREQ * Math.PI * 2 * (0.35 + 0.65 * stride) * (stride > 0.02 ? 1 : 0);
     idle += dt;
 
@@ -131,11 +156,11 @@ export function createCharacter({ eve = false } = {}) {
 
     const breathe = Math.sin(idle * 1.7) * 0.012;
     torso.position.y = 0.9 + Math.abs(Math.cos(phase)) * 0.05 * stride + breathe;
-    torso.rotation.x = 0.10 * stride;
+    torso.rotation.x = 0.10 * Math.min(stride, 1) + 0.12 * Math.max(0, stride - 1);
 
     // At rest the arms settle just off the body.
-    armL.rotation.z = 0.10 + Math.sin(idle * 1.7) * 0.015 * (1 - stride);
-    armR.rotation.z = -0.10 - Math.sin(idle * 1.7) * 0.015 * (1 - stride);
+    armL.rotation.z = 0.10 + Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
+    armR.rotation.z = -0.10 - Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
 
     // Sitting down by the water: hips fold so the legs reach forward along the
     // ground, the torso settles and leans back a touch, and the hands come
@@ -158,6 +183,7 @@ export function createCharacter({ eve = false } = {}) {
   return {
     group, update, setSitting,
     get speed() { return speed; },
+    get gait() { return gait; },
     get sitting() { return sitting; },
   };
 }
