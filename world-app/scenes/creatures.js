@@ -14,7 +14,8 @@ import * as THREE from 'three';
 import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
 import { OLIVE_BOUGH } from './olive.js';
-import { clamp, damp, shortestAngle, mulberry32 } from '../util.js';
+import { EYRIE } from './eyrie.js';
+import { clamp, damp, shortestAngle, mulberry32, smoothstep } from '../util.js';
 
 // Two beds of blossom the bees keep to — open meadow south of the river,
 // inside the flower band. Exported so the ambience can hum near them too.
@@ -678,15 +679,26 @@ export function createCreatures(scene, rng, staticNamables = []) {
   const eagle = makeBird(0x5C4630);
   eagle.group.scale.setScalar(2.4);
   group.add(eagle.group);
-  const EAGLE_NEST = (() => {
-    const x = -38, z = -30;
-    return new THREE.Vector3(x, heightAt(x, z) + 22, z);
-  })();
+  // v25: her nest now stands on a crag of its own (scenes/eyrie.js, Job
+  // 39:28) rather than in the open air, and the crag says where it is.
+  const EAGLE_NEST = EYRIE.clone();
   const eagleOrbit = {
     cx: 0, cz: 0, radius: 46, height: 30, speed: 0.05,
     theta: eagleRng() * Math.PI * 2, flap: eagleRng() * Math.PI * 2,
   };
-  let eagleMode = 'fly';   // fly | toNest | nest | toFly
+  let eagleMode = 'fly';   // fly | toNest | nest | toYoung | stir | toFly
+  // "As an eagle stirreth up her nest, fluttereth over her young, spreadeth
+  // abroad her wings" (Deuteronomy 32:11): she hangs over the nest beating
+  // her wings before she leaves it each morning, and again once on every
+  // round of her circuit as it brings her past the crag. All of it is timed
+  // off her own orbit and the clock — no fresh draw from any stream.
+  const STIR_FOR = 7;                // seconds she hangs over them each time
+  const STIR_HOVER = new THREE.Vector3(EAGLE_NEST.x, EAGLE_NEST.y + 2.1, EAGLE_NEST.z);
+  const NEST_BEARING = Math.atan2(EAGLE_NEST.z - eagleOrbit.cz, EAGLE_NEST.x - eagleOrbit.cx);
+  let stirLeft = 0;
+  let stirCool = 30;                 // she never comes straight back down to them
+  let eagleSide = null;              // which side of the crag's bearing her orbit is on
+  let eagleStirs = 0;                // how many times she has stirred them up
 
   // A raven, black-winged, on its own smaller circuit under the eagle's —
   // "Who provideth for the raven his food? when his young ones cry unto God,
@@ -905,8 +917,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
     for (let i = 0; i < grazers.length; i++) {
       const G = grazers[i];
       const p = G.group.position;
-      // The disc sat 0.02 above each animal's own origin, and still does.
-      shadowP.set(p.x, p.y + 0.02, p.z);
+      // The disc sat 0.02 above each animal's own origin, and still does —
+      // less a lamb's skip (v25), so the shadow stays down on the grass.
+      shadowP.set(p.x, p.y - (G.hop || 0) + 0.02, p.z);
       shadowS.set(G.shadowR, 1, G.shadowR);
       shadowMesh.setMatrixAt(i, shadowM.compose(shadowP, shadowQ, shadowS));
     }
@@ -1138,6 +1151,8 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // How close the walker must come before a wary creature (the wild ass,
   // Job 39:5-8) breaks off and puts ground between them.
   const WARY_RADIUS = 6;
+  // How high a lamb's skip carries it (Psalm 114:4).
+  const LAMB_SKIP = 0.24;
   // How near the flock the lion is content to be before it lies down among
   // them (Isaiah 11:6-7).
   const LION_NEAR = 3.2;
@@ -1331,8 +1346,26 @@ export function createCreatures(scene, rng, staticNamables = []) {
     // to its lofty nest at dusk (Job 39:27).
     {
       const o = eagleOrbit;
+      stirCool = Math.max(0, stirCool - dt);
       if (night > 0.45 && eagleMode !== 'nest' && eagleMode !== 'toNest') eagleMode = 'toNest';
-      else if (night < 0.18 && eagleMode === 'nest') eagleMode = 'toFly';
+      else if (night < 0.18 && eagleMode === 'nest') {
+        // Morning: before she goes, she stirs up the nest (Deuteronomy 32:11).
+        eagleMode = 'stir';
+        stirLeft = STIR_FOR;
+        eagleStirs++;
+      }
+
+      if (eagleMode === 'fly') {
+        // Once a round her circuit brings her past the crag's bearing, and
+        // she breaks off it and goes down to her young.
+        const side = Math.sign(shortestAngle(NEST_BEARING, o.theta) * (o.speed || 1));
+        if (eagleSide !== null && side > 0 && eagleSide <= 0 && stirCool <= 0) {
+          eagleMode = 'toYoung';
+        }
+        eagleSide = side;
+      } else {
+        eagleSide = null;
+      }
 
       if (eagleMode === 'fly') {
         o.theta += o.speed * dt * REST;
@@ -1357,6 +1390,27 @@ export function createCreatures(scene, rng, staticNamables = []) {
         const settle = 1.1 + Math.sin(t * 1.6) * 0.03;
         eagle.wingL.rotation.z = settle;
         eagle.wingR.rotation.z = -settle;
+      } else if (eagleMode === 'toYoung') {
+        const left = glideToward(eagle, STIR_HOVER, dt);
+        o.flap += dt * 1.6;
+        const flap = Math.sin(o.flap) * 0.25 + 0.1;
+        eagle.wingL.rotation.z = flap;
+        eagle.wingR.rotation.z = -flap;
+        if (left < 0.3) { eagleMode = 'stir'; stirLeft = STIR_FOR; eagleStirs++; }
+      } else if (eagleMode === 'stir') {
+        // She hangs over the nest with her wings spread wide, beating them
+        // quick and shallow, turning slowly about above her young.
+        stirLeft -= dt;
+        const p = eagle.group.position;
+        p.x = damp(p.x, STIR_HOVER.x + Math.sin(t * 0.9) * 0.25, 2.5, dt);
+        p.y = damp(p.y, STIR_HOVER.y + Math.sin(t * 3.1) * 0.18, 2.5, dt);
+        p.z = damp(p.z, STIR_HOVER.z + Math.cos(t * 0.9) * 0.25, 2.5, dt);
+        eagle.group.rotation.y += dt * 0.35;
+        o.flap += dt * 8.5;
+        const flap = Math.sin(o.flap) * 0.42 + 0.05;
+        eagle.wingL.rotation.z = flap;
+        eagle.wingR.rotation.z = -flap;
+        if (stirLeft <= 0) { eagleMode = 'toFly'; stirCool = 60; }
       } else if (eagleMode === 'toFly') {
         o.theta += o.speed * dt * REST;
         orbitPoint.set(
@@ -1579,6 +1633,7 @@ export function createCreatures(scene, rng, staticNamables = []) {
 
     // Grazers: graze a while, wander to a new patch, graze again.
     for (const G of grazers) {
+      G.hop = 0;   // a lamb's skip (v25) is set afresh, only by the walk below
       // The lion — and now the wolf too (v18, Isaiah 11:6) — keeps company
       // with the flock, and the fear between them is not yet (Isaiah
       // 11:6-7). Neither hunts the lambs nor startles at the walker: each
@@ -1793,7 +1848,26 @@ export function createCreatures(scene, rng, staticNamables = []) {
         for (let i = 0; i < 4; i++) {
           G.legs[i].rotation.x = Math.sin(G.phase + (i % 2) * Math.PI) * 0.45;
         }
+        // "The little hills like lambs" (Psalm 114:4): a lamb sets out on
+        // every walk with a few skips — all four feet off the grass at once,
+        // legs tucked — before it settles into an ordinary walk. Timed off
+        // how long this walk has run (the walk's cap counts down from 40),
+        // so no stream is drawn on.
+        if (G.kind === 'lamb') {
+          const since = 40 - G.until;
+          const skip = 1 - smoothstep(1.4, 2.6, since);
+          if (skip > 0.001) {
+            // Its own beat from the walk's first instant (about two skips a
+            // second), so the first frame of a walk starts on the grass.
+            const hop = Math.abs(Math.sin(since * Math.PI * 2.2));
+            G.hop = hop * LAMB_SKIP * skip;
+            p.y += G.hop;
+            for (let i = 0; i < 4; i++) G.legs[i].rotation.x *= 1 - 0.6 * skip * hop;
+          }
+        }
         if (dist < 0.5 || G.until <= 0) {
+          p.y -= G.hop;          // never left standing on air if it arrives mid-skip
+          G.hop = 0;
           G.mode = 'graze';
           G.until = 2.5 + rng() * 4;
           for (const leg of G.legs) leg.rotation.x = 0;
@@ -1813,6 +1887,9 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // report where they presently stand, so a test can walk right up to one.
   function fauna() {
     return {
+      // v25 (Deuteronomy 32:11): the eagle's own mode — 'stir' while she
+      // hangs over her young beating her wings — and how often she has.
+      eagle: { mode: eagleMode, stirs: eagleStirs },
       // `leaf` rides along from v21 so the olive's errand is legible from
       // outside: true only while the one dove that keeps it is carrying a
       // leaf home (Genesis 8:11).
@@ -1851,5 +1928,5 @@ export function createCreatures(scene, rng, staticNamables = []) {
     return named ? { name: named.name, label: named.label, kind: named.kind } : null;
   }
 
-  return { update, fauna, named: namedNow };
+  return { update, fauna, named: namedNow, eagleMode: () => eagleMode };
 }

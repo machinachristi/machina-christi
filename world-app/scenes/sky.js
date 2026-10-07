@@ -59,6 +59,28 @@ for (const s of STOPS) for (const k of COLOR_KEYS) s[k] = new THREE.Color(s[k]);
 
 const PHASE_TIMES = { dawn: 0.985, morning: 0.10, noon: 0.33, evening: 0.53, dusk: 0.64, night: 0.80 };
 
+// "The first rain and the latter rain" (Deuteronomy 11:14), each in its own
+// season of the long year: the first rain in the autumn turn, after the fig
+// has stood in full summer leaf (fig.js) and before the cold turn the
+// hoarfrost keeps (hoarfrost.js, 0.74); the latter rain in the spring,
+// toward the year's end, before the branch is tender again. Through either
+// season the dry spells between showers shorten and the showers lengthen;
+// the rest of the year keeps its long dry spells as before. 0..1 each.
+const FIRST_RAIN = 0.54;
+const LATTER_RAIN = 0.93;
+const RAIN_SEASON_HALF = 0.08;
+function rainSeasonNear(year, centre) {
+  const y = ((year % 1) + 1) % 1;
+  let d = Math.abs(y - centre);
+  if (d > 0.5) d = 1 - d;                           // the year is a circle
+  return 1 - smoothstep(RAIN_SEASON_HALF * 0.5, RAIN_SEASON_HALF, d);
+}
+export function rainSeasonOf(year, out = { first: 0, latter: 0 }) {
+  out.first = rainSeasonNear(year, FIRST_RAIN);
+  out.latter = rainSeasonNear(year, LATTER_RAIN);
+  return out;
+}
+
 function phaseOf(t) {
   if (t >= 0.945 || t < 0.03) return 'dawn';
   if (t < 0.24) return 'morning';
@@ -433,6 +455,7 @@ export function createSky(scene) {
   const state = {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
     day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase, eveningStar: 0, year: 0,
+    season: { first: 0, latter: 0 },
   };
   let t = START_T;
   let elapsed = 0;
@@ -591,16 +614,22 @@ export function createSky(scene) {
     state.sabbath = state.day % WEEK_DAYS === 0;
 
     // The shower clock: long dry spells, a brief gentle rain, eased edges.
-    // A forced level (setRain) eases in faster, so tests never idle.
+    // A forced level (setRain) eases in faster, so tests never idle. In the
+    // seasons of the first and the latter rain (v25, Deuteronomy 11:14) the
+    // same draws are simply scaled — dry spells shorter, showers longer — so
+    // the stream itself is untouched; and the first shower of any visit
+    // still keeps its distance, whatever the season.
+    const season = rainSeasonOf(state.year, state.season);
+    const wet = Math.max(season.first, season.latter);
     let target;
     if (rainForced !== null) {
       target = rainForced;
     } else {
       if (showerFor > 0) {
         showerFor -= dt;
-        if (showerFor <= 0) showerIn = 210 + rainRng() * 260;
+        if (showerFor <= 0) showerIn = (210 + rainRng() * 260) * (1 - 0.5 * wet);
       } else if ((showerIn -= dt) <= 0) {
-        showerFor = 22 + rainRng() * 18;
+        showerFor = (22 + rainRng() * 18) * (1 + 0.45 * wet);
       }
       target = showerFor > 0 ? 1 : 0;
     }
