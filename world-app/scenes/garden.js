@@ -73,6 +73,9 @@ import { createLightning } from './lightning.js';
 import { createMustard } from './mustard.js';
 import { createManna } from './manna.js';
 import { createEyrie } from './eyrie.js';
+import { createHind } from './hind.js';
+import { createAcacia } from './acacia.js';
+import { createTender } from './tender.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -86,7 +89,11 @@ export async function createGarden(scene, rng) {
 
   const sky = createSky(scene);
   await breathe();
-  createTerrain(scene, rng);
+  const terrain = createTerrain(scene, rng);
+  // v26 (Deuteronomy 32:2): the ground's own material answers the rain — the
+  // grass stands greener for a while after a shower. No geometry, no draws,
+  // no stream draws.
+  const tender = createTender(terrain.mesh.material);
   await breathe();
   const water = createWater(scene);   // draws its own course from terrain's riverCourse()
   await breathe();
@@ -203,6 +210,14 @@ export async function createGarden(scene, rng) {
   // stream, so building them here shifts nothing already planted.
   const mustard = createMustard(scene);
   const manna = createManna(scene);
+  // v26: the hind keeping the stair of ledges under the eagle's crag
+  // (Habakkuk 3:19), and the shittah trees on the dry southern rim (Isaiah
+  // 41:19, the freshly-generated idea this run — they keep clear of
+  // vegetation's own tree spots, so they come after the planting). Both
+  // fold their spots into the one naming list, and each carries its own
+  // seeded stream, so building them here shifts nothing already planted.
+  const hind = createHind(scene);
+  const acacia = createAcacia(scene, vegetation.treeSpots);
   // The cedars move up here from further down (v22): the owl keeps her night
   // watch on their boughs, so the stand has to stand before she does. Their
   // own seeded stream means building them earlier shifts nothing planted.
@@ -218,7 +233,7 @@ export async function createGarden(scene, rng) {
     ...behemoth.spots, ...deeps.spots, ...ram.spots, ...rods.spots,
     ...wildvine.spots, ...rocks.spots, ...spices.spots, ...stump.spots,
     ...cleft.spots, ...honey.spots, ...ostrich.spots,
-    ...mustard.spots, ...manna.spots,
+    ...mustard.spots, ...manna.spots, ...hind.spots, ...acacia.spots,
   ]);
   // v25 (Deuteronomy 32:11): the crag under the eagle's nest, and her two
   // young in it. Built after the creatures because it answers to her — it
@@ -341,7 +356,7 @@ export async function createGarden(scene, rng) {
     wealth.update(dt);
     nests.update(dt);
     waterTree.update(hour.t, hour.sabbath);
-    grain.update(hour.t, hour.sabbath);
+    grain.update(hour.t, hour.sabbath, hour.year);
     storks.update(dt);
     locusts.update(dt);
     puddles.update(dt, hour.rain);
@@ -375,6 +390,8 @@ export async function createGarden(scene, rng) {
     mustard.update(dt);
     manna.update(dt, hour.t, hour.sabbath);
     eyrie.update(dt, creatures.eagleMode());
+    hind.update(dt, hour.sabbath);
+    tender.update(dt, hour.rain);
     return hour;
   }
 
@@ -389,6 +406,7 @@ export async function createGarden(scene, rng) {
     constellations: sky.constellations,
     fauna: creatures.fauna,
     named: creatures.named,
+    namedThing: creatures.namedThing,
     gate: gate.state,
     reeds: reeds.count,
     presence: presence.state,
@@ -451,6 +469,10 @@ export async function createGarden(scene, rng) {
     mustard: mustard.state,
     manna: manna.state,
     eyrie: eyrie.state,
+    grain: grain.state,
+    hind: hind.state,
+    acacia: acacia.state,
+    tender: tender.state,
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

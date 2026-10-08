@@ -1,5 +1,5 @@
 {
-  "version": 25,
+  "version": 26,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -296,12 +296,27 @@
         { "text": "The long year now has its two seasons of rain: the first rain in the autumn turn and the latter rain in the spring, when the dry spells between showers shorten and the showers themselves run longer.", "source": "Deuteronomy 11:14" },
         { "text": "Whenever a lamb sets out across the meadow it goes the first few strides in skips, all four feet off the grass at once, before it settles into a walk.", "source": "Psalm 114:4" }
       ]
+    },
+    {
+      "version": 26,
+      "date": "2026-10-08",
+      "focus": "he directeth his steps",
+      "changes": [
+        { "text": "Tap the ground and Adam walks there and stops on the spot, so a long walk no longer means holding a drag the whole way. A faint ring lies on the grass where the tap fell and fades as he arrives; any drag or key takes back over at once.", "source": "Proverbs 16:9" },
+        { "text": "Sent toward a creature (or anything else that has a name), he stops of his own accord once he has come up beside it and its name is given, instead of walking on through it to the ground behind.", "source": "Genesis 2:19" },
+        { "text": "Letting go now stops him within a short step. Before, he slid on for half a stride with his legs still swinging.", "source": "Psalm 17:5" },
+        { "text": "Asked to go to the side or back the way he came, he turns before he strides off, instead of wheeling away in a wide loop in whatever direction he happened to be facing.", "source": "Proverbs 14:15" },
+        { "text": "A stair of rough ledges now climbs the face of the eagle's crag that looks into the garden, and a hind keeps it. She grazes at the foot, then goes up ledge by ledge in short, sure leaps, stands longest at the top looking out over the whole garden, and picks her way down again. Come up to her and she is named.", "source": "Habakkuk 3:19" },
+        { "text": "The grain keeps the long year: green after the first rain, ripening to gold once the latter rain has fallen, and standing pale, white to harvest, through the summer.", "source": "John 4:35" },
+        { "text": "After a shower the grass of the meadow stands greener and brighter for a while, then slowly settles back as the ground dries. The sand and the stone stay as they were.", "source": "Deuteronomy 32:2" },
+        { "text": "Three shittah trees stand on the dry southern rim, each a short grey trunk forked low under a broad, flat crown, wider than the tree is tall. Each is named when he comes near.", "source": "Isaiah 41:19" }
+      ]
     }
   ],
   "next": [
-    "Easy start and stop for Adam: a gentle first step, a clean halt that never skates, tap the ground to walk there (he goes, and stops on arrival), and stopping of his own accord beside a creature he has come up to (Proverbs 16:9)",
-    "A hind sure-footed on the high places, picking her way along the lower ledges of the eagle's crag (Habakkuk 3:19)",
-    "Fields white already to harvest: the grain ripening from green to pale gold over the long year (John 4:35)",
-    "After a shower, the small rain lying on the tender herb — the meadow greener and brighter for a while where it fell (Deuteronomy 32:2)"
+    "Never frustrating for Adam: no catching on a bank's edge, the river's bound or the stepping-stones from any side; tap-to-walk finds its way round the crag and the rocks rather than giving up against them; and wading reads as slower in his stride, not only in his pace (Isaiah 43:2)",
+    "Dress the garden, the first of Adam's work: walk up to a dry patch of ground after dipping at the river, and the mist of his watering wakes it — it greens and blooms, and stays tended a while (Genesis 2:5-6)",
+    "Flags growing up out of the mire in the shallows along the slow reach of the river, blue in their season (Job 8:11)",
+    "Where the hind stands at the top of her stair, a fawn of her own at her heels on the ledges below (Job 39:1)"
   ]
 }

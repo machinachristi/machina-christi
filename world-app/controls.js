@@ -11,6 +11,11 @@
 // The origin trails a long drag, so the thumb never runs out of screen
 // ("thou hast enlarged my steps under me", Psalm 18:36), and the heading is
 // eased so a nervous finger doesn't zigzag the walker (Proverbs 4:26).
+//
+// v26 (Proverbs 16:9, "a man's heart deviseth his way: but the LORD
+// directeth his steps"): a quick touch that never becomes a drag is a tap,
+// and is kept for the frame loop to take (`takeTap`) — main.js turns it into
+// a place on the ground to walk to (see wayfinding.js). Nothing is drawn.
 
 import { clamp } from './util.js';
 
@@ -19,9 +24,11 @@ const QUICK_ON = 110;   // px from the origin at which the walk quickens…
 const QUICK_OFF = 80;   // …and only below this does it ease back to a walk
 const TRAIL = 140;      // the origin follows the thumb past this reach
 const HEAD_LAMBDA = 10; // how eagerly the drag's heading follows the thumb
+const TAP_MS = 320;     // a touch lifted sooner than this, never dragged, is a tap
 
 export function createControls(el, onFirstInput) {
-  const drag = { id: null, ox: 0, oy: 0, dx: 0, dy: 0, quick: false, angle: 0, live: false };
+  const drag = { id: null, ox: 0, oy: 0, dx: 0, dy: 0, quick: false, angle: 0, live: false, t0: 0, far: false, opening: false };
+  let tap = null;   // { x, y } in client px, waiting for the frame loop
   const keys = new Set();
   let shift = false;
   let first = onFirstInput;
@@ -38,6 +45,11 @@ export function createControls(el, onFirstInput) {
     drag.dx = 0; drag.dy = 0;
     drag.quick = false;
     drag.live = false;
+    drag.t0 = e.timeStamp;
+    drag.far = false;
+    // The very first touch only skips the opening shot: it is not a tap to
+    // walk somewhere seen from a camera still high above and behind him.
+    drag.opening = !!first;
     try { el.setPointerCapture(e.pointerId); } catch (_) { /* not critical */ }
     notifyFirst();
   });
@@ -47,6 +59,7 @@ export function createControls(el, onFirstInput) {
     let dx = e.clientX - drag.ox;
     let dy = e.clientY - drag.oy;
     let len = Math.hypot(dx, dy);
+    if (len > DEADZONE) drag.far = true;   // once a drag, never a tap
     // The origin trails a long drag: the thumb can keep going as far as the
     // screen lets it and the drag still reads the same, held at full reach.
     if (len > TRAIL) {
@@ -61,6 +74,9 @@ export function createControls(el, onFirstInput) {
 
   function release(e) {
     if (e.pointerId !== drag.id) return;
+    if (e.type === 'pointerup' && !drag.far && !drag.opening && e.timeStamp - drag.t0 < TAP_MS) {
+      tap = { x: e.clientX, y: e.clientY };
+    }
     drag.id = null;
     drag.dx = 0; drag.dy = 0;
     drag.quick = false;
@@ -120,5 +136,12 @@ export function createControls(el, onFirstInput) {
     return { x: x / len, z: z / len, quick: shift };
   }
 
-  return { vector, update };
+  // The last tap, once: handed over and forgotten, so one tap is one walk.
+  function takeTap() {
+    const t = tap;
+    tap = null;
+    return t;
+  }
+
+  return { vector, update, takeTap };
 }
