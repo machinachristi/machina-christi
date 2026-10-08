@@ -27,6 +27,10 @@ const GROUND = heightAt(AT.x, AT.z);
 // and the bird can never disagree about where home is.
 export const EYRIE = new THREE.Vector3(AT.x, GROUND + CRAG_H + 0.55, AT.z);
 
+// Where the crag stands and the ground at its foot — read by scenes/hind.js
+// (v26), whose ledges are shouldered against this same rock.
+export const CRAG = { x: AT.x, z: AT.z, ground: GROUND };
+
 const STONE = new THREE.Color(0xA59C8D);
 const STONE_WARM = new THREE.Color(0xB5A890);
 const STONE_DARK = new THREE.Color(0x877E71);
@@ -41,7 +45,7 @@ const BEAK = new THREE.Color(0x3C3328);
 // out so no two are alike. The roughening is a fixed function of where each
 // corner stands (never a stream draw), so corners the cylinder duplicates at
 // its seam and its caps move together and the block stays closed.
-function roughPrism(rBottom, rTop, h) {
+export function roughPrism(rBottom, rTop, h) {
   const g = new THREE.CylinderGeometry(rTop, rBottom, h, 7, 2);
   const pos = g.attributes.position;
   const v = new THREE.Vector3();

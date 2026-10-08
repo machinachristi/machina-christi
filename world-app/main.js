@@ -8,6 +8,7 @@ import { createGarden } from './scenes/garden.js';
 import { createCharacter } from './character.js';
 import { CameraRig } from './camera-rig.js';
 import { createControls } from './controls.js';
+import { createWayfinding } from './wayfinding.js';
 import { createAmbience } from './audio.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { mulberry32, breathe } from './util.js';
@@ -57,6 +58,9 @@ const rig = new CameraRig(camera, character.group, garden.heightAt);
 rig.beginIntro(garden.sacredMidpoint);
 
 const controls = createControls(renderer.domElement, () => rig.skipIntro());
+
+// Tap the ground and he walks there (v26, Proverbs 16:9) — see wayfinding.js.
+const wayfinding = createWayfinding(scene, camera, renderer.domElement, garden.heightAt, garden.radius);
 
 // The garden's procedural soundscape — wind, near-water, birds by day,
 // crickets by night. It follows the sky's clock and the walker's position.
@@ -174,8 +178,22 @@ let stillFor = 0;
 let seated = false;
 let forceSit = false;
 
-function updateStillness(dt) {
+// What the walker is asked to do this frame: a drag or key always wins (and
+// forgets any walk a tap had begun); otherwise a tap's walk, if there is one.
+// `world` marks a step already in world space (the tap's), not the camera's.
+function readIntent(dt) {
+  const tap = controls.takeTap();
+  if (tap) wayfinding.tapAt(tap.x, tap.y, garden.namedThing());
   const v = controls.vector();
+  if (Math.hypot(v.x, v.z) > 0.001) {
+    wayfinding.cancel();
+    return { move: v, world: false };
+  }
+  const step = wayfinding.intent(character.group.position, garden.namedThing(), dt);
+  return step ? { move: step, world: true } : { move: v, world: false };
+}
+
+function updateStillness(dt, v) {
   const moving = Math.hypot(v.x, v.z) > 0.001;
   if (moving) forceSit = false;   // the first touch of input always rises
   const pos = character.group.position;
@@ -191,8 +209,10 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
   controls.update(dt);
-  updateStillness(dt);
-  character.update(dt, controls.vector(), rig.getYaw(), garden.heightAt, garden.radius);
+  const intent = readIntent(dt);
+  updateStillness(dt, intent.move);
+  character.update(dt, intent.move, intent.world ? null : rig.getYaw(), garden.heightAt, garden.radius);
+  wayfinding.update(dt);
   updateCompanion(dt);
   rig.update(dt);
   const lure = seated
@@ -239,7 +259,12 @@ window.__world = {
       // How the walker presently goes (v25, Isaiah 40:31): `gait` is what the
       // input asks for — 'still' | 'walk' | 'quick' — and `speed` the pace
       // actually reached, m/s (eased toward that gait's own steady pace).
-      walk: { gait: character.gait, speed: character.speed },
+      // v26 (Proverbs 16:9): `target` is the place a tap has sent him to
+      // ({x, z}, or null), `arrivals` how many such walks have ended, and
+      // `how` how the last one did — 'here' on the spot, 'beside' a
+      // creature he came up to on the way, 'stopped' given up for want of
+      // headway, or 'cancelled' by a drag or a key.
+      walk: { gait: character.gait, speed: character.speed, ...wayfinding.state() },
       companion: {
         character: eve ? 'adam' : 'eve',
         pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
@@ -431,6 +456,16 @@ window.__world = {
       mustard: garden.mustard(),
       manna: garden.manna(),
       eyrie: garden.eyrie(),
+      // v26: how ripe the corn stands over the long year (John 4:35 — `ripe`
+      // 0 the green blade to 1 white to harvest); the hind on the stair of
+      // ledges under the crag (Habakkuk 3:19 — `ledge` 0 at the foot, up to
+      // 5 at the top); the shittah trees on the southern rim (Isaiah 41:19);
+      // and how fresh the grass still stands after a shower (Deuteronomy
+      // 32:2 — `fresh` 0 to 1, easing back to 0 as the ground dries).
+      grain: garden.grain(),
+      hind: garden.hind(),
+      acacia: garden.acacia(),
+      tender: garden.tender(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -474,12 +509,19 @@ window.__world = {
   stir() {
     return garden.stir();
   },
+  // Send the walker to a place on the ground as a tap would (v26) — for
+  // tests and the curious. Returns the place he is going (clamped inside
+  // the garden's rim).
+  walkTo(x, z) {
+    return wayfinding.walkTo(x, z, garden.namedThing());
+  },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without
   // scripted walks. The walk-radius clamp still governs actual walking.
   // Optional `facing` (radians, yaw) also turns the character, and with it
   // where the follow camera settles — screenshots become composable.
   teleport(x, z, facing) {
+    wayfinding.cancel();   // a walk begun from somewhere else no longer applies
     character.group.position.set(x, garden.heightAt(x, z), z);
     if (typeof facing === 'number') {
       character.group.rotation.y = facing;

@@ -16,6 +16,12 @@ const WALK_SPEED = 3.0;     // m/s, the steady walk
 const QUICK_SPEED = 4.6;    // m/s, the quickened pace (Isaiah 40:31)
 const STRIDE_REF = 3.6;     // the speed the stride animation was drawn for
 const TURN_LAMBDA = 9;      // how eagerly the body turns to face travel
+// v26 (Psalm 17:5, "that my footsteps slip not"): he gathers pace at the
+// old easy rate, but halts on a much quicker one, so letting go stops him
+// within a short step instead of sliding on with his legs still swinging.
+const START_LAMBDA = 6;
+const STOP_LAMBDA = 13;
+const HALTED = 0.05;        // below this he simply stands
 const WALK_FREQ = 3.1;      // stride cycles per second at full speed
 
 export function createCharacter({ eve = false } = {}) {
@@ -90,6 +96,7 @@ export function createCharacter({ eve = false } = {}) {
   let seat = 0;             // 0 standing → 1 fully settled; damped, never a snap
 
   let gait = 'still';       // still | walk | quick — what the input asks for
+  let align = 1;            // how nearly he faces the way he is asked to go
 
   // move: camera-space input { x: right, z: forward, |v| ≤ 1, quick? }.
   // camYaw: yaw of the camera's view line, from the rig — or null when
@@ -115,7 +122,17 @@ export function createCharacter({ eve = false } = {}) {
         wz = sin * move.x + cos * move.z;
       }
       const targetYaw = Math.atan2(wx, wz);
-      group.rotation.y += shortestAngle(group.rotation.y, targetYaw) * (1 - Math.exp(-TURN_LAMBDA * dt));
+      const off = shortestAngle(group.rotation.y, targetYaw);
+      group.rotation.y += off * (1 - Math.exp(-TURN_LAMBDA * dt));
+      // Turned well away from where he is asked to go, he turns before he
+      // strides off (Proverbs 14:15, "the prudent man looketh well to his
+      // going"): the pace is held back while he comes round, so a drag to
+      // the side or behind him no longer sends him wheeling off in a wide
+      // loop along the way he happened to be facing. Within ~35° it is the
+      // full pace, as before.
+      align = clamp((Math.cos(off) + 0.25) / 1.07, 0.18, 1);
+    } else {
+      align = 1;
     }
 
     // Wading slows the stride: below the banks the water takes its share.
@@ -126,7 +143,9 @@ export function createCharacter({ eve = false } = {}) {
       && riverEdgeDist(group.position.x, group.position.z) <= 0;
     gait = mag > 0.001 ? (move.quick ? 'quick' : 'walk') : 'still';
     const pace = gait === 'quick' ? QUICK_SPEED : WALK_SPEED;
-    speed = damp(speed, mag * pace * (wading ? 0.6 : 1), 6, dt);
+    const want = mag * pace * align * (wading ? 0.6 : 1);
+    speed = damp(speed, want, want < speed ? STOP_LAMBDA : START_LAMBDA, dt);
+    if (want === 0 && speed < HALTED) speed = 0;
 
     // Walk along the facing direction — turning carves smooth arcs.
     if (speed > 0.01) {

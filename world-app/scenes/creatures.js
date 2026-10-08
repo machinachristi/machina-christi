@@ -1928,5 +1928,11 @@ export function createCreatures(scene, rng, staticNamables = []) {
     return named ? { name: named.name, label: named.label, kind: named.kind } : null;
   }
 
-  return { update, fauna, named: namedNow, eagleMode: () => eagleMode };
+  // The named thing itself (v26), for wayfinding.js to tell one creature
+  // from another of the same kind and to see where it stands. Read-only.
+  function namedThing() {
+    return named;
+  }
+
+  return { update, fauna, named: namedNow, namedThing, eagleMode: () => eagleMode };
 }
