@@ -115,3 +115,41 @@ The starter queries are defined in `main.bicep`:
 | Functions Flex: 250,000 executions + 100,000 GB-s | 512 MB instances, one at a time (raise once Cloudflare rate-limits the API) |
 | Log Analytics: 5 GB ingestion (shared by both workspaces) | Hard daily caps of 0.10 + 0.05 GB (about 4.6 GB/month). Traces are sampled; requests are always kept |
 | Storage | Not free, but cents: a few MB of packages and host state |
+
+## Site security headers (`staticwebapp.config.json`)
+
+Azure Static Web Apps adds these to every response (`globalHeaders`). Cloudflare
+adds HSTS, `X-Content-Type-Options` and `Referrer-Policy: same-origin` at the edge.
+
+| Header | Value, in short | Why |
+|---|---|---|
+| `Content-Security-Policy` (enforced) | `frame-ancestors 'self'`, `base-uri 'self'`, `object-src 'none'`, `form-action 'self'`, `upgrade-insecure-requests` | Can't break a page; stops clickjacking and base-tag/plugin tricks. `'self'`, not `'none'`, because world.html frames Eden's garden |
+| `Content-Security-Policy-Report-Only` | the full policy: only this site, plus Cloudflare's analytics beacon and App Insights | Reports what it *would* block, without blocking. Inline scripts are allowed for now (many pages have them, and Cloudflare injects some) |
+| `X-Frame-Options` | `SAMEORIGIN` | Older browsers' version of frame-ancestors |
+| `Permissions-Policy` | camera, microphone, location, motion sensors, payment, USB: off | The site uses none of them. Phase 6 (pronunciation) will turn the microphone on for Pray only |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Pages opened from elsewhere can't reach back into this one |
+
+**From report-only to enforced:** browser telemetry records every would-be block
+as a `csp-violation` event. When the "Site: Content Security Policy reports"
+query stays empty for a week or two of real traffic, rename the report-only
+header to `Content-Security-Policy` (merging the two). The test
+`tests/security-and-telemetry.spec.js` loads every page under these headers and
+fails on any violation, so a change that would break the policy can't merge.
+
+## Browser telemetry (`assets/telemetry.js`)
+
+Page views (with referrer), seconds each page was visible, script errors and
+CSP reports, sent to the `appi-machina-web` component. It is private by design:
+
+- no cookies and no browser storage, so there are no user or session IDs;
+- nothing is sent when the browser asks not to be tracked (Global Privacy Control
+  or Do Not Track);
+- only the live site sends anything. Local runs, tests and PR previews stay
+  silent;
+- page URLs are sent without query strings.
+
+The SDK is vendored and pinned (`assets/vendor/`), and it loads only after the
+page has finished loading. Browser telemetry goes to its own App Insights
+component and its own workspace (`log-machina-web`, capped at 0.05 GB a day).
+Its connection string is public (it's in the page), so a flood of fake
+telemetry can fill only that workspace, never the API's.
