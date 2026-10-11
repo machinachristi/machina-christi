@@ -115,3 +115,62 @@ The starter queries are defined in `main.bicep`:
 | Functions Flex: 250,000 executions + 100,000 GB-s | 512 MB instances, one at a time (raise once Cloudflare rate-limits the API) |
 | Log Analytics: 5 GB ingestion (shared by both workspaces) | Hard daily caps of 0.10 + 0.05 GB (about 4.6 GB/month). Traces are sampled; requests are always kept |
 | Storage | Not free, but cents: a few MB of packages and host state |
+
+## Site security headers (`staticwebapp.config.json`)
+
+Azure Static Web Apps adds these to every response (`globalHeaders`). HSTS and
+`Referrer-Policy` aren't here because Static Web Apps and Cloudflare already send
+them.
+
+| Header | Value, in short | Why |
+|---|---|---|
+| `Content-Security-Policy` (enforced) | `frame-ancestors 'self'`, `base-uri 'self'`, `object-src 'none'`, `form-action 'self'`, `upgrade-insecure-requests` | Can't break a page; stops clickjacking and base-tag/plugin tricks. `'self'`, not `'none'`, because world.html frames Eden's garden |
+| `Content-Security-Policy-Report-Only` | the full policy: only this site, plus Cloudflare's analytics beacon and App Insights | Reports what it *would* block, without blocking. Inline scripts are allowed for now (many pages have them, and Cloudflare injects some) |
+| `X-Frame-Options` | `SAMEORIGIN` | Older browsers' version of frame-ancestors |
+| `Permissions-Policy` | camera, microphone, location, motion sensors, payment, USB: off | The site uses none of them. Phase 6 (pronunciation) will turn the microphone on for Pray only |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Pages opened from elsewhere can't reach back into this one |
+
+**From report-only to enforced:** browser telemetry records would-be blocks as
+`csp-violation` events (query "Site: Content Security Policy reports"). That view
+has gaps: it misses visitors who opt out of tracking, anything before the
+telemetry script runs, more than 10 reports a page, and Cloudflare's own hidden
+frame. So before enforcing:
+
+1. The query has stayed empty for a week or two of real traffic.
+2. The live pages show no "[Report Only]" messages in the browser's developer
+   console, including Eden after entering and Pray with audio playing.
+3. Better still, once the API sits behind Cloudflare's rate limit, add a
+   `report-to` endpoint so the browser itself reports everything.
+
+Then rename the report-only header to `Content-Security-Policy`, merging the two.
+`tests/security-and-telemetry.spec.js` loads every page under these headers and
+fails on any violation. That catches most regressions, but not those that need
+interaction, sound, or Cloudflare's injected scripts.
+
+## Browser telemetry (`assets/telemetry.js`)
+
+Page views (with referrer), seconds each page was visible, script errors and
+CSP reports, sent to the `appi-machina-web` component. It is private by design:
+
+- no cookies and no browser storage. The SDK's user and session IDs are random
+  for each page and never stored, so nothing links one page view to the next
+  (the portal's "users" and "sessions" counts therefore equal page views);
+- nothing is sent when the browser asks not to be tracked (Global Privacy Control
+  or Do Not Track);
+- only the live site sends anything. Local runs, tests and PR previews stay
+  silent;
+- page URLs, referrers and CSP reports are sent without query strings (script
+  error stack traces may still include them);
+- time on page is sent as the visitor leaves, using the SDK's keepalive send,
+  and the SDK skips `unload` handlers so pages stay eligible for the
+  back/forward cache.
+
+Known gaps: script errors during page load (before the SDK loads) and errors
+inside Eden's frame aren't captured. `assets/telemetry.js` is cached for an hour,
+not the week other assets get, so fixes reach returning visitors quickly.
+
+The SDK is vendored and pinned (`assets/vendor/`), and it loads only after the
+page has finished loading. Browser telemetry goes to its own App Insights
+component and its own workspace (`log-machina-web`, capped at 0.05 GB a day).
+Its connection string is public (it's in the page), so a flood of fake
+telemetry can fill only that workspace, never the API's.
