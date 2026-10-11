@@ -124,7 +124,7 @@ jobs:
           outputs=$(az deployment group create -g "$RESOURCE_GROUP" -n machina-platform \
             -f infra/main.bicep --query properties.outputs -o json)
           app=$(jq -r '.functionAppName.value' <<<"$outputs")
-          host=$(jq -r '.apiHostname.value' <<<"$outputs")  # via Cloudflare: the app only answers it
+          host=$(jq -r '.functionAppHostName.value' <<<"$outputs")
           test -n "$app" && test "$app" != null && test -n "$host" && test "$host" != null
           echo "Function app: $app ($host)"
           echo "app=$app" >> "$GITHUB_OUTPUT"
@@ -150,11 +150,20 @@ jobs:
             echo "::warning::config-zip reported an error; the next step checks what is actually live"
           fi
 
+      # Only Cloudflare may reach the app, and Cloudflare's bot protection turns
+      # GitHub's runners away. So this step allows the runner's own address for
+      # its duration, asks the app directly, and always removes the rule (and
+      # the next apply of main.bicep would reset the list regardless).
       - name: Check /api/health reports this commit
         env:
+          APP: ${{ steps.infra.outputs.app }}
           HOST: ${{ steps.infra.outputs.host }}
         run: |
           host="$HOST"
+          ip=$(curl -fsS -m 20 https://api.ipify.org)
+          az functionapp config access-restriction add -g "$RESOURCE_GROUP" -n "$APP" \
+            --rule-name ci-health --action Allow --ip-address "$ip/32" --priority 50 -o none
+          trap 'az functionapp config access-restriction remove -g "$RESOURCE_GROUP" -n "$APP" --rule-name ci-health -o none || true' EXIT
           want="${GITHUB_SHA::7}"
           for i in $(seq 1 20); do
             body=$(curl -fsS -m 30 "https://$host/api/health" || true)
