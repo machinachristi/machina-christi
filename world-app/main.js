@@ -9,6 +9,7 @@ import { createCharacter } from './character.js';
 import { CameraRig } from './camera-rig.js';
 import { createControls } from './controls.js';
 import { createWayfinding } from './wayfinding.js';
+import { createFooting } from './footing.js';
 import { createAmbience } from './audio.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { mulberry32, breathe } from './util.js';
@@ -59,8 +60,12 @@ rig.beginIntro(garden.sacredMidpoint);
 
 const controls = createControls(renderer.domElement, () => rig.skipIntro());
 
+// The garden's rock is solid ground to go round, not through (v27) — see
+// footing.js. Both walkers keep to it.
+const footing = createFooting(garden.solids, garden.radius);
+
 // Tap the ground and he walks there (v26, Proverbs 16:9) — see wayfinding.js.
-const wayfinding = createWayfinding(scene, camera, renderer.domElement, garden.heightAt, garden.radius);
+const wayfinding = createWayfinding(scene, camera, renderer.domElement, garden.heightAt, garden.radius, footing);
 
 // The garden's procedural soundscape — wind, near-water, birds by day,
 // crickets by night. It follows the sky's clock and the walker's position.
@@ -77,7 +82,9 @@ const namingName = naming.querySelector('.naming__name');
 const namingLabel = naming.querySelector('.naming__label');
 let namingShown = '';
 function updateNamingCaption() {
-  const given = garden.named();
+  // A word for the work just done (v27: water taken up, the ground watered)
+  // has the line for its few seconds; otherwise the nearest thing named.
+  const given = garden.tending() || garden.named();
   const key = given ? given.name + '·' + given.label : '';
   if (key === namingShown) return;
   namingShown = key;
@@ -98,7 +105,7 @@ scene.add(companion.group);
 // path stays deterministic across reloads and screenshots without disturbing
 // the draw order the garden's planting already depends on.
 const wanderRng = mulberry32(20260703 + 1);
-const companionWander = { mode: 'pause', until: 1.5 + wanderRng() * 2, target: null };
+const companionWander = { mode: 'pause', until: 1.5 + wanderRng() * 2, target: null, memo: {} };
 
 // Graze/walk idiom borrowed from the lamb (scenes/creatures.js): pause a
 // while, walk to a new spot, pause again — but driven through the same
@@ -114,7 +121,9 @@ function updateCompanion(dt) {
       w.mode = 'walk';
       const angle = wanderRng() * Math.PI * 2;
       const r = garden.radius * (0.25 + wanderRng() * 0.65);
-      w.target = { x: Math.cos(angle) * r, z: Math.sin(angle) * r };
+      // Never a place inside the rock (v27); she goes round it on the way.
+      w.target = footing.clear(Math.cos(angle) * r, Math.sin(angle) * r);
+      w.memo = {};
       w.until = 30; // generous cap; arrival ends the walk sooner
     }
   } else {
@@ -125,12 +134,13 @@ function updateCompanion(dt) {
       w.mode = 'pause';
       w.until = 2 + wanderRng() * 4;
     } else {
-      move = { x: dx / dist, z: dz / dist };
+      const way = footing.steer(companion.group.position, w.target, w.memo);
+      move = { x: way.x, z: way.z };
     }
   }
 
   // camYaw = null: `move` is already a world-space direction, not camera-space.
-  companion.update(dt, move, null, garden.heightAt, garden.radius);
+  companion.update(dt, move, null, garden.heightAt, garden.radius, footing.keepOut);
 }
 
 window.addEventListener('resize', () => {
@@ -211,7 +221,7 @@ renderer.setAnimationLoop(() => {
   controls.update(dt);
   const intent = readIntent(dt);
   updateStillness(dt, intent.move);
-  character.update(dt, intent.move, intent.world ? null : rig.getYaw(), garden.heightAt, garden.radius);
+  character.update(dt, intent.move, intent.world ? null : rig.getYaw(), garden.heightAt, garden.radius, footing.keepOut);
   wayfinding.update(dt);
   updateCompanion(dt);
   rig.update(dt);
@@ -219,6 +229,8 @@ renderer.setAnimationLoop(() => {
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
   const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y);
+  // Water taken up at the river is carried in his cupped hands (v27).
+  character.setCarrying(garden.carrying);
   updateNamingCaption();
   ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind);
   if (garden.reverence > 0.6 && !reverent) {
@@ -264,7 +276,11 @@ window.__world = {
       // `how` how the last one did — 'here' on the spot, 'beside' a
       // creature he came up to on the way, 'stopped' given up for want of
       // headway, or 'cancelled' by a drag or a key.
-      walk: { gait: character.gait, speed: character.speed, ...wayfinding.state() },
+      // v27 (Isaiah 43:2; Proverbs 4:12): `wading` whether he is in the
+      // water, and `round` whether a tap's walk is going round rock.
+      walk: { gait: character.gait, speed: character.speed, wading: character.wading, ...wayfinding.state() },
+      // The garden's solid rock (v27, footing.js): how many circles of it.
+      footing: { solids: footing.count },
       companion: {
         character: eve ? 'adam' : 'eve',
         pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
@@ -466,6 +482,17 @@ window.__world = {
       hind: garden.hind(),
       acacia: garden.acacia(),
       tender: garden.tender(),
+      // v27: the first of Adam's own work (Genesis 2:5-6, 2:15) — `carrying`
+      // whether water from the river is in his hands, `dips` and `watered`
+      // how many times this visit he has taken it up and let it go, and each
+      // dry patch's `wet` 0 (dry ground) to 1 (green, in flower), kept
+      // across visits. The flags in the shallows (Job 8:11 — `bloom` 0 to 1
+      // in their spring season), and the fry swarming there (Genesis 1:20 —
+      // `scattered` how many shoals a wading walker has presently startled).
+      // The hind's fawn rides on `hind.fawn`.
+      watering: garden.watering(),
+      flags: garden.flags(),
+      fry: garden.fry(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {

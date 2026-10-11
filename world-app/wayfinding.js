@@ -15,6 +15,12 @@
 // Any drag or key takes back over at once and the walk is forgotten. A walk
 // that stops making headway (a bank too steep, the rim of the garden) is
 // given up quietly after a moment instead of pressing on for ever.
+//
+// v27 (Proverbs 4:12, "when thou runnest, thou shalt not stumble"): the
+// garden's rock is solid now (footing.js), and a walk whose straight way
+// runs into it goes round it instead — so the time spent going round, when
+// the place may for a while be getting no nearer, is not counted as a walk
+// that has stalled. A tap on the rock itself sends him to its foot.
 
 import * as THREE from 'three';
 import { clamp, damp } from './util.js';
@@ -29,12 +35,14 @@ const BESIDE = 2.8;       // …and once he is this near it, he has come to it
 const ON_LINE = 1.6;      // …provided it stands on his way there, where the tap was aimed
 const STALL = 1.6;        // seconds without headway before the walk is let go
 const LIFT = 0.12;        // the ring rides this far over the ground (springs.js's lesson)
+const ROUND_MAX = 14;     // seconds going round rock before even that is let go
+const ROUND_STUCK = 1.2;  // seconds hardly moving while going round: try the other side
 
 const _ray = new THREE.Raycaster();
 const _ndc = new THREE.Vector2();
 const _p = new THREE.Vector3();
 
-export function createWayfinding(scene, camera, canvas, heightAt, radius) {
+export function createWayfinding(scene, camera, canvas, heightAt, radius, footing = null) {
   const ground = (x, z) => Math.max(heightAt(x, z), WATER_Y);
 
   const ring = new THREE.Mesh(
@@ -53,6 +61,11 @@ export function createWayfinding(scene, camera, canvas, heightAt, radius) {
   let t = 0;
   let arrivals = 0;
   let how = null;        // 'here' | 'beside' | 'stopped' — how the last walk ended
+  let memo = {};         // which side of each rock this walk goes round
+  let round = false;     // going round rock this frame
+  let roundFor = 0;
+  let roundStuck = 0;
+  const last = { x: 0, z: 0 };
 
   // Where on the ground (or the water) a ray through this screen point
   // first comes down, or null if it only finds sky.
@@ -80,14 +93,20 @@ export function createWayfinding(scene, camera, canvas, heightAt, radius) {
   }
 
   function walkTo(x, z, namedThing = null) {
-    // Never past the rim the walk itself is held inside.
-    const r = Math.hypot(x, z), lim = radius - 0.5;
-    if (r > lim) { x *= lim / r; z *= lim / r; }
+    // Never past the rim the walk itself is held inside, nor into rock.
+    const lim = radius - 0.5;
+    const rim = () => { const r = Math.hypot(x, z); if (r > lim) { x *= lim / r; z *= lim / r; } };
+    rim();
+    if (footing) ({ x, z } = footing.clear(x, z, lim));
     target = { x, z };
     startThing = namedThing;
     from = null;
     best = Infinity;
     stall = 0;
+    memo = {};
+    round = false;
+    roundFor = 0;
+    roundStuck = 0;
     ring.position.set(x, ground(x, z) + LIFT, z);
     return target;
   }
@@ -100,6 +119,7 @@ export function createWayfinding(scene, camera, canvas, heightAt, radius) {
   function end(kind) {
     if (!target) return;
     target = null;
+    round = false;
     how = kind;
     if (kind !== 'cancelled') arrivals++;
   }
@@ -114,12 +134,26 @@ export function createWayfinding(scene, camera, canvas, heightAt, radius) {
     const dx = target.x - pos.x, dz = target.z - pos.z;
     const dist = Math.hypot(dx, dz);
     if (dist < ARRIVE) { end('here'); return null; }
-    if (!from) from = { x: pos.x, z: pos.z };
+    if (!from) { from = { x: pos.x, z: pos.z }; last.x = pos.x; last.z = pos.z; }
+    const moved = Math.hypot(pos.x - last.x, pos.z - last.z);
+    last.x = pos.x; last.z = pos.z;
     if (namedThing && namedThing !== startThing && aimedAt(namedThing, pos)) { end('beside'); return null; }
-    if (dist < best - 0.05) { best = dist; stall = 0; } else { stall += dt; }
+    const way = footing ? footing.steer(pos, target, memo) : { x: dx / dist, z: dz / dist, round: false };
+    round = way.round;
+    if (!round) roundStuck = 0;
+    if (round) {
+      stall = 0;
+      roundFor += dt;
+      if (roundFor > ROUND_MAX) { end('stopped'); return null; }
+      // Pressed against the rim (or other rock) on the way round: the other side.
+      roundStuck = moved < 0.3 * dt ? roundStuck + dt : 0;
+      if (roundStuck > ROUND_STUCK) { footing.flip(memo, way.block); roundStuck = 0; }
+    } else if (dist < best - 0.05) { best = dist; stall = 0; } else { stall += dt; }
     if (stall > STALL) { end('stopped'); return null; }
-    const mag = clamp(dist / SLOW_FROM, 0.3, 1);
-    return { x: (dx / dist) * mag, z: (dz / dist) * mag, quick: false };
+    // Going round, headway is measured afresh from wherever he comes out.
+    if (round) best = dist;
+    const mag = round ? 1 : clamp(dist / SLOW_FROM, 0.3, 1);
+    return { x: way.x * mag, z: way.z * mag, quick: false };
   }
 
   // Whether the thing just named is what the tap was meant for: near the
@@ -153,7 +187,7 @@ export function createWayfinding(scene, camera, canvas, heightAt, radius) {
   }
 
   function state() {
-    return { target: target ? { x: target.x, z: target.z } : null, arrivals, how };
+    return { target: target ? { x: target.x, z: target.z } : null, arrivals, how, round };
   }
 
   return { tapAt, walkTo, intent, cancel, update, state, get active() { return !!target; } };
