@@ -20,8 +20,14 @@ param allowedOrigins array = [
   'https://www.machinachristi.com'
 ]
 
-@description('Log Analytics daily ingestion cap in GB. 0.15/day is about 4.6 GB a month, inside the 5 GB free allowance.')
-param logDailyCapGb string = '0.15'
+// Two Log Analytics workspaces, each with a hard daily cap. Together they stay
+// inside the 5 GB a month free allowance (which they share): 0.10 + 0.05 GB a
+// day is about 4.6 GB a month.
+@description('Daily ingestion cap in GB for the API\'s workspace (log-machina).')
+param logDailyCapGb string = '0.10'
+
+@description('Daily ingestion cap in GB for the browser\'s workspace (log-machina-web). About 50 MB: hundreds of times today\'s real traffic.')
+param webLogDailyCapGb string = '0.05'
 
 @description('Most Function instances that may run at once. One is plenty for today\'s traffic and caps how fast a flood could use up the free grant; raise it once Cloudflare rate-limits the API.')
 @minValue(1)
@@ -86,9 +92,53 @@ resource appi 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-// Starter KQL queries. In the portal: Log Analytics workspace → Logs →
+// The browser's telemetry lives apart: its own component and its own
+// workspace. A web page has no identity to sign in with, so this component
+// accepts telemetry by connection string, which anyone can read in the page
+// source. A flood of fake browser telemetry can fill only this workspace's
+// cap. The API's telemetry, and its numbers, stay untouched.
+resource logWeb 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: 'log-machina-web'
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+    workspaceCapping: {
+      dailyQuotaGb: json(webLogDailyCapGb)
+    }
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+  }
+}
+
+resource appiWeb 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'appi-machina-web'
+  location: location
+  kind: 'web'
+  tags: tags
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logWeb.id
+    IngestionMode: 'LogAnalytics'
+    Flow_Type: 'Bluefield'
+    Request_Source: 'rest'
+    DisableLocalAuth: false
+  }
+}
+
+// Starter KQL queries. In the portal: either Log Analytics workspace → Logs →
 // Queries → "Machina Christi".
-var starterQueries = [
+var allowanceQuery = {
+  name: 'free-allowance-watch'
+  displayName: 'Free allowance watch: GB ingested this month, by table (this workspace)'
+  query: 'Usage\n| where TimeGenerated > startofmonth(now()) and IsBillable\n| summarize GB = round(sum(Quantity) / 1000, 3) by DataType\n| order by GB desc'
+}
+
+var apiQueries = [
   {
     name: 'api-requests-24h'
     displayName: 'API requests by endpoint, last 24 hours'
@@ -104,16 +154,59 @@ var starterQueries = [
     displayName: 'Health endpoint: calls per hour and speed'
     query: 'AppRequests\n| where Name == "health"\n| summarize Calls = count(), AvgMs = round(avg(DurationMs), 1), MaxMs = max(DurationMs) by bin(TimeGenerated, 1h)\n| order by TimeGenerated desc'
   }
+  allowanceQuery
+]
+
+var siteQueries = [
   {
-    name: 'free-allowance-watch'
-    displayName: 'Free allowance watch: GB ingested this month, by table'
-    query: 'Usage\n| where TimeGenerated > startofmonth(now()) and IsBillable\n| summarize GB = round(sum(Quantity) / 1000, 3) by DataType\n| order by GB desc'
+    name: 'site-page-views'
+    displayName: 'Site: page views by page, last 7 days'
+    query: 'AppPageViews\n| where TimeGenerated > ago(7d)\n| summarize Views = count() by Page = tostring(parse_url(Url).Path)\n| order by Views desc'
+  }
+  {
+    name: 'site-referrers'
+    displayName: 'Site: how visitors arrive (referrer), last 30 days'
+    query: 'AppPageViews\n| where TimeGenerated > ago(30d)\n| extend Ref = tostring(Properties.refUri)\n| extend Source = iff(isempty(Ref), "(direct or hidden)", tostring(parse_url(Ref).Host))\n| where Source !in ("machinachristi.com", "www.machinachristi.com")\n| summarize Views = count() by Source\n| order by Views desc'
+  }
+  {
+    name: 'site-countries'
+    displayName: 'Site: page views by country, last 30 days'
+    query: 'AppPageViews\n| where TimeGenerated > ago(30d)\n| summarize Views = count() by ClientCountryOrRegion\n| order by Views desc'
+  }
+  {
+    name: 'site-time-on-page'
+    displayName: 'Site: time on page (visible seconds), last 30 days'
+    query: 'AppEvents\n| where TimeGenerated > ago(30d) and Name == "page-time"\n| summarize Seconds = sum(todouble(Measurements.visibleSeconds)) by OperationId, Page = tostring(Properties.page)\n| summarize Visits = count(), MedianSeconds = round(percentile(Seconds, 50), 1), P90Seconds = round(percentile(Seconds, 90), 1) by Page\n| order by Visits desc'
+  }
+  {
+    name: 'site-csp-reports'
+    displayName: 'Site: Content Security Policy reports, last 30 days'
+    query: 'AppEvents\n| where TimeGenerated > ago(30d) and Name == "csp-violation"\n| summarize Reports = count(), Last = max(TimeGenerated) by Page = tostring(Properties.page), Directive = tostring(Properties.directive), Blocked = tostring(Properties.blocked), Disposition = tostring(Properties.disposition)\n| order by Reports desc'
+  }
+  {
+    name: 'site-script-errors'
+    displayName: 'Site: script errors, last 7 days'
+    query: 'AppExceptions\n| where TimeGenerated > ago(7d) and ClientType == "Browser"\n| summarize Count = count(), Last = max(TimeGenerated) by Page = OperationName, Message = OuterMessage\n| order by Count desc'
+  }
+  allowanceQuery
+]
+
+resource apiSavedQueries 'Microsoft.OperationalInsights/workspaces/savedSearches@2020-08-01' = [
+  for q in apiQueries: {
+    parent: log
+    name: q.name
+    properties: {
+      category: 'Machina Christi'
+      displayName: q.displayName
+      query: q.query
+      version: 2
+    }
   }
 ]
 
-resource savedQueries 'Microsoft.OperationalInsights/workspaces/savedSearches@2020-08-01' = [
-  for q in starterQueries: {
-    parent: log
+resource siteSavedQueries 'Microsoft.OperationalInsights/workspaces/savedSearches@2020-08-01' = [
+  for q in siteQueries: {
+    parent: logWeb
     name: q.name
     properties: {
       category: 'Machina Christi'
@@ -308,5 +401,7 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
 output functionAppName string = func.name
 output functionAppHostName string = func.properties.defaultHostName
 output appInsightsName string = appi.name
+output webAppInsightsName string = appiWeb.name
+output webLogWorkspaceName string = logWeb.name
 output logWorkspaceName string = log.name
 output storageAccountName string = storage.name

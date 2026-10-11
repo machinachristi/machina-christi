@@ -14,8 +14,9 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Function app | `func-machina-<suffix>` (Flex Consumption, Node 24, 512 MB) | The API. Scales to zero; one instance at most for now |
 | Managed identity | `id-machina-func` | How the API proves who it is to storage and App Insights. No keys exist |
 | Storage | `stmachina<suffix>` | Function host state and deployment packages. Account keys are switched off |
-| Log Analytics | `log-machina` | Where all telemetry lands. 30-day retention, 0.15 GB/day cap |
+| Log Analytics | `log-machina`, `log-machina-web` | Where telemetry lands: the API's and the browser's, apart. 30-day retention; hard daily caps of 0.10 and 0.05 GB |
 | Application Insights | `appi-machina` | Requests, failures, timings for the API. Accepts only Entra-signed senders |
+| Application Insights (browser) | `appi-machina-web` | Page views, time on page, script errors, CSP reports. Accepts the public connection string, so it writes to its own workspace: a flood can't touch the API's data |
 | CI identities | `id-machina-github-deploy`, `id-machina-github-preview` | What GitHub Actions signs in as (OIDC). See below |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
@@ -97,18 +98,20 @@ Node.js, Azure Functions v4 programming model. Each file in
 
 ## Reading the telemetry (KQL)
 
-Portal → `log-machina` → **Logs** → **Queries** → category **Machina Christi**.
+Portal → `log-machina` (API) or `log-machina-web` (site) → **Logs** → **Queries** →
+category **Machina Christi**.
 The starter queries are defined in `main.bicep`:
 
 - API requests by endpoint, last 24 hours
 - API failures and exceptions, last 7 days
 - Health endpoint: calls per hour and speed
 - Free allowance watch: GB ingested this month, by table
+- Site: page views, referrers, countries, time on page, CSP reports, script errors
 
 ## Staying free
 
 | Allowance (monthly) | Our guardrail |
 |---|---|
 | Functions Flex: 250,000 executions + 100,000 GB-s | 512 MB instances, one at a time (raise once Cloudflare rate-limits the API) |
-| Log Analytics: 5 GB ingestion | 0.15 GB/day cap (about 4.6 GB/month). Traces are sampled; requests are always kept |
+| Log Analytics: 5 GB ingestion (shared by both workspaces) | Hard daily caps of 0.10 + 0.05 GB (about 4.6 GB/month). Traces are sampled; requests are always kept |
 | Storage | Not free, but cents: a few MB of packages and host state |
