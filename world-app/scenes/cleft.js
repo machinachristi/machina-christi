@@ -212,6 +212,10 @@ export function createCleft(scene) {
   return {
     update, spots,
     honey: { x: hollow.x, y: hollow.y, z: hollow.z, yaw },
+    // The rock's footing as one circle (v27) — the stair runs back from the
+    // group's origin, so its middle stands 1.6 behind it along the yaw.
+    // footing.js keeps the walker out of it.
+    rock: { x: x - 1.6 * Math.sin(yaw), z: z - 1.6 * Math.cos(yaw), r: 2.2 },
     state: () => ({ x, z, shown: show, calls }),
   };
 }

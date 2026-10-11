@@ -23,6 +23,14 @@ const START_LAMBDA = 6;
 const STOP_LAMBDA = 13;
 const HALTED = 0.05;        // below this he simply stands
 const WALK_FREQ = 3.1;      // stride cycles per second at full speed
+// v27 (Psalm 18:33, "he maketh my feet like hinds' feet, and setteth me upon
+// my high places"): his body follows the ground's height on an easing, not
+// frame by frame, so stepping up onto a stone of the crossing or down off
+// it reads as a step rather than a jolt of half his own height in one frame.
+// Rising is quicker than settling, so on a climb his feet never sink.
+const RISE_LAMBDA = 30;
+const SETTLE_LAMBDA = 16;
+const SNAP_Y = 2.5;          // a drop this far is a teleport, not a step: take it outright
 
 export function createCharacter({ eve = false } = {}) {
   const skin = new THREE.MeshLambertMaterial({ color: 0xC69572, flatShading: true });
@@ -97,11 +105,28 @@ export function createCharacter({ eve = false } = {}) {
 
   let gait = 'still';       // still | walk | quick — what the input asks for
   let align = 1;            // how nearly he faces the way he is asked to go
+  let wading = false;
+  let wade = 0;             // 0 on dry ground → 1 in the water; eased, for the stride
+  let carrying = false;
+  let carry = 0;            // 0 arms free → 1 hands cupped before him; eased
+
+  // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
+  // carries it from the river to the ground he is going to water.
+  const held = new THREE.Mesh(
+    new THREE.SphereGeometry(0.075, 8, 6),
+    new THREE.MeshLambertMaterial({ color: 0x8FC3E4, emissive: 0x2A5470, transparent: true, opacity: 0.88 }),
+  );
+  held.scale.set(1.3, 0.75, 1.1);
+  held.position.set(0, 0.29, 0.43);
+  held.visible = false;
+  torso.add(held);
 
   // move: camera-space input { x: right, z: forward, |v| ≤ 1, quick? }.
   // camYaw: yaw of the camera's view line, from the rig — or null when
   // `move` is already a world-space direction (the companion's own walks).
-  function update(dt, move, camYaw, heightAt, boundsRadius) {
+  // keepOut (v27): optional — pushes a position out of the garden's solid
+  // rock (footing.js), so he slides round the crag rather than through it.
+  function update(dt, move, camYaw, heightAt, boundsRadius, keepOut = null) {
     // Seated, the figure neither walks nor turns — it rests where it is.
     if (sitting) move = { x: 0, z: 0 };
     const mag = clamp(Math.hypot(move.x, move.z), 0, 1);
@@ -139,8 +164,8 @@ export function createCharacter({ eve = false } = {}) {
     // Only in the water itself (wake.js's own test) — a dry hollow that
     // merely lies low used to slow him too, which read as his pace changing
     // for no reason on open grass (v25).
-    const wading = group.position.y < -0.6
-      && riverEdgeDist(group.position.x, group.position.z) <= 0;
+    wading = heightAt(group.position.x, group.position.z) < -0.6
+      && riverEdgeDist(group.position.x, group.position.z) < 0.01;   // 0 on the water, give or take the seams between channels
     gait = mag > 0.001 ? (move.quick ? 'quick' : 'walk') : 'still';
     const pace = gait === 'quick' ? QUICK_SPEED : WALK_SPEED;
     const want = mag * pace * align * (wading ? 0.6 : 1);
@@ -158,28 +183,43 @@ export function createCharacter({ eve = false } = {}) {
         group.position.x *= boundsRadius / r;
         group.position.z *= boundsRadius / r;
       }
+      // Rock does not give way: he is set back out to its edge, which keeps
+      // whatever part of his step ran along it — so a walk into the side of
+      // the crag slides on round it instead of stopping dead.
+      if (keepOut) keepOut(group.position);
     }
-    group.position.y = heightAt(group.position.x, group.position.z);
+    const ground = heightAt(group.position.x, group.position.z);
+    const dy = ground - group.position.y;
+    group.position.y = Math.abs(dy) > SNAP_Y
+      ? ground
+      : damp(group.position.y, ground, dy > 0 ? RISE_LAMBDA : SETTLE_LAMBDA, dt);
 
     // Stride: limbs swing opposite pairs; a light bob; a slight lean forward.
     // The quickened pace lengthens and quickens the stride past the walk's.
     const stride = Math.min(speed / STRIDE_REF, 1.3);
-    phase += dt * WALK_FREQ * Math.PI * 2 * (0.35 + 0.65 * stride) * (stride > 0.02 ? 1 : 0);
+    // In the water (v27, Isaiah 43:2, "when thou passest through the
+    // waters, I will be with thee") the stride itself changes, not only the
+    // pace: a slower cadence, a shorter, higher-kneed step pushed through
+    // the current, the body leaning into it and the arms lifted a little
+    // out to the sides for balance.
+    wade = damp(wade, wading ? 1 : 0, 5, dt);
+    phase += dt * WALK_FREQ * Math.PI * 2 * (0.35 + 0.65 * stride) * (1 - 0.3 * wade) * (stride > 0.02 ? 1 : 0);
     idle += dt;
 
     const swing = Math.sin(phase) * 0.62 * stride;
-    legL.rotation.x = swing;
-    legR.rotation.x = -swing;
-    armL.rotation.x = -swing * 0.72;
-    armR.rotation.x = swing * 0.72;
+    const kneeUp = 0.22 * wade * Math.min(stride * 2, 1);
+    legL.rotation.x = swing * (1 - 0.3 * wade) - kneeUp * Math.max(0, -Math.sin(phase));
+    legR.rotation.x = -swing * (1 - 0.3 * wade) - kneeUp * Math.max(0, Math.sin(phase));
+    armL.rotation.x = -swing * 0.72 * (1 - 0.5 * wade);
+    armR.rotation.x = swing * 0.72 * (1 - 0.5 * wade);
 
     const breathe = Math.sin(idle * 1.7) * 0.012;
-    torso.position.y = 0.9 + Math.abs(Math.cos(phase)) * 0.05 * stride + breathe;
-    torso.rotation.x = 0.10 * Math.min(stride, 1) + 0.12 * Math.max(0, stride - 1);
+    torso.position.y = 0.9 + Math.abs(Math.cos(phase)) * 0.05 * stride * (1 - 0.5 * wade) + breathe;
+    torso.rotation.x = 0.10 * Math.min(stride, 1) + 0.12 * Math.max(0, stride - 1) + 0.1 * wade * Math.min(stride * 3, 1);
 
-    // At rest the arms settle just off the body.
-    armL.rotation.z = 0.10 + Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
-    armR.rotation.z = -0.10 - Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
+    // At rest the arms settle just off the body; wading, they lift out.
+    armL.rotation.z = 0.10 - 0.42 * wade + Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
+    armR.rotation.z = -0.10 + 0.42 * wade - Math.sin(idle * 1.7) * 0.015 * Math.max(0, 1 - stride);
 
     // Sitting down by the water: hips fold so the legs reach forward along the
     // ground, the torso settles and leans back a touch, and the hands come
@@ -195,14 +235,28 @@ export function createCharacter({ eve = false } = {}) {
       torso.position.y = torso.position.y * (1 - seat) + 0.62 * seat;
       torso.rotation.x = torso.rotation.x * (1 - seat) + (-0.16) * seat;
     }
+
+    // Carrying water (v27, Genesis 2:6): both hands brought together before
+    // him and cupped, held there whatever his legs are doing, sitting or
+    // walking, until he lets it go on the ground he came to water.
+    carry = damp(carry, carrying ? 1 : 0, 7, dt);
+    if (carry > 0.001) {
+      armL.rotation.x = armL.rotation.x * (1 - carry) - 0.9 * carry;
+      armR.rotation.x = armR.rotation.x * (1 - carry) - 0.9 * carry;
+      armL.rotation.z = armL.rotation.z * (1 - carry) + 0.4 * carry;
+      armR.rotation.z = armR.rotation.z * (1 - carry) - 0.4 * carry;
+    }
+    held.visible = carry > 0.6;
   }
 
   function setSitting(b) { sitting = !!b; }
+  function setCarrying(b) { carrying = !!b; }
 
   return {
-    group, update, setSitting,
+    group, update, setSitting, setCarrying,
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },
+    get wading() { return wading; },
   };
 }

@@ -72,10 +72,13 @@ import { createOstrich } from './ostrich.js';
 import { createLightning } from './lightning.js';
 import { createMustard } from './mustard.js';
 import { createManna } from './manna.js';
-import { createEyrie } from './eyrie.js';
+import { createEyrie, CRAG } from './eyrie.js';
 import { createHind } from './hind.js';
 import { createAcacia } from './acacia.js';
 import { createTender } from './tender.js';
+import { createFlags } from './flags.js';
+import { createFry } from './fry.js';
+import { createWatering } from './watering.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -223,7 +226,11 @@ export async function createGarden(scene, rng) {
   // own seeded stream means building them earlier shifts nothing planted.
   const cedars = createCedars(scene);
   const owl = createOwl(scene, cedars.spots);
-  const creatures = createCreatures(scene, rng, [
+  // v27: the flags standing up out of the mire in the shallows (Job 8:11),
+  // built here, before the creatures, so their spots fold into the one
+  // naming list; their own seeded stream shifts nothing already planted.
+  const flags = createFlags(scene);
+  const namables = [
     ...fruit.spots, vegetation.lifeFruitSpot, waterTree.spot, storks.spot,
     ...nests.spots, ...web.spots, ...willows.spots, ...ants.spots,
     vine.spot, ...conies.spots, ...palms.spots, ...almond.spots,
@@ -234,7 +241,23 @@ export async function createGarden(scene, rng) {
     ...wildvine.spots, ...rocks.spots, ...spices.spots, ...stump.spots,
     ...cleft.spots, ...honey.spots, ...ostrich.spots,
     ...mustard.spots, ...manna.spots, ...hind.spots, ...acacia.spots,
-  ]);
+    ...flags.spots,
+  ];
+  const creatures = createCreatures(scene, rng, namables);
+  // v27: the fry swarming in the shallows of the slow reach (Genesis 1:20),
+  // and the first of Adam's own work — the dry patches of ground he waters
+  // from the river (Genesis 2:5-6, 2:15), laid clear of every tree and every
+  // named thing. Each on its own seeded stream, after everything above.
+  const fry = createFry(scene);
+  const watering = createWatering(scene, vegetation.treeSpots, namables);
+  // The garden's solid rock, as circles on the ground (v27, footing.js):
+  // the eagle's crag with the hind's stair against it, the dove's stepped
+  // rock, and the conies' houses. The walker goes round these, not through.
+  const solids = [
+    { x: CRAG.x, z: CRAG.z, r: 4.6 },
+    cleft.rock,
+    ...rocks.state().houses.map(h => ({ x: h.x, z: h.z, r: 1.0 })),
+  ];
   // v25 (Deuteronomy 32:11): the crag under the eagle's nest, and her two
   // young in it. Built after the creatures because it answers to her — it
   // is told each frame whether she is stirring them up — and on its own
@@ -392,6 +415,9 @@ export async function createGarden(scene, rng) {
     eyrie.update(dt, creatures.eagleMode());
     hind.update(dt, hour.sabbath);
     tender.update(dt, hour.rain);
+    flags.update(hour.year);
+    fry.update(dt, playerPos);
+    watering.update(dt, playerPos);
     return hour;
   }
 
@@ -473,6 +499,12 @@ export async function createGarden(scene, rng) {
     hind: hind.state,
     acacia: acacia.state,
     tender: tender.state,
+    flags: flags.state,
+    fry: fry.state,
+    watering: watering.state,
+    tending: watering.caption,
+    solids,
+    get carrying() { return watering.carrying; },
     get reverence() { return reverence; },
     get wind() { return windNow; },
   };

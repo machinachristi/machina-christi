@@ -26,6 +26,11 @@ const STAND_OUT = 0.2;    // she stands a little out from the centre of each
 const LEAP = 0.62;        // seconds in the air between ledges
 const TOP_LOOK = 8;       // seconds she stands at the top, looking out
 const FOOT_GRAZE = 16;    // seconds she grazes at the foot before going up
+// v27 (Job 39:1): her fawn, a little over half her size, a stop behind her.
+const FAWN_SCALE = 0.6;
+const FAWN_LAG = 0.5;     // seconds it stands after landing before it follows on
+const FAWN_LEAP = 0.72;   // a slower leap than hers, and higher-arched — not yet sure-footed
+const FAWN_BESIDE = 0.95; // at the foot it grazes this far to her side
 
 const TAWNY = new THREE.Color(0xA97A4E);
 const TAWNY_DARK = new THREE.Color(0x8A603A);
@@ -123,11 +128,13 @@ export function createHind(scene) {
   const route = [foot, ...stands, ...stands.slice(0, -1).reverse()];
 
   const material = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  const bodyGeo = bodyGeometry();
+  const headGeo = headGeometry();
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(bodyGeometry(), material));
+  group.add(new THREE.Mesh(bodyGeo, material));
   const head = new THREE.Group();
   head.position.set(0, 0.8, 0.38);
-  head.add(new THREE.Mesh(headGeometry(), material));
+  head.add(new THREE.Mesh(headGeo, material));
   group.add(head);
   group.scale.setScalar(1.1);
   // Yaw first, so the leap's pitch tips her about her own flank, not the
@@ -148,7 +155,90 @@ export function createHind(scene) {
 
   // Her name lives on a Vector3 moved with her (conies.js's idiom).
   const pos = group.position;
-  const spots = [{ pos, name: 'Ayyalah', label: 'the hind', kind: 'hind' }];
+
+  // v27 (Job 39:1, "canst thou mark when the hinds do calve?"): a fawn of
+  // her own keeps at her heels — the same build at a little over half her
+  // size, sharing her geometry and material (two more draw calls, both far
+  // out of the opening frame). It never goes its own way: it keeps one
+  // stop of her round behind her, so as she climbs it is always on the
+  // ledge below, and it follows each of her leaps a moment after she lands,
+  // in a slower, higher-arched leap of its own. At the foot it grazes at
+  // her side. Its round reads only her place on hers, never a stream draw.
+  const fawn = new THREE.Group();
+  fawn.add(new THREE.Mesh(bodyGeo, material));
+  const fawnHead = new THREE.Group();
+  fawnHead.position.set(0, 0.8, 0.38);
+  fawnHead.add(new THREE.Mesh(headGeo, material));
+  fawn.add(fawnHead);
+  fawn.scale.setScalar(1.1 * FAWN_SCALE);
+  fawn.rotation.order = 'YXZ';
+  scene.add(fawn);
+  // At the foot it stands to her side, across the way up to the first ledge.
+  const upX = stands[0].x - foot.x, upZ = stands[0].z - foot.z;
+  const upLen = Math.hypot(upX, upZ) || 1;
+  const fx2 = foot.x - (upZ / upLen) * FAWN_BESIDE, fz2 = foot.z + (upX / upLen) * FAWN_BESIDE;
+  const fawnFoot = { x: fx2, y: heightAt(fx2, fz2), z: fz2 };
+  const fawnStop = i => (i === 0 ? fawnFoot : route[i]);
+  let fAt = 0;
+  let fWait = FAWN_LAG;
+  let fLeap = -1;
+  let fDip = 0;
+  const fpos = fawn.position;
+  fpos.set(fawnFoot.x, fawnFoot.y, fawnFoot.z);
+  fawn.rotation.y = group.rotation.y;
+
+  const spots = [
+    { pos, name: 'Ayyalah', label: 'the hind', kind: 'hind' },
+    { pos: fpos, name: 'Ofer', label: "the hind's fawn", kind: 'fawn' },
+  ];
+
+  function updateFawn(dt, sabbath) {
+    // Going up, one stop of her round behind her, on the ledge below; from
+    // the top and all the way down, out ahead of her on the ledge below,
+    // clear of the one she leaps to next; with her at the foot, at the foot.
+    const want = at === 0 ? 0 : at < LEDGES ? at - 1 : Math.min(at + 2, route.length) % route.length;
+    // The stair's ledges are the same going up as coming down (route i and
+    // 2·LEDGES − i): turning back down, it simply counts from the other side.
+    if (fLeap < 0 && fAt > 0 && fAt < LEDGES && (want > LEDGES || (want === 0 && at > LEDGES))) fAt = 2 * LEDGES - fAt;
+    const here = fawnStop(fAt);
+    const next = fawnStop((fAt + 1) % route.length);
+    if (fLeap < 0) {
+      fpos.set(here.x, here.y, here.z);
+      if (fAt === want) {
+        fWait = FAWN_LAG;
+        // Turned toward her, wherever she stands, and grazing when she does.
+        const toHer = Math.atan2(pos.x - fpos.x, pos.z - fpos.z);
+        fawn.rotation.y += shortestAngle(fawn.rotation.y, toHer) * (1 - Math.exp(-3 * dt));
+        fDip = damp(fDip, fAt === 0 && headDip > 0.5 ? 1 : 0, 2.5, dt);
+      } else {
+        fWait -= dt * (sabbath ? 0.4 : 1);
+        const toNext = Math.atan2(next.x - here.x, next.z - here.z);
+        fawn.rotation.y += shortestAngle(fawn.rotation.y, toNext) * (1 - Math.exp(-7 * dt));
+        fDip = damp(fDip, 0, 6, dt);
+        if (fWait <= 0) fLeap = 0;
+      }
+      fawn.rotation.x = damp(fawn.rotation.x, 0, 8, dt);
+    } else {
+      fLeap += dt / FAWN_LEAP;
+      const u = Math.min(fLeap, 1);
+      const rise = Math.abs(next.y - here.y);
+      fpos.set(
+        here.x + (next.x - here.x) * u,
+        here.y + (next.y - here.y) * u + 4 * u * (1 - u) * (0.4 + 0.4 * rise),
+        here.z + (next.z - here.z) * u,
+      );
+      fawn.rotation.y = Math.atan2(next.x - here.x, next.z - here.z);
+      fawn.rotation.x = next.y >= here.y
+        ? -0.35 * Math.cos(Math.PI * u)
+        : 0.3 * Math.sin(Math.PI * u);
+      if (fLeap >= 1) {
+        fLeap = -1;
+        fAt = (fAt + 1) % route.length;
+        fWait = FAWN_LAG;
+      }
+    }
+    fawnHead.rotation.x = fDip * 2.0;
+  }
 
   function update(dt, sabbath = false) {
     const here = route[at];
@@ -190,11 +280,16 @@ export function createHind(scene) {
     }
     // Head down to the grass, or up and a little lifted to look out.
     head.rotation.x = headDip * 2.0 - (here.look && leap < 0 ? 0.12 : 0);
+    updateFawn(dt, sabbath);
   }
   update(0);
 
+  const ledgeOf = i => (i === 0 ? 0 : (i <= LEDGES ? i : 2 * LEDGES - i));
   function state() {
-    return { x: pos.x, y: pos.y, z: pos.z, ledge: at === 0 ? 0 : (at <= LEDGES ? at : 2 * LEDGES - at), leaps };
+    return {
+      x: pos.x, y: pos.y, z: pos.z, ledge: ledgeOf(at), leaps,
+      fawn: { x: fpos.x, y: fpos.y, z: fpos.z, ledge: ledgeOf(fAt) },
+    };
   }
 
   return { update, state, spots };

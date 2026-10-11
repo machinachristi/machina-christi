@@ -1,5 +1,5 @@
 {
-  "version": 26,
+  "version": 27,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -311,12 +311,27 @@
         { "text": "After a shower the grass of the meadow stands greener and brighter for a while, then slowly settles back as the ground dries. The sand and the stone stay as they were.", "source": "Deuteronomy 32:2" },
         { "text": "Three shittah trees stand on the dry southern rim, each a short grey trunk forked low under a broad, flat crown, wider than the tree is tall. Each is named when he comes near.", "source": "Isaiah 41:19" }
       ]
+    },
+    {
+      "version": 27,
+      "date": "2026-10-11",
+      "focus": "to dress it and to keep it",
+      "changes": [
+        { "text": "Here and there on the meadow, a short walk up from the river, lies a patch of bare, dry ground. Wade into the river, or stand a moment at its edge, and Adam takes up water in his cupped hands and carries it; walk to a dry patch and stand still on it, and he lets it go. A mist goes up off the ground, and the patch greens and comes into flower.", "source": "Genesis 2:6" },
+        { "text": "The garden remembers his work. A patch he has watered stays green for a day, even if he leaves the garden and comes back, then slowly goes back to dry ground over the next, ready to be watered again.", "source": "Genesis 2:15" },
+        { "text": "The eagle's crag, the dove's stepped rock and the conies' houses are solid now. He no longer walks through the middle of them: walking into the side of one, he slides on round it, and a tap on the far side walks him round the rock to the place.", "source": "Proverbs 4:12" },
+        { "text": "Stepping up onto the stones of the crossing, or down off them into the water, now reads as a step. Before, his whole body jumped up or dropped by half his own height in a single moment.", "source": "Psalm 18:33" },
+        { "text": "In the water his stride changes as well as his pace: a slower, shorter, higher-kneed step pushed through the current, leaning into it, with his arms lifted a little out to his sides.", "source": "Isaiah 43:2" },
+        { "text": "Clumps of flag stand up out of the mire in the shallows of the slow western reach, tall flat leaves with a bud on each stalk, and in their spring season, after the latter rain, the buds open blue. Wade up to a clump and it is named.", "source": "Job 8:11" },
+        { "text": "The hind on the crag's stair has a fawn of her own. It keeps one ledge below her as she climbs, following each of her leaps a moment after she lands in a slower, higher leap of its own, and grazes at her side at the foot. It is named when he comes near.", "source": "Job 39:1" },
+        { "text": "The shallows of the slow reach swarm with fry: a few small shoals wheeling just under the surface. Wade in among one and it scatters all at once, then slowly draws together again.", "source": "Genesis 1:20" }
+      ]
     }
   ],
   "next": [
-    "Never frustrating for Adam: no catching on a bank's edge, the river's bound or the stepping-stones from any side; tap-to-walk finds its way round the crag and the rocks rather than giving up against them; and wading reads as slower in his stride, not only in his pace (Isaiah 43:2)",
-    "Dress the garden, the first of Adam's work: walk up to a dry patch of ground after dipping at the river, and the mist of his watering wakes it — it greens and blooms, and stays tended a while (Genesis 2:5-6)",
-    "Flags growing up out of the mire in the shallows along the slow reach of the river, blue in their season (Job 8:11)",
-    "Where the hind stands at the top of her stair, a fawn of her own at her heels on the ledges below (Job 39:1)"
+    "Gather, the next of Adam's work: stand still under a fig or a pomegranate in fruit and a ripe one comes down into his hands, freely given, to eat (Genesis 2:16)",
+    "Keep the flock: walk out to a lamb that has wandered far from the others and it follows at his heels back to them, and lies down (Isaiah 40:11)",
+    "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
+    "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)"
   ]
 }
