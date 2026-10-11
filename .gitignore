@@ -1,9 +1,16 @@
 # Playwright is installed ad hoc (locally and in CI) and must never be
 # committed: a package.json at the repo root would trigger Azure SWA's Oryx
 # build detection and silently change how this zero-build-step site deploys.
+# Root only (leading slash): the API in functions/ has its own package.json,
+# which is committed.
 node_modules/
-package.json
-package-lock.json
+/package.json
+/package-lock.json
+
+# Build stamp the API deploy writes (commit + time), and local Functions
+# settings (copied from local.settings.example.json); never committed
+functions/build.json
+functions/local.settings.json
 
 # Playwright output
 playwright-report/

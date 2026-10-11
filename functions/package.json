@@ -1,0 +1,16 @@
+{
+  "name": "machina-christi-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Machina Christi API: Azure Functions, Node.js v4 programming model",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.0"
+  }
+}
