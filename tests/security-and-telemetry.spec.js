@@ -61,7 +61,20 @@ async function asLiveSite(page) {
   page.on('request', r => {
     const url = new URL(r.url());
     if (!/^https?:$/.test(url.protocol)) return;
-    if (url.origin !== LIVE && !INGESTION.test(url.host)) seen.offsite.push(r.url());
+    if (INGESTION.test(url.host)) {
+      // Recorded when the browser *sends*, not when the route answers: the
+      // SDK's last send happens as the page is left, and Playwright can drop
+      // a route for a request issued during navigation.
+      const body = r.postData() || '';
+      try {
+        const items = JSON.parse(body);
+        seen.sent.push(...(Array.isArray(items) ? items : [items]));
+      } catch {
+        for (const line of body.split('\n')) if (line.trim()) seen.sent.push(JSON.parse(line));
+      }
+    } else if (url.origin !== LIVE) {
+      seen.offsite.push(r.url());
+    }
   });
 
   await page.route(`${LIVE}/**`, route => {
@@ -77,20 +90,13 @@ async function asLiveSite(page) {
       body: fs.readFileSync(file),
     });
   });
-  await page.route(url => INGESTION.test(url.host), route => {
-    const body = route.request().postData() || '';
-    try {
-      const items = JSON.parse(body);
-      seen.sent.push(...(Array.isArray(items) ? items : [items]));
-    } catch {
-      for (const line of body.split('\n')) if (line.trim()) seen.sent.push(JSON.parse(line));
-    }
-    return route.fulfill({
+  // Answer for App Insights, so nothing ever reaches Azure.
+  await page.route(url => INGESTION.test(url.host), route =>
+    route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ itemsReceived: 1, itemsAccepted: 1, errors: [] }),
-    });
-  });
+    }));
   // Anything else off-site never leaves the test machine.
   await page.route(url => url.origin !== LIVE && !INGESTION.test(url.host) && /^https?:/.test(url.protocol),
     route => route.abort());
@@ -99,6 +105,18 @@ async function asLiveSite(page) {
   seen.events = name => seen.sent.filter(e => e.data && e.data.baseType === 'EventData' && e.data.baseData.name === name);
   seen.cspFromPage = () => page.evaluate(() => window.__cspViolations || []);
   return seen;
+}
+
+// What a browser does as a visitor leaves: pagehide, then the page is hidden.
+// Both the telemetry script and the SDK act on these (the SDK sends with a
+// keepalive request that outlives the page). Fired in place, so the test can
+// watch the send: Playwright can lose requests made during a real navigation.
+async function leave(page) {
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }));
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
 }
 
 test.describe('security headers', () => {
@@ -123,6 +141,7 @@ test.describe('security headers', () => {
       await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
       expect([...seen.violations, ...(await seen.cspFromPage())]).toEqual([]);
       expect(seen.offsite).toEqual([]);
+      expect(seen.pageViews()).toHaveLength(1); // and not a second one
     });
   }
 
@@ -154,15 +173,12 @@ test.describe('telemetry is private', () => {
     expect(seen.offsite).toEqual([]); // e.g. no remote SDK config from js.monitor.azure.com
   });
 
-  test('time on page is sent when the page is hidden', async ({ page }) => {
+  test('time on page survives leaving the page', async ({ page }) => {
     const seen = await asLiveSite(page);
     await page.goto(LIVE + '/about.html');
     await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
     await page.waitForTimeout(600); // at least half a second visible
-    await page.evaluate(() => {
-      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
+    await leave(page);
     await expect.poll(() => seen.events('page-time').length, { timeout: 15000 }).toBe(1);
     const time = seen.events('page-time')[0].data.baseData;
     expect(time.properties.page).toBe('/about.html');
@@ -173,36 +189,34 @@ test.describe('telemetry is private', () => {
     const seen = await asLiveSite(page);
     await page.goto(LIVE + '/about.html');
     await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
-    await page.evaluate(() => { new Image().src = 'https://example.com/not-allowed.png'; });
-    // The SDK batches events (up to 15 s); hiding the page sends the batch,
-    // just as a visitor leaving would.
-    await page.waitForTimeout(300);
-    await page.evaluate(() => {
-      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
+    await page.evaluate(() => { new Image().src = 'https://example.com/not-allowed.png?private=1'; });
+    await expect.poll(() => seen.cspFromPage().then(v => v.length)).toBe(1);
+    // The SDK batches events (up to 15 s); leaving the page sends the batch.
+    await leave(page);
     await expect.poll(() => seen.events('csp-violation').length, { timeout: 15000 }).toBe(1);
     const report = seen.events('csp-violation')[0].data.baseData.properties;
     expect(report.directive).toBe('img-src');
     expect(report.disposition).toBe('report');
-    expect(report.blocked).toContain('example.com');
+    expect(report.blocked).toBe('https://example.com/not-allowed.png'); // no query string
   });
 
   test('nothing loads off the live site, or when the browser asks not to be tracked', async ({ page }) => {
     const sdkRequests = [];
     page.on('request', r => { if (SDK_PATH.test(new URL(r.url()).pathname)) sdkRequests.push(r.url()); });
+    // Run "when idle" work at once, so a short wait is a real test.
+    await page.addInitScript(() => { window.requestIdleCallback = cb => setTimeout(cb, 0); });
 
     // Local server: silent.
     await page.goto('/about.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(4000); // past the 3 s idle deadline the SDK would load at
+    await page.waitForTimeout(1000); // idle work runs at once (stubbed above)
 
     // Live site with Global Privacy Control on: silent.
     const seen = await asLiveSite(page);
     await page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', { get: () => true }));
     await page.goto(LIVE + '/about.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(4000); // past the 3 s idle deadline the SDK would load at
+    await page.waitForTimeout(1000); // idle work runs at once (stubbed above)
 
     expect(sdkRequests).toEqual([]);
     expect(seen.sent).toEqual([]);
