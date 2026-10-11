@@ -16,6 +16,7 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Storage | `stmachina<suffix>` | Function host state and deployment packages. Account keys are switched off |
 | Log Analytics | `log-machina` | Where all telemetry lands. 30-day retention, 0.15 GB/day cap |
 | Application Insights | `appi-machina` | Requests, failures, timings for the API. Accepts only Entra-signed senders |
+| Application Insights (browser) | `appi-machina-web` | Page views, time on page, script errors, CSP reports. Accepts the public connection string, so it has its own 0.05 GB/day cap |
 | CI identities | `id-machina-github-deploy`, `id-machina-github-preview` | What GitHub Actions signs in as (OIDC). See below |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
@@ -104,6 +105,7 @@ The starter queries are defined in `main.bicep`:
 - API failures and exceptions, last 7 days
 - Health endpoint: calls per hour and speed
 - Free allowance watch: GB ingested this month, by table
+- Site: page views, referrers, countries, time on page, CSP reports, script errors
 
 ## Staying free
 
