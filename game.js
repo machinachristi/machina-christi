@@ -1,6 +1,13 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Procedural chant (camino-music.js). If that script ever fails to load the
+// game still runs: every call below becomes a no-op.
+const Music = window.CaminoMusic || {
+  unlock() {}, start() {}, stop() {}, toggle() {}, isMuted() { return false; },
+  setIntensity() {}, hit() {}, chime() {}, swell() {},
+};
+
 // ── Colors ─────────────────────────────────────────────────
 const C = {
   grass:      '#3D5C32',
@@ -152,9 +159,12 @@ function startGame() {
   tutorial = localStorage.getItem(TUT_KEY)
     ? null
     : { steps: ['left', 'right', 'up', 'down'], idx: 0 };
+
+  Music.start();
 }
 
 function endGame() {
+  Music.stop();
   gameState = 'gameover';
   gameOverAt = frameCount;
   restartReadyAt = frameCount + RESTART_LOCK_FRAMES;
@@ -187,6 +197,14 @@ canvas.addEventListener('touchend', e => {
   const dy = end.clientY - touch0.y;
   touch0 = null;
 
+  // Audio may only start from a gesture; the sound button works on any screen.
+  Music.unlock();
+  if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN &&
+      pointInRect(end.clientX, end.clientY, muteRect())) {
+    Music.toggle();
+    return;
+  }
+
   // On the game-over screen, only a tap on "Walk again" or "Return home"
   // does anything — swipes and taps elsewhere no longer restart by accident.
   if (gameState === 'gameover') {
@@ -203,6 +221,8 @@ canvas.addEventListener('touchend', e => {
 }, { passive: false });
 
 canvas.addEventListener('click', e => {
+  Music.unlock();
+  if (pointInRect(e.clientX, e.clientY, muteRect())) { Music.toggle(); return; }
   if (!canRestart()) return;
   // Before the first game, gameOverButtons doesn't exist yet — any click
   // begins the game, same as it always has.
@@ -215,6 +235,8 @@ canvas.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  Music.unlock();
+  if (e.key === 'm' || e.key === 'M') { Music.toggle(); return; }
   const dirs = { ArrowUp: [0,-1], ArrowDown: [0,1], ArrowLeft: [-1,0], ArrowRight: [1,0] };
   if (dirs[e.key]) {
     e.preventDefault();
@@ -382,6 +404,7 @@ function update(dt) {
 
   frame  += dt;
   speed   = BASE_SPEED + frame * SPEED_INC;
+  Music.setIntensity((speed - BASE_SPEED) / 3);
   score  += speed * 0.011 * dt;
   scrollY = (scrollY + speed * dt) % (H * 0.13);
 
@@ -434,6 +457,7 @@ function update(dt) {
   if (score >= nextVerse) {
     const v = VERSES[Math.floor(nextVerse / VERSE_EVERY - 1) % VERSES.length];
     verse = { ...v, life: 220, max: 220 };
+    Music.swell();
     nextVerse += VERSE_EVERY;
   }
   if (verse) { verse.life -= dt; if (verse.life <= 0) verse = null; }
@@ -465,6 +489,7 @@ function update(dt) {
         flash = 18;
         lifeFlash = 40;
         spawnParticles(player.x, player.y);
+        Music.hit();
         obs.y = H + 200;
         if (player.lives <= 0) { endGame(); return; }
         break;
@@ -479,6 +504,7 @@ function update(dt) {
       const pts  = col.type === 'cross' ? 20 : 8;
       score     += pts;
       floats.push({ x: col.x, y: col.y, text: `+${pts}`, life: 45, max: 45 });
+      Music.chime(col.type === 'cross');
       spawnParticles(col.x, col.y, '#FFE9A0', 8);
     }
   }
@@ -713,6 +739,52 @@ function drawHUD() {
   }
 }
 
+// ── Sound button ───────────────────────────────────────────
+// A 44px speaker toggle under the lives, drawn on every screen so sound can be
+// switched off before a journey starts. (Keyboard: M.)
+function muteRect() {
+  const s = 44;
+  return { x: W - W * 0.04 - s, y: H * 0.052 + W * 0.05 * 0.5 + 12, w: s, h: s };
+}
+
+function drawMuteButton() {
+  const r = muteRect();
+  const muted = Music.isMuted();
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(11,10,8,0.4)';
+  roundRectPath(r.x, r.y, r.w, r.h, 12);
+  ctx.fill();
+
+  ctx.strokeStyle = ctx.fillStyle = muted ? 'rgba(232,213,163,0.55)' : C.uiGold;
+  ctx.lineWidth = 2;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  // speaker body
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, cy - 4);
+  ctx.lineTo(cx - 5, cy - 4);
+  ctx.lineTo(cx + 1, cy - 9);
+  ctx.lineTo(cx + 1, cy + 9);
+  ctx.lineTo(cx - 5, cy + 4);
+  ctx.lineTo(cx - 10, cy + 4);
+  ctx.closePath();
+  ctx.fill();
+  if (muted) {
+    ctx.beginPath();                       // slash
+    ctx.moveTo(cx + 6, cy - 5); ctx.lineTo(cx + 14, cy + 5);
+    ctx.moveTo(cx + 14, cy - 5); ctx.lineTo(cx + 6, cy + 5);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();                       // sound waves
+    ctx.arc(cx + 2, cy, 6, -0.9, 0.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + 2, cy, 11, -0.9, 0.9);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // ── First-play tutorial ────────────────────────────────────
 // Prompts the four moves one at a time; obstacles are paused until done.
 function drawTutorial() {
@@ -935,7 +1007,7 @@ function drawGameOver() {
 function render() {
   ctx.clearRect(0, 0, W, H);
 
-  if (gameState === 'start') { drawStart(); return; }
+  if (gameState === 'start') { drawStart(); drawMuteButton(); return; }
 
   // Screen shake offset
   ctx.save();
@@ -1010,6 +1082,7 @@ function render() {
   if (tutorial && gameState === 'playing') drawTutorial();
 
   if (gameState === 'gameover') drawGameOver();
+  drawMuteButton();
 }
 
 function drawVerse() {
