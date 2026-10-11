@@ -11,8 +11,14 @@ function watchErrors(page) {
   return errors;
 }
 
-// The 44px speaker button sits under the lives, top-right (see muteRect()).
-const MUTE_TAP = { x: 352, y: 84 };
+// The 44px speaker button sits at the bottom-right (see muteRect()).
+const MUTE_TAP = { x: 352, y: 723 };
+
+// The Start button on the first screen (see startButton in game.js).
+const startTap = async page => {
+  await page.waitForFunction(() => typeof startButton !== 'undefined' && startButton);   // drawn on the first frame
+  return page.evaluate(() => ({ x: startButton.x + startButton.w / 2, y: startButton.y + startButton.h / 2 }));
+};
 
 const level = page => page.evaluate(() => window.CaminoMusic.level());
 
@@ -26,7 +32,7 @@ test.describe('camino music', () => {
     await page.touchscreen.tap(MUTE_TAP.x, MUTE_TAP.y);
     await expect.poll(() => page.evaluate(() => window.CaminoMusic.isMuted())).toBe(true);
     expect(await page.evaluate(() => gameState)).toBe('start');
-    expect(await page.evaluate(() => localStorage.getItem('camino_muted'))).toBe('1');
+    expect(await page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
 
     // The choice survives a reload.
     await page.reload();
@@ -35,7 +41,7 @@ test.describe('camino music', () => {
     // M turns it back on.
     await page.keyboard.press('m');
     await expect.poll(() => page.evaluate(() => window.CaminoMusic.isMuted())).toBe(false);
-    expect(await page.evaluate(() => localStorage.getItem('camino_muted'))).toBe('0');
+    expect(await page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
     expect(errors).toEqual([]);
   });
 
@@ -57,7 +63,7 @@ test.describe('camino music', () => {
   });
 
   test('a muted player gets a silent journey', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('camino_muted', '1'));
+    await page.addInitScript(() => localStorage.setItem('camino_sound', 'off'));
     const errors = watchErrors(page);
     await page.goto('/game.html');
     await page.keyboard.press('ArrowUp');
@@ -70,22 +76,60 @@ test.describe('camino music', () => {
 
   // Phones only unlock audio from a completed *tap*, never from a swipe — so the
   // first journey must begin with a tap, or the music can't start.
-  test('the first journey begins with a tap, not a swipe', async ({ page }) => {
+  test('the first journey begins by tapping the Start button, not by swiping', async ({ page }) => {
     await page.goto('/game.html');
     const cdp = await page.context().newCDPSession(page);
     const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent',
       { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
 
-    await touch('touchStart', 195, 500);
-    for (let i = 1; i <= 8; i++) await touch('touchMove', 195 - i * 8, 500);
-    await touch('touchEnd', 195, 500);
+    const s0 = await startTap(page);
+    await touch('touchStart', s0.x, s0.y);
+    for (let i = 1; i <= 8; i++) await touch('touchMove', s0.x - i * 8, s0.y);
+    await touch('touchEnd', s0.x, s0.y);
     // The swipe is ignored — poll a few frames to be sure it didn't start late.
     const f0 = await page.evaluate(() => frameCount);
     await expect.poll(() => page.evaluate(f => frameCount > f + 20, f0)).toBe(true);
     expect(await page.evaluate(() => gameState)).toBe('start');
 
-    await page.touchscreen.tap(195, 500);
+    // A tap that misses the Start button does nothing either.
+    await page.touchscreen.tap(195, 300);
+    expect(await page.evaluate(() => gameState)).toBe('start');
+
+    const start = await startTap(page);
+    await page.touchscreen.tap(start.x, start.y);
     await expect.poll(() => page.evaluate(() => gameState)).toBe('playing');
+  });
+});
+
+// Camino and Eden share one saved sound setting (camino_sound): muting in one
+// mutes the other, and unmuting in one unmutes the other.
+test.describe('one sound setting for Camino and Eden', () => {
+  test('muting in Camino mutes Eden', async ({ page }) => {
+    await page.goto('/game.html');
+    await page.evaluate(() => localStorage.setItem('camino_sound', 'on'));        // Eden "on" ...
+    await page.reload();
+    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(false);  // ... Camino follows
+    await page.keyboard.press('m');                                               // mute in Camino
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
+    await page.goto('/world-app/index.html');
+    await expect(page.locator('.sound')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('.sound')).toHaveClass(/sound--off/);
+  });
+
+  test('unmuting in Eden unmutes Camino', async ({ page }) => {
+    await page.goto('/world-app/index.html');               // Eden starts muted until invited
+    const btn = page.locator('.sound');
+    await expect(btn).toHaveAttribute('aria-pressed', 'false');
+    await btn.click();
+    await expect(btn).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
+    await page.goto('/game.html');
+    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(false);
+
+    // …and the other way round: Camino explicitly muted stays muted.
+    await page.evaluate(() => localStorage.setItem('camino_sound', 'off'));
+    await page.reload();
+    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(true);
   });
 });
 
@@ -115,7 +159,8 @@ test.describe('audio that the phone has not allowed yet', () => {
     await stubBlockedAudio(page);
     const errors = watchErrors(page);
     await page.goto('/game.html');
-    await page.touchscreen.tap(195, 500);               // begin the journey
+    const start = await startTap(page);
+    await page.touchscreen.tap(start.x, start.y);       // begin the journey
     await expect.poll(() => page.evaluate(() => gameState)).toBe('playing');
     await expect.poll(() => page.evaluate(() => window.CaminoMusic.blocked()), { timeout: 10000 }).toBe(true);
 

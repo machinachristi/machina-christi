@@ -109,9 +109,16 @@ function canRestart() {
   return gameState !== 'playing' && frameCount >= restartReadyAt;
 }
 
+// Start / game-over buttons: sized so they can never run into the sound button
+// (bottom-right) on a narrow phone.
+function buttonW() {
+  return Math.min(W * 0.62, 280, W - 2 * (MUTE_SIZE + muteMargin() + 10));
+}
+
 // Tap targets on the game-over screen, in CSS-pixel (viewport) coordinates.
 // The canvas fills the whole viewport, so pointer coords map straight to these.
 let gameOverButtons = null;
+let startButton = null;   // the Start button on the first screen
 
 function pointInRect(x, y, r) {
   return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -209,8 +216,12 @@ canvas.addEventListener('touchend', e => {
     if (!wasBlocked) Music.toggle();
     return;
   }
-  // The first journey begins with a tap, which is what lets the music start.
-  if (gameState === 'start' && !isTap) return;
+  // The first journey begins by tapping Start — a real tap, which is also what
+  // lets the music start.
+  if (gameState === 'start') {
+    if (isTap && pointInRect(end.clientX, end.clientY, startButton)) startGame();
+    return;
+  }
 
   // On the game-over screen, only a tap on "Walk again" or "Return home"
   // does anything — swipes and taps elsewhere no longer restart by accident.
@@ -232,9 +243,12 @@ canvas.addEventListener('click', e => {
   Music.unlock();
   if (pointInRect(e.clientX, e.clientY, muteRect())) { if (!wasBlocked) Music.toggle(); return; }
   if (!canRestart()) return;
-  // Before the first game, gameOverButtons doesn't exist yet — any click
-  // begins the game, same as it always has.
-  if (gameState !== 'gameover') { startGame(); return; }
+  // Before the first game, only the Start button begins it.
+  if (gameState === 'start') {
+    if (pointInRect(e.clientX, e.clientY, startButton)) startGame();
+    return;
+  }
+  if (gameState !== 'gameover') return;
   if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.home)) {
     goHome();
   } else if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.again)) {
@@ -749,11 +763,15 @@ function drawHUD() {
 
 // ── Sound button ───────────────────────────────────────────
 const AUDIO_DEBUG = /[?&]audiodebug\b/.test(location.search);   // ?audiodebug shows the audio state
-// A 44px speaker toggle under the lives, drawn on every screen so sound can be
+// A 44px speaker toggle at the bottom-right, drawn on every screen so sound can be
 // switched off before a journey starts. (Keyboard: M.)
+const MUTE_SIZE = 44;
+function muteMargin() { return Math.max(14, Math.min(W * 0.04, 24)); }
 function muteRect() {
-  const s = 44;
-  return { x: W - W * 0.04 - s, y: H * 0.052 + W * 0.05 * 0.5 + 12, w: s, h: s };
+  const m = muteMargin();
+  // Sits a little higher than the margin so a phone's home bar doesn't crowd it.
+  const bottom = Math.max(28, H * 0.045);
+  return { x: W - m - MUTE_SIZE, y: H - bottom - MUTE_SIZE, w: MUTE_SIZE, h: MUTE_SIZE };
 }
 
 function drawMuteButton() {
@@ -775,7 +793,7 @@ function drawMuteButton() {
     ctx.fillStyle = C.uiCream;
     ctx.font = `italic ${Math.max(14, Math.min(W * 0.04, 16))}px ${UI_SERIF}`;
     ctx.textAlign = 'right';
-    ctx.fillText('tap for sound', r.x + r.w, r.y + r.h + 22);
+    ctx.fillText('tap for sound', r.x - 12, r.y + r.h / 2 + 5);
     ctx.fillStyle = 'rgba(11,10,8,0.4)';
   }
 
@@ -808,8 +826,8 @@ function drawMuteButton() {
   if (AUDIO_DEBUG) {
     ctx.fillStyle = C.uiCream;
     ctx.font = '14px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`audio: ${Music.state()}${Music.blocked() ? ' (blocked)' : ''}`, r.x + r.w, r.y + r.h + 42);
+    ctx.textAlign = 'left';
+    ctx.fillText(`audio: ${Music.state()}${Music.blocked() ? ' (blocked)' : ''}`, 12, 22);
   }
   ctx.restore();
 }
@@ -818,30 +836,67 @@ function drawMuteButton() {
 // Prompts the four moves one at a time; obstacles are paused until done.
 function drawTutorial() {
   const prompts = {
-    left:  '◀   Swipe left',
-    right: 'Swipe right   ▶',
-    up:    '▲   Swipe up',
-    down:  'Swipe down   ▼',
+    left:  { label: 'Swipe left',  icon: 'left'  },
+    right: { label: 'Swipe right', icon: 'right' },
+    up:    { label: 'Swipe up',    icon: 'up'    },
+    down:  { label: 'Swipe down',  icon: 'down'  },
   };
   const step = tutorial.steps[tutorial.idx];
+  const { label, icon } = prompts[step];
 
   ctx.save();
-  ctx.textAlign = 'center';
 
   // Dim banner so the prompt reads clearly over the path.
   ctx.fillStyle = 'rgba(10,20,50,0.4)';
   ctx.fillRect(0, H * 0.4, W, H * 0.16);
 
   const pulse = 1 + Math.sin(frameCount * 0.08) * 0.05;
-  ctx.fillStyle = C.uiGold;
-  ctx.font = `bold ${Math.min(W * 0.075, 34) * pulse}px sans-serif`;
-  ctx.fillText(prompts[step], W / 2, H * 0.475);
+  const fs    = Math.min(W * 0.075, 34) * pulse;
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.textAlign = 'left';
+  const tw   = ctx.measureText(label).width;
+  const box  = fs * 1.25;          // the arrow tile, drawn the same for all four moves
+  const gap  = fs * 0.55;
+  const x0   = W / 2 - (tw + gap + box) / 2;
+  const base = H * 0.475;
+  // Left/up moves lead with the arrow; right/down moves end with it.
+  const arrowFirst = icon === 'left' || icon === 'up';
+  const tx = arrowFirst ? x0 + box + gap : x0;
+  const bx = arrowFirst ? x0 : x0 + tw + gap;
+  const by = base - fs * 0.78;
 
+  ctx.fillStyle = C.uiGold;
+  ctx.fillText(label, tx, base);
+  drawArrowTile(bx, by, box, icon);
+
+  ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.72)';
   ctx.font = `${Math.min(W * 0.04, 18)}px sans-serif`;
   ctx.fillText(`Learn the way   ·   ${tutorial.idx + 1} / ${tutorial.steps.length}`, W / 2, H * 0.53);
 
   ctx.restore();
+}
+
+// A blue rounded tile with a white arrowhead — one look for every direction
+// (the old text glyphs rendered differently per arrow on phones).
+function drawArrowTile(x, y, size, dir) {
+  const g = ctx.createLinearGradient(x, y, x, y + size);
+  g.addColorStop(0, '#4D93F2');
+  g.addColorStop(1, '#2A66D2');
+  ctx.fillStyle = g;
+  roundRectPath(x, y, size, size, size * 0.22);
+  ctx.fill();
+
+  const cx = x + size / 2, cy = y + size / 2, h = size * 0.27;
+  const [dx, dy] = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[dir];
+  const px = -dy, py = dx;                      // perpendicular
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(cx + dx * h,            cy + dy * h);
+  ctx.lineTo(cx - dx * h + px * h,   cy - dy * h + py * h);
+  ctx.lineTo(cx - dx * h - px * h,   cy - dy * h - py * h);
+  ctx.closePath();
+  ctx.fill();
 }
 
 // ── Start screen ───────────────────────────────────────────
@@ -893,51 +948,16 @@ function drawStart() {
     ctx.fillText(`farthest walk · ${bestScore} km`, W/2, H*0.762);
   }
 
-  // Swipe-direction hint: four arrows around a center pilgrim dot
-  drawSwipeHint(W/2, H*0.86, Math.min(W*0.11, 52));
+  // Start button, styled like the game-over buttons.
+  const bw = buttonW();
+  const bh = Math.min(H * 0.078, 54);
+  startButton = { x: W/2 - bw/2, y: H * 0.845 - bh/2, w: bw, h: bh };
+  drawButton(startButton, 'Start', true, 1);
 
   ctx.fillStyle = 'rgba(232,213,163,0.6)';
   ctx.font      = `italic ${Math.min(W*0.042, 17)}px ${UI_SERIF}`;
   ctx.textAlign = 'center';
-  ctx.fillText('tap to begin', W/2, H*0.96);
-}
-
-function drawSwipeHint(cx, cy, reach) {
-  // Pulse so it draws the eye
-  const pulse = 1 + Math.sin(frameCount * 0.06) * 0.08;
-  const r = reach * pulse;
-
-  // Center dot (the pilgrim)
-  ctx.fillStyle = C.crossGold;
-  ctx.beginPath();
-  ctx.arc(cx, cy, reach * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-
-  const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-  ctx.strokeStyle = 'rgba(201,162,39,0.85)';
-  ctx.fillStyle   = 'rgba(201,162,39,0.85)';
-  ctx.lineWidth   = Math.max(1.5, reach * 0.04);
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  for (const [dx, dy] of dirs) {
-    const sx = cx + dx * reach * 0.34, sy = cy + dy * reach * 0.34;
-    const ex = cx + dx * r,           ey = cy + dy * r;
-    // shaft
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.stroke();
-    // arrowhead (perpendicular wings)
-    const px = -dy, py = dx;       // perpendicular
-    const hs = reach * 0.18;       // head size
-    ctx.beginPath();
-    ctx.moveTo(ex, ey);
-    ctx.lineTo(ex - dx*hs + px*hs*0.7, ey - dy*hs + py*hs*0.7);
-    ctx.lineTo(ex - dx*hs - px*hs*0.7, ey - dy*hs - py*hs*0.7);
-    ctx.closePath();
-    ctx.fill();
-  }
+  ctx.fillText('then swipe to guide the pilgrim', W/2, H*0.935);
 }
 
 // ── Game over screen ───────────────────────────────────────
@@ -1015,7 +1035,7 @@ function drawGameOver() {
   if (canRestart()) {
     const fade = Math.min(1, (frameCount - restartReadyAt) / 25);
 
-    const bw = Math.min(W * 0.62, 280);
+    const bw = buttonW();
     const bh = Math.min(H * 0.078, 54);
     const cx = W / 2;
     const y1 = H * 0.74;
@@ -1167,7 +1187,9 @@ let lastTime = performance.now();
 function loop(now) {
   // dt = elapsed time as a fraction of one 60fps frame (16.67ms).
   // Capped at 3 so a long pause (tab backgrounded) can't teleport the world.
-  const dt = Math.min((now - lastTime) / (1000 / 60), 3);
+  // Floored at 0: the first frame's timestamp can predate lastTime, which made
+  // frameCount briefly negative and blocked starting for a moment.
+  const dt = Math.max(0, Math.min((now - lastTime) / (1000 / 60), 3));
   lastTime = now;
   frameCount += dt;
 

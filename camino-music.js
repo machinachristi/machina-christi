@@ -6,7 +6,9 @@
 //
 // Browsers only allow audio after a user gesture, so nothing is created until
 // unlock() is called from a tap / key press. Muting is remembered in
-// localStorage (camino_muted); the default is sound ON.
+// localStorage (camino_sound), the same setting Eden uses, so muting in one
+// mutes the other. Until someone chooses, Camino defaults to sound ON (Eden,
+// by its own design, stays quiet until invited).
 //
 // Everything is a safe no-op where Web Audio is missing or blocked.
 (function () {
@@ -19,7 +21,7 @@
   const BEAT_FAST   = 1.0;    // seconds per beat at full intensity
   const FADE_IN     = 1.5;    // seconds
   const FADE_OUT    = 2.4;    // seconds, after a journey ends
-  const KEY         = 'camino_muted';
+  const KEY         = 'camino_sound';   // shared with Eden: 'on' | 'off'; unset = each page's own default
 
   const AC = window.AudioContext || window.webkitAudioContext;
 
@@ -48,7 +50,7 @@
   let wantedSince = 0;          // performance.now() when sound was first wanted but not running
   let nextTime = 0, queue = [], lastPhrase = -1, chimeIdx = 0;
 
-  try { muted = localStorage.getItem(KEY) === '1'; } catch (e) { /* private mode */ }
+  try { muted = localStorage.getItem(KEY) === 'off'; } catch (e) { /* private mode */ }
 
   function build() {
     if (ctx || !AC) return !!ctx;
@@ -247,7 +249,7 @@
     stop: function () { active = false; apply(); },
     toggle: function () {
       muted = !muted;
-      try { localStorage.setItem(KEY, muted ? '1' : '0'); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(KEY, muted ? 'off' : 'on'); } catch (e) { /* ignore */ }
       if (build()) { resume(); apply(); }
       return muted;
     },
