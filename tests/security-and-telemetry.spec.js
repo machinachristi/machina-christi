@@ -41,6 +41,7 @@ const PAGES = [
   '/ordo.html',
   '/pray.html',
   '/prayer.html',
+  '/workshop.html',
 ];
 
 // Serve the repo as the live site, with production's headers; capture what

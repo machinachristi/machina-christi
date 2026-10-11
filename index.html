@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -26,11 +26,12 @@
        fade only plays when JS can run it. Without JS the page renders fully
        visible and the portals are plain links in a native scroll-snap strip. -->
   <script>document.documentElement.classList.add('js');</script>
-  <!-- Every journey from this room goes through one of five doors — fetch
+  <!-- Every journey from this room goes through one of six doors — fetch
        their pages (just the HTML, a few KB each; none of their data or 3D
        payloads) while the visitor is still choosing, so the walk through a
        gate lands on an already-delivered page. Browsers without prefetch
        simply ignore these. -->
+  <link rel="prefetch" href="workshop.html" />
   <link rel="prefetch" href="game.html" />
   <link rel="prefetch" href="world.html" />
   <link rel="prefetch" href="about.html" />
@@ -48,6 +49,7 @@
       --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
       --marian:    138, 170, 222;  /* Pray — Marian blue */
       --parchment: 216, 198, 170;  /* About — the written word */
+      --timber:    214, 146, 92;   /* Workshop — the carpenter's bench */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
          beneath the hero: never wider than the phone allows a neighbor to
@@ -157,7 +159,7 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
-    /* The way loops: swiping past Camino or Pray doesn't scroll through
+    /* The way loops: swiping past the Workshop or Pray doesn't scroll through
        to a preview of the other end (that would spoil it, and looks like
        a stray duplicate card) — the strip fades out, jumps, and fades
        back in already standing at the far gate. */
@@ -205,6 +207,7 @@
     .portal--ordo   { --glow: var(--violet); }
     .portal--pray   { --glow: var(--marian); }
     .portal--about  { --glow: var(--parchment); }
+    .portal--workshop { --glow: var(--timber); }
 
     /* The light waiting past each threshold. */
     .portal__halo {
@@ -416,6 +419,21 @@
       <!-- To add a new experience: copy one .portal block below and set its
            href, glyph, title, and description. The waymark dots, centered-card
            activation, and entry transition are all wired up from the DOM. -->
+      <a class="portal portal--workshop" href="workshop.html" aria-label="Enter the Workshop, how it's built">
+        <span class="portal__halo" aria-hidden="true"></span>
+        <span class="portal__vignette" aria-hidden="true">
+          <svg viewBox="0 0 48 64">
+            <!-- a carpenter's square, and a compass standing open over it -->
+            <path d="M11 16 V49 H39 V43 H17 V16 Z" />
+            <circle cx="30" cy="12" r="2.2" />
+            <path d="M29 14 L22 37" />
+            <path d="M31 14 L38 37" />
+          </svg>
+        </span>
+        <span class="portal__title">Workshop</span>
+        <span class="portal__desc">how it&rsquo;s built</span>
+      </a>
+
       <a class="portal portal--camino" href="game.html" aria-label="Enter Camino, the pilgrim's road">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
@@ -553,7 +571,7 @@
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
 
-      // The way loops: past Pray is Camino again, past Camino is Pray.
+      // The way loops: past Pray is the Workshop again, and back the other way.
       // Rather than scroll through to a peek of the far gate first (which
       // would spoil it and briefly show what looks like a stray duplicate
       // card), a swipe past either end is a quick cut — fade out, jump,
@@ -778,8 +796,9 @@
         setActive(nearest());
       });
 
-      // Open on Eden — the middle gate — so either neighbor is one swipe away.
-      const start = Math.min(1, portals.length - 1);
+      // Open on Eden, the heart of the way, with gates on either side. Found
+      // by name, so adding a gate on either side never moves the opening.
+      const start = Math.max(0, portals.findIndex(p => p.classList.contains('portal--eden')));
       center(start, true);
       setActive(start);
 

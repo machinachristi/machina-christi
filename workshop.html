@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="The Workshop: every tool that builds and keeps Machina Christi, shown as a stained-glass window. Tap a pane to see what it does and what it touches." />
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/workshop.html" />
+  <meta property="og:title" content="Workshop · Machina Christi" />
+  <meta property="og:description" content="Every tool that builds and keeps Machina Christi, shown as a stained-glass window." />
+  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>Workshop · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --stone:     #17130d;
+      --lead:      #070605;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+
+      /* One jewel colour per tier (rgb parts), like the panels of a window
+         that each tell one part of the story. */
+      --hands:      226, 168, 62;   /* gold     */
+      --door:       176, 48, 52;    /* ruby     */
+      --house:      48, 96, 180;    /* sapphire */
+      --store:      40, 136, 88;    /* emerald  */
+      --messengers: 126, 82, 170;   /* amethyst */
+      --watch:      28, 136, 140;   /* teal     */
+      --bench:      176, 102, 48;   /* copper   */
+    }
+
+    html { background: var(--bg); }
+    body {
+      min-height: 100dvh;
+      background:
+        radial-gradient(90% 50% at 50% 0%, rgba(120, 92, 48, 0.14), transparent 70%),
+        var(--bg);
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: max(26px, env(safe-area-inset-top)) 16px 0;
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+
+    header { text-align: center; margin: 26px auto 22px; max-width: 34em; }
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-indent: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 14px auto 0;
+      background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.6), transparent);
+    }
+    .intro {
+      margin-top: 16px;
+      font-size: clamp(15px, 4vw, 17px);
+      line-height: 1.6;
+      color: rgba(232, 213, 163, 0.8);
+    }
+    .legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px 22px;
+      margin-top: 14px;
+      font-size: 14px;
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.65);
+    }
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 7px;
+      vertical-align: -2px;
+      border-radius: 50% 50% 2px 2px / 40% 40% 2px 2px;
+    }
+    .legend .live::before { background: linear-gradient(160deg, rgb(var(--house)), rgb(var(--door))); }
+    .legend .planned::before { background: rgba(232, 213, 163, 0.08); border: 1px dashed rgba(232, 213, 163, 0.5); }
+
+    /* ── Layout: the window, and the panel that explains a pane ──
+       Phone: the panel rests at the bottom of the screen while the window
+       scrolls behind it. Wide screens: the panel stands beside the window. */
+    .layout { display: block; }
+    @media (min-width: 920px) {
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 560px) minmax(0, 360px);
+        justify-content: center;
+        gap: 40px;
+        align-items: start;
+      }
+    }
+
+    /* ── The window ────────────────────────────────────────────
+       A tall lancet in dark stone; the tiers are its bands of glass, the
+       gaps between panes are the lead. */
+    .window {
+      position: relative;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 18px 12px 14px;
+      background: var(--stone);
+      border: 1px solid rgba(201, 162, 39, 0.32);
+      border-radius: 50% 50% 12px 12px / 150px 150px 12px 12px;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 30px 80px -40px rgba(201, 162, 39, 0.25);
+      /* clip, not hidden: a hidden box can still be scrolled sideways by the
+         browser (focusing a pane did it), shifting the glass out of frame. */
+      overflow: hidden;
+      overflow: clip;
+    }
+    /* Daylight drifting slowly across the glass. */
+    .window::after {
+      content: "";
+      position: absolute;
+      inset: -20% -70%;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 35%, rgba(255, 240, 200, 0.07) 48%, transparent 60%);
+      animation: daylight 16s ease-in-out infinite alternate;
+    }
+    @keyframes daylight { from { transform: translateX(-18%); } to { transform: translateX(18%); } }
+
+    .rose { display: block; width: 92px; height: 92px; margin: 8px auto 6px; }
+
+    .tier { position: relative; z-index: 1; }
+    .tier + .tier { margin-top: 6px; }
+    /* Each band carries its name, like the inscription along a window's foot. */
+    .tier__name {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.6em;
+      padding: 8px 4px 6px;
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(232, 213, 163, 0.72);
+      text-align: center;
+    }
+    .tier__name small {
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.5);
+    }
+    /* Rows stay balanced, as a glazier would set them: four panes as two
+       pairs, never three and a lone straggler. --cols is set per tier. */
+    .panes {
+      display: grid;
+      grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+      gap: 5px;
+      padding: 5px;
+      background: var(--lead);
+      border-radius: 6px;
+    }
+
+    /* ── A pane of glass ───────────────────────────────────────── */
+    .pane {
+      --c: var(--gold-rgb, 201, 162, 39);
+      position: relative;
+      min-height: 78px;
+      padding: 20px 8px 10px;
+      border: none;
+      border-radius: 50% 50% 4px 4px / 24px 24px 4px 4px;
+      font-family: var(--serif);
+      font-size: 15px;
+      line-height: 1.25;
+      color: #fff8e6;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+      cursor: pointer;
+      background:
+        radial-gradient(120% 90% at 30% 15%, rgba(255, 255, 255, 0.26), transparent 55%),
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 9px),
+        linear-gradient(165deg, rgba(var(--c), 0.95), rgba(var(--c), 0.55));
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 -12px 20px rgba(0, 0, 0, 0.32);
+      transition: opacity 0.35s ease, filter 0.35s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .pane[data-status="planned"] {
+      color: rgba(232, 213, 163, 0.82);
+      background:
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 9px),
+        linear-gradient(165deg, rgba(var(--c), 0.22), rgba(255, 255, 255, 0.03));
+      box-shadow: inset 0 0 0 1px rgba(var(--c), 0.55);
+    }
+    .pane__phase {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+      font-style: italic;
+      color: rgba(232, 213, 163, 0.6);
+      text-shadow: none;
+    }
+    .pane:hover { filter: brightness(1.15); }
+    .pane:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+
+    /* Light through one pane: it and everything it touches stay lit,
+       the rest of the glass dims. */
+    .window.has-selection .pane { opacity: 0.3; filter: saturate(0.45); }
+    .window.has-selection .pane.is-lit { opacity: 1; filter: none; }
+    .window.has-selection .pane.is-selected {
+      opacity: 1;
+      filter: brightness(1.18);
+      box-shadow: 0 0 0 2px #f6e7b8, 0 0 26px rgba(var(--c), 0.85);
+      z-index: 2;
+    }
+
+    /* ── The panel ─────────────────────────────────────────────── */
+    .panel {
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+      margin: 18px -16px 0;
+      padding: 16px 20px max(18px, env(safe-area-inset-bottom));
+      max-height: 48dvh;
+      overflow-y: auto;
+      background: rgba(11, 10, 8, 0.96);
+      border-top: 1px solid rgba(201, 162, 39, 0.4);
+      box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+    }
+    @media (min-width: 920px) {
+      .panel {
+        position: sticky;
+        top: 24px;
+        bottom: auto;
+        margin: 0;
+        max-height: calc(100dvh - 48px);
+        border: 1px solid rgba(201, 162, 39, 0.3);
+        border-radius: 10px;
+        box-shadow: none;
+      }
+    }
+    .panel__hint { font-size: 15px; font-style: italic; line-height: 1.6; color: rgba(232, 213, 163, 0.72); }
+    .panel h2 {
+      font-weight: normal;
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+    }
+    .chip {
+      display: inline-block;
+      margin: 6px 0 2px;
+      padding: 2px 10px;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--c), 0.8);
+      background: rgba(var(--c), 0.22);
+      color: var(--gold-soft);
+    }
+    .panel p { margin-top: 10px; font-size: 16px; line-height: 1.6; }
+    .panel .what { font-style: italic; color: rgba(232, 213, 163, 0.75); }
+    .panel h3 {
+      margin-top: 14px;
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(232, 213, 163, 0.6);
+    }
+    .touches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .touches button {
+      font-family: var(--serif);
+      font-size: 15px;
+      padding: 7px 12px;
+      min-height: 36px;
+      color: var(--gold-soft);
+      background: rgba(var(--c), 0.18);
+      border: 1px solid rgba(var(--c), 0.65);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .touches button:hover, .touches button:focus-visible { background: rgba(var(--c), 0.35); outline: none; }
+
+    footer {
+      max-width: 34em;
+      margin: 28px auto 0;
+      padding-bottom: 28px;
+      text-align: center;
+      font-size: 15px;
+      font-style: italic;
+      line-height: 1.6;
+      color: rgba(232, 213, 163, 0.6);
+    }
+    @media (min-width: 920px) { footer { padding-bottom: 48px; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .window::after { animation: none; }
+      .pane { transition: none; }
+    }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+</head>
+<body>
+  <div class="page">
+    <a class="back" href="index.html">&lsaquo; home</a>
+
+    <header>
+      <h1>Workshop</h1>
+      <p class="intro">Every pane in this window is a tool that builds or keeps Machina Christi. Tap one to see what it does, and the panes it touches will light with it.</p>
+      <p class="legend"><span class="live">in use today</span><span class="planned">still to come</span></p>
+    </header>
+
+    <div class="layout">
+      <section class="window" aria-label="The Workshop window">
+        <!-- A small rose at the head of the arch. -->
+        <svg class="rose" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="46" fill="#070605" stroke="rgba(201,162,39,0.55)" stroke-width="1.5" />
+          <g stroke="#070605" stroke-width="2.5">
+            <path d="M50 50 L50 8 A42 42 0 0 1 86.4 29 Z" fill="rgb(176,48,52)" />
+            <path d="M50 50 L86.4 29 A42 42 0 0 1 86.4 71 Z" fill="rgb(48,96,180)" />
+            <path d="M50 50 L86.4 71 A42 42 0 0 1 50 92 Z" fill="rgb(40,136,88)" />
+            <path d="M50 50 L50 92 A42 42 0 0 1 13.6 71 Z" fill="rgb(126,82,170)" />
+            <path d="M50 50 L13.6 71 A42 42 0 0 1 13.6 29 Z" fill="rgb(28,136,140)" />
+            <path d="M50 50 L13.6 29 A42 42 0 0 1 50 8 Z" fill="rgb(176,102,48)" />
+          </g>
+          <circle cx="50" cy="50" r="13" fill="rgb(226,168,62)" stroke="#070605" stroke-width="2.5" />
+          <path d="M50 42 V58 M44 48 H56" stroke="#070605" stroke-width="2.4" stroke-linecap="round" />
+          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,240,200,0.12)" stroke-width="6" />
+        </svg>
+        <div class="tiers"></div>
+        <noscript><p class="panel__hint" style="text-align:center;padding:20px">The window needs JavaScript to light up.</p></noscript>
+      </section>
+
+      <aside class="panel" aria-live="polite">
+        <p class="panel__hint">Tap a pane of glass to see what it is, how it serves this site, and what it touches.</p>
+      </aside>
+    </div>
+
+    <footer>Built on free allowances and opened one pane at a time. The clear glass is the road ahead; each phase lights another pane.</footer>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const win   = document.querySelector('.window');
+      const host  = document.querySelector('.tiers');
+      const panel = document.querySelector('.panel');
+      const hint  = panel.innerHTML;
+      let panes = [], byId = {}, selected = null;
+
+      const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      };
+
+      function neighbours(id) {
+        // Touching goes both ways: lit together whichever side names the link.
+        const set = new Set(byId[id].touches || []);
+        panes.forEach(p => { if ((p.touches || []).includes(id)) set.add(p.id); });
+        set.delete(id);
+        return [...set].filter(n => byId[n]);
+      }
+
+      function select(id, { focus = false } = {}) {
+        selected = id;
+        win.classList.toggle('has-selection', !!id);
+        const lit = id ? new Set([id, ...neighbours(id)]) : new Set();
+        win.querySelectorAll('.pane').forEach(b => {
+          b.classList.toggle('is-selected', b.dataset.id === id);
+          b.classList.toggle('is-lit', lit.has(b.dataset.id));
+          b.setAttribute('aria-pressed', String(b.dataset.id === id));
+        });
+        if (!id) {
+          panel.innerHTML = hint;
+          panel.style.removeProperty('--c');
+          history.replaceState(null, '', location.pathname);
+          return;
+        }
+        const p = byId[id];
+        panel.style.setProperty('--c', getComputedStyle(document.documentElement).getPropertyValue('--' + p.tier).trim());
+        panel.replaceChildren();
+        panel.append(el('h2', null, p.name));
+        panel.append(el('span', 'chip', p.status === 'live' ? 'In use today' : 'Coming in phase ' + p.phase));
+        panel.append(el('p', 'what', p.what));
+        panel.append(el('p', null, p.here));
+        const near = neighbours(id);
+        if (near.length) {
+          panel.append(el('h3', null, 'It touches'));
+          const list = el('div', 'touches');
+          near.forEach(n => {
+            const b = el('button', null, byId[n].name);
+            b.type = 'button';
+            b.addEventListener('click', () => select(n, { focus: true }));
+            list.append(b);
+          });
+          panel.append(list);
+        }
+        panel.scrollTop = 0;
+        history.replaceState(null, '', '#' + id);
+        if (focus) {
+          const pane = win.querySelector(`.pane[data-id="${id}"]`);
+          pane.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }
+      }
+
+      function build(data) {
+        panes = data.panes;
+        panes.forEach(p => { byId[p.id] = p; });
+        data.tiers.forEach(t => {
+          const inTier = panes.filter(p => p.tier === t.id);
+          if (!inTier.length) return;
+          const tier = el('div', 'tier');
+          const name = el('p', 'tier__name', t.name);
+          if (t.note) name.append(el('small', null, t.note));
+          tier.append(name);
+          const row = el('div', 'panes');
+          const n = inTier.length;
+          row.style.setProperty('--cols', n % 3 === 1 ? Math.min(n, 2) : Math.min(n, 3));
+          inTier.forEach(p => {
+            const b = el('button', 'pane', p.name);
+            b.type = 'button';
+            b.dataset.id = p.id;
+            b.dataset.status = p.status;
+            b.style.setProperty('--c', `var(--${p.tier})`);
+            b.setAttribute('aria-pressed', 'false');
+            if (p.status === 'planned') b.append(el('span', 'pane__phase', 'phase ' + p.phase));
+            b.addEventListener('click', () => select(selected === p.id ? null : p.id));
+            row.append(b);
+          });
+          tier.append(row);
+          host.append(tier);
+        });
+        const fromHash = decodeURIComponent(location.hash.slice(1));
+        if (byId[fromHash]) select(fromHash, { focus: true });
+      }
+
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && selected) select(null); });
+
+      fetch('workshop/glass.json')
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(build)
+        .catch(() => {
+          host.append(el('p', 'panel__hint', 'The glass could not be fetched just now. Please try again in a moment.'));
+        });
+    })();
+  </script>
+</body>
+</html>
