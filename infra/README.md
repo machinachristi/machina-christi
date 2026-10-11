@@ -53,6 +53,16 @@ Why it's built this way:
   `platform-roles.json` and re-running bootstrap. Widening CI's powers is meant
   to take a person.
 
+## CI/CD (`.github/workflows/azure-platform.yml`)
+
+Runs when `infra/`, `functions/` or the workflow itself changes:
+
+- **Pull request:** API unit tests, Bicep compile/lint, then a what-if preview
+  (as the read-only identity). The preview is in the run's summary page.
+- **Merge to main:** the same tests, then apply `main.bicep`, deploy the API with
+  a build stamp, and wait until `/api/health` reports the new commit. A manual
+  re-run is available from the Actions tab (on main).
+
 ## Deploying by hand
 
 ```bash
