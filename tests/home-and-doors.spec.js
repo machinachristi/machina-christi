@@ -168,16 +168,31 @@ test.describe('home page on a desktop pointer', () => {
     await page.goto('/index.html');
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
     await page.locator('.portal--eden').click();
-    await page.waitForURL('**/world.html');
+    await page.waitForURL('**/world.html', { waitUntil: 'commit' });
   });
 
   test('a plain click on a side gate centers it, then enters', async ({ page }) => {
     await page.goto('/index.html');
+    // Let the way open on Eden and come to rest first. A click that lands
+    // mid-glide (a busy runner) can find Camino already near the middle and
+    // walk straight in, which is right for a visitor but not for this test.
+    await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
+    const settle = async () => {
+      let last = -1;
+      await expect.poll(async () => {
+        const x = await page.locator('.portal--camino').evaluate(e => Math.round(e.getBoundingClientRect().left));
+        const still = x === last; last = x; return still;
+      }, { intervals: [150] }).toBe(true);
+    };
+    await settle();
     await page.locator('.portal--camino').click();
     await expect(page.locator('.portal--camino')).toHaveClass(/is-active/);
     expect(page.url()).toContain('index.html');
+    await settle();
     await page.locator('.portal--camino').click();
-    await page.waitForURL('**/game.html');
+    // 'commit': we only need the visit to begin; game.html is heavy, and on a
+    // busy runner waiting for its full load can outlast the test's timeout.
+    await page.waitForURL('**/game.html', { waitUntil: 'commit' });
   });
 
   test('the arrows walk between gates', async ({ page }) => {
