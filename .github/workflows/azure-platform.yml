@@ -1,0 +1,163 @@
+name: Azure Platform
+
+# Infrastructure (infra/main.bicep) and the API (functions/) ship together:
+#   pull request → test, then preview the Azure changes (what-if) in the run summary
+#   merge to main → test, apply the Bicep, deploy the API, check /api/health
+#
+# Sign-in is OIDC: GitHub vouches for this run and Azure returns a token that
+# lasts minutes. No password or key is stored; the AZURE_* repo variables are
+# identifiers, not secrets. Two identities (infra/modules/ci-access.bicep):
+#   pull requests → AZURE_PREVIEW_CLIENT_ID: read-only, can only preview. A PR
+#                   runs its own copy of this file before review, so it must
+#                   not be able to change anything.
+#   main          → AZURE_CLIENT_ID: deploys.
+#
+# Only infra/bootstrap.bicep (resource groups, budget, these identities) stays
+# manual. CI can't change its own permissions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'functions/**'
+      - '.github/workflows/azure-platform.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'functions/**'
+      - '.github/workflows/azure-platform.yml'
+  workflow_dispatch: # re-run a deploy by hand (works from main only)
+
+# Deploys to the one shared environment run one at a time, and are never
+# cancelled halfway.
+concurrency:
+  group: azure-platform-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-machina-platform
+  NODE_VERSION: '24'
+
+jobs:
+  test:
+    name: API tests + Bicep build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Unit tests
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+      - name: Compile and lint Bicep
+        run: |
+          az bicep install
+          az bicep build -f infra/main.bicep --stdout > /dev/null
+          az bicep build -f infra/bootstrap.bicep --stdout > /dev/null
+
+  preview:
+    name: Preview Azure changes (what-if)
+    needs: test
+    # Fork PRs can't get an Azure token; only branches in this repo preview.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # lets the run ask GitHub for its OIDC token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_PREVIEW_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: What-if
+        # ProviderNoRbac: full validation, but checks only read permission,
+        # which is all the preview identity has.
+        run: |
+          az deployment group what-if -g "$RESOURCE_GROUP" -n machina-platform \
+            -f infra/main.bicep --validation-level ProviderNoRbac \
+            --exclude-change-types NoChange Ignore > whatif.txt
+          cat whatif.txt
+          {
+            echo '### Azure changes this PR would make'
+            echo 'Some "Modify" lines are what-if noise: values it cannot know until deploy time (principal IDs, endpoints).'
+            echo '```'
+            sed 's/\x1b\[[0-9;]*m//g' whatif.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Apply Bicep + deploy API
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Apply infra/main.bicep
+        id: infra
+        run: |
+          outputs=$(az deployment group create -g "$RESOURCE_GROUP" -n machina-platform \
+            -f infra/main.bicep --query properties.outputs -o json)
+          app=$(jq -r '.functionAppName.value' <<<"$outputs")
+          host=$(jq -r '.functionAppHostName.value' <<<"$outputs")
+          test -n "$app" && test "$app" != null && test -n "$host" && test "$host" != null
+          echo "Function app: $app ($host)"
+          echo "app=$app" >> "$GITHUB_OUTPUT"
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+
+      - name: Package the API
+        working-directory: functions
+        run: |
+          npm ci --omit=dev --no-audit --no-fund
+          printf '{"commit":"%s","builtAt":"%s"}\n' "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build.json
+          zip -qr ../api.zip host.json package.json package-lock.json build.json src node_modules
+
+      - name: Deploy the API
+        env:
+          APP: ${{ steps.infra.outputs.app }}
+        run: |
+          az functionapp deployment source config-zip -g "$RESOURCE_GROUP" \
+            -n "$APP" --src api.zip --build-remote false -o none
+
+      - name: Check /api/health reports this commit
+        env:
+          HOST: ${{ steps.infra.outputs.host }}
+        run: |
+          host="$HOST"
+          want="${GITHUB_SHA::7}"
+          for i in $(seq 1 20); do
+            body=$(curl -fsS -m 30 "https://$host/api/health" || true)
+            echo "try $i: $body"
+            if echo "$body" | grep -q "\"commit\":\"$want\""; then
+              echo "### API live at commit \`$want\`" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::/api/health never reported commit $want"
+          exit 1
