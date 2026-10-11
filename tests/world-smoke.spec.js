@@ -13,7 +13,12 @@ function watchErrors(page) {
   return errors;
 }
 
-async function gotoWorldReady(page, query = '') {
+async function gotoWorldReady(page, query = '', { sound = false } = {}) {
+  // Eden's sound is on by default (shared with Camino). These tests measure
+  // frame-rate-sensitive things — distance walked, fades, timings — and a full
+  // audio graph on a slow, software-rendered CI runner skews them, so they run
+  // muted. Only the ambience test opts in to the real default.
+  if (!sound) await page.addInitScript(() => localStorage.setItem('camino_sound', 'off'));
   await page.goto('/world.html' + query);
   // The intro explainer gates everything else — nothing loads until it's dismissed.
   await page.click('.intro__enter');
@@ -146,7 +151,7 @@ test.describe('the garden loads', () => {
   });
 
   test('the ambience is on by default, and the toggle mutes it (a choice shared with Camino)', async ({ page }) => {
-    await gotoWorldReady(page);
+    await gotoWorldReady(page, '', { sound: true });
     const frame = appFrame(page);
 
     const s0 = await frame.evaluate(() => window.__world.getState().sound);
