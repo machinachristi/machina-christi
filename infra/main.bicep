@@ -56,6 +56,20 @@ var hostStorageRoles = [
 
 var deploymentContainer = 'app-package'
 
+// Only Cloudflare may reach the API, so its rate limit and cache can't be
+// bypassed through the azurewebsites.net address. Ranges: cloudflare-ips.json.
+var cloudflareIps = loadJsonContent('cloudflare-ips.json')
+var cloudflareRanges = concat(cloudflareIps.ipv4, cloudflareIps.ipv6)
+var cloudflareRules = [
+  for (range, i) in cloudflareRanges: {
+    name: 'cloudflare-${i + 1}'
+    priority: 100 + i
+    action: 'Allow'
+    ipAddress: range
+    description: 'Cloudflare proxy'
+  }
+]
+
 // ── Observability ────────────────────────────────────────────────────────────
 
 resource log 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -319,6 +333,10 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
     siteConfig: {
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
+      // Anything not listed is denied. The deployment site (scm) has its own
+      // list and stays reachable for CI, which signs in with Entra.
+      ipSecurityRestrictions: cloudflareRules
+      ipSecurityRestrictionsDefaultAction: 'Deny'
       cors: {
         allowedOrigins: allowedOrigins
       }
@@ -414,6 +432,7 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
 
 output functionAppName string = func.name
 output functionAppHostName string = func.properties.defaultHostName
+output apiHostname string = apiHostBinding.name
 output appInsightsName string = appi.name
 output webAppInsightsName string = appiWeb.name
 output webLogWorkspaceName string = logWeb.name
