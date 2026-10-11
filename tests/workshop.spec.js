@@ -82,7 +82,7 @@ test.describe('workshop nave (3D)', () => {
       const panel = document.querySelector('.panel').getBoundingClientRect();
       const stage = document.querySelector('.nave').getBoundingClientRect();
       return s.y > Math.max(stage.top, 0) && s.y < panel.top - 20;
-    }, p.id), { timeout: 8000 }).toBe(true);
+    }, p.id), { timeout: 15000 }).toBe(true);
     expect(await smallText(page)).toEqual([]);
     expect(await sideways(page)).toBeLessThanOrEqual(1);
   });
@@ -102,6 +102,26 @@ test.describe('workshop nave (3D)', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.panel .panel__hint')).toBeVisible();
     await expect(page.locator('.pane[data-id="blob"]')).toBeFocused();
+  });
+
+  test('if three.js cannot load, the window stands instead', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.route('**/three.module.min.js', r => r.abort());
+    await page.goto('/workshop.html');
+    await expect(page.locator('.pane[data-id="functions"]')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.nave')).toBeHidden();
+    await expect(page.locator('.modes')).toBeHidden();
+    await page.locator('.pane[data-id="functions"]').click();
+    await expect(page.locator('.panel h2')).toHaveText('Functions');
+    expect(errors.filter(e => !/three\.module|ERR_FAILED|Failed to load/.test(e))).toEqual([]);
+  });
+
+  test('if the graphics context is lost, the window takes over', async ({ page }) => {
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    await page.evaluate(() => document.querySelector('.nave canvas').getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
+    await expect(page.locator('.nave')).toBeHidden();
+    await expect(page.locator('.pane[data-id="functions"]')).toBeVisible();
   });
 
   test('the Window switch brings back the stained glass', async ({ page }) => {

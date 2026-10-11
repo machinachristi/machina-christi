@@ -277,7 +277,7 @@
       }
     }
     @media (max-width: 919px) { html.nave-on .panel { max-height: 42dvh; } }
-    @media (max-height: 500px) and (max-width: 919px) { .panel { max-height: 36dvh; } }
+    @media (max-height: 500px) and (max-width: 919px) { .panel, html.nave-on .panel { max-height: 36dvh; } }
     .panel__hint { font-size: 15px; font-style: italic; line-height: 1.6; color: rgba(232, 213, 163, 0.72); }
     .panel h2 {
       font-weight: normal;
@@ -398,6 +398,7 @@
     .tag.on { opacity: var(--fade, 1); }
     .tag em { margin-left: 0.4em; font-size: 14px; color: rgba(232, 213, 163, 0.62); }
     .tag.is-sel { color: #fff8e6; border-color: #f6e7b8; box-shadow: 0 0 16px rgba(var(--c), 0.65); }
+    .tag.is-focus { opacity: 1; outline: 2px solid var(--gold-soft); outline-offset: 2px; }
     .tag--tier {
       padding: 0;
       background: none;

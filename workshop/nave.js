@@ -24,7 +24,7 @@ const LOOK = {
 
 export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, coverOf, reducedMotion, onLost }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
@@ -221,7 +221,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   const view = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
   const goal = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
   let fit = 20, w = 1, h = 1, offY = 0, lastInput = performance.now();
-  let active = true, visible = true, raf = 0, last = 0, ready = false;
+  let active = true, onScreen = true, pageShown = !document.hidden, raf = 0, last = 0, ready = false, settled = false;
+  const running = () => active && onScreen && pageShown;
 
   function nearestTurn(to) { return to + TAU * Math.round((goal.theta - to) / TAU); }
 
@@ -256,7 +257,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   function focus(id) {
     state.focus = id;
     // Turn the tower so a light reached by keyboard faces the visitor.
-    if (id && !state.selected) goal.theta = nearestTurn(prisms.get(id).angle);
+    if (id) goal.theta = nearestTurn(prisms.get(id).angle);
     lastInput = performance.now();
     wake();
   }
@@ -359,9 +360,12 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   canvas.addEventListener('pointerup', release);
   canvas.addEventListener('pointercancel', release);
   canvas.addEventListener('pointerleave', () => { if (state.hover) { state.hover = null; canvas.classList.remove('is-pointing'); wake(); } });
+  // The wheel scrolls the page as usual; only a pinch on a trackpad (which
+  // arrives as ctrl+wheel) or ctrl/cmd+wheel draws near.
   canvas.addEventListener('wheel', e => {
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
-    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * 0.0012));
+    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * 0.004));
     lastInput = performance.now();
     wake();
   }, { passive: false });
@@ -384,6 +388,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
 
   function frame(now) {
     raf = 0;
+    // Left alone for a while, the nave keeps breathing at a gentler pace.
+    if (settled && now - lastInput > 20000 && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
     last = now;
     const idle = now - lastInput > 5000;
@@ -462,7 +468,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     const queue = [];
     const sinT = Math.sin(view.theta), cosT = Math.cos(view.theta);
     for (const p of prisms.values()) {
-      const show = state.selected ? (p.id === state.selected || state.lit.has(p.id)) : (p.id === state.hover || p.id === state.focus);
+      const show = p.id === state.hover || p.id === state.focus || (state.selected && (p.id === state.selected || state.lit.has(p.id)));
       if (!show) { placeTag(p.label, 0, 0, false); continue; }
       v.copy(p.top).project(camera);
       const facing = p.pos.x * sinT + p.pos.z * cosT;
@@ -473,6 +479,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     for (const t of queue) {
       const el = t.p.label;
       el.classList.toggle('is-sel', t.p.id === state.selected);
+      el.classList.toggle('is-focus', t.p.id === state.focus);
       if (!el._w) { el._w = el.offsetWidth; el._h = el.offsetHeight; }
       const left = Math.max(4, Math.min(t.x - el._w / 2, w - el._w - 4));
       const top = t.y - el._h;
@@ -500,15 +507,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     if (!ready) { ready = true; stage.dataset.ready = '1'; }
     // The dust and the slow turn keep it alive; with reduced motion asked
     // for, it rests as soon as everything has settled, to spare the battery.
-    if ((!reducedMotion || settling) && active && visible) raf = requestAnimationFrame(frame);
+    settled = !settling;
+    if ((!reducedMotion || settling) && running()) raf = requestAnimationFrame(frame);
   }
 
   function wake() {
-    if (!raf && active && visible) { last = 0; raf = requestAnimationFrame(frame); }
+    settled = false;
+    if (!raf && running()) { last = 0; raf = requestAnimationFrame(frame); }
   }
 
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; wake(); }).observe(stage);
-  document.addEventListener('visibilitychange', () => { visible = !document.hidden; wake(); });
+  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; wake(); }).observe(stage);
+  document.addEventListener('visibilitychange', () => { pageShown = !document.hidden; wake(); });
 
   resize();
   goal.dist = view.dist = fit;
