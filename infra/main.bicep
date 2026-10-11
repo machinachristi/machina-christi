@@ -14,6 +14,9 @@ param location string = resourceGroup().location
 @description('Stable suffix for names that must be unique across all of Azure (storage, function app).')
 param suffix string = take(uniqueString(resourceGroup().id), 6)
 
+@description('Public hostname for the API. Cloudflare proxies it (DNS: a proxied CNAME to the Function app, plus the asuid TXT record that proves ownership). TLS to Azure uses its own certificate; Cloudflare terminates the public one.')
+param apiHostname string = 'api.machinachristi.com'
+
 @description('Browser origins allowed to call the API.')
 param allowedOrigins array = [
   'https://machinachristi.com'
@@ -379,6 +382,17 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
     hostStorageAccess
     metricsPublisher
   ]
+}
+
+// The custom hostname, so Azure answers requests addressed to it. No
+// certificate binding: Cloudflare (Full mode) accepts Azure's default one.
+resource apiHostBinding 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
+  parent: func
+  name: apiHostname
+  properties: {
+    hostNameType: 'Verified'
+    siteName: func.name
+  }
 }
 
 // Deploys sign in with Entra; the old username/password publishing is off.
