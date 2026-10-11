@@ -145,19 +145,19 @@ test.describe('the garden loads', () => {
     }
   });
 
-  test('the ambience is quiet until invited, and the toggle invites it', async ({ page }) => {
+  test('the ambience is on by default, and the toggle mutes it (a choice shared with Camino)', async ({ page }) => {
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
     const s0 = await frame.evaluate(() => window.__world.getState().sound);
     expect(typeof s0.supported).toBe('boolean');
-    expect(s0.muted).toBe(true);             // fresh visit: Eden is silent until asked
+    expect(s0.muted).toBe(false);            // fresh visit: sound on, like Camino
 
-    // The corner toggle exists, and inviting sound persists for next visit.
+    // The corner toggle exists, and muting persists for next visit.
     await expect(frame.locator('.sound')).toBeVisible();
-    const s1 = await frame.evaluate(() => window.__world.setMuted(false));
-    expect(s1.muted).toBe(false);
-    expect(await frame.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
+    const s1 = await frame.evaluate(() => window.__world.setMuted(true));
+    expect(s1.muted).toBe(true);
+    expect(await frame.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
   });
 
   test('stepping stones ford the river at the crossing', async ({ page }) => {

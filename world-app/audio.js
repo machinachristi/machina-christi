@@ -5,9 +5,9 @@
 // passes over, the hum of bees near their beds of blossom, crickets after
 // dark in short phrases (never a drone), and a quiet chime of reverence
 // near the sacred trees. Everything passes through one mellowing low-pass,
-// so nothing in Eden ever hisses or bites. Silent until invited: the garden
-// starts muted, and the corner toggle (persisted) is how a visitor asks
-// for its voice.
+// so nothing in Eden ever hisses or bites. The garden sounds by default (like
+// Camino); the corner toggle mutes it, and that choice is saved under the
+// same key Camino uses, so muting in one mutes the other.
 
 import { clamp, smoothstep } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
@@ -19,9 +19,9 @@ const PREF_KEY = 'camino_sound';
 export function createAmbience() {
   const AC = window.AudioContext || window.webkitAudioContext;
   let supported = typeof AC === 'function';
-  // Quiet by default: only an explicit, persisted "on" wakes the ambience.
-  let muted = true;
-  try { muted = localStorage.getItem(PREF_KEY) !== 'on'; } catch (_) { /* private mode etc. */ }
+  // On by default; only an explicit, persisted "off" (shared with Camino) mutes it.
+  let muted = false;
+  try { muted = localStorage.getItem(PREF_KEY) === 'off'; } catch (_) { /* private mode etc. */ }
 
   let ctx = null;
   let master = null;

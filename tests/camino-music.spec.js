@@ -116,20 +116,20 @@ test.describe('one sound setting for Camino and Eden', () => {
     await expect(page.locator('.sound')).toHaveClass(/sound--off/);
   });
 
-  test('unmuting in Eden unmutes Camino', async ({ page }) => {
-    await page.goto('/world-app/index.html');               // Eden starts muted until invited
+  test('Eden is on by default, like Camino, and its toggle drives the shared setting', async ({ page }) => {
+    await page.goto('/world-app/index.html');
     const btn = page.locator('.sound');
+    await expect(btn).toHaveAttribute('aria-pressed', 'true');           // on by default
+    await btn.click();                                                    // mute in Eden
     await expect(btn).toHaveAttribute('aria-pressed', 'false');
-    await btn.click();
-    await expect(btn).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
+    expect(await page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('off');
     await page.goto('/game.html');
-    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(false);
+    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(true);   // Camino follows
 
-    // …and the other way round: Camino explicitly muted stays muted.
-    await page.evaluate(() => localStorage.setItem('camino_sound', 'off'));
-    await page.reload();
-    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(true);
+    await page.keyboard.press('m');                                       // unmute in Camino
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('camino_sound'))).toBe('on');
+    await page.goto('/world-app/index.html');
+    await expect(page.locator('.sound')).toHaveAttribute('aria-pressed', 'true');  // Eden follows
   });
 });
 
