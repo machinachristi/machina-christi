@@ -1,6 +1,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Procedural chant (camino-music.js). If that script ever fails to load the
+// game still runs: every call below becomes a no-op.
+const Music = window.CaminoMusic || {
+  unlock() {}, start() {}, stop() {}, toggle() {}, isMuted() { return false; },
+  blocked() { return false; }, state() { return 'none'; },
+  setIntensity() {}, hit() {}, chime() {}, swell() {},
+};
+
 // ── Colors ─────────────────────────────────────────────────
 const C = {
   grass:      '#3D5C32',
@@ -101,9 +109,16 @@ function canRestart() {
   return gameState !== 'playing' && frameCount >= restartReadyAt;
 }
 
+// Start / game-over buttons: sized so they can never run into the sound button
+// (bottom-right) on a narrow phone.
+function buttonW() {
+  return Math.min(W * 0.62, 280, W - 2 * (MUTE_SIZE + muteMargin() + 10));
+}
+
 // Tap targets on the game-over screen, in CSS-pixel (viewport) coordinates.
 // The canvas fills the whole viewport, so pointer coords map straight to these.
 let gameOverButtons = null;
+let startButton = null;   // the Start button on the first screen
 
 function pointInRect(x, y, r) {
   return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
@@ -152,9 +167,12 @@ function startGame() {
   tutorial = localStorage.getItem(TUT_KEY)
     ? null
     : { steps: ['left', 'right', 'up', 'down'], idx: 0 };
+
+  Music.start();
 }
 
 function endGame() {
+  Music.stop();
   gameState = 'gameover';
   gameOverAt = frameCount;
   restartReadyAt = frameCount + RESTART_LOCK_FRAMES;
@@ -187,6 +205,24 @@ canvas.addEventListener('touchend', e => {
   const dy = end.clientY - touch0.y;
   touch0 = null;
 
+  // Audio may only start from a *tap* (phones don't count a swipe as a
+  // gesture), so every tap tries to unlock it. The sound button works on any
+  // screen — but if sound is wanted and merely blocked, tapping it should turn
+  // sound on, not mute it.
+  const isTap = Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN;
+  const wasBlocked = Music.blocked();
+  Music.unlock();
+  if (isTap && pointInRect(end.clientX, end.clientY, muteRect())) {
+    if (!wasBlocked) Music.toggle();
+    return;
+  }
+  // The first journey begins by tapping Start — a real tap, which is also what
+  // lets the music start.
+  if (gameState === 'start') {
+    if (isTap && pointInRect(end.clientX, end.clientY, startButton)) startGame();
+    return;
+  }
+
   // On the game-over screen, only a tap on "Walk again" or "Return home"
   // does anything — swipes and taps elsewhere no longer restart by accident.
   if (gameState === 'gameover') {
@@ -203,10 +239,16 @@ canvas.addEventListener('touchend', e => {
 }, { passive: false });
 
 canvas.addEventListener('click', e => {
+  const wasBlocked = Music.blocked();
+  Music.unlock();
+  if (pointInRect(e.clientX, e.clientY, muteRect())) { if (!wasBlocked) Music.toggle(); return; }
   if (!canRestart()) return;
-  // Before the first game, gameOverButtons doesn't exist yet — any click
-  // begins the game, same as it always has.
-  if (gameState !== 'gameover') { startGame(); return; }
+  // Before the first game, only the Start button begins it.
+  if (gameState === 'start') {
+    if (pointInRect(e.clientX, e.clientY, startButton)) startGame();
+    return;
+  }
+  if (gameState !== 'gameover') return;
   if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.home)) {
     goHome();
   } else if (pointInRect(e.clientX, e.clientY, gameOverButtons && gameOverButtons.again)) {
@@ -215,6 +257,8 @@ canvas.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  Music.unlock();
+  if (e.key === 'm' || e.key === 'M') { Music.toggle(); return; }
   const dirs = { ArrowUp: [0,-1], ArrowDown: [0,1], ArrowLeft: [-1,0], ArrowRight: [1,0] };
   if (dirs[e.key]) {
     e.preventDefault();
@@ -382,6 +426,7 @@ function update(dt) {
 
   frame  += dt;
   speed   = BASE_SPEED + frame * SPEED_INC;
+  Music.setIntensity((speed - BASE_SPEED) / 3);
   score  += speed * 0.011 * dt;
   scrollY = (scrollY + speed * dt) % (H * 0.13);
 
@@ -434,6 +479,7 @@ function update(dt) {
   if (score >= nextVerse) {
     const v = VERSES[Math.floor(nextVerse / VERSE_EVERY - 1) % VERSES.length];
     verse = { ...v, life: 220, max: 220 };
+    Music.swell();
     nextVerse += VERSE_EVERY;
   }
   if (verse) { verse.life -= dt; if (verse.life <= 0) verse = null; }
@@ -465,6 +511,7 @@ function update(dt) {
         flash = 18;
         lifeFlash = 40;
         spawnParticles(player.x, player.y);
+        Music.hit();
         obs.y = H + 200;
         if (player.lives <= 0) { endGame(); return; }
         break;
@@ -479,6 +526,7 @@ function update(dt) {
       const pts  = col.type === 'cross' ? 20 : 8;
       score     += pts;
       floats.push({ x: col.x, y: col.y, text: `+${pts}`, life: 45, max: 45 });
+      Music.chime(col.type === 'cross');
       spawnParticles(col.x, col.y, '#FFE9A0', 8);
     }
   }
@@ -713,34 +761,142 @@ function drawHUD() {
   }
 }
 
+// ── Sound button ───────────────────────────────────────────
+const AUDIO_DEBUG = /[?&]audiodebug\b/.test(location.search);   // ?audiodebug shows the audio state
+// A 44px speaker toggle at the bottom-right, drawn on every screen so sound can be
+// switched off before a journey starts. (Keyboard: M.)
+const MUTE_SIZE = 44;
+function muteMargin() { return Math.max(14, Math.min(W * 0.04, 24)); }
+function muteRect() {
+  const m = muteMargin();
+  // Sits a little higher than the margin so a phone's home bar doesn't crowd it.
+  const bottom = Math.max(28, H * 0.045);
+  return { x: W - m - MUTE_SIZE, y: H - bottom - MUTE_SIZE, w: MUTE_SIZE, h: MUTE_SIZE };
+}
+
+function drawMuteButton() {
+  const r = muteRect();
+  const muted = Music.isMuted();
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(11,10,8,0.4)';
+  roundRectPath(r.x, r.y, r.w, r.h, 12);
+  ctx.fill();
+
+  // Sound is on but the phone hasn't allowed it yet: pulse and say so.
+  if (Music.blocked()) {
+    const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.12);
+    ctx.strokeStyle = `rgba(255,215,0,${0.35 + 0.55 * pulse})`;
+    ctx.lineWidth = 2;
+    roundRectPath(r.x - 3, r.y - 3, r.w + 6, r.h + 6, 14);
+    ctx.stroke();
+    ctx.fillStyle = C.uiCream;
+    ctx.font = `italic ${Math.max(14, Math.min(W * 0.04, 16))}px ${UI_SERIF}`;
+    ctx.textAlign = 'right';
+    ctx.fillText('tap for sound', r.x - 12, r.y + r.h / 2 + 5);
+    ctx.fillStyle = 'rgba(11,10,8,0.4)';
+  }
+
+  ctx.strokeStyle = ctx.fillStyle = muted ? 'rgba(232,213,163,0.55)' : C.uiGold;
+  ctx.lineWidth = 2;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  // speaker body
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, cy - 4);
+  ctx.lineTo(cx - 5, cy - 4);
+  ctx.lineTo(cx + 1, cy - 9);
+  ctx.lineTo(cx + 1, cy + 9);
+  ctx.lineTo(cx - 5, cy + 4);
+  ctx.lineTo(cx - 10, cy + 4);
+  ctx.closePath();
+  ctx.fill();
+  if (muted) {
+    ctx.beginPath();                       // slash
+    ctx.moveTo(cx + 6, cy - 5); ctx.lineTo(cx + 14, cy + 5);
+    ctx.moveTo(cx + 14, cy - 5); ctx.lineTo(cx + 6, cy + 5);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();                       // sound waves
+    ctx.arc(cx + 2, cy, 6, -0.9, 0.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + 2, cy, 11, -0.9, 0.9);
+    ctx.stroke();
+  }
+  if (AUDIO_DEBUG) {
+    ctx.fillStyle = C.uiCream;
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`audio: ${Music.state()}${Music.blocked() ? ' (blocked)' : ''}`, 12, 22);
+  }
+  ctx.restore();
+}
+
 // ── First-play tutorial ────────────────────────────────────
 // Prompts the four moves one at a time; obstacles are paused until done.
 function drawTutorial() {
   const prompts = {
-    left:  '◀   Swipe left',
-    right: 'Swipe right   ▶',
-    up:    '▲   Swipe up',
-    down:  'Swipe down   ▼',
+    left:  { label: 'Swipe left',  icon: 'left'  },
+    right: { label: 'Swipe right', icon: 'right' },
+    up:    { label: 'Swipe up',    icon: 'up'    },
+    down:  { label: 'Swipe down',  icon: 'down'  },
   };
   const step = tutorial.steps[tutorial.idx];
+  const { label, icon } = prompts[step];
 
   ctx.save();
-  ctx.textAlign = 'center';
 
   // Dim banner so the prompt reads clearly over the path.
   ctx.fillStyle = 'rgba(10,20,50,0.4)';
   ctx.fillRect(0, H * 0.4, W, H * 0.16);
 
   const pulse = 1 + Math.sin(frameCount * 0.08) * 0.05;
-  ctx.fillStyle = C.uiGold;
-  ctx.font = `bold ${Math.min(W * 0.075, 34) * pulse}px sans-serif`;
-  ctx.fillText(prompts[step], W / 2, H * 0.475);
+  const fs    = Math.min(W * 0.075, 34) * pulse;
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.textAlign = 'left';
+  const tw   = ctx.measureText(label).width;
+  const box  = fs * 1.25;          // the arrow tile, drawn the same for all four moves
+  const gap  = fs * 0.55;
+  const x0   = W / 2 - (tw + gap + box) / 2;
+  const base = H * 0.475;
+  // Left/up moves lead with the arrow; right/down moves end with it.
+  const arrowFirst = icon === 'left' || icon === 'up';
+  const tx = arrowFirst ? x0 + box + gap : x0;
+  const bx = arrowFirst ? x0 : x0 + tw + gap;
+  const by = base - fs * 0.78;
 
+  ctx.fillStyle = C.uiGold;
+  ctx.fillText(label, tx, base);
+  drawArrowTile(bx, by, box, icon);
+
+  ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.72)';
   ctx.font = `${Math.min(W * 0.04, 18)}px sans-serif`;
   ctx.fillText(`Learn the way   ·   ${tutorial.idx + 1} / ${tutorial.steps.length}`, W / 2, H * 0.53);
 
   ctx.restore();
+}
+
+// A blue rounded tile with a white arrowhead — one look for every direction
+// (the old text glyphs rendered differently per arrow on phones).
+function drawArrowTile(x, y, size, dir) {
+  const g = ctx.createLinearGradient(x, y, x, y + size);
+  g.addColorStop(0, '#4D93F2');
+  g.addColorStop(1, '#2A66D2');
+  ctx.fillStyle = g;
+  roundRectPath(x, y, size, size, size * 0.22);
+  ctx.fill();
+
+  const cx = x + size / 2, cy = y + size / 2, h = size * 0.27;
+  const [dx, dy] = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[dir];
+  const px = -dy, py = dx;                      // perpendicular
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(cx + dx * h,            cy + dy * h);
+  ctx.lineTo(cx - dx * h + px * h,   cy - dy * h + py * h);
+  ctx.lineTo(cx - dx * h - px * h,   cy - dy * h - py * h);
+  ctx.closePath();
+  ctx.fill();
 }
 
 // ── Start screen ───────────────────────────────────────────
@@ -792,51 +948,16 @@ function drawStart() {
     ctx.fillText(`farthest walk · ${bestScore} km`, W/2, H*0.762);
   }
 
-  // Swipe-direction hint: four arrows around a center pilgrim dot
-  drawSwipeHint(W/2, H*0.86, Math.min(W*0.11, 52));
+  // Start button, styled like the game-over buttons.
+  const bw = buttonW();
+  const bh = Math.min(H * 0.078, 54);
+  startButton = { x: W/2 - bw/2, y: H * 0.845 - bh/2, w: bw, h: bh };
+  drawButton(startButton, 'Start', true, 1);
 
   ctx.fillStyle = 'rgba(232,213,163,0.6)';
   ctx.font      = `italic ${Math.min(W*0.042, 17)}px ${UI_SERIF}`;
   ctx.textAlign = 'center';
-  ctx.fillText('swipe to guide the pilgrim', W/2, H*0.96);
-}
-
-function drawSwipeHint(cx, cy, reach) {
-  // Pulse so it draws the eye
-  const pulse = 1 + Math.sin(frameCount * 0.06) * 0.08;
-  const r = reach * pulse;
-
-  // Center dot (the pilgrim)
-  ctx.fillStyle = C.crossGold;
-  ctx.beginPath();
-  ctx.arc(cx, cy, reach * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-
-  const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-  ctx.strokeStyle = 'rgba(201,162,39,0.85)';
-  ctx.fillStyle   = 'rgba(201,162,39,0.85)';
-  ctx.lineWidth   = Math.max(1.5, reach * 0.04);
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  for (const [dx, dy] of dirs) {
-    const sx = cx + dx * reach * 0.34, sy = cy + dy * reach * 0.34;
-    const ex = cx + dx * r,           ey = cy + dy * r;
-    // shaft
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.stroke();
-    // arrowhead (perpendicular wings)
-    const px = -dy, py = dx;       // perpendicular
-    const hs = reach * 0.18;       // head size
-    ctx.beginPath();
-    ctx.moveTo(ex, ey);
-    ctx.lineTo(ex - dx*hs + px*hs*0.7, ey - dy*hs + py*hs*0.7);
-    ctx.lineTo(ex - dx*hs - px*hs*0.7, ey - dy*hs - py*hs*0.7);
-    ctx.closePath();
-    ctx.fill();
-  }
+  ctx.fillText('then swipe to guide the pilgrim', W/2, H*0.935);
 }
 
 // ── Game over screen ───────────────────────────────────────
@@ -914,7 +1035,7 @@ function drawGameOver() {
   if (canRestart()) {
     const fade = Math.min(1, (frameCount - restartReadyAt) / 25);
 
-    const bw = Math.min(W * 0.62, 280);
+    const bw = buttonW();
     const bh = Math.min(H * 0.078, 54);
     const cx = W / 2;
     const y1 = H * 0.74;
@@ -935,7 +1056,7 @@ function drawGameOver() {
 function render() {
   ctx.clearRect(0, 0, W, H);
 
-  if (gameState === 'start') { drawStart(); return; }
+  if (gameState === 'start') { drawStart(); drawMuteButton(); return; }
 
   // Screen shake offset
   ctx.save();
@@ -1010,6 +1131,7 @@ function render() {
   if (tutorial && gameState === 'playing') drawTutorial();
 
   if (gameState === 'gameover') drawGameOver();
+  drawMuteButton();
 }
 
 function drawVerse() {
@@ -1065,7 +1187,9 @@ let lastTime = performance.now();
 function loop(now) {
   // dt = elapsed time as a fraction of one 60fps frame (16.67ms).
   // Capped at 3 so a long pause (tab backgrounded) can't teleport the world.
-  const dt = Math.min((now - lastTime) / (1000 / 60), 3);
+  // Floored at 0: the first frame's timestamp can predate lastTime, which made
+  // frameCount briefly negative and blocked starting for a moment.
+  const dt = Math.max(0, Math.min((now - lastTime) / (1000 / 60), 3));
   lastTime = now;
   frameCount += dt;
 
