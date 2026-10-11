@@ -35,7 +35,8 @@ test.describe('workshop page', () => {
     await expect(page.locator('.tier')).toHaveCount(new Set(glass.panes.map(p => p.tier)).size);
     const planned = glass.panes.filter(p => p.status === 'planned').length;
     await expect(page.locator('.pane[data-status="planned"]')).toHaveCount(planned);
-    await expect(page.locator('.pane[data-id="sql"] .pane__phase')).toHaveText('phase 2');
+    const someP = glass.panes.find(p => p.status === 'planned');
+    if (someP) await expect(page.locator(`.pane[data-id="${someP.id}"] .pane__phase`)).toHaveText('phase ' + someP.phase);
     expect(errors).toEqual([]);
   });
 
@@ -65,9 +66,10 @@ test.describe('workshop page', () => {
   });
 
   test('a link to a pane opens with it selected', async ({ page }) => {
-    await page.goto('/workshop.html#sql');
-    await expect(page.locator('.panel h2')).toHaveText('Azure SQL');
-    await expect(page.locator('.panel .chip')).toHaveText('Coming in phase 2');
+    const p = glass.panes.find(x => x.status === 'planned') || glass.panes[0];
+    await page.goto('/workshop.html#' + p.id);
+    await expect(page.locator('.panel h2')).toHaveText(p.name);
+    await expect(page.locator('.panel .chip')).toHaveText(p.status === 'live' ? 'In use today' : 'Coming in phase ' + p.phase);
   });
 
   test('readable on a phone: no text under 14px, no sideways scroll', async ({ page }) => {
