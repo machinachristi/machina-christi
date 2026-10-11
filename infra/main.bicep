@@ -23,23 +23,18 @@ param allowedOrigins array = [
 @description('Log Analytics daily ingestion cap in GB. 0.15/day is about 4.6 GB a month, inside the 5 GB free allowance.')
 param logDailyCapGb string = '0.15'
 
-@description('Most Function instances that may run at once. Low on purpose: it caps how fast a flood of requests can use up the free grant.')
+@description('Most Function instances that may run at once. One is plenty for today\'s traffic and caps how fast a flood could use up the free grant; raise it once Cloudflare rate-limits the API.')
 @minValue(1)
-param maxInstances int = 5
+param maxInstances int = 1
 
 var tags = {
   project: 'machina-christi'
   managedBy: 'bicep'
 }
 
-// Roles granted below. Each must also be listed in modules/ci-identity.bicep,
-// or CI won't be allowed to grant it.
-var roles = {
-  storageBlobDataOwner: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
-  storageQueueDataContributor: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
-  storageTableDataContributor: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
-  monitoringMetricsPublisher: '3913510d-42f4-4e42-8a64-420c390055eb'
-}
+// The roles granted below. CI may grant exactly the roles in this file (see
+// modules/ci-access.bicep), so a new one is added there and bootstrap re-run.
+var roles = loadJsonContent('platform-roles.json')
 
 // What the Functions host needs from its storage account: blobs for leases,
 // keys and deployment packages; queues and tables for its own bookkeeping
@@ -81,10 +76,13 @@ resource appi 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     WorkspaceResourceId: log.id
     IngestionMode: 'LogAnalytics'
-    // Browser telemetry can't sign in (a web page has no identity), so sending
-    // with just the connection string stays allowed. The Function app still
-    // signs in with Entra; see APPLICATIONINSIGHTS_AUTHENTICATION_STRING.
-    DisableLocalAuth: false
+    Flow_Type: 'Bluefield'
+    Request_Source: 'rest'
+    // Only senders that sign in with Entra are accepted, so knowing the
+    // connection string isn't enough to send (or flood) telemetry. The
+    // Function app signs in with its managed identity; see
+    // APPLICATIONINSIGHTS_AUTHENTICATION_STRING.
+    DisableLocalAuth: true
   }
 }
 
@@ -224,6 +222,7 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
     httpsOnly: true
     siteConfig: {
       minTlsVersion: '1.2'
+      ftpsState: 'Disabled'
       cors: {
         allowedOrigins: allowedOrigins
       }
