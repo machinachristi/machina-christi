@@ -33,7 +33,7 @@ on:
 # Deploys to the one shared environment run one at a time, and are never
 # cancelled halfway.
 concurrency:
-  group: azure-platform-${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
+  group: azure-platform-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -121,10 +121,14 @@ jobs:
       - name: Apply infra/main.bicep
         id: infra
         run: |
-          app=$(az deployment group create -g "$RESOURCE_GROUP" -n machina-platform \
-            -f infra/main.bicep --query properties.outputs.functionAppName.value -o tsv)
-          echo "Function app: $app"
+          outputs=$(az deployment group create -g "$RESOURCE_GROUP" -n machina-platform \
+            -f infra/main.bicep --query properties.outputs -o json)
+          app=$(jq -r '.functionAppName.value' <<<"$outputs")
+          host=$(jq -r '.functionAppHostName.value' <<<"$outputs")
+          test -n "$app" && test "$app" != null && test -n "$host" && test "$host" != null
+          echo "Function app: $app ($host)"
           echo "app=$app" >> "$GITHUB_OUTPUT"
+          echo "host=$host" >> "$GITHUB_OUTPUT"
 
       - name: Package the API
         working-directory: functions
@@ -134,13 +138,17 @@ jobs:
           zip -qr ../api.zip host.json package.json package-lock.json build.json src node_modules
 
       - name: Deploy the API
+        env:
+          APP: ${{ steps.infra.outputs.app }}
         run: |
           az functionapp deployment source config-zip -g "$RESOURCE_GROUP" \
-            -n "${{ steps.infra.outputs.app }}" --src api.zip --build-remote false -o none
+            -n "$APP" --src api.zip --build-remote false -o none
 
       - name: Check /api/health reports this commit
+        env:
+          HOST: ${{ steps.infra.outputs.host }}
         run: |
-          host=$(az functionapp show -g "$RESOURCE_GROUP" -n "${{ steps.infra.outputs.app }}" --query defaultHostName -o tsv)
+          host="$HOST"
           want="${GITHUB_SHA::7}"
           for i in $(seq 1 20); do
             body=$(curl -fsS -m 30 "https://$host/api/health" || true)
