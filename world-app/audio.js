@@ -48,7 +48,28 @@ export function createAmbience() {
     '<path class="slash" d="M15 9l6 6M21 9l-6 6"/>' +
     '</svg>';
   document.body.appendChild(btn);
-  btn.addEventListener('click', () => setMuted(!muted));
+  // "On" but not actually sounding (the phone hasn't allowed audio yet, or
+  // iOS parked it): the toggle says so, and a tap on it wakes the sound
+  // instead of muting it.
+  // The tap's own touchend/pointerup already wakes the audio before `click`
+  // arrives, so judge "was it waiting?" from the moment the press began.
+  let pressedWhileWaiting = false;
+  const notePress = () => { pressedWhileWaiting = !muted && !running(); };
+  btn.addEventListener('pointerdown', notePress);
+  btn.addEventListener('touchstart', notePress, { passive: true });
+  btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') notePress(); });
+  btn.addEventListener('click', () => {
+    const wasWaiting = pressedWhileWaiting || (!muted && !running());
+    pressedWhileWaiting = false;
+    if (wasWaiting) { ensureStarted(); return; }
+    setMuted(!muted);
+  });
+  function running() { return !!(ctx && ctx.state === 'running'); }
+  function syncButton() {
+    const waiting = !muted && supported && !running();
+    btn.classList.toggle('sound--waiting', waiting);
+    btn.setAttribute('aria-label', waiting ? 'Tap to turn sound on' : 'Toggle sound');
+  }
 
   function noiseBuffer(shape) {
     const len = Math.floor(ctx.sampleRate * 2);
@@ -419,22 +440,40 @@ export function createAmbience() {
         return;
       }
     }
-    if (ctx.state === 'suspended') ctx.resume().catch(() => { /* not yet allowed — a later gesture will */ });
+    // iOS also parks audio as 'interrupted' (call, lock screen, app switch):
+    // anything not running needs a resume, which only a tap / key will win.
+    if (ctx.state !== 'running') {
+      ctx.resume().then(syncButton, () => { /* not yet allowed — a later gesture will */ });
+    }
     if (master) master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
+    syncButton();
   }
 
   // Waking the sound is itself a click on the toggle (already a gesture);
   // these cover the case of a persisted "on" from an earlier visit.
-  window.addEventListener('pointerdown', ensureStarted);
-  window.addEventListener('keydown', ensureStarted);
+  // Phones only honour audio from a completed tap (touchend / click) or a key
+  // press — not pointerdown or touchstart, and not the end of a drag — so
+  // listen for those, and stop bothering once the sound is really running.
+  function wake() { if (!muted && !running()) ensureStarted(); }
+  for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) {
+    window.addEventListener(ev, wake, { capture: true, passive: true });
+  }
   ensureStarted();
+  syncButton();
 
   // Sleep with the tab: no ambience from a background tab, and the clock
   // of gusts and crickets simply resumes where it left off.
+  // Waking again after a suspend that was still in flight would otherwise be
+  // swallowed (resume() on a still-'running' context is a no-op), so re-check.
+  function sleep() {
+    if (!ctx || ctx.state !== 'running') return;
+    const again = () => { if (!muted && !document.hidden) ensureStarted(); else syncButton(); };
+    ctx.suspend().then(again, again);
+  }
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
-    if (document.hidden) ctx.suspend().catch(() => {});
-    else if (!muted) ctx.resume().catch(() => {});
+    if (document.hidden) sleep();
+    else if (!muted) ensureStarted();
   });
 
   function setMuted(next) {
@@ -445,7 +484,7 @@ export function createAmbience() {
     if (muted) {
       if (ctx && master) {
         master.gain.setTargetAtTime(0, ctx.currentTime, 0.2);
-        setTimeout(() => { if (muted && ctx) ctx.suspend().catch(() => {}); }, 900);
+        setTimeout(() => { if (muted && ctx) sleep(); }, 900);
       }
     } else {
       ensureStarted();
@@ -531,7 +570,8 @@ export function createAmbience() {
     return {
       supported,
       muted,
-      running: !!(ctx && ctx.state === 'running'),
+      running: running(),
+      ctxState: ctx ? ctx.state : 'none',
     };
   }
 

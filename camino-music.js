@@ -45,6 +45,7 @@
   let muted = false;
   let intensity = 0;            // 0 (start) → 1 (fast)
   let timer = null, suspendTimer = null;
+  let wantedSince = 0;          // performance.now() when sound was first wanted but not running
   let nextTime = 0, queue = [], lastPhrase = -1, chimeIdx = 0;
 
   try { muted = localStorage.getItem(KEY) === '1'; } catch (e) { /* private mode */ }
@@ -109,18 +110,35 @@
     return buf;
   }
 
+  // iOS can park the context as 'suspended' or 'interrupted' (phone call,
+  // lock screen, app switch); anything but 'running' needs a resume, and a
+  // resume is only honoured from inside a tap / key press.
   function resume() {
-    if (ctx && ctx.state === 'suspended') {
+    if (ctx && ctx.state !== 'running') {
       const p = ctx.resume();
       if (p && p.catch) p.catch(function () {});
     }
+  }
+
+  function wanted() { return active && !muted && !document.hidden; }
+
+  // Suspend, then re-check: if sound was wanted again while the suspend was in
+  // flight (mute → quickly unmute), resume() would have seen 'running' and done
+  // nothing, leaving the context stuck silent.
+  function sleep() {
+    if (!ctx || ctx.state !== 'running') return;
+    const p = ctx.suspend();
+    const after = function () { if (wanted()) resume(); };
+    if (p && p.then) p.then(after, after);
   }
 
   // Bring the sound in line with the current state (playing? muted? hidden?).
   function apply() {
     if (!ctx) return;
     const t = ctx.currentTime;
-    const on = active && !muted && !document.hidden;
+    const on = wanted();
+    if (!on) wantedSince = 0;
+    else if (!wantedSince) wantedSince = performance.now();
     const g = master.gain;
     g.cancelScheduledValues(t);
     g.setValueAtTime(g.value, t);
@@ -133,9 +151,7 @@
       const fade = active ? 0.25 : FADE_OUT;     // muting is quick, a journey's end is slow
       g.linearRampToValueAtTime(0, t + fade);
       stopScheduler();
-      suspendTimer = setTimeout(function () {
-        if (!(active && !muted && !document.hidden) && ctx.state === 'running') ctx.suspend();
-      }, fade * 1000 + 400);
+      suspendTimer = setTimeout(function () { if (!wanted()) sleep(); }, fade * 1000 + 400);
     }
   }
 
@@ -236,6 +252,13 @@
       return muted;
     },
     isMuted: function () { return muted; },
+    // Sound is wanted but the browser hasn't allowed it yet (needs a tap).
+    // Waits half a second so the normal start-up moment doesn't flash a hint.
+    blocked: function () {
+      return wanted() && (!ctx || ctx.state !== 'running') &&
+             wantedSince > 0 && performance.now() - wantedSince > 500;
+    },
+    state: function () { return ctx ? ctx.state : 'none'; },
     // 0 → 1 as the road gets faster; quickens the chant, adds the second voice.
     setIntensity: function (i) { intensity = Math.max(0, Math.min(1, i || 0)); },
     // Struck by a rock or water: muffle and duck the choir, add a soft thud.

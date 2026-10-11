@@ -5,6 +5,7 @@ const ctx = canvas.getContext('2d');
 // game still runs: every call below becomes a no-op.
 const Music = window.CaminoMusic || {
   unlock() {}, start() {}, stop() {}, toggle() {}, isMuted() { return false; },
+  blocked() { return false; }, state() { return 'none'; },
   setIntensity() {}, hit() {}, chime() {}, swell() {},
 };
 
@@ -197,13 +198,19 @@ canvas.addEventListener('touchend', e => {
   const dy = end.clientY - touch0.y;
   touch0 = null;
 
-  // Audio may only start from a gesture; the sound button works on any screen.
+  // Audio may only start from a *tap* (phones don't count a swipe as a
+  // gesture), so every tap tries to unlock it. The sound button works on any
+  // screen — but if sound is wanted and merely blocked, tapping it should turn
+  // sound on, not mute it.
+  const isTap = Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN;
+  const wasBlocked = Music.blocked();
   Music.unlock();
-  if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN &&
-      pointInRect(end.clientX, end.clientY, muteRect())) {
-    Music.toggle();
+  if (isTap && pointInRect(end.clientX, end.clientY, muteRect())) {
+    if (!wasBlocked) Music.toggle();
     return;
   }
+  // The first journey begins with a tap, which is what lets the music start.
+  if (gameState === 'start' && !isTap) return;
 
   // On the game-over screen, only a tap on "Walk again" or "Return home"
   // does anything — swipes and taps elsewhere no longer restart by accident.
@@ -221,8 +228,9 @@ canvas.addEventListener('touchend', e => {
 }, { passive: false });
 
 canvas.addEventListener('click', e => {
+  const wasBlocked = Music.blocked();
   Music.unlock();
-  if (pointInRect(e.clientX, e.clientY, muteRect())) { Music.toggle(); return; }
+  if (pointInRect(e.clientX, e.clientY, muteRect())) { if (!wasBlocked) Music.toggle(); return; }
   if (!canRestart()) return;
   // Before the first game, gameOverButtons doesn't exist yet — any click
   // begins the game, same as it always has.
@@ -740,6 +748,7 @@ function drawHUD() {
 }
 
 // ── Sound button ───────────────────────────────────────────
+const AUDIO_DEBUG = /[?&]audiodebug\b/.test(location.search);   // ?audiodebug shows the audio state
 // A 44px speaker toggle under the lives, drawn on every screen so sound can be
 // switched off before a journey starts. (Keyboard: M.)
 function muteRect() {
@@ -755,6 +764,20 @@ function drawMuteButton() {
   ctx.fillStyle = 'rgba(11,10,8,0.4)';
   roundRectPath(r.x, r.y, r.w, r.h, 12);
   ctx.fill();
+
+  // Sound is on but the phone hasn't allowed it yet: pulse and say so.
+  if (Music.blocked()) {
+    const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.12);
+    ctx.strokeStyle = `rgba(255,215,0,${0.35 + 0.55 * pulse})`;
+    ctx.lineWidth = 2;
+    roundRectPath(r.x - 3, r.y - 3, r.w + 6, r.h + 6, 14);
+    ctx.stroke();
+    ctx.fillStyle = C.uiCream;
+    ctx.font = `italic ${Math.max(14, Math.min(W * 0.04, 16))}px ${UI_SERIF}`;
+    ctx.textAlign = 'right';
+    ctx.fillText('tap for sound', r.x + r.w, r.y + r.h + 22);
+    ctx.fillStyle = 'rgba(11,10,8,0.4)';
+  }
 
   ctx.strokeStyle = ctx.fillStyle = muted ? 'rgba(232,213,163,0.55)' : C.uiGold;
   ctx.lineWidth = 2;
@@ -781,6 +804,12 @@ function drawMuteButton() {
     ctx.beginPath();
     ctx.arc(cx + 2, cy, 11, -0.9, 0.9);
     ctx.stroke();
+  }
+  if (AUDIO_DEBUG) {
+    ctx.fillStyle = C.uiCream;
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`audio: ${Music.state()}${Music.blocked() ? ' (blocked)' : ''}`, r.x + r.w, r.y + r.h + 42);
   }
   ctx.restore();
 }
@@ -870,7 +899,7 @@ function drawStart() {
   ctx.fillStyle = 'rgba(232,213,163,0.6)';
   ctx.font      = `italic ${Math.min(W*0.042, 17)}px ${UI_SERIF}`;
   ctx.textAlign = 'center';
-  ctx.fillText('swipe to guide the pilgrim', W/2, H*0.96);
+  ctx.fillText('tap to begin', W/2, H*0.96);
 }
 
 function drawSwipeHint(cx, cy, reach) {

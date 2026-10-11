@@ -67,4 +67,80 @@ test.describe('camino music', () => {
     expect((await level(page)).rms).toBeLessThan(0.0005);
     expect(errors).toEqual([]);
   });
+
+  // Phones only unlock audio from a completed *tap*, never from a swipe — so the
+  // first journey must begin with a tap, or the music can't start.
+  test('the first journey begins with a tap, not a swipe', async ({ page }) => {
+    await page.goto('/game.html');
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent',
+      { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+
+    await touch('touchStart', 195, 500);
+    for (let i = 1; i <= 8; i++) await touch('touchMove', 195 - i * 8, 500);
+    await touch('touchEnd', 195, 500);
+    // The swipe is ignored — poll a few frames to be sure it didn't start late.
+    const f0 = await page.evaluate(() => frameCount);
+    await expect.poll(() => page.evaluate(f => frameCount > f + 20, f0)).toBe(true);
+    expect(await page.evaluate(() => gameState)).toBe('start');
+
+    await page.touchscreen.tap(195, 500);
+    await expect.poll(() => page.evaluate(() => gameState)).toBe('playing');
+  });
+});
+
+// A browser that refuses to start audio until it is "allowed" — what a phone
+// does until it sees a real tap. Lets us test the not-yet-sounding states.
+async function stubBlockedAudio(page) {
+  await page.addInitScript(() => {
+    window.__gestureOK = false;     // flip to true: the next resume() is "a real tap"
+    window.__allowAudio = false;    // becomes true only once that resume() completes
+    const Orig = window.AudioContext;
+    // `state` is defined on a parent prototype (BaseAudioContext) — walk up to find it.
+    let proto = Orig.prototype, desc;
+    while (proto && !(desc = Object.getOwnPropertyDescriptor(proto, 'state'))) proto = Object.getPrototypeOf(proto);
+    const realState = desc.get;
+    window.AudioContext = class extends Orig {
+      resume() {
+        if (!window.__gestureOK) return Promise.reject(new Error('blocked'));
+        return super.resume().then(() => { window.__allowAudio = true; });
+      }
+      get state() { return window.__allowAudio ? realState.call(this) : 'suspended'; }
+    };
+  });
+}
+
+test.describe('audio that the phone has not allowed yet', () => {
+  test('camino: sound on but blocked pulses a hint, and a tap on the button wakes it (not mutes it)', async ({ page }) => {
+    await stubBlockedAudio(page);
+    const errors = watchErrors(page);
+    await page.goto('/game.html');
+    await page.touchscreen.tap(195, 500);               // begin the journey
+    await expect.poll(() => page.evaluate(() => gameState)).toBe('playing');
+    await expect.poll(() => page.evaluate(() => window.CaminoMusic.blocked()), { timeout: 10000 }).toBe(true);
+
+    // The speaker is "on but blocked": tapping it must NOT mute.
+    await page.evaluate(() => { window.__gestureOK = true; });
+    await page.touchscreen.tap(MUTE_TAP.x, MUTE_TAP.y);
+    expect(await page.evaluate(() => window.CaminoMusic.isMuted())).toBe(false);
+    await expect.poll(() => page.evaluate(() => window.CaminoMusic.blocked())).toBe(false);
+    await expect.poll(async () => (await level(page)).rms, { timeout: 20000 }).toBeGreaterThan(0.002);
+    expect(errors).toEqual([]);
+  });
+
+  test('eden: a persisted "on" that is not sounding says so, and a tap wakes it', async ({ page }) => {
+    await stubBlockedAudio(page);
+    await page.addInitScript(() => localStorage.setItem('camino_sound', 'on'));
+    await page.goto('/world-app/index.html');
+    const btn = page.locator('.sound');
+    await expect(btn).toHaveClass(/sound--waiting/, { timeout: 20000 });
+    await expect(btn).toHaveAttribute('aria-pressed', 'true');
+
+    await page.evaluate(() => { window.__gestureOK = true; });
+    await btn.click();
+    // Woken, not muted: still "on", no longer waiting.
+    await expect(btn).not.toHaveClass(/sound--waiting/);
+    await expect(btn).toHaveAttribute('aria-pressed', 'true');
+    await expect(btn).not.toHaveClass(/sound--off/);
+  });
 });
