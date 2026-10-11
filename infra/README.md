@@ -64,6 +64,23 @@ Runs when `infra/`, `functions/` or the workflow itself changes:
   a build stamp, and wait until `/api/health` reports the new commit. A manual
   re-run is available from the Actions tab (on main).
 
+## API hostname and Cloudflare
+
+`https://api.machinachristi.com` is proxied by Cloudflare (free plan) in front of
+the Function app:
+
+| Where | Setting |
+|---|---|
+| DNS | `api` CNAME → the Function app's `azurewebsites.net` name, proxied; `asuid.api` TXT = the app's domain-verification ID (proves ownership) |
+| Azure | `hostNameBindings` in `main.bicep` (no certificate binding: Cloudflare in Full mode accepts Azure's default one) |
+| Cache Rule | `api` host + GET → eligible for cache, honoring the origin's `Cache-Control` (bypass if absent). `/api/health` is `no-store`, so it is never cached |
+| Rate limiting rule | `api` host: more than 20 requests per 10 s from one IP → block (429) for 10 s. The free plan allows one rule |
+| Browser Cache TTL | Respect Existing Headers, so Cloudflare doesn't stretch the site's short cache times |
+
+The Function app's own `azurewebsites.net` address still answers directly, so
+the rate limit can be bypassed there. Restricting the app to Cloudflare's
+address ranges would close that.
+
 ## Deploying by hand
 
 ```bash
