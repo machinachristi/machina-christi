@@ -2,8 +2,9 @@
 // vouches for the workflow run and Azure hands back a token that lasts
 // minutes. No password or key is stored anywhere.
 //
-//   deploy  - only runs on main (push or manual run) may use it. main is
-//             reached only through a PR that passed the required checks.
+//   deploy  - only workflow runs on main may use it, which means code
+//             already on main. (Required checks guard main, but an admin can
+//             still push past them unless branch protection says otherwise.)
 //   preview - pull request runs. Read-only (see ci-access.bicep): a PR runs
 //             its own copy of the workflow, so whatever a PR can sign in as,
 //             any pushed branch can, before review.

@@ -41,8 +41,11 @@ Why it's built this way:
 - A pull request runs its *own* copy of the workflow, before anyone reviews it. So
   whatever a PR can sign in as, any pushed branch can. That is why PR runs get the
   read-only identity.
-- `main` is reached only through a PR that passed the required checks, so only
-  main gets the identity that can change things.
+- Only code already on `main` gets the identity that can change things. Required
+  checks guard main, so turn on "Do not allow bypassing the above settings" in
+  the branch protection too, or an admin push could skip them.
+- CI can grant data roles only to other service principals, never to its own
+  identities.
 - The identities live in `rg-machina-ci`, where CI has no rights at all. A
   compromised run can't add a new sign-in trust (a backdoor) to them or delete
   them, and it can't touch the budget or the subscription.

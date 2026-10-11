@@ -18,6 +18,9 @@ param deployPrincipalId string
 param previewPrincipalId string
 param whatIfRoleId string
 
+// CI may never grant data roles to its own identities.
+var ciPrincipalIds = '${deployPrincipalId}, ${previewPrincipalId}'
+
 var builtInRoles = {
   contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
   rbacAdministrator: 'f58310d9-a9f6-439a-9e8d-f62e7b41a168'
@@ -27,8 +30,9 @@ var builtInRoles = {
 var grantableRoleIds = join(map(items(loadJsonContent('../platform-roles.json')), r => r.value), ', ')
 
 // Azure ABAC condition, checked on every role-assignment write and delete:
-// the role must be one of the listed ones and the assignee a service principal.
-var rbacCondition = replace('''
+// the role must be one of the listed ones and the assignee a service principal
+// other than CI's own identities.
+var rbacCondition = replace(replace('''
 (
   (
     !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})
@@ -38,6 +42,8 @@ var rbacCondition = replace('''
     @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {ROLE_IDS}
     AND
     @Request[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase {'ServicePrincipal'}
+    AND
+    @Request[Microsoft.Authorization/roleAssignments:PrincipalId] ForAnyOfAllValues:GuidNotEquals {CI_IDS}
   )
 )
 AND
@@ -52,7 +58,7 @@ AND
     @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase {'ServicePrincipal'}
   )
 )
-''', 'ROLE_IDS', grantableRoleIds)
+''', 'ROLE_IDS', grantableRoleIds), 'CI_IDS', ciPrincipalIds)
 
 var assignments = [
   {
