@@ -274,12 +274,15 @@ test.describe('the garden loads', () => {
   });
 
   test('draw near a creature and its name is given (Genesis 2:19-20)', async ({ page }) => {
+    // The world's clock is capped per frame, so a slow CI runner simulates slower
+    // than real time: every wait below polls with a generous ceiling.
+    test.setTimeout(120000);
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
     // Standing apart on the south-eastern meadow, no name is given.
     await frame.evaluate(() => window.__world.teleport(30, -30));
-    await expect.poll(async () => (await getState(page)).naming).toBe(null);
+    await expect.poll(async () => (await getState(page)).naming, { timeout: 30000 }).toBe(null);
 
     // Draw near the lamb — wherever it now grazes. It wanders, so each
     // poll re-reads its place from the census and steps up beside it;
@@ -289,11 +292,11 @@ test.describe('the garden loads', () => {
       await frame.evaluate(([x, z]) => window.__world.teleport(x + 0.7, z + 0.7), [lamb.x, lamb.z]);
       const naming = (await getState(page)).naming;
       return naming && naming.name;
-    }, { timeout: 10000 }).toBe('Taleh');
+    }, { timeout: 40000 }).toBe('Taleh');
 
     // The caption stands in the world's own document, name and kind.
-    await expect(frame.locator('.naming')).toHaveClass(/naming--shown/);
-    await expect(frame.locator('.naming__label')).toHaveText('the lamb');
+    await expect(frame.locator('.naming')).toHaveClass(/naming--shown/, { timeout: 30000 });
+    await expect(frame.locator('.naming__label')).toHaveText('the lamb', { timeout: 30000 });
 
     // The golden fish alone bears a name of its own.
     await expect.poll(async () => {
@@ -301,12 +304,13 @@ test.describe('the garden loads', () => {
       await frame.evaluate(([x, z]) => window.__world.teleport(x + 0.4, z), [gold.x, gold.z]);
       const naming = (await getState(page)).naming;
       return naming && naming.name;
-    }, { timeout: 10000 }).toBe('Zahav');
+    }, { timeout: 40000 }).toBe('Zahav');
 
     // Walking away, the caption lets go and the garden falls quiet again.
     await frame.evaluate(() => window.__world.teleport(30, -30));
-    await expect.poll(async () => (await getState(page)).naming).toBe(null);
-    await expect(frame.locator('.naming')).not.toHaveClass(/naming--shown/);
+    await expect.poll(async () => (await getState(page)).naming, { timeout: 30000 }).toBe(null);
+    // The caption itself is updated by the render loop, a frame or more later.
+    await expect(frame.locator('.naming')).not.toHaveClass(/naming--shown/, { timeout: 40000 });
   });
 
   test('stillness by the water: the walker sits, and a fish draws near (v8)', async ({ page }) => {
@@ -482,6 +486,9 @@ test.describe('the garden loads', () => {
   });
 
   test('footprints linger a while on the sandy banks, then fade (v10, Genesis 2:15)', async ({ page }) => {
+    // A print lingers LIFE = 7.5 simulated seconds, and the world's clock is capped
+    // per frame (0.05s) — on a slow CI runner that is far more than 7.5 real seconds.
+    test.setTimeout(150000);
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
@@ -491,16 +498,20 @@ test.describe('the garden loads', () => {
     // Walk a stretch of the western bank — real sand, not the water itself
     // (wading leaves the wake's own rings instead, v9).
     await frame.evaluate(() => window.__world.teleport(-40, 11.22, Math.PI / 2));
-    for (let i = 1; i <= 6; i++) {
-      await frame.evaluate((n) => window.__world.teleport(-40 + n * 0.13, 11.22, Math.PI / 2), i);
+    // Keep stepping along the bank until a print lands (prints are laid by frames
+    // that see the walker move; a slow runner may need more steps than a fast one).
+    let step = 0;
+    await expect.poll(async () => {
+      step++;
+      await frame.evaluate((n) => window.__world.teleport(-40 + (n % 40) * 0.13, 11.22, Math.PI / 2), step);
       await page.waitForTimeout(80);
-    }
-    await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 5000 }).toBeGreaterThan(0);
+      return (await getState(page)).footprints.prints;
+    }, { timeout: 30000 }).toBeGreaterThan(0);
 
     // Move well away; the bank forgets them after a while (poll — CI's
     // software renderer dilates simulated time well past real, per house rule).
     await frame.evaluate(() => window.__world.teleport(30, -30));
-    await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 20000 }).toBe(0);
+    await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 100000 }).toBe(0);
   });
 
   test('?character=eve embodies Eve', async ({ page }) => {
@@ -581,11 +592,16 @@ test.describe('walking the garden', () => {
   test('arrow keys walk too (desktop courtesy)', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);
+    // Hold the key until the walker has really moved. (A fixed 700ms hold meant
+    // "however many frames fit" — on a slow software-rendered CI runner that is
+    // too few, and the distance came up short.)
     await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(700);
-    await page.keyboard.up('ArrowUp');
-    const s1 = await getState(page);
-    expect(dist2d(s1.pos, s0.pos)).toBeGreaterThan(0.5);
+    try {
+      await expect.poll(async () => dist2d((await getState(page)).pos, s0.pos), { timeout: 30000 })
+        .toBeGreaterThan(0.5);
+    } finally {
+      await page.keyboard.up('ArrowUp');
+    }
   });
 
   test('the companion wanders on its own', async ({ page }) => {
