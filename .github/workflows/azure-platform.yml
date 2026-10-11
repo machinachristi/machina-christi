@@ -124,7 +124,7 @@ jobs:
           outputs=$(az deployment group create -g "$RESOURCE_GROUP" -n machina-platform \
             -f infra/main.bicep --query properties.outputs -o json)
           app=$(jq -r '.functionAppName.value' <<<"$outputs")
-          host=$(jq -r '.functionAppHostName.value' <<<"$outputs")
+          host=$(jq -r '.apiHostname.value' <<<"$outputs")  # via Cloudflare: the app only answers it
           test -n "$app" && test "$app" != null && test -n "$host" && test "$host" != null
           echo "Function app: $app ($host)"
           echo "app=$app" >> "$GITHUB_OUTPUT"
@@ -141,8 +141,14 @@ jobs:
         env:
           APP: ${{ steps.infra.outputs.app }}
         run: |
-          az functionapp deployment source config-zip -g "$RESOURCE_GROUP" \
-            -n "$APP" --src api.zip --build-remote false -o none
+          # The CLI ends with its own probe of the app's main address, which
+          # only Cloudflare may reach (and which can be slow right after a
+          # restart). A failed upload still fails the next step: the live API
+          # must report this commit.
+          if ! az functionapp deployment source config-zip -g "$RESOURCE_GROUP" \
+            -n "$APP" --src api.zip --build-remote false -o none; then
+            echo "::warning::config-zip reported an error; the next step checks what is actually live"
+          fi
 
       - name: Check /api/health reports this commit
         env:

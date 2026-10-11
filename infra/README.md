@@ -77,9 +77,11 @@ the Function app:
 | Rate limiting rule | `api` host: more than 20 requests per 10 s from one IP → block (429) for 10 s. The free plan allows one rule |
 | Browser Cache TTL | Respect Existing Headers, so Cloudflare doesn't stretch the site's short cache times |
 
-The Function app's own `azurewebsites.net` address still answers directly, so
-the rate limit can be bypassed there. Restricting the app to Cloudflare's
-address ranges would close that.
+The Function app accepts requests only from Cloudflare's address ranges
+(`cloudflare-ips.json`, refreshed with `scripts/refresh-cloudflare-ips.sh`), so
+its `azurewebsites.net` address can't be used to bypass the rate limit. The
+deployment site (scm) is separate and stays open to CI, which signs in with
+Entra. The deploy's health check goes through `api.machinachristi.com`.
 
 ## Deploying by hand
 
