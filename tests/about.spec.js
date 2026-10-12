@@ -18,6 +18,7 @@ test.describe('about hub', () => {
     await expect(page.locator('a[href="about-eden.html"]')).toBeVisible();
     await expect(page.locator('a[href="about-ordo.html"]')).toBeVisible();
     await expect(page.locator('a[href="about-pray.html"]')).toBeVisible();
+    await expect(page.locator('a[href="about-workshop.html"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -59,6 +60,15 @@ test.describe('about sub-pages', () => {
     await expect(page.locator('h1')).toContainText('Pray');
     await expect(page.locator('a[href="pray.html"]')).toBeVisible();
     await expect(page.locator('blockquote')).toHaveCount(3);
+    expect(errors).toEqual([]);
+  });
+
+  test('about-workshop loads cleanly, links to the workshop, and credits RepoSense', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/about-workshop.html');
+    await expect(page.locator('h1')).toContainText('Workshop');
+    await expect(page.locator('a.enter[href="workshop.html"]')).toBeVisible();
+    await expect(page.locator('a[href^="https://github.com/iLevyTate/reposense"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 

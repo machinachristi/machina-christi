@@ -1,23 +1,23 @@
-// The Workshop nave: the same glass as the 2D window (workshop/glass.json),
-// raised as a city of light on a stepped ziggurat of dark stone, one step for
-// each tier, from the workbench at its foot up to "in your hands" beside the
-// cross. Each technology is a slender tower of dark glass whose windows burn
-// in its tier's colour (taller the more it holds together); planned ones are
-// clear crystal, outlined and waiting to be lit. Threads of gold join the
-// towers that touch, a pillar of light rises from the heart of the steps to
-// the cross, and ripples of light go out across the ground from its foot.
+// The Workshop: every technology Machina Christi uses (workshop/glass.json),
+// set as a square of light after St Peter's at night. Steps of dark stone
+// rise in the middle, one for each tier, from the workbench at the foot up to
+// "in your hands" beside an obelisk crowned with a radiant cross. Each
+// technology is a floodlit column of travertine with a flame of its tier's
+// colour at the top (brighter the more it holds together); planned ones are
+// clear crystal, waiting to be lit. Threads of gold join the columns that
+// touch, and around it all Bernini's colonnade opens its arms, its saints a
+// line of small lights along the top.
 //
 // Every surface is drawn by a small shader of its own and the brightest
 // things bloom, the way light does at dusk. The look follows the lead of
 // RepoSense (iLevyTate, MIT): unlit materials, a graded sky, real glow.
 //
 // It tells its story with the camera: an opening shot in which the light
-// falls from the cross and wakes each step in turn, then shots the page asks
-// for: a whole tier (the guided walk and the tier lights), one tower and its
-// neighbours, or a chosen few (the road ahead).
+// falls from the cross and wakes each step in turn, then the shots the page
+// asks for: a whole tier (the tier lights), or one column and its neighbours.
 //
-// The page (workshop.html) owns the data, the selection, the walk and the
-// card; this module only draws, and reports taps. It uses the three.js Eden
+// The page (workshop.html) owns the data, the selection and the card; this
+// module only draws, and reports taps. It uses the three.js Eden
 // already ships (world-app/vendor), so the Workshop downloads nothing new.
 import * as THREE from 'three';
 
@@ -27,13 +27,15 @@ const RING = 0.62;   // width of each step's open band
 const RISE = 0.46;   // height of each step
 const GOLD = new THREE.Color(0xf2d58a);
 
-// How brightly each tower burns: dimmed, resting, lit by a neighbour,
-// selected. Lit glass glows from its windows and crown; planned glass is a
-// clear outline that only kindles a little when it is told.
+// How brightly each column is lit: dimmed, resting, lit by a neighbour,
+// chosen. A live column is floodlit stone with a flame at its top; planned
+// ones are clear crystal that only kindles a little when it is told.
 const LOOK = {
-  live:    { light: [0.1, 0.72, 1.0, 1.3], shell: [0.45, 1, 1, 1],    crown: [0.12, 1.3, 2.0, 3.2] },
-  planned: { light: [0, 0, 0.1, 0.22],     shell: [0.3, 0.75, 1, 1.2], crown: [0, 0.1, 0.45, 0.9] },
+  live:    { light: [0.22, 0.85, 1.05, 1.3], shell: [0.6, 1, 1, 1],     crown: [0.15, 1.5, 2.2, 3.4] },
+  planned: { light: [0, 0, 0, 0],           shell: [0.3, 0.75, 1, 1.2], crown: [0, 0.12, 0.5, 1.0] },
 };
+const COL_H = 1.0;    // a column's height
+const COL_R = 0.075;  // its radius at the foot
 
 const QUAD_VS = /* glsl */ `
   varying vec2 vUv;
@@ -85,6 +87,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   const topY = stepTop(0);
   const maxR = outer(N - 1);
   const crossY = topY + 3.0;
+  const colonnadeR = maxR + 0.85;   // Bernini's arms, around the whole square
+  const extent = colonnadeR + 0.3;
 
   // How many panes each touches, either way: what it holds together.
   const degree = {};
@@ -153,18 +157,25 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     })));
   }
 
-  // The ground: still water, with ripples of light going out from the foot
-  // of the steps, and a warm pool around them.
+  // The ground: the paved square, its stones laid in rays from the obelisk as
+  // they are in Rome, and beyond the colonnade still water, with ripples of
+  // light going out across it.
   background(new THREE.Mesh(
     new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2).translate(0, -0.26, 0),
     new THREE.ShaderMaterial({
       ...additive,
-      uniforms: { uTime: time, uR: { value: maxR } },
+      uniforms: { uTime: time, uR: { value: colonnadeR }, uSteps: { value: maxR } },
       vertexShader: `varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
       fragmentShader: `
-        uniform float uTime, uR; varying vec3 vW;
+        uniform float uTime, uR, uSteps; varying vec3 vW;
         void main() {
           float r = length(vW.xz);
+          // The square: faint rays of travertine, and a ring at its edge.
+          float inside = step(uSteps, r) * (1.0 - step(uR, r));
+          float a = atan(vW.z, vW.x);
+          float ray = abs(fract(a / 6.2831853 * 16.0) - 0.5) * 2.0 * r * 6.2831853 / 32.0;
+          vec3 square = vec3(0.9, 0.75, 0.5) * (1.0 - smoothstep(0.006, 0.02 + fwidth(ray), ray)) * 0.03 * inside;
+          square += vec3(0.07, 0.055, 0.035) * inside * (1.0 - smoothstep(uSteps, uR, r));
           float out_ = smoothstep(uR * 0.98, uR * 1.12, r);
           float fade = 1.0 - smoothstep(uR * 1.1, uR * 3.2, r);
           float w = r * 1.15 - uTime * 0.35;
@@ -172,8 +183,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
           float ripple = pow(0.5 + 0.5 * cos(w), 40.0) * aa;
           float still = pow(0.5 + 0.5 * cos(r * 0.55), 160.0) * (1.0 - smoothstep(0.1, 0.6, fwidth(r * 0.55)));
           vec3 col = vec3(1.0, 0.8, 0.5) * (ripple * 0.05 + still * 0.035) * fade * out_;
-          col += vec3(0.05, 0.036, 0.02) * exp(-pow(max(r - uR, 0.0) * 0.8, 2.0)) * out_;
-          gl_FragColor = vec4(col, 1.0);
+          col += vec3(0.04, 0.03, 0.016) * exp(-pow(max(r - uR, 0.0) * 0.8, 2.0)) * out_;
+          gl_FragColor = vec4(col + square, 1.0);
         }`,
     }),
   ));
@@ -214,53 +225,77 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       ${OUT}
     }`;
 
-  // ── Towers ───────────────────────────────────────────────────────
-  const towerVS = `
-    varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vWall;
+  // ── Columns ──────────────────────────────────────────────────────
+  // A Tuscan column turned on a lathe: plinth, torus, a gently tapering
+  // shaft, the necking, the echinus and the abacus.
+  function columnGeometry(H, r) {
+    const pts = [
+      [0, 0], [r * 1.75, 0], [r * 1.75, 0.04],
+      [r * 1.5, 0.05], [r * 1.58, 0.075], [r * 1.32, 0.1],
+      [r * 1.08, 0.12], [r, 0.14],
+      [r * 0.86, H - 0.17],
+      [r * 0.96, H - 0.155], [r * 0.96, H - 0.135],
+      [r * 0.88, H - 0.125], [r * 1.28, H - 0.06],
+      [r * 1.55, H - 0.055], [r * 1.55, H], [0, H],
+    ];
+    return new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  }
+  const columnVS = `
+    varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
     void main() {
-      vUv = uv;
-      vec4 w = modelMatrix * vec4(position, 1.0);
-      vN = normalize(mat3(modelMatrix) * normal);
+      mat4 m = modelMatrix;
+      #ifdef USE_INSTANCING
+        m = modelMatrix * instanceMatrix;
+      #endif
+      vec4 w = m * vec4(position, 1.0);
+      vW = w.xyz; vLocal = position;
+      vN = normalize(mat3(m) * normal);
       vV = normalize(cameraPosition - w.xyz);
-      vWall = 1.0 - step(0.5, abs(normal.y));
       gl_Position = projectionMatrix * viewMatrix * w;
     }`;
-  const towerFS = `${HASH}
-    uniform vec3 uColor; uniform float uLight, uShell, uPlanned, uTime, uSeed, uRows, uReveal;
-    varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vWall;
+  const columnFS = `
+    uniform vec3 uColor; uniform float uLight, uShell, uPlanned, uReveal, uH, uNeck;
+    varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
     void main() {
-      float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
-      vec3 lamp = mix(uColor, vec3(1.0, 0.88, 0.68), 0.55);
-      // Windows: two columns up each face, some lit, each breathing slowly.
-      vec2 cell = vec2(vUv.x * 2.0, vUv.y * uRows);
-      vec2 id = floor(cell), f = fract(cell), fw = fwidth(cell);
-      vec2 m = smoothstep(0.26 - fw, 0.26 + fw, f) * (1.0 - smoothstep(0.74 - fw, 0.74 + fw, f));
-      float pane = m.x * m.y * vWall;
-      float on = step(0.32, hash(id + uSeed));
-      float breathe = 0.8 + 0.2 * sin(uTime * (0.35 + hash(id + 3.1) * 0.5) + hash(id) * 6.2831);
-      // From far away the grid melts into its average glow instead of shimmering.
-      float far = smoothstep(0.3, 0.85, max(fw.x, fw.y));
-      float lit = mix(pane * on * breathe, 0.3 * vWall, far);
-      float foot = mix(0.55, 1.0, smoothstep(0.0, 0.3, vUv.y * vWall + (1.0 - vWall)));
+      vec3 n = normalize(vN);
+      float y = vLocal.y;
+      // Travertine, floodlit from the square as the colonnade is at night:
+      // faces turned toward the cross take its light, brightest at the foot.
+      vec3 stone = vec3(0.82, 0.73, 0.58);
+      vec2 toCentre = -vW.xz;
+      vec3 L = normalize(vec3(toCentre, 0.9 * length(toCentre) + 0.4));
+      L = vec3(L.x, L.z, L.y);
+      float diff = 0.6 + 0.4 * dot(n, L);
+      float up = mix(1.0, 0.5, smoothstep(0.0, uH, y));
+      float ang = atan(vLocal.z, vLocal.x);
+      float shaft = step(0.14, y) * (1.0 - step(uH - 0.17, y));
+      float flute = 1.0 - shaft * 0.2 * smoothstep(0.3, 0.5, abs(fract(ang / 6.2831853 * 20.0) - 0.5));
+      float fres = pow(1.0 - abs(dot(n, normalize(vV))), 3.0);
+      // The tier's light: a band at the necking, and its flame warming the capital.
+      float neck = smoothstep(uH - 0.158, uH - 0.15, y) * (1.0 - smoothstep(uH - 0.14, uH - 0.132, y));
+      float cap = smoothstep(uH - 0.35, uH, y);
       vec3 col; float alpha = 1.0;
       if (uPlanned < 0.5) {
-        col = (uColor * 0.045 + vec3(0.01, 0.01, 0.018)) * uShell * foot
-            + uColor * fres * 0.5 * uShell
-            + lamp * lit * uLight * 1.9;
+        col = stone * (0.03 + 0.8 * diff * up) * flute * uLight
+            + uColor * (neck * uNeck + cap * 0.22) * uLight
+            + uColor * fres * 0.28 * uLight
+            + stone * 0.02 * uShell;
       } else {
-        // Clear crystal: an outline of light and empty windows, waiting.
-        col = uColor * (0.05 + fres * 0.65) * uShell + lamp * pane * 0.1 * uShell + lamp * lit * uLight * 1.6;
-        alpha = clamp((0.14 + fres * 0.6) * uShell, 0.0, 1.0);
+        // Clear crystal: an outline of light, waiting.
+        col = uColor * (0.05 + fres * 0.75) * uShell + uColor * neck * 0.7 * uShell;
+        alpha = clamp((0.12 + fres * 0.65) * uShell, 0.0, 1.0);
       }
       gl_FragColor = vec4(col * uReveal, alpha * mix(1.0, uReveal, uPlanned));
       ${OUT}
     }`;
+  const columnGeo = columnGeometry(COL_H, COL_R);
 
   const prisms = new Map();
   const prismMeshes = [];
   const rims = new Map();
   const tierAt = new Map(); // tier id → { i, y, r }
-  const W = 0.3;            // a tower's breadth
+  const flameGeo = new THREE.SphereGeometry(1, 16, 12);
+  const poolGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 
   tiers.forEach((t, i) => {
     const y = stepTop(i);
@@ -286,47 +321,48 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     inTier.forEach((p, k) => {
       const a = offset + (k * TAU) / inTier.length;
       const kind = p.status === 'planned' ? 'planned' : 'live';
-      const H = THREE.MathUtils.clamp(0.7 + (degree[p.id] || 0) * 0.13, 0.7, 2.1);
       const base = new THREE.Vector3(Math.sin(a) * ringAt, y, Math.cos(a) * ringAt);
-      const geo = new THREE.BoxGeometry(W, H, W).translate(0, H / 2, 0);
       const look = new THREE.ShaderMaterial({
         uniforms: {
           uColor: { value: colour }, uLight: { value: 0 }, uShell: { value: 0 }, uPlanned: { value: kind === 'planned' ? 1 : 0 },
-          uTime: time, uSeed: { value: k * 7.3 + i * 1.7 }, uRows: { value: Math.round(H * 7) }, uReveal: { value: 1 },
+          uReveal: { value: 1 }, uH: { value: COL_H }, uNeck: { value: 1.6 },
         },
-        vertexShader: towerVS,
-        fragmentShader: towerFS,
+        vertexShader: columnVS,
+        fragmentShader: columnFS,
         transparent: kind === 'planned',
         depthWrite: kind !== 'planned',
       });
-      const mesh = new THREE.Mesh(geo, look);
+      const mesh = new THREE.Mesh(columnGeo, look);
       mesh.position.copy(base);
       mesh.rotation.y = a;
       mesh.userData.id = p.id;
       scene.add(mesh);
       prismMeshes.push(mesh);
-      // The crown: a thin band of light at the top.
+      // Its flame: larger the more the column holds together.
       const crownMat = new THREE.MeshBasicMaterial({ color: 0x000000, ...additive });
-      const crown = new THREE.Mesh(new THREE.BoxGeometry(W * 1.08, 0.035, W * 1.08).translate(0, H + 0.01, 0), crownMat);
-      mesh.add(crown);
-      // Clear crystal keeps its edges, finely drawn.
-      let lineMat = null;
-      if (kind === 'planned') {
-        lineMat = new THREE.LineBasicMaterial({ color: colour.clone().lerp(new THREE.Color(1, 1, 1), 0.45), transparent: true, opacity: 0, depthWrite: false });
-        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), lineMat));
-      }
+      const flame = new THREE.Mesh(flameGeo, crownMat);
+      const size = 0.04 + Math.min(degree[p.id] || 0, 10) * 0.004;
+      flame.scale.set(size, size * 1.35, size);
+      flame.position.set(0, COL_H + size * 1.2, 0);
+      mesh.add(flame);
+      // And the light it casts on the stone at its foot.
+      const poolMat = new THREE.MeshBasicMaterial({ map: glowTex, color: 0x000000, ...additive });
+      const pool = new THREE.Mesh(poolGeo, poolMat);
+      pool.scale.setScalar(0.62);
+      pool.position.set(base.x, y + 0.006, base.z);
+      scene.add(pool);
       const label = tag(p.name, 'tag', kind === 'planned' ? 'phase ' + p.phase : null, p.tier);
-      const pos = base.clone().add(new THREE.Vector3(0, H / 2, 0));
       prisms.set(p.id, {
-        id: p.id, tier: t.id, kind, mesh, look, crownMat, lineMat, colour, pos, angle: a, label,
-        top: base.clone().add(new THREE.Vector3(0, H + 0.14, 0)),
-        crownAt: base.clone().add(new THREE.Vector3(0, H + 0.03, 0)),
+        id: p.id, tier: t.id, kind, mesh, look, crownMat, poolMat, lineMat: null, colour, angle: a, label,
+        pos: base.clone().add(new THREE.Vector3(0, COL_H / 2, 0)),
+        top: base.clone().add(new THREE.Vector3(0, COL_H + 0.24, 0)),
+        crownAt: base.clone().add(new THREE.Vector3(0, COL_H + size * 1.2, 0)),
         cur: { light: 0, shell: 0, crown: 0, s: 1 },
       });
     });
   });
 
-  // The heart: a dais, and a pillar of light rising from it to the cross.
+  // The heart: a dais, an obelisk on it, and the cross above, as in Rome.
   const daisH = topY + 0.4;
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(CORE, CORE, daisH, 96, 1), new THREE.ShaderMaterial({
     uniforms: { uRim: { value: GOLD.clone() }, uGlow: { value: 1.6 }, uR: { value: CORE }, uInner: { value: 99 }, uTop: { value: topY + 0.14 }, uReveal: { value: 1 } },
@@ -335,27 +371,31 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   }));
   dais.position.y = topY + 0.14 - daisH / 2;
   scene.add(dais);
-
-  const pillarBase = topY + 0.14;
-  const pillarH = crossY - 0.42 - pillarBase;
-  const pillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.035, 0.05, pillarH, 16, 1, true),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.86, 0.6).multiplyScalar(2.4) }),
-  );
-  pillar.position.y = pillarBase + pillarH / 2;
-  scene.add(pillar);
-  // Its soft breath of light, wider and fading upward.
   {
-    const geo = new THREE.CylinderGeometry(0.16, 0.28, pillarH, 24, 8, true);
-    const p = geo.attributes.position, col = new Float32Array(p.count * 4);
-    for (let v = 0; v < p.count; v++) {
-      const u = p.getY(v) / pillarH + 0.5;
-      col.set([1.0, 0.82, 0.5, 0.09 * (1 - u * 0.7)], v * 4);
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
-    const breath = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
-    breath.position.copy(pillar.position);
-    scene.add(breath);
+    const foot = topY + 0.14;
+    const obeliskFS = `
+      uniform float uTop, uFoot;
+      varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
+      void main() {
+        vec3 n = normalize(vN);
+        float h = clamp((vW.y - uFoot) / (uTop - uFoot), 0.0, 1.0);
+        vec3 stone = vec3(0.8, 0.7, 0.55);
+        float fres = pow(1.0 - abs(dot(n, normalize(vV))), 2.0);
+        // Lit from the foot, the light climbing and thinning toward the cross.
+        vec3 col = stone * (0.05 + 0.75 * mix(1.0, 0.25, h) * (0.6 + 0.4 * n.y + 0.3 * abs(n.x)))
+                 + vec3(1.0, 0.8, 0.45) * fres * 0.35;
+        gl_FragColor = vec4(col, 1.0);
+        ${OUT}
+      }`;
+    const stone = new THREE.ShaderMaterial({ uniforms: { uTop: { value: crossY - 0.43 }, uFoot: { value: foot } }, vertexShader: columnVS, fragmentShader: obeliskFS });
+    const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.26, 0.46), stone);
+    pedestal.position.y = foot + 0.13;
+    const shaftH = crossY - 0.43 - (foot + 0.26) - 0.2;
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, shaftH, 4, 1).rotateY(Math.PI / 4), stone);
+    shaft.position.y = foot + 0.26 + shaftH / 2;
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.2, 4).rotateY(Math.PI / 4), stone);
+    tip.position.y = foot + 0.26 + shaftH + 0.1;
+    scene.add(pedestal, shaft, tip);
   }
 
   const cross = new THREE.Group();
@@ -378,12 +418,55 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     const p = geo.attributes.position, col = new Float32Array(p.count * 4);
     for (let v = 0; v < p.count; v++) {
       const u = p.getY(v) / hgt + 0.5;
-      col.set([1.0, 0.84, 0.55, 0.05 * u * u], v * 4);
+      col.set([1.0, 0.84, 0.55, 0.045 * u * u], v * 4);
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
-    const shaft = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
-    shaft.position.y = hgt / 2 - 0.3;
-    scene.add(shaft);
+    const beam = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
+    beam.position.y = hgt / 2 - 0.3;
+    scene.add(beam);
+  }
+
+  // ── The colonnade: two arms open around the square, as Bernini meant
+  // them, the arms of the Church; its saints a line of small lights above.
+  {
+    const H = 0.95, foot = -0.26, spacing = 0.4;
+    const gap = 0.24; // the openings, east and west, in radians either side
+    const all = Math.round((TAU * colonnadeR) / spacing);
+    const at = [];
+    for (let k = 0; k < all; k++) {
+      const a = (k / all) * TAU;
+      if (Math.abs(Math.sin(a)) < Math.sin(gap)) continue; // the openings, on the x axis
+      at.push(a);
+    }
+    const geo = columnGeometry(H, 0.07);
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: GOLD.clone() }, uLight: { value: 0.62 }, uShell: { value: 1 }, uPlanned: { value: 0 }, uReveal: { value: 1 }, uH: { value: H }, uNeck: { value: 0.6 } },
+      vertexShader: columnVS,
+      fragmentShader: columnFS,
+    });
+    const columns = new THREE.InstancedMesh(geo, mat, at.length);
+    const m4 = new THREE.Matrix4();
+    at.forEach((a, k) => { columns.setMatrixAt(k, m4.makeTranslation(Math.cos(a) * colonnadeR, foot, Math.sin(a) * colonnadeR)); });
+    scene.add(columns);
+    // The entablature: one beam of stone running along the tops of both arms.
+    const arc = (from, to) => {
+      const shape = [[colonnadeR - 0.13, 0], [colonnadeR + 0.13, 0], [colonnadeR + 0.13, 0.09], [colonnadeR - 0.13, 0.09], [colonnadeR - 0.13, 0]];
+      const g = new THREE.LatheGeometry(shape.map(([x, y]) => new THREE.Vector2(x, y)), 96, from, to - from);
+      const beam = new THREE.Mesh(g, mat);
+      beam.position.y = foot + H;
+      scene.add(beam);
+    };
+    // Lathe angles run from +z toward +x, so the openings on the x axis sit
+    // at a quarter and three quarters of the turn.
+    arc(Math.PI / 2 + gap + 0.04, (3 * Math.PI) / 2 - gap - 0.04);
+    arc((3 * Math.PI) / 2 + gap + 0.04, (5 * Math.PI) / 2 - gap - 0.04);
+    // The saints: a small warm light over every other column.
+    const saints = at.filter((_, k) => k % 2 === 0);
+    const sp = new Float32Array(saints.length * 3);
+    saints.forEach((a, k) => sp.set([Math.cos(a) * colonnadeR, foot + H + 0.17, Math.sin(a) * colonnadeR], k * 3));
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ map: glowTex, color: new THREE.Color(1, 0.86, 0.6).multiplyScalar(1.4), size: 0.13, ...additive })));
   }
 
   // Dust turning slowly in the light.
@@ -400,7 +483,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: glowTex, color: 0xf2d58a, size: 0.06, opacity: 0.45, ...additive }));
   scene.add(motes);
 
-  // A ring of light at the foot of the chosen tower.
+  // A ring of light at the foot of the chosen column.
   const marker = new THREE.Mesh(
     new THREE.RingGeometry(0.3, 0.33, 48).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x000000, ...additive, side: THREE.DoubleSide }),
@@ -551,7 +634,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   const INTRO = 4.6;
   // At rest the camera looks down on the whole of it from a little above, so
   // the steps read as rings, and stands back far enough for all of it.
-  const REST_PHI = 1.0;
+  let REST_PHI = 1.0;
   const home = new THREE.Vector3(0, crossY * 0.42, 0);
   const view = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
   const goal = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
@@ -674,12 +757,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     glow.size(Math.round(w * pixelRatio), Math.round(h * pixelRatio));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    // On a tall, narrow screen the camera looks further down, so the square
+    // fills more of the height instead of sitting in a band across it.
+    const wasPhi = REST_PHI;
+    REST_PHI = THREE.MathUtils.clamp(0.62 + 0.45 * camera.aspect, 0.8, 1.0);
+    if (!state.selected && !state.tier && goal.phi === wasPhi) goal.phi = REST_PHI;
     // Far enough back that the whole of it, cross to widest step, fits
     // between the top bar and the dock with a little room on every side.
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const old = fit;
-    const halfW = maxR + 0.3;
-    const halfH = ((crossY + 0.8) / 2) * Math.sin(REST_PHI) + maxR * Math.cos(REST_PHI);
+    const halfW = extent;
+    const halfH = ((crossY + 0.8) / 2) * Math.sin(REST_PHI) + extent * Math.cos(REST_PHI);
     const open = Math.max(0.5, (h - 150) / h); // the top bar and the dock
     fit = Math.max(halfH / (t * open), halfW / (t * camera.aspect)) * 1.1;
     goal.dist *= fit / old;
@@ -733,8 +821,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     right.setFromMatrixColumn(camera.matrixWorld, 0);
     up.setFromMatrixColumn(camera.matrixWorld, 1);
     goal.target.addScaledVector(right, -dx * per).addScaledVector(up, dy * per);
-    goal.target.x = THREE.MathUtils.clamp(goal.target.x, -maxR, maxR);
-    goal.target.z = THREE.MathUtils.clamp(goal.target.z, -maxR, maxR);
+    goal.target.x = THREE.MathUtils.clamp(goal.target.x, -colonnadeR, colonnadeR);
+    goal.target.z = THREE.MathUtils.clamp(goal.target.z, -colonnadeR, colonnadeR);
     goal.target.y = THREE.MathUtils.clamp(goal.target.y, -0.5, crossY);
   }
 
@@ -913,6 +1001,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       p.look.uniforms.uLight.value = p.cur.light;
       p.look.uniforms.uShell.value = p.cur.shell;
       p.crownMat.color.copy(p.colour).lerp(warmWhite, 0.5).multiplyScalar(p.cur.crown);
+      p.poolMat.color.copy(p.colour).lerp(warmWhite, 0.3).multiplyScalar(p.cur.crown * 0.12);
       if (p.lineMat) p.lineMat.opacity = Math.min(1, p.cur.shell * 0.7);
       p.mesh.scale.set(1, p.cur.s, 1);
     }

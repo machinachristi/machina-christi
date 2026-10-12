@@ -1,7 +1,5 @@
 {
-  "_about": "The Workshop window (workshop.html): every technology Machina Christi uses or plans to use. One pane each, in tiers from the visitor's hands down to the workbench. status is 'live' or 'planned' (planned panes name their roadmap phase). touches lists the panes it connects to; the page lights them together. Each tier's story, with the prologue and epilogue, is what the guided walk reads. To add a technology, add a pane here. A new tier also needs its colour (--<tier-id>) in workshop.html.",
-  "prologue": "Seven tiers of glass hold everything that builds and keeps this site. Follow a single tap from your hands down to the workbench where it was made.",
-  "epilogue": "The clear glass is the road ahead. Each phase of the roadmap lights another pane.",
+  "_about": "The Workshop (workshop.html): every technology Machina Christi uses or plans to use. One pane each, in tiers from the visitor's hands down to the workbench. status is 'live' or 'planned' (planned panes name their roadmap phase). touches lists the panes it connects to; the page lights them together. Each tier's story is what its card reads. To add a technology, add a pane here. A new tier also needs its colour (--<tier-id>) in workshop.html.",
   "tiers": [
     { "id": "hands",    "name": "In your hands", "note": "runs in your browser",
       "story": "It begins in your hands. Your own browser draws Eden, sings Camino's chant and reads the prayers aloud, with nothing to install." },

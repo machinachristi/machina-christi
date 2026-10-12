@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="The Workshop: every tool that builds and keeps Machina Christi, set as glass in a stepped tower of light. Tap a pane to see what it does and what it touches." />
+  <meta name="theme-color" content="#06070c" />
+  <meta name="description" content="The Workshop: every tool that builds and keeps Machina Christi, set as columns of light in a square after St Peter's. Tap a column to see what it does and what it touches." />
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/workshop.html" />
   <meta property="og:title" content="Workshop · Machina Christi" />
-  <meta property="og:description" content="Every tool that builds and keeps Machina Christi, set as glass in a stepped tower of light." />
+  <meta property="og:description" content="Every tool that builds and keeps Machina Christi, set as columns of light in a square after St Peter's." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>Workshop · Machina Christi</title>
@@ -18,15 +18,12 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg:        #0b0a08;
-      --stone:     #17130d;
-      --lead:      #070605;
+      --bg:        #06070c;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
 
-      /* One jewel colour per tier (rgb parts), like the panels of a window
-         that each tell one part of the story. */
+      /* One jewel colour per tier (rgb parts); the 3D square reads these too. */
       --hands:      226, 168, 62;   /* gold     */
       --door:       176, 48, 52;    /* ruby     */
       --house:      48, 96, 180;    /* sapphire */
@@ -36,347 +33,18 @@
       --bench:      176, 102, 48;   /* copper   */
     }
 
-    html { background: var(--bg); }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); }
     body {
-      min-height: 100dvh;
-      background:
-        radial-gradient(90% 50% at 50% 0%, rgba(120, 92, 48, 0.14), transparent 70%),
-        var(--bg);
       color: var(--gold-soft);
       font-family: var(--serif);
       -webkit-tap-highlight-color: transparent;
     }
 
-    .page {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: max(26px, env(safe-area-inset-top)) 16px 0;
-    }
-
-    .back {
-      display: inline-block;
-      font-size: 14px;
-      letter-spacing: 0.2em;
-      color: rgba(232, 213, 163, 0.62);
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      padding-bottom: 2px;
-      transition: color 0.25s ease, border-color 0.25s ease;
-    }
-    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
-
-    header { text-align: center; margin: 18px auto 16px; max-width: 34em; }
-    @media (min-width: 920px) { header { margin: 26px auto 22px; } }
-    .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 22px; margin-top: 12px; }
-    .bar .legend, .bar .modes { margin-top: 0; }
-    .panel .legend { justify-content: flex-start; margin-top: 8px; }
-    @media (max-width: 919px) {
-      .bar .legend { display: none; }
-      .modes button { min-height: 34px; padding: 4px 14px; }
-      .intro { margin-top: 12px; }
-    }
-    @media (min-width: 920px) { .panel .legend { display: none; } }
-    h1 {
-      font-weight: normal;
-      font-size: clamp(28px, 7vw, 38px);
-      letter-spacing: 0.26em;
-      text-indent: 0.26em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-    h1::after {
-      content: "";
-      display: block;
-      width: 72px;
-      height: 1px;
-      margin: 14px auto 0;
-      background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.6), transparent);
-    }
-    .intro {
-      margin-top: 16px;
-      font-size: clamp(15px, 4vw, 17px);
-      line-height: 1.6;
-      color: rgba(232, 213, 163, 0.8);
-    }
-    .legend {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 6px 22px;
-      margin-top: 14px;
-      font-size: 14px;
-      font-style: italic;
-      color: rgba(232, 213, 163, 0.65);
-    }
-    .legend span::before {
-      content: "";
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      margin-right: 7px;
-      vertical-align: -2px;
-      border-radius: 50% 50% 2px 2px / 40% 40% 2px 2px;
-    }
-    .legend .live::before { background: linear-gradient(160deg, rgb(var(--house)), rgb(var(--door))); }
-    .legend .planned::before { background: rgba(232, 213, 163, 0.08); border: 1px dashed rgba(232, 213, 163, 0.5); }
-
-    /* ── Layout: the window, and the panel that explains a pane ──
-       Phone: the panel rests at the bottom of the screen while the window
-       scrolls behind it. Wide screens: the panel stands beside the window. */
-    .layout { display: block; }
-    @media (min-width: 920px) {
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 660px) minmax(0, 360px);
-        justify-content: center;
-        gap: 40px;
-        align-items: start;
-      }
-    }
-
-    /* ── The window ────────────────────────────────────────────
-       A tall lancet in dark stone; the tiers are its bands of glass, the
-       gaps between panes are the lead. */
-    .window {
-      position: relative;
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 18px 12px 14px;
-      background: var(--stone);
-      border: 1px solid rgba(201, 162, 39, 0.32);
-      border-radius: 50% 50% 12px 12px / 150px 150px 12px 12px;
-      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 30px 80px -40px rgba(201, 162, 39, 0.25);
-      /* clip, not hidden: a hidden box can still be scrolled sideways by the
-         browser (focusing a pane did it), shifting the glass out of frame. */
-      overflow: hidden;
-      overflow: clip;
-    }
-    /* Daylight drifting slowly across the glass. */
-    .window::after {
-      content: "";
-      position: absolute;
-      inset: -20% -70%;
-      pointer-events: none;
-      background: linear-gradient(115deg, transparent 35%, rgba(255, 240, 200, 0.07) 48%, transparent 60%);
-      animation: daylight 16s ease-in-out infinite alternate;
-    }
-    @keyframes daylight { from { transform: translateX(-18%); } to { transform: translateX(18%); } }
-
-    .rose { display: block; width: 92px; height: 92px; margin: 8px auto 6px; }
-
-    .tier { position: relative; z-index: 1; }
-    .tier + .tier { margin-top: 6px; }
-    /* Each band carries its name, like the inscription along a window's foot. */
-    .tier__name {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 0.6em;
-      padding: 8px 4px 6px;
-      font-size: 14px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(232, 213, 163, 0.72);
-      text-align: center;
-    }
-    .tier__name small {
-      font-size: 14px;
-      letter-spacing: 0.02em;
-      text-transform: none;
-      font-style: italic;
-      color: rgba(232, 213, 163, 0.5);
-    }
-    /* Rows stay balanced, as a glazier would set them: four panes as two
-       pairs, never three and a lone straggler. --cols is set per tier. */
-    .panes {
-      display: grid;
-      grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
-      gap: 5px;
-      padding: 5px;
-      background: var(--lead);
-      border-radius: 6px;
-    }
-
-    /* ── A pane of glass ───────────────────────────────────────── */
-    .pane {
-      --c: var(--gold-rgb, 201, 162, 39);
-      position: relative;
-      min-height: 78px;
-      padding: 20px 8px 10px;
-      border: none;
-      border-radius: 50% 50% 4px 4px / 24px 24px 4px 4px;
-      font-family: var(--serif);
-      font-size: 15px;
-      line-height: 1.25;
-      color: #fff8e6;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-      cursor: pointer;
-      background:
-        radial-gradient(120% 90% at 30% 15%, rgba(255, 255, 255, 0.26), transparent 55%),
-        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 9px),
-        linear-gradient(165deg, rgba(var(--c), 0.95), rgba(var(--c), 0.55));
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 -12px 20px rgba(0, 0, 0, 0.32);
-      transition: opacity 0.35s ease, filter 0.35s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    }
-    .pane[data-status="planned"] {
-      color: rgba(232, 213, 163, 0.82);
-      background:
-        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 9px),
-        linear-gradient(165deg, rgba(var(--c), 0.22), rgba(255, 255, 255, 0.03));
-      box-shadow: inset 0 0 0 1px rgba(var(--c), 0.55);
-    }
-    .pane__phase {
-      display: block;
-      margin-top: 4px;
-      font-size: 14px;
-      font-style: italic;
-      color: rgba(232, 213, 163, 0.6);
-      text-shadow: none;
-    }
-    .pane:hover { filter: brightness(1.15); }
-    .pane:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-
-    /* Light through one pane: it and everything it touches stay lit,
-       the rest of the glass dims. */
-    /* The dimmed glass darkens, but its name stays readable. */
-    .pane::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: rgba(7, 6, 5, 0);
-      transition: background 0.35s ease;
-      pointer-events: none;
-    }
-    .pane__name, .pane__phase { position: relative; z-index: 1; }
-    .window.has-selection .pane { filter: saturate(0.5); color: rgba(255, 248, 230, 0.86); }
-    .window.has-selection .pane::after { background: rgba(7, 6, 5, 0.62); }
-    .window.has-selection .pane.is-lit { filter: none; color: #fff8e6; }
-    .window.has-selection .pane.is-lit::after { background: rgba(7, 6, 5, 0); }
-    .window.has-selection .pane.is-selected {
-      opacity: 1;
-      filter: brightness(1.18);
-      box-shadow: 0 0 0 2px #f6e7b8, 0 0 26px rgba(var(--c), 0.85);
-      z-index: 2;
-    }
-
-    /* ── The panel ─────────────────────────────────────────────── */
-    .panel {
-      position: sticky;
-      bottom: 0;
-      z-index: 5;
-      margin: 18px -16px 0;
-      padding: 16px 20px max(18px, env(safe-area-inset-bottom));
-      max-height: 48dvh;
-      overflow-y: auto;
-      background: rgba(11, 10, 8, 0.96);
-      border-top: 1px solid rgba(201, 162, 39, 0.4);
-      box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(6px);
-    }
-    @media (min-width: 920px) {
-      .panel {
-        position: sticky;
-        top: 24px;
-        bottom: auto;
-        margin: 0;
-        max-height: calc(100dvh - 48px);
-        border: 1px solid rgba(201, 162, 39, 0.3);
-        border-radius: 10px;
-        box-shadow: none;
-      }
-    }
-    @media (max-width: 919px) { html.nave-on .panel { max-height: 42dvh; } }
-    @media (max-height: 500px) and (max-width: 919px) { .panel, html.nave-on .panel { max-height: 36dvh; } }
-    /* A phone on its side has the width but not the height: the panel
-       stands beside the glass, as on a wide screen. */
-    @media (orientation: landscape) and (max-height: 500px) and (max-width: 919px) {
-      .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 14px; align-items: start; }
-      .panel {
-        position: sticky;
-        top: 8px;
-        bottom: auto;
-        margin: 0;
-        max-height: calc(100dvh - 16px);
-        border: 1px solid rgba(201, 162, 39, 0.3);
-        border-radius: 10px;
-        box-shadow: none;
-      }
-      .panel .legend { display: none; }
-    }
-    .panel__hint { font-size: 15px; font-style: italic; line-height: 1.6; color: rgba(232, 213, 163, 0.72); }
-    .panel h2 {
-      font-weight: normal;
-      font-size: 22px;
-      letter-spacing: 0.06em;
-      color: var(--gold);
-    }
-    .chip {
-      display: inline-block;
-      margin: 6px 0 2px;
-      padding: 2px 10px;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-      border-radius: 999px;
-      border: 1px solid rgba(var(--c), 0.8);
-      background: rgba(var(--c), 0.22);
-      color: var(--gold-soft);
-    }
-    .panel p { margin-top: 10px; font-size: 16px; line-height: 1.6; }
-    .panel .what { font-style: italic; color: rgba(232, 213, 163, 0.75); }
-    .panel h3 {
-      margin-top: 14px;
-      font-weight: normal;
-      font-size: 14px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(232, 213, 163, 0.6);
-    }
-    .touches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .touches button {
-      font-family: var(--serif);
-      font-size: 15px;
-      padding: 7px 12px;
-      min-height: 36px;
-      color: var(--gold-soft);
-      background: rgba(var(--c), 0.18);
-      border: 1px solid rgba(var(--c), 0.65);
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .touches button:hover, .touches button:focus-visible { background: rgba(var(--c), 0.35); outline: none; }
-
-    /* ── The view switch ───────────────────────────────────────── */
-    .modes { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
-    .modes[hidden] { display: none; }
-    .modes button {
-      font-family: var(--serif);
-      font-size: 14px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      min-height: 36px;
-      padding: 6px 16px;
-      color: rgba(232, 213, 163, 0.7);
-      background: transparent;
-      border: 1px solid rgba(201, 162, 39, 0.3);
-      border-radius: 999px;
-      cursor: pointer;
-    }
-    .modes button[aria-pressed="true"] { color: var(--gold-soft); border-color: rgba(201, 162, 39, 0.75); background: rgba(201, 162, 39, 0.12); }
-    .modes button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-
-    /* ── The nave: the glass fills the screen ──────────────────────
-       After RepoSense (iLevyTate, MIT): nothing on screen but the tower,
-       a slim bar above, one small dock below, and a card only when
-       something is chosen. Everything else waits behind the "?". */
-    .nave {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      overflow: hidden;
-      background: #06070c;
-    }
+    /* ── The square fills the screen ──────────────────────────────
+       After RepoSense (iLevyTate, MIT): nothing on screen but the square, a
+       slim bar above, the tiers as lights at the left, and a card only when
+       something is chosen. */
+    .nave { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
     .nave canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
     .nave canvas:active { cursor: grabbing; }
     .nave canvas.is-pointing { cursor: pointer; }
@@ -397,12 +65,7 @@
       color: rgba(232, 213, 163, 0.6);
       pointer-events: none;
     }
-    .nave[data-ready] .nave__wait { display: none; }
-
-    /* The HUD fades away during the walk, as a film's titles do. */
-    .topbar, .dock, .rail { transition: opacity 0.5s ease; }
-    .nave.is-walking .topbar, .nave.is-walking .dock, .nave.is-walking .rail { opacity: 0; pointer-events: none; }
-    .nave.is-walking .topbar *, .nave.is-walking .dock *, .nave.is-walking .rail * { visibility: hidden; }
+    .nave[data-ready] .nave__wait, .is-flat .nave__wait { display: none; }
 
     .topbar {
       position: absolute;
@@ -438,13 +101,19 @@
       cursor: pointer;
     }
     .icon-btn:hover { border-color: rgba(201, 162, 39, 0.7); }
-    .icon-btn:focus-visible, .dock button:focus-visible, .tour button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-    .topbar__name { font-size: 17px; letter-spacing: 0.28em; text-indent: 0; text-transform: uppercase; color: #ecd28a; text-shadow: 0 0 18px rgba(201, 162, 39, 0.35); }
-    .topbar__name::after { display: none; }
+    .icon-btn:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+    h1 {
+      font-weight: normal;
+      font-size: 17px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #ecd28a;
+      text-shadow: 0 0 18px rgba(201, 162, 39, 0.35);
+    }
     .topbar__sub { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
 
     /* The tiers as a column of lights down the left edge, stacked like the
-       tower itself; only the tier being told says its name. */
+       steps themselves; only the tier being told says its name. */
     .rail {
       position: absolute;
       z-index: 3;
@@ -468,13 +137,9 @@
       position: relative;
       display: flex;
       align-items: center;
-      gap: 10px;
       width: 40px;
       min-height: 34px;
       padding: 0 13px;
-      font-family: var(--serif);
-      font-size: 14px;
-      color: var(--gold-soft);
       background: none;
       border: none;
       border-radius: 999px;
@@ -485,17 +150,19 @@
       flex: none;
       width: 14px;
       height: 14px;
-      box-sizing: border-box;
       border-radius: 50%;
       background: rgba(var(--c), 0.9);
       border: 2px solid rgba(11, 10, 8, 0.9);
       box-shadow: 0 0 10px rgba(var(--c), 0.75);
       transition: transform 0.3s ease, border-color 0.3s ease;
     }
-    /* The name floats beside its light, out of the way of taps on the glass. */
+    /* The name floats beside its light, out of the way of taps on the square. */
     .rail button span {
       position: absolute;
       left: 38px;
+      font-family: var(--serif);
+      font-size: 14px;
+      color: var(--gold-soft);
       white-space: nowrap;
       text-shadow: 0 1px 4px #000, 0 0 12px #000;
       opacity: 0;
@@ -506,187 +173,9 @@
     .rail button[aria-current="true"]::before { transform: scale(1.3); border-color: #f6e7b8; }
     .rail button[aria-current="true"] span, .rail button:hover span, .rail button:focus-visible span { opacity: 1; transform: none; }
     .rail button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
+    @media (max-height: 700px) { .rail button { min-height: 31px; } }
 
-    /* One small dock: the walk, the window, and everything else behind "?". */
-    .dock, .tour {
-      position: absolute;
-      z-index: 3;
-      left: 50%;
-      bottom: calc(14px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px;
-      max-width: calc(100vw - 24px);
-      background: rgba(14, 13, 19, 0.62);
-      border: 1px solid rgba(255, 240, 210, 0.13);
-      border-radius: 999px;
-      backdrop-filter: blur(18px) saturate(1.2);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 16px 40px rgba(0, 0, 0, 0.45);
-    }
-    .dock button, .tour button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      min-width: 44px;
-      min-height: 42px;
-      padding: 8px 16px;
-      font-family: var(--serif);
-      font-size: 15px;
-      white-space: nowrap;
-      color: rgba(232, 213, 163, 0.88);
-      background: none;
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-    .dock button:hover, .tour button:hover { background: rgba(201, 162, 39, 0.14); }
-    .dock .walk { color: #1a1408; background: linear-gradient(180deg, #ecd28a, #c9a227); box-shadow: 0 0 18px rgba(201, 162, 39, 0.35); }
-    .dock .walk:hover { background: linear-gradient(180deg, #f3dc9c, #d4ad35); }
-    .dock .walk::before { content: ""; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent #1a1408; }
-
-    /* The walk: big captions, a thread of progress, and small controls. */
-    .tour { display: none; }
-    .nave.is-walking .tour { display: flex; }
-    .tour button:disabled { opacity: 0.35; cursor: default; }
-    .tour button[aria-pressed="true"] { background: rgba(201, 162, 39, 0.25); }
-    .tour__step { min-width: 56px; font-size: 14px; font-style: italic; text-align: center; color: rgba(232, 213, 163, 0.7); }
-    .caption {
-      display: none;
-      position: absolute;
-      z-index: 3;
-      left: 50%;
-      bottom: calc(80px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      width: min(600px, calc(100vw - 24px));
-      padding: 26px 22px 18px;
-      text-align: center;
-      pointer-events: none;
-      background: radial-gradient(64% 100% at 50% 55%, rgba(6, 7, 12, 0.85), rgba(6, 7, 12, 0.5) 60%, transparent 78%);
-    }
-    .nave.is-walking .caption { display: block; }
-    .caption > * { animation: caption-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    .caption .eyebrow { display: block; }
-    .caption h2 {
-      font-weight: normal;
-      font-size: clamp(24px, 6.4vw, 40px);
-      letter-spacing: 0.14em;
-      text-indent: 0.14em;
-      text-transform: uppercase;
-      color: var(--gold);
-      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9);
-    }
-    .caption p { margin-top: 10px; font-size: 16px; line-height: 1.55; color: rgba(244, 232, 200, 0.92); text-shadow: 0 1px 8px #000; }
-    @keyframes caption-in { from { opacity: 0; transform: translateY(12px); } }
-    .tour-line { display: none; position: absolute; z-index: 4; top: 0; left: 0; right: 0; height: 2px; background: rgba(201, 162, 39, 0.15); }
-    .nave.is-walking .tour-line { display: block; }
-    .tour-line i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #c9a227, #f6e7b8); box-shadow: 0 0 10px rgba(201, 162, 39, 0.8); }
-    .tour-line i.run { animation: dwell var(--dwell, 9s) linear forwards; }
-    .tour-line i.paused { animation-play-state: paused; }
-    .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-    /* A first word on how to move, then it fades for good. */
-    .toast {
-      position: absolute;
-      z-index: 3;
-      left: 50%;
-      bottom: calc(76px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      padding: 8px 16px;
-      font-size: 14px;
-      font-style: italic;
-      white-space: nowrap;
-      color: rgba(232, 213, 163, 0.88);
-      background: rgba(14, 13, 19, 0.6);
-      border: 1px solid rgba(255, 240, 210, 0.12);
-      backdrop-filter: blur(14px);
-      border-radius: 999px;
-      opacity: 0;
-      transition: opacity 0.7s ease;
-      pointer-events: none;
-    }
-    .toast.on { opacity: 1; }
-
-    /* The card that explains what is chosen: above the dock on a phone,
-       standing at the right on a wide screen or a phone on its side. */
-    .panel__close { display: none; }
-    html.nave-on .panel {
-      position: fixed;
-      z-index: 12;
-      top: auto;
-      left: max(10px, env(safe-area-inset-left));
-      right: max(10px, env(safe-area-inset-right));
-      bottom: calc(70px + env(safe-area-inset-bottom));
-      width: auto;
-      margin: 0;
-      max-height: 46dvh;
-      padding: 14px 18px 16px;
-      background: rgba(12, 11, 17, 0.72);
-      border: 1px solid rgba(255, 240, 210, 0.13);
-      border-radius: 18px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 60px rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(22px) saturate(1.25);
-      animation: card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-    html.nave-on .panel.is-empty { display: none; }
-    @media (max-height: 720px) { html.nave-on .panel { max-height: 40dvh; } }
-    html.nave-on .panel__close { display: grid; float: right; width: 36px; height: 36px; margin: -4px -8px 4px 10px; font-size: 18px; }
-    @keyframes card-in { from { opacity: 0; transform: translateY(10px); } }
-    @media (min-width: 920px) {
-      html.nave-on .panel { left: auto; right: max(18px, env(safe-area-inset-right)); top: 76px; bottom: auto; width: 360px; max-height: calc(100dvh - 170px); }
-      /* With a card open, the dock stands in the middle of what is left. */
-      .nave.has-card .dock, .nave.has-card .tour { left: calc((100vw - 378px) / 2); }
-    }
-    @media (orientation: landscape) and (max-height: 500px) {
-      html.nave-on .panel { left: auto; right: max(10px, env(safe-area-inset-right)); top: 58px; bottom: max(10px, env(safe-area-inset-bottom)); width: 300px; max-height: none; }
-      .nave.has-card .dock, .nave.has-card .tour { left: calc((100vw - 320px) / 2); }
-      .caption { bottom: calc(70px + env(safe-area-inset-bottom)); padding-top: 14px; }
-      .caption p { font-size: 15px; }
-    }
-
-    /* The help sheet: the words that used to crowd the page. */
-    .help {
-      margin: auto;
-      width: min(460px, calc(100vw - 32px));
-      max-height: 86dvh;
-      padding: 22px 24px 20px;
-      overflow-y: auto;
-      font-family: var(--serif);
-      color: var(--gold-soft);
-      background: rgba(12, 11, 17, 0.94);
-      border: 1px solid rgba(255, 240, 210, 0.14);
-      border-radius: 18px;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-    }
-    .help::backdrop { background: rgba(0, 0, 0, 0.6); }
-    .help h2 { margin-top: 20px; font-weight: normal; font-size: 16px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
-    .help h2:first-child { margin-top: 0; }
-    .help p, .help li { margin-top: 10px; font-size: 15px; line-height: 1.6; }
-    .help ul { list-style: none; }
-    .help li { margin-top: 6px; }
-    .help kbd { display: inline-block; min-width: 96px; margin-right: 8px; font-family: var(--serif); font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.7); }
-    .help .legend { justify-content: flex-start; }
-    .help .credit { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.75); }
-    .help__close { margin-top: 18px; min-height: 42px; padding: 8px 22px; font-family: var(--serif); font-size: 15px; color: var(--gold-soft); background: rgba(201, 162, 39, 0.12); border: 1px solid rgba(201, 162, 39, 0.45); border-radius: 999px; cursor: pointer; }
-    .help__close:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-    .eyebrow {
-      display: inline-block;
-      margin-bottom: 4px;
-      padding: 0;
-      font-family: var(--serif);
-      font-size: 14px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(var(--c, 201, 162, 39), 1);
-      filter: brightness(1.45);
-      background: none;
-      border: none;
-    }
-    button.eyebrow { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(232, 213, 163, 0.3); text-underline-offset: 4px; }
-    .caption .eyebrow { filter: none; color: rgba(232, 213, 163, 0.75); }
-    @keyframes dwell { to { width: 100%; } }
+    /* Labels over the square: frosted, with a point of the tier's light. */
     .tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
     .tag {
       --c: 201, 162, 39;
@@ -724,186 +213,195 @@
     .tag em { font-size: 14px; color: rgba(232, 213, 163, 0.6); }
     .tag.is-sel { border-color: rgba(246, 231, 184, 0.8); box-shadow: 0 0 0 1px rgba(246, 231, 184, 0.18), 0 0 26px rgba(var(--c), 0.45); }
     .tag.is-focus { opacity: 1; outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-    .tag--tier {
+
+    /* A first word on how to move, then it fades for good. */
+    .toast {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: calc(22px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-style: italic;
+      white-space: nowrap;
+      color: rgba(232, 213, 163, 0.88);
+      background: rgba(14, 13, 19, 0.6);
+      border: 1px solid rgba(255, 240, 210, 0.12);
+      border-radius: 999px;
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      pointer-events: none;
+    }
+    .toast.on { opacity: 1; }
+
+    /* ── The card: what is chosen, all of it at a glance ──────────
+       On a phone it rests at the foot of the screen and is sized to hold a
+       whole tier without scrolling; on a wide screen, or a phone on its
+       side, it stands at the right. */
+    .panel {
+      --c: 201, 162, 39;
+      position: fixed;
+      z-index: 12;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      /* Once a card is open, reading it matters more than the square behind:
+         it may rise as far as the top bar rather than ever scroll. */
+      max-height: calc(100dvh - max(10px, env(safe-area-inset-bottom)) - max(10px, env(safe-area-inset-top)) - 62px);
+      overflow-y: auto;
+      padding: 14px 16px 15px;
+      background: rgba(12, 11, 17, 0.74);
+      border: 1px solid rgba(255, 240, 210, 0.13);
+      border-radius: 18px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(22px) saturate(1.25);
+      animation: card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .panel.is-empty { display: none; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(10px); } }
+    @media (min-width: 920px) {
+      .panel { left: auto; right: max(18px, env(safe-area-inset-right)); top: 76px; bottom: auto; width: 360px; max-height: calc(100dvh - 100px); padding: 18px 20px; }
+    }
+    @media (orientation: landscape) and (max-height: 500px) {
+      .panel { left: auto; top: 58px; width: 300px; max-height: none; }
+    }
+    .panel__close { float: right; width: 34px; height: 34px; margin: -4px -6px 2px 10px; font-size: 18px; border-radius: 10px; }
+    .eyebrow {
+      display: inline-block;
       padding: 0;
-      background: none;
-      border: none;
+      font-family: var(--serif);
+      font-size: 14px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: rgba(232, 213, 163, 0.58);
-      text-shadow: 0 1px 3px #000, 0 0 8px #000;
+      color: rgb(var(--c));
+      filter: brightness(1.45);
+      background: none;
+      border: none;
     }
-    .tag--tier.on { opacity: 1; }
+    button.eyebrow { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(232, 213, 163, 0.3); text-underline-offset: 4px; }
+    .eyebrow:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+    .panel h2 { margin-top: 2px; font-weight: normal; font-size: 21px; letter-spacing: 0.05em; color: var(--gold); }
+    .chip {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 1px 10px;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--c), 0.8);
+      background: rgba(var(--c), 0.2);
+    }
+    .panel p { margin-top: 8px; font-size: 15px; line-height: 1.5; color: rgba(244, 232, 200, 0.92); }
+    .panel .what { font-style: italic; color: rgba(232, 213, 163, 0.75); }
+    .panel h3 {
+      margin-top: 12px;
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(232, 213, 163, 0.6);
+    }
+    .touches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .touches button {
+      font-family: var(--serif);
+      font-size: 14px;
+      padding: 5px 11px;
+      min-height: 32px;
+      color: var(--gold-soft);
+      background: rgba(var(--c), 0.16);
+      border: 1px solid rgba(var(--c), 0.6);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .touches button:hover, .touches button:focus-visible { background: rgba(var(--c), 0.34); outline: none; }
 
-    /* While the nave stands, the window steps aside but stays in the page:
-       its panes are how a keyboard or a screen reader walks the glass. */
-    html.nave-pending .nave, html.nave-on .nave { display: block; }
-    html.nave-pending, html.nave-on, html.nave-pending body, html.nave-on body { height: 100%; overflow: hidden; }
-    html.nave-pending .page > .back, html.nave-on .page > .back,
-    html.nave-pending .page > header, html.nave-on .page > header,
-    html.nave-pending .page > footer, html.nave-on .page > footer { display: none; }
-    html.nave-pending .window, html.nave-on .window {
+    /* ── Every column, as a plain list ─────────────────────────────
+       While the square stands this list is out of sight but in the page: it
+       is how a keyboard or a screen reader walks the columns. Where the
+       square cannot be drawn at all, it is the page. */
+    .list {
       position: absolute;
       width: 1px;
       height: 1px;
       overflow: hidden;
-      padding: 0;
-      border: 0;
       clip-path: inset(50%);
       white-space: nowrap;
     }
-
-    .credit { margin-top: 12px; font-size: 15px; }
-    .credit a { color: rgba(232, 213, 163, 0.8); text-underline-offset: 3px; }
-    .credit a:hover, .credit a:focus-visible { color: var(--gold-soft); }
-
-    footer {
-      max-width: 34em;
-      margin: 28px auto 0;
-      padding-bottom: 28px;
-      text-align: center;
-      font-size: 15px;
-      font-style: italic;
-      line-height: 1.6;
-      color: rgba(232, 213, 163, 0.6);
+    .is-flat .list {
+      position: fixed;
+      inset: 0;
+      width: auto;
+      height: auto;
+      overflow-y: auto;
+      clip-path: none;
+      white-space: normal;
+      padding: 90px 20px 40vh;
     }
-    @media (min-width: 920px) { footer { padding-bottom: 48px; } }
+    .list h2 { margin-top: 18px; font-weight: normal; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+    .list ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .list button {
+      font-family: var(--serif);
+      font-size: 15px;
+      padding: 6px 12px;
+      min-height: 36px;
+      color: var(--gold-soft);
+      background: rgba(var(--c), 0.16);
+      border: 1px solid rgba(var(--c), 0.6);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .list button[aria-pressed="true"] { background: rgba(var(--c), 0.4); }
+    .is-flat .nave canvas, .is-flat .rail, .is-flat .toast { display: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      .window::after { animation: none; }
-      .pane, .pane::after, .tag { transition: none; }
+      .panel, .tag, .toast, .rail button::before, .rail button span { animation: none; transition: none; }
     }
   </style>
   <script src="/assets/telemetry.js" async></script>
   <!-- three.js is the copy Eden already ships, so a visitor who has walked
        the garden downloads nothing new here. -->
   <script type="importmap">{ "imports": { "three": "/world-app/vendor/three.module.min.js" } }</script>
-  <script>
-    // The 3D nave is raised for everyone who hasn't asked for reduced
-    // motion; until it is ready (or if it can't be) the 2D window stands.
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('nave-pending');
-  </script>
 </head>
 <body>
-  <div class="page">
-    <a class="back" href="index.html">&lsaquo; home</a>
+  <main class="nave" aria-label="The Workshop: every tool that builds Machina Christi, as columns in a square of light">
+    <canvas aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="tags" aria-hidden="true"></div>
+    <p class="nave__wait">Lighting the square&hellip;</p>
 
-    <header>
-      <h1>Workshop</h1>
-      <p class="intro">Everything that builds and keeps Machina Christi, set in glass from your hands down to the workbench.</p>
-      <div class="bar">
-        <p class="legend"><span class="live">in use today</span><span class="planned">still to come</span></p>
-        <p class="modes" role="group" aria-label="View" hidden>
-          <button type="button" data-mode="nave" aria-pressed="true">Nave</button>
-          <button type="button" data-mode="window" aria-pressed="false">Window</button>
-        </p>
+    <div class="topbar">
+      <a class="icon-btn" href="index.html" aria-label="Home">&lsaquo;</a>
+      <div>
+        <h1>Workshop</h1>
+        <p class="topbar__sub">how Machina Christi is built</p>
       </div>
-    </header>
-
-    <div class="layout">
-      <div class="view">
-      <section class="nave" aria-label="The Workshop nave, in three dimensions">
-        <canvas aria-hidden="true"></canvas>
-        <div class="vignette" aria-hidden="true"></div>
-        <div class="tags" aria-hidden="true"></div>
-        <p class="nave__wait">Lighting the nave&hellip;</p>
-
-        <div class="topbar">
-          <a class="icon-btn" href="index.html" aria-label="Home">&lsaquo;</a>
-          <div>
-            <h1 class="topbar__name">Workshop</h1>
-            <p class="topbar__sub">how Machina Christi is built</p>
-          </div>
-        </div>
-
-        <nav class="rail" aria-label="Tiers of the nave"></nav>
-
-        <div class="dock">
-          <button type="button" class="walk">Walk through it</button>
-          <button type="button" data-mode="window">Window</button>
-          <button type="button" class="help-open" aria-label="About the Workshop, and how to move">?</button>
-        </div>
-
-        <div class="tour-line" aria-hidden="true"><i></i></div>
-        <div class="caption" aria-hidden="true"><span class="eyebrow"></span><h2></h2><p></p></div>
-        <div class="tour" role="group" aria-label="The walk">
-          <button type="button" data-role="back" aria-label="Back">&lsaquo;</button>
-          <span class="tour__step"></span>
-          <button type="button" data-role="pause" aria-pressed="false">Pause</button>
-          <button type="button" data-role="next" aria-label="Next">&rsaquo;</button>
-          <button type="button" data-role="end" aria-label="End the walk">&times;</button>
-        </div>
-        <p class="toast" aria-hidden="true">drag to turn &middot; pinch to draw near &middot; tap the glass</p>
-      </section>
-      <section class="window" aria-label="The Workshop window">
-        <!-- A small rose at the head of the arch. -->
-        <svg class="rose" viewBox="0 0 100 100" aria-hidden="true">
-          <circle cx="50" cy="50" r="46" fill="#070605" stroke="rgba(201,162,39,0.55)" stroke-width="1.5" />
-          <g stroke="#070605" stroke-width="2.5">
-            <path d="M50 50 L50 8 A42 42 0 0 1 86.4 29 Z" fill="rgb(176,48,52)" />
-            <path d="M50 50 L86.4 29 A42 42 0 0 1 86.4 71 Z" fill="rgb(48,96,180)" />
-            <path d="M50 50 L86.4 71 A42 42 0 0 1 50 92 Z" fill="rgb(40,136,88)" />
-            <path d="M50 50 L50 92 A42 42 0 0 1 13.6 71 Z" fill="rgb(126,82,170)" />
-            <path d="M50 50 L13.6 71 A42 42 0 0 1 13.6 29 Z" fill="rgb(28,136,140)" />
-            <path d="M50 50 L13.6 29 A42 42 0 0 1 50 8 Z" fill="rgb(176,102,48)" />
-          </g>
-          <circle cx="50" cy="50" r="13" fill="rgb(226,168,62)" stroke="#070605" stroke-width="2.5" />
-          <path d="M50 42 V58 M44 48 H56" stroke="#070605" stroke-width="2.4" stroke-linecap="round" />
-          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,240,200,0.12)" stroke-width="6" />
-        </svg>
-        <div class="tiers"></div>
-        <noscript><p class="panel__hint" style="text-align:center;padding:20px">The window needs JavaScript to light up.</p></noscript>
-      </section>
-      </div>
-
-      <p class="say" aria-live="polite"></p>
-      <aside class="panel" aria-live="polite">
-        <p class="panel__hint">Tap any pane of glass to see what it does and what it touches.</p>
-      </aside>
     </div>
 
-    <footer>
-      <p>Built on free allowances and opened one pane at a time. The clear glass is the road ahead; each phase lights another pane.</p>
-      <p class="credit">To walk the code itself, <a href="https://ilevytate.github.io/reposense/#/machinachristi/machina-christi" rel="noopener">fly through it in RepoSense</a>, made by iLevyTate and shared under the MIT licence.</p>
-    </footer>
-  </div>
+    <nav class="rail" aria-label="Tiers"></nav>
+    <p class="toast" aria-hidden="true">drag to turn &middot; pinch to draw near &middot; tap a light</p>
 
-  <dialog class="help" aria-labelledby="help-title">
-    <h2 id="help-title">The Workshop</h2>
-    <p>Everything that builds and keeps Machina Christi, set in glass from your hands down to the workbench. Tap a pane to see what it does; the panes it touches light with it.</p>
-    <p class="legend"><span class="live">in use today</span><span class="planned">still to come</span></p>
-    <h2>Moving around</h2>
-    <ul>
-      <li><kbd>drag</kbd>turn the tower, any way</li>
-      <li><kbd>pinch, scroll</kbd>draw near or stand back</li>
-      <li><kbd>two fingers</kbd>slide the view (right-drag with a mouse)</li>
-      <li><kbd>the lights</kbd>at the left go to a tier</li>
-      <li><kbd>Esc</kbd>put everything back</li>
-    </ul>
-    <h2>The road ahead</h2>
-    <p>Built on free allowances and opened one pane at a time. The clear glass is still to come; each phase of the roadmap lights another pane.</p>
-    <p class="credit">The full-screen nave and its guided walk follow the lead of RepoSense, made by iLevyTate and shared under the MIT licence. To walk this site's code itself, <a href="https://ilevytate.github.io/reposense/#/machinachristi/machina-christi" rel="noopener">fly through it in RepoSense</a>.</p>
-    <button type="button" class="help__close">Close</button>
-  </dialog>
+    <nav class="list" aria-label="Every tool, by tier"></nav>
+    <noscript><p class="nave__wait">The Workshop needs JavaScript to light. Its story is on the <a href="about-workshop.html" style="color:inherit">About page</a>.</p></noscript>
+  </main>
+
+  <aside class="panel is-empty" aria-live="polite"></aside>
 
   <script>
     (() => {
       'use strict';
       const root  = document.documentElement;
-      const win   = document.querySelector('.window');
-      const host  = document.querySelector('.tiers');
-      const panel = document.querySelector('.panel');
       const stage = document.querySelector('.nave');
+      const list  = document.querySelector('.list');
       const rail  = document.querySelector('.rail');
-      const modes = document.querySelector('.modes');
-      const help  = document.querySelector('.help');
-      const say   = document.querySelector('.say');
+      const panel = document.querySelector('.panel');
       const toast = stage.querySelector('.toast');
-      // Wide: the card stands beside the glass (a wide screen, or a phone on its side).
+      // Wide: the card stands at the right (a wide screen, or a phone on its side).
       const wide  = matchMedia('(min-width: 920px), (orientation: landscape) and (max-height: 500px)');
       const still = matchMedia('(prefers-reduced-motion: reduce)');
       let data = null, panes = [], byId = {}, tierById = {}, nave = null;
-      // What is being told: nothing, one pane, or one tier.
+      // What is being told: nothing, one column, or one tier.
       let selected = null, shownTier = null;
 
       const el = (tag, cls, text) => {
@@ -918,10 +416,9 @@
         b.addEventListener('click', onClick);
         return b;
       };
-      const paneButton = id => win.querySelector(`.pane[data-id="${id}"]`);
+      const paneButton = id => list.querySelector(`button[data-id="${id}"]`);
       const railButton = id => rail.querySelector(`button[data-tier="${id}"]`);
       const tierColour = id => getComputedStyle(root).getPropertyValue('--' + id).trim() || '201, 162, 39';
-      const naveOn = () => root.classList.contains('nave-on') || root.classList.contains('nave-pending');
 
       function neighbours(id) {
         // Touching goes both ways: lit together whichever side names the link.
@@ -931,27 +428,9 @@
         return [...set].filter(n => byId[n]);
       }
 
-      // ── The 2D window mirrors whatever is being told ─────────────
-      function light(lit, chosen) {
-        win.classList.toggle('has-selection', lit.size > 0);
-        win.querySelectorAll('.pane').forEach(b => {
-          b.classList.toggle('is-selected', b.dataset.id === chosen);
-          b.classList.toggle('is-lit', lit.has(b.dataset.id));
-          b.setAttribute('aria-pressed', String(b.dataset.id === chosen));
-        });
-      }
-      function markRail(tierId) {
+      function mark(chosen, tierId) {
+        list.querySelectorAll('button[data-id]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === chosen)));
         rail.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', String(b.dataset.tier === tierId)));
-      }
-
-      // In the window (no nave), the panel rests over the bottom of a phone's
-      // screen; keep the chosen glass in the part it leaves open.
-      function keepClear(node, smooth) {
-        if (wide.matches || naveOn() || !node) return;
-        const r = node.getBoundingClientRect();
-        const floor = panel.getBoundingClientRect().top - 16;
-        const dy = r.bottom > floor ? Math.min(r.bottom - floor, r.top - 16) : r.top < 16 ? r.top - 16 : 0;
-        if (dy) window.scrollBy({ top: dy, behavior: smooth && !still.matches ? 'smooth' : 'auto' });
       }
 
       function setHash(id) {
@@ -961,38 +440,29 @@
       // ── The card ─────────────────────────────────────────────────
       function card(colour) {
         panel.classList.remove('is-empty');
-        stage.classList.add('has-card');
         panel.style.setProperty('--c', colour);
-        panel.replaceChildren(button('icon-btn panel__close', '×', () => {
+        const close = button('icon-btn panel__close', '×', () => {
           // Closing the card returns the keyboard to what it was about.
           const back = selected ? paneButton(selected) : shownTier ? railButton(shownTier) : null;
           rest();
           if (back) back.focus({ preventScroll: true });
-        }));
-        panel.firstChild.setAttribute('aria-label', 'Close');
+        });
+        close.setAttribute('aria-label', 'Close');
+        panel.replaceChildren(close);
         panel.scrollTop = 0;
       }
 
       function paneList(title, ids) {
         const frag = document.createDocumentFragment();
         frag.append(el('h3', null, title));
-        const list = el('div', 'touches');
-        ids.forEach(n => list.append(button(null, byId[n].name, () => {
-          select(n, { focus: true });
-          // The card was rebuilt under the keyboard; carry focus to the new pane.
+        const row = el('div', 'touches');
+        ids.forEach(n => row.append(button(null, byId[n].name, () => {
+          select(n);
+          // The card was rebuilt under the keyboard; carry focus to the new column.
           paneButton(n).focus({ preventScroll: true });
         })));
-        frag.append(list);
+        frag.append(row);
         return frag;
-      }
-
-      function renderHint() {
-        panel.style.removeProperty('--c');
-        // In the nave nothing is chosen, so there is no card at all.
-        panel.classList.add('is-empty');
-        stage.classList.remove('has-card');
-        panel.replaceChildren(el('p', 'panel__hint', 'Tap any pane of glass to see what it does and what it touches.'));
-        panel.append(document.querySelector('header .legend').cloneNode(true));
       }
 
       function renderTier(t) {
@@ -1000,7 +470,7 @@
         const i = data.tiers.indexOf(t);
         panel.append(el('span', 'eyebrow', `Tier ${i + 1} of ${data.tiers.length} · ${t.note}`));
         panel.append(el('h2', null, t.name));
-        panel.append(el('p', 'story', t.story || t.note));
+        panel.append(el('p', null, t.story || t.note));
         panel.append(paneList('In this tier', panes.filter(p => p.tier === t.id).map(p => p.id)));
       }
 
@@ -1017,31 +487,30 @@
       }
 
       // ── What can be told ─────────────────────────────────────────
-      function select(id, { focus = false } = {}) {
-        endWalk();
+      function select(id) {
         selected = id;
         shownTier = null;
-        const near = id ? neighbours(id) : [];
-        light(new Set(id ? [id, ...near] : []), id);
-        markRail(id ? byId[id].tier : null);
-        if (!id) { renderHint(); setHash(null); if (nave) nave.select(null); return; }
+        mark(id, id ? byId[id].tier : null);
+        if (!id) {
+          panel.classList.add('is-empty');
+          panel.replaceChildren();
+          setHash(null);
+          if (nave) nave.select(null);
+          return;
+        }
         renderPane(byId[id]);
         setHash(id);
         // The card is in place before the camera frames what it leaves open.
-        if (nave) nave.select(id, near);
-        if (!naveOn()) keepClear(paneButton(id), focus);
+        if (nave) nave.select(id, neighbours(id));
       }
 
       function showTier(id) {
-        endWalk();
         selected = null;
         shownTier = id;
-        light(new Set(panes.filter(p => p.tier === id).map(p => p.id)), null);
-        markRail(id);
+        mark(null, id);
         renderTier(tierById[id]);
         setHash(null);
         if (nave) nave.showTier(id);
-        if (!naveOn()) keepClear(host.children[data.tiers.findIndex(t => t.id === id)], true);
       }
 
       function rest() {
@@ -1049,116 +518,16 @@
         select(null);
       }
 
-      // ── The walk: the camera tells the tower from top to foot ────
-      // The HUD fades and big captions tell each tier. It moves on by itself
-      // every few seconds, but never while a keyboard is on its controls,
-      // and Pause holds it still. A tap anywhere takes the wheel back.
-      const walk = { on: false, i: 0, timer: 0, paused: false, steps: [] };
-      const ctl = role => stage.querySelector(`.tour [data-role="${role}"]`);
-      const fill = stage.querySelector('.tour-line i');
-      const dwell = () => window.__workshopDwell || 9000;
-      const held = () => walk.paused || !!stage.querySelector('.tour :focus-visible');
-
-      function schedule() {
-        clearTimeout(walk.timer);
-        if (!walk.on) return;
-        const last = walk.i >= walk.steps.length - 1;
-        fill.classList.toggle('paused', held() || last);
-        if (last) return;
-        if (held()) { walk.timer = setTimeout(schedule, 700); return; }
-        walk.timer = setTimeout(() => go(walk.i + 1), dwell());
-      }
-
-      function go(i) {
-        if (!walk.on) return;
-        walk.i = Math.max(0, Math.min(i, walk.steps.length - 1));
-        const s = walk.steps[walk.i];
-        const cap = stage.querySelector('.caption');
-        let eyebrow, title, text, lit;
-        if (s.tier) {
-          const t = tierById[s.tier];
-          const n = data.tiers.indexOf(t);
-          eyebrow = `Tier ${n + 1} of ${data.tiers.length}`;
-          title = t.name; text = t.story || t.note;
-          lit = panes.filter(p => p.tier === t.id).map(p => p.id);
-          markRail(t.id);
-        } else {
-          ({ eyebrow, title, text } = s);
-          lit = s.set || [];
-          markRail(null);
-        }
-        light(new Set(lit), null);
-        // Fresh nodes, so the caption rises in again for every step; then the
-        // camera frames what the caption leaves open.
-        cap.replaceChildren(el('span', 'eyebrow', eyebrow), el('h2', null, title), el('p', null, text));
-        if (nave) { if (s.tier) nave.showTier(s.tier); else nave.showSet(lit.length ? lit : null); }
-        say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}. ${title}. ${text}`;
-        const last = walk.i === walk.steps.length - 1;
-        ctl('back').disabled = walk.i === 0;
-        stage.querySelector('.tour__step').textContent = `${walk.i + 1} of ${walk.steps.length}`;
-        ctl('next').disabled = last;
-        fill.style.setProperty('--dwell', dwell() / 1000 + 's');
-        fill.classList.remove('run');
-        void fill.offsetWidth; // restart the thread of progress
-        fill.classList.add('run');
-        schedule();
-      }
-
-      function startWalk() {
-        select(null);
-        walk.steps = [
-          { eyebrow: 'The Workshop', title: 'A tower of glass', text: data.prologue },
-          ...data.tiers.filter(t => panes.some(p => p.tier === t.id)).map(t => ({ tier: t.id })),
-          { eyebrow: 'The road ahead', title: 'Clear glass', text: data.epilogue, set: panes.filter(p => p.status === 'planned').map(p => p.id) },
-        ];
-        walk.on = true;
-        walk.paused = false;
-        ctl('pause').setAttribute('aria-pressed', 'false');
-        stage.classList.add('is-walking');
-        if (nave) nave.endIntro();
-        go(0);
-        ctl('next').focus({ preventScroll: true });
-      }
-
-      // Any other choice ends the walk; a step only the walk could show gives
-      // way to the tower at rest, and the keyboard returns to the dock.
-      function endWalk() {
-        if (!walk.on) return;
-        const hadFocus = stage.querySelector('.tour').contains(document.activeElement);
-        walk.on = false;
-        clearTimeout(walk.timer);
-        stage.classList.remove('is-walking');
-        say.textContent = '';
-        markRail(null);
-        light(new Set(), null);
-        if (nave) nave.showTier(null);
-        if (hadFocus) stage.querySelector('.dock .walk').focus({ preventScroll: true });
-      }
-
-      ctl('back').addEventListener('click', () => go(walk.i - 1));
-      ctl('next').addEventListener('click', () => go(walk.i + 1));
-      ctl('end').addEventListener('click', () => { endWalk(); rest(); });
-      ctl('pause').addEventListener('click', () => {
-        walk.paused = !walk.paused;
-        ctl('pause').setAttribute('aria-pressed', String(walk.paused));
-        schedule();
-      });
-      stage.querySelector('.tour').addEventListener('focusin', () => schedule());
-      stage.querySelector('.tour').addEventListener('focusout', () => setTimeout(schedule, 0));
-      stage.querySelector('.dock .walk').addEventListener('click', startWalk);
-
-      // ── Nave or window ───────────────────────────────────────────
-      // The part of the screen left open: below the top bar, above the card
-      // (on a phone) and the dock. The nave centres what it tells there.
+      // The part of the screen left open: below the top bar, past the tier
+      // lights, above the card on a phone or beside it on a wide screen. The
+      // square centres what it tells there.
       function bandOf(h) {
         const top = stage.querySelector('.topbar').getBoundingClientRect().bottom - 14;
-        let bottom = stage.querySelector(walk.on ? '.caption' : '.dock').getBoundingClientRect().top - 8;
-        let left = 48, right = innerWidth; // past the tier lights at the left
+        let bottom = h - 10, left = 48, right = innerWidth;
         if (!panel.classList.contains('is-empty')) {
           const p = panel.getBoundingClientRect();
           if (wide.matches) right = p.left - 8; else bottom = Math.min(bottom, p.top - 8);
         }
-        bottom = Math.min(bottom, h);
         return bottom - top < 120 || right - left < 160 ? null : { top, bottom, left, right };
       }
 
@@ -1166,63 +535,47 @@
         try { return decodeURIComponent(location.hash.slice(1)); } catch { return ''; }
       }
 
-      function setMode(mode) {
-        endWalk();
-        root.classList.remove('nave-pending');
-        root.classList.toggle('nave-on', mode === 'nave');
-        modes.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
-        if (nave) nave.setActive(mode === 'nave');
-        if (mode === 'window') {
-          window.scrollTo(0, 0);
-          if (selected) keepClear(paneButton(selected), false);
-          if (!selected && !shownTier) renderHint();
-          panel.classList.remove('is-empty');
-        } else if (!selected && !shownTier) {
-          renderHint();
-        }
-      }
-
-      function greet() {
-        // A first word on how to move, gone at the first touch or soon after.
-        toast.classList.add('on');
-        const hide = () => toast.classList.remove('on');
-        setTimeout(hide, 6500);
-        stage.addEventListener('pointerdown', hide, { once: true });
+      // Where the square cannot be drawn, the plain list is the page.
+      function flat() {
+        nave = null;
+        root.classList.add('is-flat');
       }
 
       async function raise() {
-        if (!root.classList.contains('nave-pending')) return;
-        let gaveUp = false;
-        const timer = setTimeout(() => { gaveUp = true; root.classList.remove('nave-pending'); panel.classList.remove('is-empty'); }, 10000);
+        const timer = setTimeout(() => { if (!nave) flat(); }, 12000);
         try {
           const { createNave } = await import('./workshop/nave.js');
-          if (gaveUp) return;
+          if (root.classList.contains('is-flat')) return;
           nave = createNave({
             stage, data,
             canvas: stage.querySelector('canvas'),
             tagHost: stage.querySelector('.tags'),
             colourOf: tierColour,
-            onPick: id => {
-              if (walk.on) { endWalk(); if (id) select(id); return; }
-              if (id && id !== selected) select(id);
-              else if (selected || shownTier) rest();
-            },
+            onPick: id => { if (id && id !== selected) select(id); else if (selected || shownTier) rest(); },
             bandOf,
             reducedMotion: still.matches,
-            onLost: () => { nave = null; modes.hidden = true; stage.querySelector('[data-mode="window"]').hidden = true; setMode('window'); },
+            onLost: flat,
           });
-          modes.hidden = false;
-          setMode('nave');
           if (selected) nave.select(selected, neighbours(selected));
-          else { nave.startIntro(); setTimeout(greet, 4200); }
+          else if (!still.matches) {
+            nave.startIntro();
+            setTimeout(greet, 4400);
+          }
           window.__nave = nave;
         } catch (e) {
-          nave = null;
-          root.classList.remove('nave-pending', 'nave-on');
-          panel.classList.remove('is-empty');
+          flat();
         } finally {
           clearTimeout(timer);
         }
+      }
+
+      function greet() {
+        // A first word on how to move, gone at the first touch or soon after.
+        if (selected || shownTier) return;
+        toast.classList.add('on');
+        const hide = () => toast.classList.remove('on');
+        setTimeout(hide, 6500);
+        stage.addEventListener('pointerdown', hide, { once: true });
       }
 
       function build(d) {
@@ -1233,70 +586,49 @@
           tierById[t.id] = t;
           const inTier = panes.filter(p => p.tier === t.id);
           if (!inTier.length) return;
-          const tier = el('div', 'tier');
-          const name = el('p', 'tier__name', t.name);
-          if (t.note) name.append(el('small', null, t.note));
-          tier.append(name);
-          const row = el('div', 'panes');
-          const n = inTier.length;
-          row.style.setProperty('--cols', n % 3 === 1 ? Math.min(n, 2) : Math.min(n, 3));
+          // The plain list: a heading and a button for every column.
+          const h = el('h2', null, t.name);
+          const ul = el('ul');
+          ul.style.setProperty('--c', tierColour(t.id));
           inTier.forEach(p => {
-            const b = el('button', 'pane');
-            b.append(el('span', 'pane__name', p.name));
-            b.type = 'button';
+            const li = el('li');
+            const b = button(null, p.status === 'planned' ? `${p.name} (phase ${p.phase})` : p.name, () => { if (selected === p.id) rest(); else select(p.id); });
             b.dataset.id = p.id;
-            b.dataset.status = p.status;
-            b.style.setProperty('--c', `var(--${p.tier})`);
             b.setAttribute('aria-pressed', 'false');
-            if (p.status === 'planned') b.append(el('span', 'pane__phase', 'phase ' + p.phase));
-            b.addEventListener('click', () => { if (selected === p.id) rest(); else select(p.id); });
-            row.append(b);
+            li.append(b);
+            ul.append(li);
           });
-          tier.append(row);
-          host.append(tier);
-
+          list.append(h, ul);
+          // And its light at the left.
           const r = button(null, null, () => { if (shownTier === t.id) rest(); else showTier(t.id); });
           r.append(el('span', null, t.name));
           r.dataset.tier = t.id;
           r.style.setProperty('--c', tierColour(t.id));
           r.setAttribute('aria-current', 'false');
+          r.setAttribute('aria-label', t.name);
           rail.append(r);
         });
-        renderHint();
-        if (!naveOn()) panel.classList.remove('is-empty');
-        // A keyboard walking the (hidden) window turns the nave to each pane.
-        win.addEventListener('focusin', e => { if (nave && e.target.matches('.pane:focus-visible')) nave.focus(e.target.dataset.id); });
-        win.addEventListener('focusout', () => { if (nave) nave.focus(null); });
+        // A keyboard walking the (unseen) list turns the square to each column.
+        list.addEventListener('focusin', e => { if (nave && e.target.matches('button[data-id]:focus-visible')) nave.focus(e.target.dataset.id); });
+        list.addEventListener('focusout', () => { if (nave) nave.focus(null); });
         const fromHash = idFromHash();
-        if (byId[fromHash]) select(fromHash, { focus: true });
+        if (byId[fromHash]) select(fromHash);
         raise();
       }
 
       document.addEventListener('keydown', e => {
-        if (help.open) return;
-        if (walk.on && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
-          go(walk.i + (e.key === 'ArrowRight' ? 1 : -1));
-          return;
-        }
-        if (e.key !== 'Escape' || !(selected || shownTier || walk.on)) return;
-        const back = selected ? paneButton(selected) : shownTier ? railButton(shownTier) : null;
+        if (e.key !== 'Escape' || !(selected || shownTier)) return;
+        const back = selected ? paneButton(selected) : railButton(shownTier);
         const inCard = panel.contains(document.activeElement) || document.activeElement === document.body;
-        const walking = walk.on;
-        endWalk();
         rest();
-        if (!walking && inCard && back) back.focus({ preventScroll: true });
+        if (inCard && back) back.focus({ preventScroll: true });
       });
       window.addEventListener('hashchange', () => {
         const id = idFromHash();
-        if (byId[id]) { if (id !== selected) select(id, { focus: true }); }
+        if (byId[id]) { if (id !== selected) select(id); }
         else if (selected) rest();
       });
-      modes.addEventListener('click', e => {
-        const b = e.target.closest('button[data-mode]');
-        if (b) setMode(b.dataset.mode);
-      });
-      stage.querySelector('[data-mode="window"]').addEventListener('click', () => setMode('window'));
-      // If the page itself has been zoomed, a pinch on the glass zooms the
+      // If the page itself has been zoomed, a pinch on the square zooms the
       // page back out rather than the camera, so no one is trapped.
       if (window.visualViewport) {
         const canvas = stage.querySelector('canvas');
@@ -1304,17 +636,13 @@
         visualViewport.addEventListener('resize', free);
         free();
       }
-      stage.querySelector('.help-open').addEventListener('click', () => help.showModal());
-      help.querySelector('.help__close').addEventListener('click', () => help.close());
-      help.addEventListener('click', e => { if (e.target === help) help.close(); });
 
       fetch('workshop/glass.json')
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(build)
         .catch(() => {
-          root.classList.remove('nave-pending');
-          panel.classList.remove('is-empty');
-          host.append(el('p', 'panel__hint', 'The glass could not be fetched just now. Please try again in a moment.'));
+          flat();
+          list.append(el('p', null, 'The Workshop could not be fetched just now. Please try again in a moment.'));
         });
     })();
   </script>
