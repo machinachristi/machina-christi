@@ -85,6 +85,9 @@
       transition: color 0.25s ease, border-color 0.25s ease;
     }
     .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    /* A bigger, invisible tap area (~44px tall) for thumbs; the link looks the same. */
+    .back { position: relative; }
+    .back::before { content: ''; position: absolute; inset: -9px -12px; }
 
     h1 {
       font-weight: normal;
@@ -115,6 +118,9 @@
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
     a { color: inherit; }
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    /* The `hidden` attribute must win over the display rules below
+       (.toggles is flex, .chip inline-flex), or hidden controls still show. */
+    [hidden] { display: none !important; }
 
     /* ── Settings: two quiet switches ─────────────────────────── */
     .toggles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1em; }

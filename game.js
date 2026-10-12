@@ -91,7 +91,9 @@ const VERSE_EVERY = 100; // km between verses
 let shake = 0;     // remaining shake frames
 let flash = 0;     // remaining hit-flash frames
 let lifeFlash = 0; // animates the life-lost indicator in the HUD
-let bestScore = Number(localStorage.getItem('camino_best') || 0);
+// Storage can throw when a browser blocks site data; the game must still run.
+let bestScore = 0;
+try { bestScore = Number(localStorage.getItem('camino_best') || 0); } catch (e) { /* storage blocked */ }
 
 // First-play guide: walk the player through the four moves once, ever.
 let tutorial = null;
@@ -164,7 +166,9 @@ function startGame() {
   lifeFlash = 0;
 
   // Only guide the very first journey; retries start straight away.
-  tutorial = localStorage.getItem(TUT_KEY)
+  let tutDone = false;
+  try { tutDone = !!localStorage.getItem(TUT_KEY); } catch (e) { /* storage blocked */ }
+  tutorial = tutDone
     ? null
     : { steps: ['left', 'right', 'up', 'down'], idx: 0 };
 
@@ -178,7 +182,7 @@ function endGame() {
   restartReadyAt = frameCount + RESTART_LOCK_FRAMES;
   if (Math.floor(score) > bestScore) {
     bestScore = Math.floor(score);
-    localStorage.setItem('camino_best', bestScore);
+    try { localStorage.setItem('camino_best', bestScore); } catch (e) { /* storage blocked */ }
   }
 }
 
@@ -297,7 +301,7 @@ function handleInput(dx, dy) {
     tutorial.idx++;
     if (tutorial.idx >= tutorial.steps.length) {
       tutorial = null;
-      localStorage.setItem(TUT_KEY, '1');
+      try { localStorage.setItem(TUT_KEY, '1'); } catch (e) { /* storage blocked */ }
     }
   }
 }
