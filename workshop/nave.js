@@ -1,8 +1,8 @@
 // The Workshop: every technology Machina Christi uses (workshop/glass.json),
 // set as a square of light after St Peter's at night. Steps of dark stone
 // rise in the middle, one for each tier, from the workbench at the foot up to
-// "in your hands" beside an obelisk crowned with a radiant cross. Each
-// technology is a floodlit column of travertine with a flame of its tier's
+// "in your hands" beside a great cross of light at the centre. Each
+// technology is a column glowing from within in its tier's colour, a flame of
 // colour at the top (brighter the more it holds together); planned ones are
 // clear crystal, waiting to be lit. Threads of gold join the columns that
 // touch, and around it all Bernini's colonnade opens its arms, its saints a
@@ -28,14 +28,15 @@ const RISE = 0.46;   // height of each step
 const GOLD = new THREE.Color(0xf2d58a);
 
 // How brightly each column is lit: dimmed, resting, lit by a neighbour,
-// chosen. A live column is floodlit stone with a flame at its top; planned
+// chosen. A live column glows from within, with a flame at its top; planned
 // ones are clear crystal that only kindles a little when it is told.
 const LOOK = {
-  live:    { light: [0.22, 0.85, 1.05, 1.3], shell: [0.6, 1, 1, 1],     crown: [0.15, 1.5, 2.2, 3.4] },
+  live:    { light: [0.2, 0.9, 1.15, 1.45], shell: [0.6, 1, 1, 1],    crown: [0.15, 1.5, 2.2, 3.4] },
   planned: { light: [0, 0, 0, 0],           shell: [0.3, 0.75, 1, 1.2], crown: [0, 0.12, 0.5, 1.0] },
 };
-const COL_H = 1.0;    // a column's height
-const COL_R = 0.075;  // its radius at the foot
+// The columns that are tools stand well above the colonnade that only frames them.
+const COL_H = 1.35;   // a tool's column: its height
+const COL_R = 0.1;    // and its radius at the foot
 
 const QUAD_VS = /* glsl */ `
   varying vec2 vUv;
@@ -157,7 +158,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     })));
   }
 
-  // The ground: the paved square, its stones laid in rays from the obelisk as
+  // The ground: the paved square, its stones laid in rays from the centre as
   // they are in Rome, and beyond the colonnade still water, with ripples of
   // light going out across it.
   background(new THREE.Mesh(
@@ -259,27 +260,28 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     void main() {
       vec3 n = normalize(vN);
       float y = vLocal.y;
-      // Travertine, floodlit from the square as the colonnade is at night:
-      // faces turned toward the cross take its light, brightest at the foot.
-      vec3 stone = vec3(0.82, 0.73, 0.58);
+      // Each column glows from within, like alabaster with a lamp inside:
+      // its tier's colour warmed toward candlelight, brightest at the foot
+      // and toward the flame above, a fine line of light up every flute,
+      // and its edges catching the most light of all.
+      vec3 lamp = mix(uColor, vec3(1.0, 0.92, 0.78), 0.18);
       vec2 toCentre = -vW.xz;
-      vec3 L = normalize(vec3(toCentre, 0.9 * length(toCentre) + 0.4));
-      L = vec3(L.x, L.z, L.y);
-      float diff = 0.6 + 0.4 * dot(n, L);
-      float up = mix(1.0, 0.5, smoothstep(0.0, uH, y));
-      float ang = atan(vLocal.z, vLocal.x);
+      vec3 L = normalize(vec3(toCentre.x, 0.9 * length(toCentre) + 0.4, toCentre.y));
+      float shade = 0.72 + 0.28 * dot(n, L);
+      float ang = atan(vLocal.z, vLocal.x) / 6.2831853 * 16.0;
       float shaft = step(0.14, y) * (1.0 - step(uH - 0.17, y));
-      float flute = 1.0 - shaft * 0.2 * smoothstep(0.3, 0.5, abs(fract(ang / 6.2831853 * 20.0) - 0.5));
-      float fres = pow(1.0 - abs(dot(n, normalize(vV))), 3.0);
-      // The tier's light: a band at the necking, and its flame warming the capital.
+      float fw = fwidth(ang);
+      float ridge = 1.0 - abs(fract(ang) - 0.5) * 2.0;
+      float line = (1.0 - smoothstep(0.0, 0.16 + fw, 1.0 - ridge)) * shaft;
+      // From far away the flutes melt into an even glow instead of shimmering.
+      line = mix(line, 0.22 * shaft, smoothstep(0.25, 0.7, fw));
+      float glow = 0.4 + 0.28 * smoothstep(uH * 0.45, uH, y) + 0.22 * (1.0 - smoothstep(0.0, 0.22, y));
+      float fres = pow(1.0 - abs(dot(n, normalize(vV))), 2.6);
       float neck = smoothstep(uH - 0.158, uH - 0.15, y) * (1.0 - smoothstep(uH - 0.14, uH - 0.132, y));
-      float cap = smoothstep(uH - 0.35, uH, y);
       vec3 col; float alpha = 1.0;
       if (uPlanned < 0.5) {
-        col = stone * (0.03 + 0.8 * diff * up) * flute * uLight
-            + uColor * (neck * uNeck + cap * 0.22) * uLight
-            + uColor * fres * 0.28 * uLight
-            + stone * 0.02 * uShell;
+        col = lamp * (glow * shade + line * 0.95 + fres * 1.15 + neck * uNeck) * uLight
+            + lamp * 0.02 * uShell;
       } else {
         // Clear crystal: an outline of light, waiting.
         col = uColor * (0.05 + fres * 0.75) * uShell + uColor * neck * 0.7 * uShell;
@@ -341,14 +343,14 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       // Its flame: larger the more the column holds together.
       const crownMat = new THREE.MeshBasicMaterial({ color: 0x000000, ...additive });
       const flame = new THREE.Mesh(flameGeo, crownMat);
-      const size = 0.04 + Math.min(degree[p.id] || 0, 10) * 0.004;
+      const size = 0.05 + Math.min(degree[p.id] || 0, 10) * 0.005;
       flame.scale.set(size, size * 1.35, size);
       flame.position.set(0, COL_H + size * 1.2, 0);
       mesh.add(flame);
       // And the light it casts on the stone at its foot.
       const poolMat = new THREE.MeshBasicMaterial({ map: glowTex, color: 0x000000, ...additive });
       const pool = new THREE.Mesh(poolGeo, poolMat);
-      pool.scale.setScalar(0.62);
+      pool.scale.setScalar(0.8);
       pool.position.set(base.x, y + 0.006, base.z);
       scene.add(pool);
       const label = tag(p.name, 'tag', kind === 'planned' ? 'phase ' + p.phase : null, p.tier);
@@ -362,7 +364,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     });
   });
 
-  // The heart: a dais, an obelisk on it, and the cross above, as in Rome.
+  // The heart: a dais, and on it a great cross of light, standing alone.
   const daisH = topY + 0.4;
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(CORE, CORE, daisH, 96, 1), new THREE.ShaderMaterial({
     uniforms: { uRim: { value: GOLD.clone() }, uGlow: { value: 1.6 }, uR: { value: CORE }, uInner: { value: 99 }, uTop: { value: topY + 0.14 }, uReveal: { value: 1 } },
@@ -371,44 +373,21 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   }));
   dais.position.y = topY + 0.14 - daisH / 2;
   scene.add(dais);
-  {
-    const foot = topY + 0.14;
-    const obeliskFS = `
-      uniform float uTop, uFoot;
-      varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
-      void main() {
-        vec3 n = normalize(vN);
-        float h = clamp((vW.y - uFoot) / (uTop - uFoot), 0.0, 1.0);
-        vec3 stone = vec3(0.8, 0.7, 0.55);
-        float fres = pow(1.0 - abs(dot(n, normalize(vV))), 2.0);
-        // Lit from the foot, the light climbing and thinning toward the cross.
-        vec3 col = stone * (0.05 + 0.75 * mix(1.0, 0.25, h) * (0.6 + 0.4 * n.y + 0.3 * abs(n.x)))
-                 + vec3(1.0, 0.8, 0.45) * fres * 0.35;
-        gl_FragColor = vec4(col, 1.0);
-        ${OUT}
-      }`;
-    const stone = new THREE.ShaderMaterial({ uniforms: { uTop: { value: crossY - 0.43 }, uFoot: { value: foot } }, vertexShader: columnVS, fragmentShader: obeliskFS });
-    const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.26, 0.46), stone);
-    pedestal.position.y = foot + 0.13;
-    const shaftH = crossY - 0.43 - (foot + 0.26) - 0.2;
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, shaftH, 4, 1).rotateY(Math.PI / 4), stone);
-    shaft.position.y = foot + 0.26 + shaftH / 2;
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.2, 4).rotateY(Math.PI / 4), stone);
-    tip.position.y = foot + 0.26 + shaftH + 0.1;
-    scene.add(pedestal, shaft, tip);
-  }
 
+  const crossFoot = topY + 0.14;
+  const crossTall = crossY + 0.45 - crossFoot;
   const cross = new THREE.Group();
-  const crossMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.82, 0.48).multiplyScalar(3.2) });
-  cross.add(new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.86, 0.07), crossMat));
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.07, 0.07), crossMat);
-  arm.position.y = 0.16;
-  cross.add(arm);
-  cross.position.y = crossY;
+  const crossMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.84, 0.52).multiplyScalar(2.4) });
+  const upright = new THREE.Mesh(new THREE.BoxGeometry(0.1, crossTall, 0.1), crossMat);
+  upright.position.y = crossTall / 2;
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.1, 0.1), crossMat);
+  arm.position.y = crossY - 0.05 - crossFoot;
+  cross.add(upright, arm);
+  cross.position.y = crossFoot;
   scene.add(cross);
-  const crossHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xf6d88e, opacity: 0.35, ...additive }));
-  crossHalo.scale.setScalar(2.6);
-  crossHalo.position.y = crossY;
+  const crossHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xf6d88e, opacity: 0.32, ...additive }));
+  crossHalo.scale.setScalar(3.4);
+  crossHalo.position.y = crossY - 0.05;
   scene.add(crossHalo);
 
   // Light falling from the cross, faint, over the whole of the steps.
@@ -429,7 +408,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   // ── The colonnade: two arms open around the square, as Bernini meant
   // them, the arms of the Church; its saints a line of small lights above.
   {
-    const H = 0.95, foot = -0.26, spacing = 0.4;
+    const H = 0.62, foot = -0.26, spacing = 0.32;
     const gap = 0.24; // the openings, east and west, in radians either side
     const all = Math.round((TAU * colonnadeR) / spacing);
     const at = [];
@@ -438,9 +417,9 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       if (Math.abs(Math.sin(a)) < Math.sin(gap)) continue; // the openings, on the x axis
       at.push(a);
     }
-    const geo = columnGeometry(H, 0.07);
+    const geo = columnGeometry(H, 0.05);
     const mat = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: GOLD.clone() }, uLight: { value: 0.62 }, uShell: { value: 1 }, uPlanned: { value: 0 }, uReveal: { value: 1 }, uH: { value: H }, uNeck: { value: 0.6 } },
+      uniforms: { uColor: { value: new THREE.Color(1, 0.95, 0.86) }, uLight: { value: 0.5 }, uShell: { value: 1 }, uPlanned: { value: 0 }, uReveal: { value: 1 }, uH: { value: H }, uNeck: { value: 0.5 } },
       vertexShader: columnVS,
       fragmentShader: columnFS,
     });
@@ -450,7 +429,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     scene.add(columns);
     // The entablature: one beam of stone running along the tops of both arms.
     const arc = (from, to) => {
-      const shape = [[colonnadeR - 0.13, 0], [colonnadeR + 0.13, 0], [colonnadeR + 0.13, 0.09], [colonnadeR - 0.13, 0.09], [colonnadeR - 0.13, 0]];
+      const shape = [[colonnadeR - 0.1, 0], [colonnadeR + 0.1, 0], [colonnadeR + 0.1, 0.07], [colonnadeR - 0.1, 0.07], [colonnadeR - 0.1, 0]];
       const g = new THREE.LatheGeometry(shape.map(([x, y]) => new THREE.Vector2(x, y)), 96, from, to - from);
       const beam = new THREE.Mesh(g, mat);
       beam.position.y = foot + H;
@@ -463,10 +442,10 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     // The saints: a small warm light over every other column.
     const saints = at.filter((_, k) => k % 2 === 0);
     const sp = new Float32Array(saints.length * 3);
-    saints.forEach((a, k) => sp.set([Math.cos(a) * colonnadeR, foot + H + 0.17, Math.sin(a) * colonnadeR], k * 3));
+    saints.forEach((a, k) => sp.set([Math.cos(a) * colonnadeR, foot + H + 0.13, Math.sin(a) * colonnadeR], k * 3));
     const sg = new THREE.BufferGeometry();
     sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ map: glowTex, color: new THREE.Color(1, 0.86, 0.6).multiplyScalar(1.4), size: 0.13, ...additive })));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ map: glowTex, color: new THREE.Color(1, 0.86, 0.6).multiplyScalar(1.4), size: 0.1, ...additive })));
   }
 
   // Dust turning slowly in the light.
