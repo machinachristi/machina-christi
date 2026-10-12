@@ -339,7 +339,9 @@
       white-space: normal;
       padding: 90px 20px 40vh;
     }
-    .list h2 { margin-top: 18px; font-weight: normal; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+    .list h2 { margin-top: 18px; font-weight: normal; }
+    .list .tier-open { padding: 4px 0; font-family: var(--serif); font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); background: none; border: none; cursor: pointer; }
+    .list .tier-open:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
     .list ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .list button {
       font-family: var(--serif);
@@ -586,8 +588,11 @@
           tierById[t.id] = t;
           const inTier = panes.filter(p => p.tier === t.id);
           if (!inTier.length) return;
-          // The plain list: a heading and a button for every column.
-          const h = el('h2', null, t.name);
+          // The plain list: a heading that opens the tier, and a button for every column.
+          const h = el('h2');
+          const open = button('tier-open', t.name, () => showTier(t.id));
+          open.dataset.tier = t.id;
+          h.append(open);
           const ul = el('ul');
           ul.style.setProperty('--c', tierColour(t.id));
           inTier.forEach(p => {

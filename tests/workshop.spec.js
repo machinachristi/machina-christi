@@ -141,12 +141,15 @@ test.describe('workshop square (3D)', () => {
   // Once a card is open, reading it is the point: no card ever scrolls.
   for (const [w, h] of [[390, 844], [375, 667]]) {
     test(`every card, tier and column, fits a ${w}x${h} phone without scrolling`, async ({ page }) => {
+      // The card's layout owes nothing to the 3D square; checking all of them
+      // without drawing it keeps this quick, and spares a slow runner.
+      await page.route('**/three.module.min.js', r => r.abort());
       await page.setViewportSize({ width: w, height: h });
       await page.goto('/workshop.html');
-      await ready(page);
+      await expect(page.locator('html')).toHaveClass(/is-flat/, { timeout: 15000 });
       const over = () => page.locator('.panel').evaluate(e => e.scrollHeight - e.clientHeight);
       for (const t of tiers) {
-        await page.locator(`.rail button[data-tier="${t.id}"]`).click();
+        await page.locator(`.list .tier-open[data-tier="${t.id}"]`).click();
         await expect(page.locator('.panel h2')).toHaveText(t.name);
         expect(await over(), `${t.id} card scrolls`).toBeLessThanOrEqual(1);
       }
