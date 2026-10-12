@@ -328,7 +328,7 @@
         calendarFor(year).then(calendar => {
           if (seq !== renderSeq) return;
           if (!calendar) {
-            celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}">day's Gospel at USCCB</a> directly.</p>`;
+            celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}" target="_blank" rel="noopener">day's Gospel at USCCB</a> directly.</p>`;
             saintEl.innerHTML = '';
             return;
           }
