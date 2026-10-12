@@ -1,13 +1,20 @@
 {
-  "_about": "The Workshop window (workshop.html): every technology Machina Christi uses or plans to use. One pane each, in tiers from the visitor's hands down to the workbench. status is 'live' or 'planned' (planned panes name their roadmap phase). touches lists the panes it connects to; the page lights them together. To add a technology, add a pane here. A new tier also needs its colour (--<tier-id>) in workshop.html.",
+  "_about": "The Workshop (workshop.html): every technology Machina Christi uses or plans to use. One pane each, in tiers from the visitor's hands down to the workbench. status is 'live' or 'planned' (planned panes name their roadmap phase). touches lists the panes it connects to; the page lights them together. Each tier's story is what its card reads. To add a technology, add a pane here. A new tier also needs its colour (--<tier-id>) in workshop.html.",
   "tiers": [
-    { "id": "hands",    "name": "In your hands", "note": "runs in your browser" },
-    { "id": "door",     "name": "At the door",   "note": "between you and the house" },
-    { "id": "house",    "name": "The house",     "note": "where the site lives" },
-    { "id": "store",    "name": "The storeroom", "note": "where things are kept" },
-    { "id": "messengers", "name": "Messengers",  "note": "services that carry word" },
-    { "id": "watch",    "name": "The watch",     "note": "keeping an eye on it all" },
-    { "id": "bench",    "name": "The workbench", "note": "how it is made and kept" }
+    { "id": "hands",    "name": "In your hands", "note": "runs in your browser",
+      "story": "It begins in your hands. Your own browser draws Eden, sings Camino's chant and reads the prayers aloud, with nothing to install." },
+    { "id": "door",     "name": "At the door",   "note": "between you and the house",
+      "story": "Every request passes the door first. Cloudflare and the security headers decide what may come in, and how." },
+    { "id": "house",    "name": "The house",     "note": "where the site lives",
+      "story": "Inside is the house: the pages themselves, and a small API that wakes only when it is called." },
+    { "id": "store",    "name": "The storeroom", "note": "where things are kept",
+      "story": "Below it lies the storeroom. Today it keeps the API's own state; soon it will hold the saints and the prayers." },
+    { "id": "messengers", "name": "Messengers",  "note": "services that carry word",
+      "story": "The messengers are still clear glass: a voice for the prayers, a guard for the prayer wall, and candles shared live." },
+    { "id": "watch",    "name": "The watch",     "note": "keeping an eye on it all",
+      "story": "The watch keeps an eye on it all: every page view and error counted, and an alarm at the first dollar spent." },
+    { "id": "bench",    "name": "The workbench", "note": "how it is made and kept",
+      "story": "And at the foot is the workbench, where every change is written, tested and sent up through all the rest." }
   ],
   "panes": [
     { "id": "threejs", "tier": "hands", "name": "three.js", "status": "live",

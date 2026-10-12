@@ -37,6 +37,7 @@ const PAGES = [
   '/about-eden.html',
   '/about-ordo.html',
   '/about-pray.html',
+  '/about-workshop.html',
   '/game.html',
   '/ordo.html',
   '/pray.html',

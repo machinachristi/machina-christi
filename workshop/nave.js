@@ -1,48 +1,73 @@
-// The Workshop nave: the same glass as the 2D window (workshop/glass.json),
-// raised into a stepped tower of terraces, one for each tier, from the
-// workbench at its foot up to "in your hands" nearest the light. Each
-// technology is a prism of coloured glass; planned ones are clear, waiting to
-// be lit. Golden threads join the panes that touch, and light falls from a
-// cross above through every terrace.
+// The Workshop: every technology Machina Christi uses (workshop/glass.json),
+// set as a square of light after St Peter's at night. Steps of dark stone
+// rise in the middle, one for each tier, from the workbench at the foot up to
+// "in your hands" beside a great cross of light at the centre. Each
+// technology is a column glowing from within in its tier's colour, a flame of
+// colour at the top (brighter the more it holds together); planned ones are
+// clear crystal, waiting to be lit. Threads of gold join the columns that
+// touch, and around it all Bernini's colonnade opens its arms, its saints a
+// line of small lights along the top.
 //
-// The page (workshop.html) owns the data, the selection and the panel; this
-// module only draws, and reports taps. It uses the three.js Eden already
-// ships (world-app/vendor), so the Workshop downloads nothing new.
+// Every surface is drawn by a small shader of its own and the brightest
+// things bloom, the way light does at dusk. The look follows the lead of
+// RepoSense (iLevyTate, MIT): unlit materials, a graded sky, real glow.
+//
+// It tells its story with the camera: an opening shot in which the light
+// falls from the cross and wakes each step in turn, then the shots the page
+// asks for: a whole tier (the tier lights), or one column and its neighbours.
+//
+// The page (workshop.html) owns the data, the selection and the card; this
+// module only draws, and reports taps. It uses the three.js Eden
+// already ships (world-app/vendor), so the Workshop downloads nothing new.
 import * as THREE from 'three';
 
 const TAU = Math.PI * 2;
-const STEP = 1.15;          // height between terraces
-const PRISM_H = 0.95;
-const GOLD = 0xf2d58a;
+const CORE = 0.95;   // radius of the dais at the heart
+const RING = 0.62;   // width of each step's open band
+const RISE = 0.46;   // height of each step
+const GOLD = new THREE.Color(0xf2d58a);
 
-// How brightly each prism burns: dimmed, resting, lit by a neighbour,
-// selected. Live glass glows in its tier's colour; planned glass is clear.
+// How brightly each column is lit: dimmed, resting, lit by a neighbour,
+// chosen. A live column glows from within, with a flame at its top; planned
+// ones are clear crystal that only kindles a little when it is told.
 const LOOK = {
-  live:    { e: [0.10, 0.55, 0.95, 1.6],  o: [0.35, 0.92, 0.96, 1],    g: [0.03, 0.30, 0.55, 0.95], l: [0.25, 0.6, 0.7, 0.8] },
-  planned: { e: [0.02, 0.06, 0.30, 0.55], o: [0.08, 0.22, 0.32, 0.4],  g: [0, 0, 0.18, 0.4],        l: [0.2, 0.7, 0.95, 1] },
+  live:    { light: [0.2, 0.9, 1.15, 1.45], shell: [0.6, 1, 1, 1],    crown: [0.15, 1.5, 2.2, 3.4] },
+  planned: { light: [0, 0, 0, 0],           shell: [0.3, 0.75, 1, 1.2], crown: [0, 0.12, 0.5, 1.0] },
 };
+// The columns that are tools stand well above the colonnade that only frames them.
+const COL_H = 1.35;   // a tool's column: its height
+const COL_R = 0.1;    // and its radius at the foot
 
-export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, coverOf, reducedMotion, onLost }) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.setClearColor(0x000000, 0);
+const QUAD_VS = /* glsl */ `
+  varying vec2 vUv;
+  void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+const HASH = /* glsl */ `
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }`;
+const OUT = /* glsl */ `
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>`;
+
+export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, bandOf, reducedMotion, onLost }) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(pixelRatio);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.autoClear = false;
+  renderer.setClearColor(0x06070c, 1);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0b0a08, 20, 52);
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 140);
-  scene.add(new THREE.HemisphereLight(0xfff1d6, 0x1a140c, 1.1));
-  const sun = new THREE.DirectionalLight(0xfff4dc, 1.5);
-  sun.position.set(3, 16, 7);
-  scene.add(sun);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 220);
+  const time = { value: 0 };
 
-  // A soft round glow, drawn once and shared by every halo and mote.
+  // A soft round glow, drawn once and shared by the motes and sparks.
   const glowTex = (() => {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
     const g = c.getContext('2d');
     const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
     r.addColorStop(0, 'rgba(255,255,255,1)');
-    r.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+    r.addColorStop(0.3, 'rgba(255,255,255,0.4)');
     r.addColorStop(1, 'rgba(255,255,255,0)');
     g.fillStyle = r;
     g.fillRect(0, 0, 64, 64);
@@ -51,127 +76,401 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     return t;
   })();
   const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  const background = o => { scene.add(o); return o; };
 
-  // ── Terraces and prisms ──────────────────────────────────────────
+  // ── The layout: steps, and a tower for every pane ─────────────────
   const panes = data.panes;
   const byId = Object.fromEntries(panes.map(p => [p.id, p]));
   const tiers = data.tiers.filter(t => panes.some(p => p.tier === t.id));
   const N = tiers.length;
-  const topY = (N - 1) * STEP;
-  const ringR = i => 1.3 + i * 0.6;
-  const maxR = ringR(N - 1) + 0.65;
+  const stepTop = i => (N - 1 - i) * RISE;      // tier 0 (hands) is the highest
+  const outer = i => CORE + RING * (i + 1);     // each step's edge
+  const topY = stepTop(0);
+  const maxR = outer(N - 1);
+  const crossY = topY + 3.0;
+  const colonnadeR = maxR + 0.85;   // Bernini's arms, around the whole square
+  const extent = colonnadeR + 0.3;
 
-  const stone = new THREE.MeshStandardMaterial({ color: 0x241d14, roughness: 0.85, metalness: 0.05 });
-  const prismGeo = new THREE.CylinderGeometry(0.3, 0.3, PRISM_H, 6);
-  const edgeGeo = new THREE.EdgesGeometry(prismGeo);
+  // How many panes each touches, either way: what it holds together.
+  const degree = {};
+  panes.forEach(p => { degree[p.id] = degree[p.id] || 0; (p.touches || []).forEach(t => {
+    if (!byId[t]) return;
+    degree[p.id] += 1;
+    degree[t] = (degree[t] || 0) + 1;
+  }); });
+
+  // ── Sky: dusk over the city, deep above, a warm afterglow low on one side
+  background(new THREE.Mesh(
+    new THREE.SphereGeometry(150, 48, 24),
+    new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      vertexShader: `varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `${HASH}
+        varying vec3 vDir;
+        void main() {
+          float h = vDir.y;
+          vec3 col = mix(vec3(0.014, 0.017, 0.036), vec3(0.003, 0.005, 0.014), smoothstep(-0.02, 0.6, h));
+          float glow = pow(max(dot(vDir, normalize(vec3(-0.55, 0.02, -0.83))), 0.0), 8.0);
+          col += vec3(0.05, 0.026, 0.01) * glow * (1.0 - smoothstep(-0.05, 0.3, h));
+          float cool = pow(max(dot(vDir, normalize(vec3(0.7, 0.25, 0.65))), 0.0), 4.0);
+          col += vec3(0.008, 0.012, 0.03) * cool;
+          col *= mix(0.35, 1.0, smoothstep(-0.35, 0.0, h));
+          // A whisper of dither, so the long gradient never bands.
+          col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+          gl_FragColor = vec4(col, 1.0);
+          ${OUT}
+        }`,
+    }),
+  ));
+
+  // Stars, faint and few, on the upper sky.
+  {
+    const COUNT = 900;
+    const pos = new Float32Array(COUNT * 3), seed = new Float32Array(COUNT);
+    let s = 7;
+    const rand = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < COUNT; i++) {
+      const u = 0.06 + rand() * 0.94, a = rand() * TAU, r = 120;
+      const c = Math.sqrt(1 - u * u);
+      pos.set([Math.cos(a) * c * r, u * r, Math.sin(a) * c * r], i * 3);
+      seed[i] = rand();
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+    background(new THREE.Points(geo, new THREE.ShaderMaterial({
+      ...additive,
+      uniforms: { uTime: time, uRatio: { value: pixelRatio } },
+      vertexShader: `
+        attribute float aSeed; uniform float uTime, uRatio; varying float vA;
+        void main() {
+          vA = (0.35 + 0.65 * aSeed) * (0.7 + 0.3 * sin(uTime * (0.4 + aSeed) + aSeed * 40.0));
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = (aSeed > 0.94 ? 2.6 : 1.4) * uRatio;
+        }`,
+      fragmentShader: `
+        varying float vA;
+        void main() {
+          float d = length(gl_PointCoord - 0.5);
+          gl_FragColor = vec4(vec3(0.85, 0.88, 1.0) * vA * 0.55 * smoothstep(0.5, 0.0, d), 1.0);
+        }`,
+    })));
+  }
+
+  // The ground: the paved square, its stones laid in rays from the centre as
+  // they are in Rome, and beyond the colonnade still water, with ripples of
+  // light going out across it.
+  background(new THREE.Mesh(
+    new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2).translate(0, -0.26, 0),
+    new THREE.ShaderMaterial({
+      ...additive,
+      uniforms: { uTime: time, uR: { value: colonnadeR }, uSteps: { value: maxR } },
+      vertexShader: `varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+      fragmentShader: `
+        uniform float uTime, uR, uSteps; varying vec3 vW;
+        void main() {
+          float r = length(vW.xz);
+          // The square: faint rays of travertine, and a ring at its edge.
+          float inside = step(uSteps, r) * (1.0 - step(uR, r));
+          float a = atan(vW.z, vW.x);
+          float ray = abs(fract(a / 6.2831853 * 16.0) - 0.5) * 2.0 * r * 6.2831853 / 32.0;
+          vec3 square = vec3(0.9, 0.75, 0.5) * (1.0 - smoothstep(0.006, 0.02 + fwidth(ray), ray)) * 0.03 * inside;
+          square += vec3(0.07, 0.055, 0.035) * inside * (1.0 - smoothstep(uSteps, uR, r));
+          float out_ = smoothstep(uR * 0.98, uR * 1.12, r);
+          float fade = 1.0 - smoothstep(uR * 1.1, uR * 3.2, r);
+          float w = r * 1.15 - uTime * 0.35;
+          float aa = 1.0 - smoothstep(0.25, 1.2, fwidth(w));
+          float ripple = pow(0.5 + 0.5 * cos(w), 40.0) * aa;
+          float still = pow(0.5 + 0.5 * cos(r * 0.55), 160.0) * (1.0 - smoothstep(0.1, 0.6, fwidth(r * 0.55)));
+          vec3 col = vec3(1.0, 0.8, 0.5) * (ripple * 0.05 + still * 0.035) * fade * out_;
+          col += vec3(0.04, 0.03, 0.016) * exp(-pow(max(r - uR, 0.0) * 0.8, 2.0)) * out_;
+          gl_FragColor = vec4(col + square, 1.0);
+        }`,
+    }),
+  ));
+
+  // ── The steps ────────────────────────────────────────────────────
+  const stepVS = `
+    varying vec3 vW; varying vec3 vN;
+    void main() {
+      vec4 w = modelMatrix * vec4(position, 1.0);
+      vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal);
+      gl_Position = projectionMatrix * viewMatrix * w;
+    }`;
+  const stepFS = `
+    uniform vec3 uRim; uniform float uGlow, uR, uInner, uTop, uReveal;
+    varying vec3 vW; varying vec3 vN;
+    void main() {
+      float r = length(vW.xz);
+      float top = step(0.5, vN.y);
+      vec3 gold = vec3(1.0, 0.78, 0.42);
+      // Polished dark stone, with the column's light pooled across it.
+      vec3 col = vec3(0.016, 0.015, 0.022) + vec3(0.05, 0.036, 0.018) * exp(-r * 0.42) * top;
+      // Tracery set into the open band, like the stone of a rose window.
+      float band = step(uInner, r) * top;
+      float a = atan(vW.z, vW.x);
+      float spoke = abs(fract(a / 6.2831853 * 24.0) - 0.5) * 2.0;
+      float spokeW = spoke * r * 6.2831853 / 24.0 * 0.5;
+      col += gold * (1.0 - smoothstep(0.004, 0.012 + fwidth(spokeW), spokeW)) * 0.014 * band;
+      float inner = abs(r - uInner - 0.05);
+      col += gold * (1.0 - smoothstep(0.003, 0.008 + fwidth(r), inner)) * 0.06 * band;
+      // A line of light along the edge of every step.
+      float edge = abs(r - uR + 0.035);
+      col += uRim * (1.0 - smoothstep(0.004, 0.012 + fwidth(r), edge)) * uGlow * top;
+      // The walls: dark, catching a little of their own edge's light.
+      float wall = 1.0 - top;
+      col += uRim * wall * (0.02 + 0.22 * smoothstep(uTop - 0.12, uTop, vW.y)) * uGlow * 0.5;
+      col *= uReveal;
+      gl_FragColor = vec4(col, 1.0);
+      ${OUT}
+    }`;
+
+  // ── Columns ──────────────────────────────────────────────────────
+  // A Tuscan column turned on a lathe: plinth, torus, a gently tapering
+  // shaft, the necking, the echinus and the abacus.
+  function columnGeometry(H, r) {
+    const pts = [
+      [0, 0], [r * 1.75, 0], [r * 1.75, 0.04],
+      [r * 1.5, 0.05], [r * 1.58, 0.075], [r * 1.32, 0.1],
+      [r * 1.08, 0.12], [r, 0.14],
+      [r * 0.86, H - 0.17],
+      [r * 0.96, H - 0.155], [r * 0.96, H - 0.135],
+      [r * 0.88, H - 0.125], [r * 1.28, H - 0.06],
+      [r * 1.55, H - 0.055], [r * 1.55, H], [0, H],
+    ];
+    return new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  }
+  const columnVS = `
+    varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
+    void main() {
+      mat4 m = modelMatrix;
+      #ifdef USE_INSTANCING
+        m = modelMatrix * instanceMatrix;
+      #endif
+      vec4 w = m * vec4(position, 1.0);
+      vW = w.xyz; vLocal = position;
+      vN = normalize(mat3(m) * normal);
+      vV = normalize(cameraPosition - w.xyz);
+      gl_Position = projectionMatrix * viewMatrix * w;
+    }`;
+  const columnFS = `
+    uniform vec3 uColor; uniform float uLight, uShell, uPlanned, uReveal, uH, uNeck;
+    varying vec3 vN; varying vec3 vV; varying vec3 vW; varying vec3 vLocal;
+    void main() {
+      vec3 n = normalize(vN);
+      float y = vLocal.y;
+      // Each column glows from within, like alabaster with a lamp inside:
+      // its tier's colour warmed toward candlelight, brightest at the foot
+      // and toward the flame above, a fine line of light up every flute,
+      // and its edges catching the most light of all.
+      vec3 lamp = mix(uColor, vec3(1.0, 0.92, 0.78), 0.18);
+      vec2 toCentre = -vW.xz;
+      vec3 L = normalize(vec3(toCentre.x, 0.9 * length(toCentre) + 0.4, toCentre.y));
+      float shade = 0.72 + 0.28 * dot(n, L);
+      float ang = atan(vLocal.z, vLocal.x) / 6.2831853 * 16.0;
+      float shaft = step(0.14, y) * (1.0 - step(uH - 0.17, y));
+      float fw = fwidth(ang);
+      float ridge = 1.0 - abs(fract(ang) - 0.5) * 2.0;
+      float line = (1.0 - smoothstep(0.0, 0.16 + fw, 1.0 - ridge)) * shaft;
+      // From far away the flutes melt into an even glow instead of shimmering.
+      line = mix(line, 0.22 * shaft, smoothstep(0.25, 0.7, fw));
+      float glow = 0.4 + 0.28 * smoothstep(uH * 0.45, uH, y) + 0.22 * (1.0 - smoothstep(0.0, 0.22, y));
+      float fres = pow(1.0 - abs(dot(n, normalize(vV))), 2.6);
+      float neck = smoothstep(uH - 0.158, uH - 0.15, y) * (1.0 - smoothstep(uH - 0.14, uH - 0.132, y));
+      vec3 col; float alpha = 1.0;
+      if (uPlanned < 0.5) {
+        col = lamp * (glow * shade + line * 0.95 + fres * 1.15 + neck * uNeck) * uLight
+            + lamp * 0.02 * uShell;
+      } else {
+        // Clear crystal: an outline of light, waiting.
+        col = uColor * (0.05 + fres * 0.75) * uShell + uColor * neck * 0.7 * uShell;
+        alpha = clamp((0.12 + fres * 0.65) * uShell, 0.0, 1.0);
+      }
+      gl_FragColor = vec4(col * uReveal, alpha * mix(1.0, uReveal, uPlanned));
+      ${OUT}
+    }`;
+  const columnGeo = columnGeometry(COL_H, COL_R);
+
   const prisms = new Map();
   const prismMeshes = [];
   const rims = new Map();
-  const tierTags = [];
+  const tierAt = new Map(); // tier id → { i, y, r }
+  const flameGeo = new THREE.SphereGeometry(1, 16, 12);
+  const poolGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 
   tiers.forEach((t, i) => {
-    const y = topY - i * STEP;
-    const r = ringR(i);
+    const y = stepTop(i);
+    const R = outer(i), inner = R - RING;
     const colour = new THREE.Color(`rgb(${colourOf(t.id)})`);
+    const rimColour = colour.clone().lerp(GOLD, 0.45);
 
-    const terrace = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.55, r + 0.65, 0.14, 72), stone);
-    terrace.position.y = y - 0.07;
-    scene.add(terrace);
-    const rimMat = new THREE.MeshBasicMaterial({ color: colour, transparent: true, opacity: 0.45 });
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(r + 0.64, 0.022, 6, 120), rimMat);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.y = y - 0.02;
-    scene.add(rim);
-    rims.set(t.id, { mat: rimMat, cur: 0.45 });
-    tierTags.push({ el: tag(`${t.name}`, 'tag tag--tier', null, t.id), y: y - 0.05, r: r + 0.66, on: false, w: 0 });
+    const height = y + 0.26;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uRim: { value: rimColour }, uGlow: { value: 0 }, uR: { value: R }, uInner: { value: inner }, uTop: { value: y }, uReveal: { value: 1 } },
+      vertexShader: stepVS,
+      fragmentShader: stepFS,
+    });
+    const step = new THREE.Mesh(new THREE.CylinderGeometry(R, R, height, 128, 1), mat);
+    step.position.y = y - height / 2;
+    scene.add(step);
+    rims.set(t.id, { mat, cur: 0 });
+    tierAt.set(t.id, { i, y, r: R });
 
     const inTier = panes.filter(p => p.tier === t.id);
-    const offset = i * 2.39996; // the golden angle, so no two terraces line up
+    const offset = i * 2.39996; // the golden angle, so no two steps line up
+    const ringAt = inner + RING / 2;
     inTier.forEach((p, k) => {
       const a = offset + (k * TAU) / inTier.length;
-      const pos = new THREE.Vector3(Math.sin(a) * r, y + 0.04 + PRISM_H / 2, Math.cos(a) * r);
       const kind = p.status === 'planned' ? 'planned' : 'live';
-      const look = LOOK[kind];
-      const mat = kind === 'live'
-        ? new THREE.MeshStandardMaterial({ color: colour, emissive: colour, emissiveIntensity: look.e[1], roughness: 0.3, transparent: true, opacity: look.o[1] })
-        : new THREE.MeshStandardMaterial({ color: 0xf4ecd8, emissive: colour, emissiveIntensity: look.e[1], roughness: 0.1, transparent: true, opacity: look.o[1], depthWrite: false });
-      const mesh = new THREE.Mesh(prismGeo, mat);
-      mesh.position.copy(pos);
+      const base = new THREE.Vector3(Math.sin(a) * ringAt, y, Math.cos(a) * ringAt);
+      const look = new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: colour }, uLight: { value: 0 }, uShell: { value: 0 }, uPlanned: { value: kind === 'planned' ? 1 : 0 },
+          uReveal: { value: 1 }, uH: { value: COL_H }, uNeck: { value: 1.6 },
+        },
+        vertexShader: columnVS,
+        fragmentShader: columnFS,
+        transparent: kind === 'planned',
+        depthWrite: kind !== 'planned',
+      });
+      const mesh = new THREE.Mesh(columnGeo, look);
+      mesh.position.copy(base);
       mesh.rotation.y = a;
       mesh.userData.id = p.id;
       scene.add(mesh);
       prismMeshes.push(mesh);
-      // Lead lines on lit glass; a coloured outline on clear glass.
-      const lineMat = new THREE.LineBasicMaterial({ color: kind === 'live' ? 0x070605 : colour.clone().lerp(new THREE.Color(0xffffff), 0.35), transparent: true, opacity: look.l[1] });
-      const lines = new THREE.LineSegments(edgeGeo, lineMat);
-      mesh.add(lines);
-      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: colour, opacity: look.g[1], ...additive }));
-      halo.scale.setScalar(1.7);
-      halo.position.copy(pos);
-      scene.add(halo);
+      // Its flame: larger the more the column holds together.
+      const crownMat = new THREE.MeshBasicMaterial({ color: 0x000000, ...additive });
+      const flame = new THREE.Mesh(flameGeo, crownMat);
+      const size = 0.05 + Math.min(degree[p.id] || 0, 10) * 0.005;
+      flame.scale.set(size, size * 1.35, size);
+      flame.position.set(0, COL_H + size * 1.2, 0);
+      mesh.add(flame);
+      // And the light it casts on the stone at its foot.
+      const poolMat = new THREE.MeshBasicMaterial({ map: glowTex, color: 0x000000, ...additive });
+      const pool = new THREE.Mesh(poolGeo, poolMat);
+      pool.scale.setScalar(0.8);
+      pool.position.set(base.x, y + 0.006, base.z);
+      scene.add(pool);
       const label = tag(p.name, 'tag', kind === 'planned' ? 'phase ' + p.phase : null, p.tier);
       prisms.set(p.id, {
-        id: p.id, kind, mesh, mat, lineMat, halo, pos, angle: a, label, on: false,
-        top: pos.clone().add(new THREE.Vector3(0, PRISM_H / 2 + 0.12, 0)),
-        cur: { e: look.e[1], o: look.o[1], g: look.g[1], l: look.l[1], s: 1 },
+        id: p.id, tier: t.id, kind, mesh, look, crownMat, poolMat, lineMat: null, colour, angle: a, label,
+        pos: base.clone().add(new THREE.Vector3(0, COL_H / 2, 0)),
+        top: base.clone().add(new THREE.Vector3(0, COL_H + 0.24, 0)),
+        crownAt: base.clone().add(new THREE.Vector3(0, COL_H + size * 1.2, 0)),
+        cur: { light: 0, shell: 0, crown: 0, s: 1 },
       });
     });
   });
 
-  // The spine the terraces hang on, and the cross the light falls from.
-  const spine = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.08, 0.1, topY + 1.6, 12),
-    new THREE.MeshStandardMaterial({ color: 0x6b5520, emissive: 0x2a2008, roughness: 0.5, metalness: 0.4 }),
-  );
-  spine.position.y = (topY + 1.6) / 2 - 0.3;
-  scene.add(spine);
+  // The heart: a dais, and on it a great cross of light, standing alone.
+  const daisH = topY + 0.4;
+  const dais = new THREE.Mesh(new THREE.CylinderGeometry(CORE, CORE, daisH, 96, 1), new THREE.ShaderMaterial({
+    uniforms: { uRim: { value: GOLD.clone() }, uGlow: { value: 1.6 }, uR: { value: CORE }, uInner: { value: 99 }, uTop: { value: topY + 0.14 }, uReveal: { value: 1 } },
+    vertexShader: stepVS,
+    fragmentShader: stepFS,
+  }));
+  dais.position.y = topY + 0.14 - daisH / 2;
+  scene.add(dais);
 
-  const crossY = topY + 2.1;
+  const crossFoot = topY + 0.14;
+  const crossTall = crossY + 0.45 - crossFoot;
   const cross = new THREE.Group();
-  const crossMat = new THREE.MeshBasicMaterial({ color: 0xe8c25a });
-  const upright = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.9, 0.09), crossMat);
-  const beam = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.09, 0.09), crossMat);
-  beam.position.y = 0.17;
-  cross.add(upright, beam);
-  cross.position.y = crossY;
+  const crossMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.84, 0.52).multiplyScalar(2.4) });
+  const upright = new THREE.Mesh(new THREE.BoxGeometry(0.1, crossTall, 0.1), crossMat);
+  upright.position.y = crossTall / 2;
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.1, 0.1), crossMat);
+  arm.position.y = crossY - 0.05 - crossFoot;
+  cross.add(upright, arm);
+  cross.position.y = crossFoot;
   scene.add(cross);
-  const crossGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xf2d58a, opacity: 0.5, ...additive }));
-  crossGlow.scale.setScalar(3);
-  crossGlow.position.y = crossY;
-  scene.add(crossGlow);
+  const crossHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xf6d88e, opacity: 0.32, ...additive }));
+  crossHalo.scale.setScalar(3.4);
+  crossHalo.position.y = crossY - 0.05;
+  scene.add(crossHalo);
 
-  // Light falling from the cross, brightest above and fading toward the foot.
+  // Light falling from the cross, faint, over the whole of the steps.
   {
-    const h = crossY + 0.6;
-    const geo = new THREE.CylinderGeometry(0.3, maxR + 0.4, h, 48, 10, true);
-    const pos = geo.attributes.position;
-    const col = new Float32Array(pos.count * 4);
-    const gold = new THREE.Color(GOLD);
-    for (let v = 0; v < pos.count; v++) {
-      const t = pos.getY(v) / h + 0.5; // 0 at the foot, 1 at the cross
-      col.set([gold.r, gold.g, gold.b, 0.09 * t * t], v * 4);
+    const hgt = crossY + 0.3;
+    const geo = new THREE.CylinderGeometry(0.2, maxR * 0.95, hgt, 64, 12, true);
+    const p = geo.attributes.position, col = new Float32Array(p.count * 4);
+    for (let v = 0; v < p.count; v++) {
+      const u = p.getY(v) / hgt + 0.5;
+      col.set([1.0, 0.84, 0.55, 0.045 * u * u], v * 4);
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
-    const shaft = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
-    shaft.position.y = h / 2 - 0.6;
-    scene.add(shaft);
+    const beam = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
+    beam.position.y = hgt / 2 - 0.3;
+    scene.add(beam);
+  }
+
+  // ── The colonnade: two arms open around the square, as Bernini meant
+  // them, the arms of the Church; its saints a line of small lights above.
+  {
+    const H = 0.62, foot = -0.26, spacing = 0.32;
+    const gap = 0.24; // the openings, east and west, in radians either side
+    const all = Math.round((TAU * colonnadeR) / spacing);
+    const at = [];
+    for (let k = 0; k < all; k++) {
+      const a = (k / all) * TAU;
+      if (Math.abs(Math.sin(a)) < Math.sin(gap)) continue; // the openings, on the x axis
+      at.push(a);
+    }
+    const geo = columnGeometry(H, 0.05);
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(1, 0.95, 0.86) }, uLight: { value: 0.5 }, uShell: { value: 1 }, uPlanned: { value: 0 }, uReveal: { value: 1 }, uH: { value: H }, uNeck: { value: 0.5 } },
+      vertexShader: columnVS,
+      fragmentShader: columnFS,
+    });
+    const columns = new THREE.InstancedMesh(geo, mat, at.length);
+    const m4 = new THREE.Matrix4();
+    at.forEach((a, k) => { columns.setMatrixAt(k, m4.makeTranslation(Math.cos(a) * colonnadeR, foot, Math.sin(a) * colonnadeR)); });
+    scene.add(columns);
+    // The entablature: one beam of stone running along the tops of both arms.
+    const arc = (from, to) => {
+      const shape = [[colonnadeR - 0.1, 0], [colonnadeR + 0.1, 0], [colonnadeR + 0.1, 0.07], [colonnadeR - 0.1, 0.07], [colonnadeR - 0.1, 0]];
+      const g = new THREE.LatheGeometry(shape.map(([x, y]) => new THREE.Vector2(x, y)), 96, from, to - from);
+      const beam = new THREE.Mesh(g, mat);
+      beam.position.y = foot + H;
+      scene.add(beam);
+    };
+    // Lathe angles run from +z toward +x, so the openings on the x axis sit
+    // at a quarter and three quarters of the turn.
+    arc(Math.PI / 2 + gap + 0.04, (3 * Math.PI) / 2 - gap - 0.04);
+    arc((3 * Math.PI) / 2 + gap + 0.04, (5 * Math.PI) / 2 - gap - 0.04);
+    // The saints: a small warm light over every other column.
+    const saints = at.filter((_, k) => k % 2 === 0);
+    const sp = new Float32Array(saints.length * 3);
+    saints.forEach((a, k) => sp.set([Math.cos(a) * colonnadeR, foot + H + 0.13, Math.sin(a) * colonnadeR], k * 3));
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ map: glowTex, color: new THREE.Color(1, 0.86, 0.6).multiplyScalar(1.4), size: 0.1, ...additive })));
   }
 
   // Dust turning slowly in the light.
-  const MOTES = 140;
+  const MOTES = 120;
   const moteGeo = new THREE.BufferGeometry();
   const motePos = new Float32Array(MOTES * 3);
   for (let m = 0; m < MOTES; m++) {
     const y = Math.random() * (crossY + 0.4) - 0.4;
-    const reach = 0.4 + (1 - y / crossY) * (maxR - 0.6);
+    const reach = 0.3 + (1 - y / crossY) * (maxR - 0.8);
     const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * reach;
     motePos.set([Math.sin(a) * d, y, Math.cos(a) * d], m * 3);
   }
   moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
-  const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: glowTex, color: GOLD, size: 0.09, opacity: 0.5, ...additive }));
+  const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: glowTex, color: 0xf2d58a, size: 0.06, opacity: 0.45, ...additive }));
   scene.add(motes);
 
-  // ── Threads between the panes that touch ─────────────────────────
+  // A ring of light at the foot of the chosen column.
+  const marker = new THREE.Mesh(
+    new THREE.RingGeometry(0.3, 0.33, 48).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0x000000, ...additive, side: THREE.DoubleSide }),
+  );
+  marker.visible = false;
+  scene.add(marker);
+
+  // ── Threads of gold between the towers that touch ────────────────
   const threads = [];
   const seen = new Set();
   for (const p of panes) {
@@ -179,26 +478,116 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       const key = [p.id, t].sort().join('|');
       if (!byId[t] || seen.has(key)) continue;
       seen.add(key);
-      const a = prisms.get(p.id).pos, b = prisms.get(t).pos;
+      const a = prisms.get(p.id).crownAt, b = prisms.get(t).crownAt;
       const mid = a.clone().add(b).multiplyScalar(0.5);
       const out = new THREE.Vector3(mid.x, 0, mid.z);
       if (out.lengthSq() < 0.09) out.set(Math.sin(seen.size), 0, Math.cos(seen.size));
-      out.normalize().multiplyScalar(0.8 + a.distanceTo(b) * 0.12);
-      const curve = new THREE.QuadraticBezierCurve3(a.clone(), mid.add(out).add(new THREE.Vector3(0, 0.5, 0)), b.clone());
-      const mat = new THREE.MeshBasicMaterial({ color: GOLD, opacity: 0.1, ...additive });
-      const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.016, 5, false), mat);
-      scene.add(mesh);
-      threads.push({ a: p.id, b: t, curve, mat, cur: 0.1 });
+      out.normalize().multiplyScalar(0.25);
+      const lift = 0.5 + a.distanceTo(b) * 0.16;
+      const curve = new THREE.QuadraticBezierCurve3(a.clone(), mid.add(out).add(new THREE.Vector3(0, lift, 0)), b.clone());
+      const mat = new THREE.MeshBasicMaterial({ color: 0x000000, ...additive });
+      scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.009, 5, false), mat));
+      threads.push({ a: p.id, b: t, ta: p.tier, tb: byId[t].tier, curve, mat, cur: 0 });
     }
   }
-  // Sparks that run along the lit threads, outward from the chosen pane.
-  const sparks = Array.from({ length: 10 }, () => {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xfff1c8, opacity: 0.9, ...additive }));
-    s.scale.setScalar(0.34);
+  // Sparks that run along the lit threads, outward from the chosen tower.
+  const sparks = Array.from({ length: 12 }, () => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(1, 0.9, 0.7).multiplyScalar(2), opacity: 0.9, ...additive }));
+    s.scale.setScalar(0.22);
     s.visible = false;
     scene.add(s);
     return { s, curve: null, fwd: true, phase: 0 };
   });
+
+  // ── Glow: the brightest light blooms, as it does at dusk ──────────
+  // The finished picture is copied once, its brightest parts kept and
+  // blurred at two scales, and the blur laid back over it. The scene is drawn
+  // only once, the picture keeps the canvas's own smooth edges, the glow is
+  // made in the same colours the eye sees, and on a slow device it can simply
+  // be left off.
+  const glow = (() => {
+    const opts = { type: THREE.HalfFloatType, depthBuffer: false };
+    let src = null;
+    const a = new THREE.WebGLRenderTarget(1, 1, opts), b = new THREE.WebGLRenderTarget(1, 1, opts);
+    const c = new THREE.WebGLRenderTarget(1, 1, opts), d = new THREE.WebGLRenderTarget(1, 1, opts);
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+    quad.frustumCulled = false;
+    const quadScene = new THREE.Scene();
+    quadScene.add(quad);
+    const pass = { depthTest: false, depthWrite: false };
+    const bright = new THREE.ShaderMaterial({
+      ...pass,
+      uniforms: { tSrc: { value: null }, uThreshold: { value: 0.78 }, uKnee: { value: 0.22 } },
+      vertexShader: QUAD_VS,
+      fragmentShader: `
+        uniform sampler2D tSrc; uniform float uThreshold, uKnee; varying vec2 vUv;
+        void main() {
+          vec3 c = texture2D(tSrc, vUv).rgb;
+          float l = max(c.r, max(c.g, c.b));
+          float soft = clamp(l - uThreshold + uKnee, 0.0, 2.0 * uKnee);
+          soft = soft * soft / (4.0 * uKnee + 1e-4);
+          gl_FragColor = vec4(c * max(soft, l - uThreshold) / max(l, 1e-4), 1.0);
+        }`,
+    });
+    const blur = new THREE.ShaderMaterial({
+      ...pass,
+      uniforms: { tSrc: { value: null }, uDir: { value: new THREE.Vector2() } },
+      vertexShader: QUAD_VS,
+      fragmentShader: `
+        uniform sampler2D tSrc; uniform vec2 uDir; varying vec2 vUv;
+        void main() {
+          vec3 c = texture2D(tSrc, vUv).rgb * 0.2270270;
+          c += (texture2D(tSrc, vUv + uDir * 1.3846154).rgb + texture2D(tSrc, vUv - uDir * 1.3846154).rgb) * 0.3162162;
+          c += (texture2D(tSrc, vUv + uDir * 3.2307692).rgb + texture2D(tSrc, vUv - uDir * 3.2307692).rgb) * 0.0702703;
+          gl_FragColor = vec4(c, 1.0);
+        }`,
+    });
+    const blend = new THREE.ShaderMaterial({
+      ...pass,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+      uniforms: { tNear: { value: a.texture }, tFar: { value: d.texture }, uStrength: { value: 0.9 } },
+      vertexShader: QUAD_VS,
+      fragmentShader: `
+        uniform sampler2D tNear, tFar; uniform float uStrength; varying vec2 vUv;
+        void main() {
+          vec3 g = (texture2D(tNear, vUv).rgb * 0.6 + texture2D(tFar, vUv).rgb * 1.1) * uStrength;
+          gl_FragColor = vec4(1.0 - exp(-g), 1.0);
+        }`,
+    });
+    function run(mat, target) {
+      quad.material = mat;
+      renderer.setRenderTarget(target);
+      renderer.render(quadScene, cam);
+    }
+    return {
+      on: true,
+      size(pw, ph) {
+        const hw = Math.max(1, Math.round(pw / 2)), hh = Math.max(1, Math.round(ph / 2));
+        const qw = Math.max(1, Math.round(pw / 4)), qh = Math.max(1, Math.round(ph / 4));
+        if (src) src.dispose();
+        src = new THREE.FramebufferTexture(Math.max(1, pw), Math.max(1, ph));
+        src.minFilter = src.magFilter = THREE.LinearFilter;
+        a.setSize(hw, hh); b.setSize(hw, hh);
+        c.setSize(qw, qh); d.setSize(qw, qh);
+        this.hw = hw; this.hh = hh; this.qw = qw; this.qh = qh;
+      },
+      draw() {
+        // Straight after the scene has been drawn to the screen.
+        renderer.copyFramebufferToTexture(src);
+        bright.uniforms.tSrc.value = src; run(bright, a);
+        blur.uniforms.tSrc.value = a.texture; blur.uniforms.uDir.value.set(1 / this.hw, 0); run(blur, b);
+        blur.uniforms.tSrc.value = b.texture; blur.uniforms.uDir.value.set(0, 1 / this.hh); run(blur, a);
+        blur.uniforms.tSrc.value = a.texture; blur.uniforms.uDir.value.set(1.5 / this.qw, 0); run(blur, c);
+        blur.uniforms.tSrc.value = c.texture; blur.uniforms.uDir.value.set(0, 1.5 / this.qh); run(blur, d);
+        blur.uniforms.tSrc.value = d.texture; blur.uniforms.uDir.value.set(3 / this.qw, 0); run(blur, c);
+        blur.uniforms.tSrc.value = c.texture; blur.uniforms.uDir.value.set(0, 3 / this.qh); run(blur, d);
+      },
+      over() { quad.material = blend; renderer.setRenderTarget(null); renderer.render(quadScene, cam); },
+    };
+  })();
 
   // ── Labels: real text, laid over the canvas ──────────────────────
   function tag(text, cls, extra, tier) {
@@ -216,47 +605,118 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   }
 
   // ── State ────────────────────────────────────────────────────────
-  const state = { selected: null, lit: new Set(), hover: null, focus: null };
-  const home = new THREE.Vector3(0, topY / 2 + 0.3, 0);
-  const view = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
-  const goal = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
-  let fit = 20, w = 1, h = 1, offY = 0, lastInput = performance.now();
+  // What the camera is telling: one tower (selected, with its lit
+  // neighbours), one tier, a chosen set, or (all null) the whole city.
+  const state = { selected: null, lit: new Set(), tier: null, set: null, hover: null, focus: null };
+  const reveal = new Map([...tierAt.keys()].map(id => [id, 1]));
+  let introT = null;                 // seconds into the opening shot, or null
+  const INTRO = 4.6;
+  // At rest the camera looks down on the whole of it from a little above, so
+  // the steps read as rings, and stands back far enough for all of it.
+  let REST_PHI = 1.0;
+  const home = new THREE.Vector3(0, crossY * 0.42, 0);
+  const view = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
+  const goal = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
+  let fit = 20, w = 1, h = 1, offY = 0, offX = 0, lastInput = performance.now();
   let active = true, onScreen = true, pageShown = !document.hidden, raf = 0, last = 0, ready = false, settled = false;
   const running = () => active && onScreen && pageShown;
 
   function nearestTurn(to) { return to + TAU * Math.round((goal.theta - to) / TAU); }
 
+  function clearSparks() { sparks.forEach(s => { s.s.visible = false; s.curve = null; }); }
+
+  function restShot() {
+    goal.target.copy(home);
+    goal.phi = REST_PHI;
+    goal.dist = fit;
+  }
+
+  // A tier fills the frame: looking down a little onto its step.
+  function tierShot(id) {
+    const { y, r } = tierAt.get(id);
+    const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const half = r + 0.6;
+    // Fit the part of the screen the card, the bars and the rail leave open,
+    // with room to spare, never closer than half the rest view.
+    const band = bandOf(h);
+    const openH = band ? Math.max(0.3, (band.bottom - band.top) / h) : 1;
+    const openW = band ? Math.max(0.4, (band.right - band.left) / w) : 1;
+    goal.target.set(0, y + 0.55, 0);
+    goal.phi = 0.88;
+    goal.dist = Math.max(half / (t * camera.aspect * openW), (half * 0.75 + 1.2) / (t * openH)) * 1.15;
+    goal.dist = THREE.MathUtils.clamp(goal.dist, fit * 0.5, fit);
+  }
+
+  function told() {
+    endIntro();
+    stage.classList.toggle('has-selection', !!(state.selected || state.tier || state.set));
+    if (reducedMotion) snap();
+    lastInput = performance.now();
+    wake();
+  }
+
+  function showTier(id) {
+    state.selected = null; state.lit = new Set(); state.set = null;
+    state.tier = id && tierAt.has(id) ? id : null;
+    clearSparks();
+    if (state.tier) tierShot(state.tier); else restShot();
+    told();
+  }
+
+  function showSet(ids) {
+    state.selected = null; state.lit = new Set(); state.tier = null;
+    state.set = ids && ids.length ? new Set(ids) : null;
+    clearSparks();
+    restShot();
+    told();
+  }
+
   function select(id, lit) {
+    endIntro();
     state.selected = id;
+    state.tier = null; state.set = null;
     state.lit = new Set(lit || []);
     if (id) {
       const p = prisms.get(id);
       goal.target.copy(p.pos);
       goal.theta = nearestTurn(p.angle);
-      goal.phi = 1.12;
-      goal.dist = Math.min(goal.dist, fit * 0.62);
+      goal.phi = 1.05;
+      goal.dist = Math.min(goal.dist, fit * 0.6);
       // Send a spark out along each lit thread.
       let n = 0;
-      sparks.forEach(s => { s.s.visible = false; s.curve = null; });
+      clearSparks();
       threads.forEach(t => {
         if (n >= sparks.length || (t.a !== id && t.b !== id)) return;
         Object.assign(sparks[n++], { curve: t.curve, fwd: t.a === id, phase: Math.random() });
       });
     } else {
-      goal.target.copy(home);
-      goal.phi = 1.1;
-      goal.dist = fit;
-      sparks.forEach(s => { s.s.visible = false; s.curve = null; });
+      restShot();
+      clearSparks();
     }
-    if (reducedMotion) snap();
-    stage.classList.toggle('has-selection', !!id);
-    lastInput = performance.now();
+    told();
+  }
+
+  // The opening shot: the camera begins beside the cross and draws back down
+  // the steps while the light wakes each one from the top. Any touch ends it
+  // early, gliding straight to where it was going.
+  function startIntro() {
+    if (reducedMotion) return;
+    introT = 0;
+    reveal.forEach((_, id) => reveal.set(id, 0));
+    stage.dataset.intro = 'playing';
+  }
+  function endIntro() {
+    if (introT === null) return;
+    introT = null;
+    reveal.forEach((_, id) => reveal.set(id, 1));
+    stage.dataset.intro = 'done';
     wake();
   }
 
   function focus(id) {
+    if (id) endIntro();
     state.focus = id;
-    // Turn the tower so a light reached by keyboard faces the visitor.
+    // Turn the city so a tower reached by keyboard faces the visitor.
     if (id) goal.theta = nearestTurn(prisms.get(id).angle);
     lastInput = performance.now();
     wake();
@@ -271,17 +731,27 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   function resize() {
     w = Math.max(1, canvas.clientWidth);
     h = Math.max(1, canvas.clientHeight);
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(w, h, false);
+    glow.size(Math.round(w * pixelRatio), Math.round(h * pixelRatio));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    // Far enough back that the whole tower fits, letting a narrow phone
-    // crop the widest terrace a little rather than shrink everything.
+    // On a tall, narrow screen the camera looks further down, so the square
+    // fills more of the height instead of sitting in a band across it.
+    const wasPhi = REST_PHI;
+    REST_PHI = THREE.MathUtils.clamp(0.62 + 0.45 * camera.aspect, 0.8, 1.0);
+    if (!state.selected && !state.tier && goal.phi === wasPhi) goal.phi = REST_PHI;
+    // Far enough back that the whole of it, cross to widest step, fits
+    // between the top bar and the dock with a little room on every side.
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const old = fit;
-    fit = Math.max((topY / 2 + 2.4) / t, (maxR / (t * camera.aspect)) * 0.86);
+    const halfW = extent;
+    const halfH = ((crossY + 0.8) / 2) * Math.sin(REST_PHI) + extent * Math.cos(REST_PHI);
+    const open = Math.max(0.5, (h - 150) / h); // the top bar and the dock
+    fit = Math.max(halfH / (t * open), halfW / (t * camera.aspect)) * 1.1;
     goal.dist *= fit / old;
     view.dist *= fit / old;
-    tierTags.forEach(tt => { tt.w = tt.el.offsetWidth; });
+    if (state.tier) tierShot(state.tier);
     wake();
   }
   new ResizeObserver(resize).observe(stage);
@@ -304,7 +774,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     const hit = ray.intersectObjects(prismMeshes, false)[0];
     if (hit) return hit.object.userData.id;
     if (!grace) return null;
-    // A fingertip's grace: the nearest light within reach of the tap.
+    // A fingertip's grace: the nearest tower within reach of the tap.
     let best = null, bd = 30 * 30;
     for (const p of prisms.values()) {
       const s = screenOf(p.id);
@@ -314,17 +784,34 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     return best;
   }
 
+  // The nave fills the screen, so every gesture belongs to the camera: one
+  // finger (or the mouse) turns the city any way, two fingers pinch to draw
+  // near and drag to slide the view, the wheel zooms, a right-drag slides.
   const pts = new Map();
-  let down = null, pinch0 = 0, dist0 = 0;
+  let down = null, pinch0 = 0, dist0 = 0, mid0 = null, panning = false;
   const spread = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
-  const clampDist = d => THREE.MathUtils.clamp(d, fit * 0.28, fit * 1.35);
+  const midpoint = () => { const [a, b] = [...pts.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  const clampDist = d => THREE.MathUtils.clamp(d, fit * 0.2, fit * 1.5);
+  const right = new THREE.Vector3(), up = new THREE.Vector3();
+  function slide(dx, dy) {
+    // Move the point the camera circles, in the plane of the screen, then keep
+    // it within the city's reach so the view can never be lost.
+    const per = (2 * goal.dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    up.setFromMatrixColumn(camera.matrixWorld, 1);
+    goal.target.addScaledVector(right, -dx * per).addScaledVector(up, dy * per);
+    goal.target.x = THREE.MathUtils.clamp(goal.target.x, -colonnadeR, colonnadeR);
+    goal.target.z = THREE.MathUtils.clamp(goal.target.z, -colonnadeR, colonnadeR);
+    goal.target.y = THREE.MathUtils.clamp(goal.target.y, -0.5, crossY);
+  }
 
   canvas.addEventListener('pointerdown', e => {
+    if (introT !== null) { endIntro(); return; }
     canvas.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInput = performance.now();
-    if (pts.size === 1) down = { x: e.clientX, y: e.clientY, t: lastInput, moved: 0 };
-    if (pts.size === 2) { pinch0 = spread(); dist0 = goal.dist; down = null; }
+    if (pts.size === 1) { down = { x: e.clientX, y: e.clientY, t: lastInput, moved: 0 }; panning = e.button === 2 || e.shiftKey; }
+    if (pts.size === 2) { pinch0 = spread(); dist0 = goal.dist; mid0 = midpoint(); down = null; }
     wake();
   });
   canvas.addEventListener('pointermove', e => {
@@ -342,11 +829,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     if (pts.size === 1 && down) {
       down.moved += Math.abs(dx) + Math.abs(dy);
       if (down.moved > 6) {
-        goal.theta -= dx * 0.008;
-        if (e.pointerType === 'mouse') goal.phi = THREE.MathUtils.clamp(goal.phi - dy * 0.006, 0.5, 1.45);
+        if (panning) slide(dx, dy);
+        else {
+          goal.theta -= dx * 0.008;
+          goal.phi = THREE.MathUtils.clamp(goal.phi - dy * 0.006, 0.35, 1.5);
+        }
       }
     } else if (pts.size === 2) {
       goal.dist = clampDist(dist0 * (pinch0 / spread()));
+      const m = midpoint();
+      slide(m.x - mid0.x, m.y - mid0.y);
+      mid0 = m;
     }
     wake();
   });
@@ -359,47 +852,94 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   };
   canvas.addEventListener('pointerup', release);
   canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
   canvas.addEventListener('pointerleave', () => { if (state.hover) { state.hover = null; canvas.classList.remove('is-pointing'); wake(); } });
-  // The wheel scrolls the page as usual; only a pinch on a trackpad (which
-  // arrives as ctrl+wheel) or ctrl/cmd+wheel draws near.
   canvas.addEventListener('wheel', e => {
-    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
-    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * 0.004));
+    endIntro();
+    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
     lastInput = performance.now();
     wake();
   }, { passive: false });
+
+  // A software renderer (a blocklisted graphics driver, or a test machine)
+  // starts without the glow and at plain sharpness, sparing the processor.
+  {
+    const gl = renderer.getContext();
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+    if (/swiftshader|llvmpipe|softpipe|software/i.test(name) && window.__naveQuality !== 'high') {
+      glow.on = false;
+      pixelRatio = 1;
+    }
+  }
 
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); cancelAnimationFrame(raf); onLost && onLost(); });
 
   // ── The frame ────────────────────────────────────────────────────
   const ease = (cur, to, k) => cur + (to - cur) * k;
 
-  function level(id) {
-    if (id === state.selected) return 3;
-    if (!state.selected) return 1;
-    return state.lit.has(id) ? 2 : 0;
+  function level(p) {
+    if (state.selected) return p.id === state.selected ? 3 : state.lit.has(p.id) ? 2 : 0;
+    if (state.tier) return p.tier === state.tier ? 2 : 0;
+    if (state.set) return state.set.has(p.id) ? 2 : 0;
+    return 1;
   }
+  const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 
   function placeTag(el, x, y, show, cls = '') {
     if (show) el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ${cls}`;
     if (el._on !== show) { el._on = show; el.classList.toggle('on', show); }
   }
 
+  // Quality steps down on a device that cannot keep up: first the glow,
+  // then the sharpness. (?quality=high, or a test, can hold it.)
+  let slow = 0, quick = 0;
+  function adapt(dt) {
+    if (window.__naveQuality === 'high') return;
+    if (dt > 1 / 28) { slow++; quick = 0; } else { quick++; slow = 0; }
+    if (slow > 50) {
+      slow = 0;
+      if (glow.on) glow.on = false;
+      else if (pixelRatio > 1) { pixelRatio = 1; resize(); }
+    }
+  }
+
+  const warmWhite = new THREE.Color(1, 0.9, 0.72);
+
   function frame(now) {
     raf = 0;
-    // Left alone for a while, the nave keeps breathing at a gentler pace.
-    if (settled && now - lastInput > 20000 && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
+    // Left alone for a while, the city keeps breathing at a gentler pace,
+    // and that pace is not mistaken for a device that cannot keep up.
+    const resting = settled && now - lastInput > 20000;
+    if (resting && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
+    const lastFrame = last;
+    if (resting) slow = 0;
+    else if (last) adapt((now - last) / 1000);
     last = now;
+    time.value = now / 1000;
     const idle = now - lastInput > 5000;
-    if (!state.selected && idle && !pts.size && !reducedMotion) goal.theta += dt * 0.07;
+    // The city turns slowly by itself, a little faster while a tier is told.
+    if (!state.selected && !pts.size && !reducedMotion && (idle || state.tier)) goal.theta += dt * (state.tier ? 0.08 : 0.05);
 
-    const kc = reducedMotion ? 1 : 1 - Math.exp(-dt * 3);
-    view.theta = ease(view.theta, goal.theta, kc);
-    view.phi = ease(view.phi, goal.phi, kc);
-    view.dist = ease(view.dist, goal.dist, kc);
-    view.target.lerp(goal.target, kc);
+    if (introT !== null) {
+      // The opening keeps to the clock, however slowly frames arrive.
+      introT += lastFrame ? Math.min(0.25, (now - lastFrame) / 1000) : 0.016;
+      for (const [id, { i }] of tierAt) reveal.set(id, smooth((introT - 0.7 - i * 0.4) / 0.8));
+      const u = smooth(introT / (INTRO - 0.4));
+      view.target.set(0, THREE.MathUtils.lerp(crossY - 0.3, home.y, u), 0);
+      view.dist = THREE.MathUtils.lerp(fit * 0.28, goal.dist, u);
+      view.phi = THREE.MathUtils.lerp(1.42, goal.phi, u);
+      view.theta = goal.theta - (1 - u) * 1.2;
+      if (introT >= INTRO) endIntro();
+    } else {
+      const kc = reducedMotion ? 1 : 1 - Math.exp(-dt * 2.6);
+      view.theta = ease(view.theta, goal.theta, kc);
+      view.phi = ease(view.phi, goal.phi, kc);
+      view.dist = ease(view.dist, goal.dist, kc);
+      view.target.lerp(goal.target, kc);
+    }
     const s = Math.sin(view.phi);
     camera.position.set(
       view.target.x + view.dist * s * Math.sin(view.theta),
@@ -408,67 +948,91 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     );
     camera.lookAt(view.target);
 
-    // Keep the chosen light in the part of the stage the panel leaves open.
-    const want = state.selected ? coverOf(h) : 0;
-    offY = ease(offY, want, reducedMotion ? 1 : 1 - Math.exp(-dt * 5));
-    if (Math.abs(offY) > 0.5) camera.setViewOffset(w, h, 0, offY, w, h);
+    // Keep what is told in the part of the screen the card and bars leave open.
+    const band = state.selected || state.tier || state.set ? bandOf(h) : null;
+    const want = band ? h / 2 - (band.top + band.bottom) / 2 : 0;
+    const wantX = band ? w / 2 - (band.left + band.right) / 2 : 0;
+    const ko = reducedMotion ? 1 : 1 - Math.exp(-dt * 5);
+    offY = ease(offY, want, ko);
+    offX = ease(offX, wantX, ko);
+    if (Math.abs(offY) > 0.5 || Math.abs(offX) > 0.5) camera.setViewOffset(w, h, offX, offY, w, h);
     else if (camera.view && camera.view.enabled) camera.clearViewOffset();
     camera.updateMatrixWorld();
 
     const k = 1 - Math.exp(-dt * 6);
-    let settling = Math.abs(goal.theta - view.theta) > 1e-3 || Math.abs(goal.dist - view.dist) > 1e-2 ||
-      view.target.distanceToSquared(goal.target) > 1e-4 || Math.abs(want - offY) > 0.5;
+    let settling = introT !== null || Math.abs(goal.theta - view.theta) > 1e-3 || Math.abs(goal.dist - view.dist) > 1e-2 ||
+      view.target.distanceToSquared(goal.target) > 1e-4 || Math.abs(want - offY) > 0.5 || Math.abs(wantX - offX) > 0.5;
 
     for (const p of prisms.values()) {
-      const L = LOOK[p.kind], i = level(p.id);
+      const L = LOOK[p.kind], i = level(p);
       const near = p.id === state.hover || p.id === state.focus;
-      const to = { e: L.e[i] + (near ? 0.3 : 0), o: L.o[i], g: L.g[i] + (near ? 0.15 : 0), l: L.l[i], s: i === 3 ? 1.18 : near ? 1.08 : 1 };
+      const r = reveal.get(p.tier);
+      const to = {
+        light: (L.light[i] + (near ? 0.25 : 0)) * r,
+        shell: L.shell[i] * (0.25 + 0.75 * r),
+        crown: (L.crown[i] + (near ? 0.6 : 0)) * r,
+        s: i === 3 ? 1.08 : 1,
+      };
       for (const key in to) {
         const d = to[key] - p.cur[key];
         if (Math.abs(d) > 1e-3) { p.cur[key] += d * k; settling = true; }
       }
-      p.mat.emissiveIntensity = p.cur.e;
-      p.mat.opacity = p.cur.o;
-      p.halo.material.opacity = p.cur.g;
-      p.lineMat.opacity = p.cur.l;
-      p.mesh.scale.setScalar(p.cur.s);
+      p.look.uniforms.uLight.value = p.cur.light;
+      p.look.uniforms.uShell.value = p.cur.shell;
+      p.crownMat.color.copy(p.colour).lerp(warmWhite, 0.5).multiplyScalar(p.cur.crown);
+      p.poolMat.color.copy(p.colour).lerp(warmWhite, 0.3).multiplyScalar(p.cur.crown * 0.12);
+      if (p.lineMat) p.lineMat.opacity = Math.min(1, p.cur.shell * 0.7);
+      p.mesh.scale.set(1, p.cur.s, 1);
     }
+    const woven = introT === null ? 1 : smooth((introT - 3.2) / 1);
     for (const t of threads) {
-      const on = state.selected && (t.a === state.selected || t.b === state.selected);
-      const to = !state.selected ? 0.1 : on ? 0.85 : 0.03;
+      let to;
+      if (state.selected) to = t.a === state.selected || t.b === state.selected ? 1.5 : 0.02;
+      else if (state.tier) to = t.ta === state.tier && t.tb === state.tier ? 0.9 : t.ta === state.tier || t.tb === state.tier ? 0.45 : 0.02;
+      else if (state.set) to = 0.03;
+      else to = 0.05 * woven;
       t.cur = ease(t.cur, to, k);
-      t.mat.opacity = t.cur;
+      t.mat.color.copy(GOLD).multiplyScalar(t.cur);
     }
-    const selTier = state.selected && byId[state.selected].tier;
+    const selTier = state.selected ? byId[state.selected].tier : state.tier;
     for (const [id, r] of rims) {
-      r.cur = ease(r.cur, !state.selected ? 0.45 : id === selTier ? 0.9 : 0.2, k);
-      r.mat.opacity = r.cur;
+      r.cur = ease(r.cur, (!selTier ? (state.set ? 0.5 : 1.1) : id === selTier ? 2.2 : 0.35) * reveal.get(id), k);
+      r.mat.uniforms.uGlow.value = r.cur;
     }
+    if (state.selected) {
+      const p = prisms.get(state.selected);
+      marker.visible = true;
+      marker.position.set(p.pos.x, tierAt.get(p.tier).y + 0.01, p.pos.z);
+      marker.material.color.copy(p.colour).lerp(warmWhite, 0.4).multiplyScalar(1.4 + 0.4 * Math.sin(now / 500));
+    } else marker.visible = false;
     for (const sp of sparks) {
       if (!sp.curve) continue;
-      const t = (now / 1000 * 0.4 + sp.phase) % 1;
+      const t = (now / 1000 * 0.35 + sp.phase) % 1;
       sp.curve.getPoint(sp.fwd ? t : 1 - t, sp.s.position);
-      sp.s.material.opacity = Math.sin(t * Math.PI) * 0.9;
+      sp.s.material.opacity = Math.sin(t * Math.PI) * 0.95;
       sp.s.visible = true;
     }
     cross.rotation.y = view.theta;
     if (!reducedMotion) {
       const arr = moteGeo.attributes.position.array;
-      for (let m = 1; m < arr.length; m += 3) { arr[m] += dt * 0.12; if (arr[m] > crossY) arr[m] = -0.4; }
+      for (let m = 1; m < arr.length; m += 3) { arr[m] += dt * 0.1; if (arr[m] > crossY) arr[m] = -0.4; }
       moteGeo.attributes.position.needsUpdate = true;
     }
 
+    renderer.setRenderTarget(null);
+    renderer.clear();
     renderer.render(scene, camera);
+    if (glow.on) { glow.draw(); glow.over(); }
 
-    // Labels: the chosen light and its neighbours; whatever is under the
-    // pointer or keyboard; and, at rest, the names of the terraces. The most
-    // important are placed first, and a label that would overlap one already
-    // placed waits until the tower turns and makes room.
+    // Labels: whatever the camera is telling (one tower and its neighbours,
+    // a tier, or a chosen few), and whatever is under the pointer or the
+    // keyboard. The most important are placed first, and a label that would
+    // overlap one already placed waits until the city turns and makes room.
     const placed = [];
     const queue = [];
     const sinT = Math.sin(view.theta), cosT = Math.cos(view.theta);
     for (const p of prisms.values()) {
-      const show = p.id === state.hover || p.id === state.focus || (state.selected && (p.id === state.selected || state.lit.has(p.id)));
+      const show = p.id === state.hover || p.id === state.focus || (introT === null && level(p) >= 2);
       if (!show) { placeTag(p.label, 0, 0, false); continue; }
       v.copy(p.top).project(camera);
       const facing = p.pos.x * sinT + p.pos.z * cosT;
@@ -487,28 +1051,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       const ok = t.z < 1 && t.y > el._h * 0.5 && t.y < h + 10 &&
         !placed.some(o => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
       if (ok) placed.push(box);
-      // Lights on the far side of the tower read a little fainter.
+      // Towers on the far side of the city read a little fainter.
       el.style.setProperty('--fade', t.facing < -0.3 && t.rank < 500 ? '0.62' : '1');
       placeTag(el, left, top, ok);
     }
-    const rx = Math.cos(view.theta), rz = -Math.sin(view.theta);
-    for (const tt of tierTags) {
-      const show = !state.selected;
-      let x = 0, y = 0, ok = show;
-      if (show) {
-        v.set(rx * tt.r, tt.y, rz * tt.r).project(camera);
-        x = Math.min(((v.x + 1) / 2) * w + 10, w - tt.w - 8);
-        y = ((1 - v.y) / 2) * h;
-        ok = v.z < 1 && y > 0 && y < h;
-      }
-      placeTag(tt.el, x, y, ok, 'translate(0, -50%)');
-    }
 
     if (!ready) { ready = true; stage.dataset.ready = '1'; }
-    // The dust and the slow turn keep it alive; with reduced motion asked
-    // for, it rests as soon as everything has settled, to spare the battery.
+    // The dust, the windows and the slow turn keep it alive; with reduced
+    // motion asked for, it rests as soon as everything has settled.
     settled = !settling;
-    if ((!reducedMotion || settling) && running()) raf = requestAnimationFrame(frame);
+    // (Something above may already have asked for the next frame: one loop only.)
+    if (!raf && (!reducedMotion || settling) && running()) raf = requestAnimationFrame(frame);
   }
 
   function wake() {
@@ -521,13 +1074,19 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
 
   resize();
   goal.dist = view.dist = fit;
+  stage.dataset.intro = 'done';
   wake();
 
   return {
+    reset() { restShot(); goal.theta = nearestTurn(0.5); told(); },
     select,
+    showTier,
+    showSet,
+    startIntro,
+    endIntro,
     focus,
     setActive(on) { active = on; if (on) { resize(); wake(); } },
-    // For the tests: where a light sits on screen, and which light a point hits.
+    // For the tests: where a tower stands on screen, and which tower a point hits.
     screenOf,
     pickAt,
   };
