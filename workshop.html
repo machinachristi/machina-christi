@@ -367,109 +367,308 @@
     .modes button[aria-pressed="true"] { color: var(--gold-soft); border-color: rgba(201, 162, 39, 0.75); background: rgba(201, 162, 39, 0.12); }
     .modes button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
 
-    /* ── The nave: the window raised into a tower of light ─────── */
+    /* ── The nave: the glass fills the screen ──────────────────────
+       After RepoSense (iLevyTate, MIT): nothing on screen but the tower,
+       a slim bar above, one small dock below, and a card only when
+       something is chosen. Everything else waits behind the "?". */
     .nave {
       display: none;
-      position: relative;
-      margin: 0 -16px;
-      height: min(74dvh, 680px);
-      min-height: 420px;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
       overflow: hidden;
       background:
-        radial-gradient(55% 45% at 50% 6%, rgba(232, 196, 110, 0.14), transparent 70%),
-        radial-gradient(80% 50% at 50% 100%, rgba(120, 92, 48, 0.12), transparent 70%);
+        radial-gradient(60% 45% at 50% 16%, rgba(232, 196, 110, 0.13), transparent 70%),
+        radial-gradient(90% 60% at 50% 110%, rgba(120, 92, 48, 0.16), transparent 70%),
+        var(--bg);
     }
-    @media (min-width: 920px) {
-      .nave {
-        margin: 0;
-        height: clamp(520px, calc(100dvh - 48px), 860px);
-        border: 1px solid rgba(201, 162, 39, 0.22);
-        border-radius: 12px;
-      }
-    }
-    .nave canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }
+    .nave canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
     .nave canvas:active { cursor: grabbing; }
     .nave canvas.is-pointing { cursor: pointer; }
-    .nave__help, .nave__wait {
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(120% 90% at 50% 50%, transparent 52%, rgba(5, 4, 3, 0.7) 100%);
+    }
+    .nave__wait {
       position: absolute;
       left: 16px;
       right: 16px;
+      top: 46%;
       text-align: center;
-      font-size: 14px;
+      font-size: 15px;
       font-style: italic;
-      color: rgba(232, 213, 163, 0.55);
+      color: rgba(232, 213, 163, 0.6);
       pointer-events: none;
     }
-    .nave__help { top: 64px; }
-    .nave__wait { top: 45%; }
     .nave[data-ready] .nave__wait { display: none; }
-    .nave__help { transition: opacity 0.4s ease; }
-    .nave.has-selection .nave__help, .nave.touched .nave__help, .nave[data-intro="playing"] .nave__help { opacity: 0; }
 
-    /* The tier rail: where you are in the tower, and a way to any tier. */
-    .rail {
+    /* The HUD fades away during the walk, as a film's titles do. */
+    .topbar, .dock, .rail { transition: opacity 0.5s ease; }
+    .nave.is-walking .topbar, .nave.is-walking .dock, .nave.is-walking .rail { opacity: 0; pointer-events: none; }
+    .nave.is-walking .topbar *, .nave.is-walking .dock *, .nave.is-walking .rail * { visibility: hidden; }
+
+    .topbar {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 2;
+      z-index: 3;
       display: flex;
-      gap: 6px;
-      padding: 10px 12px 18px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      background: linear-gradient(rgba(11, 10, 8, 0.88), rgba(11, 10, 8, 0.6) 65%, transparent);
+      align-items: center;
+      gap: 12px;
+      padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 26px max(12px, env(safe-area-inset-left));
+      background: linear-gradient(rgba(11, 10, 8, 0.86), rgba(11, 10, 8, 0.4) 60%, transparent);
+      pointer-events: none;
     }
-    .rail::-webkit-scrollbar { display: none; }
+    .topbar > * { pointer-events: auto; }
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      font-family: var(--serif);
+      font-size: 20px;
+      line-height: 1;
+      color: var(--gold-soft);
+      text-decoration: none;
+      background: rgba(23, 19, 13, 0.72);
+      border: 1px solid rgba(201, 162, 39, 0.32);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+    }
+    .icon-btn:hover { border-color: rgba(201, 162, 39, 0.7); }
+    .icon-btn:focus-visible, .dock button:focus-visible, .tour button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+    .topbar__name { font-size: 17px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); }
+    .topbar__sub { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
+
+    /* The tiers as a column of lights down the left edge, stacked like the
+       tower itself; only the tier being told says its name. */
+    .rail {
+      position: absolute;
+      z-index: 3;
+      left: max(6px, env(safe-area-inset-left));
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .rail::before {
+      content: "";
+      position: absolute;
+      left: 19px;
+      top: 18px;
+      bottom: 18px;
+      width: 1px;
+      background: linear-gradient(rgba(201, 162, 39, 0.05), rgba(201, 162, 39, 0.35), rgba(201, 162, 39, 0.05));
+    }
     .rail button {
       --c: 201, 162, 39;
-      flex: none;
-      display: inline-flex;
+      position: relative;
+      display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
+      width: 40px;
       min-height: 36px;
-      padding: 6px 12px;
+      padding: 0 13px;
       font-family: var(--serif);
       font-size: 14px;
-      color: rgba(232, 213, 163, 0.82);
-      background: rgba(11, 10, 8, 0.55);
-      border: 1px solid rgba(var(--c), 0.45);
+      color: var(--gold-soft);
+      background: none;
+      border: none;
       border-radius: 999px;
       cursor: pointer;
-      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
     .rail button::before {
       content: "";
-      width: 8px;
-      height: 8px;
+      flex: none;
+      width: 14px;
+      height: 14px;
+      box-sizing: border-box;
       border-radius: 50%;
-      background: rgb(var(--c));
-      box-shadow: 0 0 6px rgba(var(--c), 0.9);
+      background: rgba(var(--c), 0.9);
+      border: 2px solid rgba(11, 10, 8, 0.9);
+      box-shadow: 0 0 10px rgba(var(--c), 0.75);
+      transition: transform 0.3s ease, border-color 0.3s ease;
     }
-    .rail button[aria-current="true"] { color: #fff8e6; background: rgba(var(--c), 0.32); border-color: rgba(var(--c), 0.95); }
-    .rail button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+    /* The name floats beside its light, out of the way of taps on the glass. */
+    .rail button span {
+      position: absolute;
+      left: 38px;
+      white-space: nowrap;
+      text-shadow: 0 1px 4px #000, 0 0 12px #000;
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    }
+    .rail button[aria-current="true"]::before { transform: scale(1.3); border-color: #f6e7b8; }
+    .rail button[aria-current="true"] span, .rail button:hover span, .rail button:focus-visible span { opacity: 1; transform: none; }
+    .rail button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: -2px; }
 
-    /* ── Panel views: the walk, a tier, a pane ─────────────────── */
-    .walk {
+    /* One small dock: the walk, the window, and everything else behind "?". */
+    .dock, .tour {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px;
+      max-width: calc(100vw - 24px);
+      background: rgba(23, 19, 13, 0.74);
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      border-radius: 999px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    .dock button, .tour button {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 12px;
-      min-height: 44px;
-      padding: 9px 20px;
+      justify-content: center;
+      gap: 9px;
+      min-width: 44px;
+      min-height: 42px;
+      padding: 8px 16px;
       font-family: var(--serif);
-      font-size: 16px;
-      letter-spacing: 0.06em;
-      color: #1a1408;
-      background: linear-gradient(180deg, #ecd28a, #c9a227);
+      font-size: 15px;
+      white-space: nowrap;
+      color: rgba(232, 213, 163, 0.88);
+      background: none;
       border: none;
       border-radius: 999px;
-      box-shadow: 0 0 22px rgba(201, 162, 39, 0.35);
       cursor: pointer;
     }
-    .walk::before { content: ""; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent #1a1408; }
-    .walk:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 3px; }
-    html:not(.nave-on) .walk { display: none; }
+    .dock button:hover, .tour button:hover { background: rgba(201, 162, 39, 0.14); }
+    .dock .walk { color: #1a1408; background: linear-gradient(180deg, #ecd28a, #c9a227); box-shadow: 0 0 18px rgba(201, 162, 39, 0.35); }
+    .dock .walk:hover { background: linear-gradient(180deg, #f3dc9c, #d4ad35); }
+    .dock .walk::before { content: ""; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent #1a1408; }
+
+    /* The walk: big captions, a thread of progress, and small controls. */
+    .tour { display: none; }
+    .nave.is-walking .tour { display: flex; }
+    .tour button:disabled { opacity: 0.35; cursor: default; }
+    .tour button[aria-pressed="true"] { background: rgba(201, 162, 39, 0.25); }
+    .tour__step { min-width: 56px; font-size: 14px; font-style: italic; text-align: center; color: rgba(232, 213, 163, 0.7); }
+    .caption {
+      display: none;
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: calc(80px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(600px, calc(100vw - 24px));
+      padding: 26px 22px 18px;
+      text-align: center;
+      pointer-events: none;
+      background: radial-gradient(64% 100% at 50% 55%, rgba(11, 10, 8, 0.9), rgba(11, 10, 8, 0.55) 60%, transparent 78%);
+    }
+    .nave.is-walking .caption { display: block; }
+    .caption > * { animation: caption-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .caption .eyebrow { display: block; }
+    .caption h2 {
+      font-weight: normal;
+      font-size: clamp(24px, 6.4vw, 40px);
+      letter-spacing: 0.14em;
+      text-indent: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9);
+    }
+    .caption p { margin-top: 10px; font-size: 16px; line-height: 1.55; color: rgba(244, 232, 200, 0.92); text-shadow: 0 1px 8px #000; }
+    @keyframes caption-in { from { opacity: 0; transform: translateY(12px); } }
+    .tour-line { display: none; position: absolute; z-index: 4; top: 0; left: 0; right: 0; height: 2px; background: rgba(201, 162, 39, 0.15); }
+    .nave.is-walking .tour-line { display: block; }
+    .tour-line i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #c9a227, #f6e7b8); box-shadow: 0 0 10px rgba(201, 162, 39, 0.8); }
+    .tour-line i.run { animation: dwell var(--dwell, 9s) linear forwards; }
+    .tour-line i.paused { animation-play-state: paused; }
+    .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    /* A first word on how to move, then it fades for good. */
+    .toast {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-style: italic;
+      white-space: nowrap;
+      color: rgba(232, 213, 163, 0.88);
+      background: rgba(11, 10, 8, 0.72);
+      border: 1px solid rgba(201, 162, 39, 0.25);
+      border-radius: 999px;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      pointer-events: none;
+    }
+    .toast.on { opacity: 1; }
+
+    /* The card that explains what is chosen: above the dock on a phone,
+       standing at the right on a wide screen or a phone on its side. */
+    .panel__close { display: none; }
+    html.nave-on .panel {
+      position: fixed;
+      z-index: 12;
+      top: auto;
+      left: 10px;
+      right: 10px;
+      bottom: calc(70px + env(safe-area-inset-bottom));
+      width: auto;
+      margin: 0;
+      max-height: 46dvh;
+      padding: 14px 18px 16px;
+      background: rgba(15, 12, 9, 0.92);
+      border: 1px solid rgba(201, 162, 39, 0.32);
+      border-radius: 14px;
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(14px);
+      animation: card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    html.nave-on .panel.is-empty { display: none; }
+    html.nave-on .panel__close { display: grid; float: right; width: 36px; height: 36px; margin: -4px -8px 4px 10px; font-size: 18px; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(10px); } }
+    @media (min-width: 920px) {
+      html.nave-on .panel { left: auto; right: 18px; top: 76px; bottom: auto; width: 360px; max-height: calc(100dvh - 170px); }
+    }
+    @media (orientation: landscape) and (max-height: 500px) {
+      html.nave-on .panel { left: auto; right: 10px; top: 58px; bottom: 10px; width: 300px; max-height: none; }
+      .caption { bottom: calc(70px + env(safe-area-inset-bottom)); padding-top: 14px; }
+      .caption p { font-size: 15px; }
+    }
+
+    /* The help sheet: the words that used to crowd the page. */
+    .help {
+      margin: auto;
+      width: min(460px, calc(100vw - 32px));
+      max-height: 86dvh;
+      padding: 22px 24px 20px;
+      overflow-y: auto;
+      font-family: var(--serif);
+      color: var(--gold-soft);
+      background: rgba(15, 12, 9, 0.97);
+      border: 1px solid rgba(201, 162, 39, 0.4);
+      border-radius: 14px;
+    }
+    .help::backdrop { background: rgba(0, 0, 0, 0.6); }
+    .help h2 { margin-top: 20px; font-weight: normal; font-size: 16px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+    .help h2:first-child { margin-top: 0; }
+    .help p, .help li { margin-top: 10px; font-size: 15px; line-height: 1.6; }
+    .help ul { list-style: none; }
+    .help li { margin-top: 6px; }
+    .help kbd { display: inline-block; min-width: 96px; margin-right: 8px; font-family: var(--serif); font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.7); }
+    .help .legend { justify-content: flex-start; }
+    .help .credit { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.75); }
+    .help__close { margin-top: 18px; min-height: 42px; padding: 8px 22px; font-family: var(--serif); font-size: 15px; color: var(--gold-soft); background: rgba(201, 162, 39, 0.12); border: 1px solid rgba(201, 162, 39, 0.45); border-radius: 999px; cursor: pointer; }
+    .help__close:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
     .eyebrow {
       display: inline-block;
       margin-bottom: 4px;
@@ -484,46 +683,7 @@
       border: none;
     }
     button.eyebrow { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(232, 213, 163, 0.3); text-underline-offset: 4px; }
-    .story { font-size: 17px; }
-    .tour {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(201, 162, 39, 0.2);
-    }
-    .tour button {
-      min-width: 44px;
-      min-height: 40px;
-      padding: 6px 12px;
-      font-family: var(--serif);
-      font-size: 15px;
-      color: var(--gold-soft);
-      background: rgba(201, 162, 39, 0.1);
-      border: 1px solid rgba(201, 162, 39, 0.45);
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .tour button:disabled { opacity: 0.35; cursor: default; }
-    .tour button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-    .tour__step { flex: 1; font-size: 14px; font-style: italic; text-align: center; color: rgba(232, 213, 163, 0.7); }
-    .tour__bar { height: 2px; margin-top: 8px; background: rgba(201, 162, 39, 0.18); border-radius: 2px; overflow: hidden; }
-    .tour__bar i { display: block; height: 100%; width: 0; background: var(--gold); }
-    .tour__bar i.run { animation: dwell var(--dwell, 8s) linear forwards; }
-    .tour__bar i.paused { animation-play-state: paused; }
-    .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    .tour button[aria-pressed="true"] { background: rgba(201, 162, 39, 0.3); }
-    /* Walking, the controls stay in reach at the panel's foot. */
-    .tour-box {
-      position: sticky;
-      bottom: calc(-1 * max(18px, env(safe-area-inset-bottom)));
-      margin: 0 -20px calc(-1 * max(18px, env(safe-area-inset-bottom)));
-      padding: 0 20px max(14px, env(safe-area-inset-bottom));
-      background: rgba(11, 10, 8, 0.98);
-    }
-    @media (min-width: 920px) { .tour-box { bottom: -16px; margin-bottom: -16px; padding-bottom: 14px; } }
-    /* On a short screen the walk keeps to its story; the list waits for a tap. */
+    .caption .eyebrow { filter: none; color: rgba(232, 213, 163, 0.75); }
     @keyframes dwell { to { width: 100%; } }
     .tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
     .tag {
@@ -561,6 +721,10 @@
     /* While the nave stands, the window steps aside but stays in the page:
        its panes are how a keyboard or a screen reader walks the glass. */
     html.nave-pending .nave, html.nave-on .nave { display: block; }
+    html.nave-pending, html.nave-on, html.nave-pending body, html.nave-on body { height: 100%; overflow: hidden; }
+    html.nave-pending .page > .back, html.nave-on .page > .back,
+    html.nave-pending .page > header, html.nave-on .page > header,
+    html.nave-pending .page > footer, html.nave-on .page > footer { display: none; }
     html.nave-pending .window, html.nave-on .window {
       position: absolute;
       width: 1px;
@@ -623,10 +787,36 @@
       <div class="view">
       <section class="nave" aria-label="The Workshop nave, in three dimensions">
         <canvas aria-hidden="true"></canvas>
+        <div class="vignette" aria-hidden="true"></div>
         <div class="tags" aria-hidden="true"></div>
-        <nav class="rail" aria-label="Tiers of the nave"></nav>
-        <p class="nave__help" aria-hidden="true">drag to turn &middot; pinch to draw near &middot; tap the glass</p>
         <p class="nave__wait">Lighting the nave&hellip;</p>
+
+        <div class="topbar">
+          <a class="icon-btn" href="index.html" aria-label="Home">&lsaquo;</a>
+          <div>
+            <p class="topbar__name">Workshop</p>
+            <p class="topbar__sub">how Machina Christi is built</p>
+          </div>
+        </div>
+
+        <nav class="rail" aria-label="Tiers of the nave"></nav>
+
+        <div class="dock">
+          <button type="button" class="walk">Walk through it</button>
+          <button type="button" data-mode="window">Window</button>
+          <button type="button" class="help-open" aria-label="About the Workshop, and how to move">?</button>
+        </div>
+
+        <div class="tour-line" aria-hidden="true"><i></i></div>
+        <div class="caption" aria-hidden="true"><span class="eyebrow"></span><h2></h2><p></p></div>
+        <div class="tour" role="group" aria-label="The walk">
+          <button type="button" data-role="back" aria-label="Back">&lsaquo;</button>
+          <span class="tour__step"></span>
+          <button type="button" data-role="pause" aria-pressed="false">Pause</button>
+          <button type="button" data-role="next" aria-label="Next">&rsaquo;</button>
+          <button type="button" data-role="end" aria-label="End the walk">&times;</button>
+        </div>
+        <p class="toast" aria-hidden="true">drag to turn &middot; pinch to draw near &middot; tap the glass</p>
       </section>
       <section class="window" aria-label="The Workshop window">
         <!-- A small rose at the head of the arch. -->
@@ -661,6 +851,24 @@
     </footer>
   </div>
 
+  <dialog class="help" aria-labelledby="help-title">
+    <h2 id="help-title">The Workshop</h2>
+    <p>Everything that builds and keeps Machina Christi, set in glass from your hands down to the workbench. Tap a pane to see what it does; the panes it touches light with it.</p>
+    <p class="legend"><span class="live">in use today</span><span class="planned">still to come</span></p>
+    <h2>Moving around</h2>
+    <ul>
+      <li><kbd>drag</kbd>turn the tower, any way</li>
+      <li><kbd>pinch, scroll</kbd>draw near or stand back</li>
+      <li><kbd>two fingers</kbd>slide the view (right-drag with a mouse)</li>
+      <li><kbd>the lights</kbd>at the left go to a tier</li>
+      <li><kbd>Esc</kbd>put everything back</li>
+    </ul>
+    <h2>The road ahead</h2>
+    <p>Built on free allowances and opened one pane at a time. The clear glass is still to come; each phase of the roadmap lights another pane.</p>
+    <p class="credit">The full-screen nave and its guided walk follow the lead of RepoSense, made by iLevyTate and shared under the MIT licence. To walk this site's code itself, <a href="https://ilevytate.github.io/reposense/#/machinachristi/machina-christi" rel="noopener">fly through it in RepoSense</a>.</p>
+    <button type="button" class="help__close">Close</button>
+  </dialog>
+
   <script>
     (() => {
       'use strict';
@@ -671,11 +879,14 @@
       const stage = document.querySelector('.nave');
       const rail  = document.querySelector('.rail');
       const modes = document.querySelector('.modes');
-      // Wide: the panel stands beside the glass (a wide screen, or a phone on its side).
+      const help  = document.querySelector('.help');
+      const say   = document.querySelector('.say');
+      const toast = stage.querySelector('.toast');
+      // Wide: the card stands beside the glass (a wide screen, or a phone on its side).
       const wide  = matchMedia('(min-width: 920px), (orientation: landscape) and (max-height: 500px)');
       const still = matchMedia('(prefers-reduced-motion: reduce)');
       let data = null, panes = [], byId = {}, tierById = {}, nave = null;
-      // What the panel is telling: nothing, one pane, or one tier.
+      // What is being told: nothing, one pane, or one tier.
       let selected = null, shownTier = null;
 
       const el = (tag, cls, text) => {
@@ -694,7 +905,6 @@
       const railButton = id => rail.querySelector(`button[data-tier="${id}"]`);
       const tierColour = id => getComputedStyle(root).getPropertyValue('--' + id).trim() || '201, 162, 39';
       const naveOn = () => root.classList.contains('nave-on') || root.classList.contains('nave-pending');
-      const glide = () => (still.matches ? 'auto' : 'smooth');
 
       function neighbours(id) {
         // Touching goes both ways: lit together whichever side names the link.
@@ -715,12 +925,10 @@
       }
       function markRail(tierId) {
         rail.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', String(b.dataset.tier === tierId)));
-        const b = tierId && railButton(tierId);
-        if (b) rail.scrollTo({ left: b.offsetLeft - (rail.clientWidth - b.offsetWidth) / 2, behavior: glide() });
       }
 
-      // On a phone the panel rests over the bottom of the screen; keep the
-      // chosen glass in the part it leaves open (the nave does its own).
+      // In the window (no nave), the panel rests over the bottom of a phone's
+      // screen; keep the chosen glass in the part it leaves open.
       function keepClear(node, smooth) {
         if (wide.matches || naveOn() || !node) return;
         const r = node.getBoundingClientRect();
@@ -728,27 +936,27 @@
         const dy = r.bottom > floor ? Math.min(r.bottom - floor, r.top - 16) : r.top < 16 ? r.top - 16 : 0;
         if (dy) window.scrollBy({ top: dy, behavior: smooth && !still.matches ? 'smooth' : 'auto' });
       }
-      // Arriving from a link or the walk, bring the whole stage into view.
-      function showStage(force) {
-        if (!naveOn()) return;
-        const r = stage.getBoundingClientRect();
-        const off = wide.matches ? r.bottom > innerHeight + 4 || r.top < -4 : r.top > 40 || r.bottom < innerHeight * 0.5;
-        if (force || off) window.scrollBy({ top: wide.matches ? r.top - 24 : r.top - 8, behavior: glide() });
-      }
 
       function setHash(id) {
         history.replaceState(null, '', location.pathname + location.search + (id ? '#' + id : ''));
       }
 
-      // ── Panel views ──────────────────────────────────────────────
+      // ── The card ─────────────────────────────────────────────────
+      function card(colour) {
+        panel.classList.remove('is-empty');
+        panel.style.setProperty('--c', colour);
+        panel.replaceChildren(button('icon-btn panel__close', '×', () => { const was = selected; rest(); if (was && !naveOn()) paneButton(was).focus(); }));
+        panel.firstChild.setAttribute('aria-label', 'Close');
+        panel.scrollTop = 0;
+      }
+
       function paneList(title, ids) {
         const frag = document.createDocumentFragment();
         frag.append(el('h3', null, title));
         const list = el('div', 'touches');
         ids.forEach(n => list.append(button(null, byId[n].name, () => {
-          endWalk();
           select(n, { focus: true });
-          // The panel was rebuilt under the keyboard; carry focus to the new pane.
+          // The card was rebuilt under the keyboard; carry focus to the new pane.
           paneButton(n).focus({ preventScroll: true });
         })));
         frag.append(list);
@@ -757,16 +965,16 @@
 
       function renderHint() {
         panel.style.removeProperty('--c');
+        // In the nave nothing is chosen, so there is no card at all.
+        panel.classList.add('is-empty');
         panel.replaceChildren(el('p', 'panel__hint', 'Tap any pane of glass to see what it does and what it touches.'));
-        // On a phone the legend lives here, beside the first thing read.
         panel.append(document.querySelector('header .legend').cloneNode(true));
-        panel.append(button('walk', 'Walk through it', startWalk));
       }
 
       function renderTier(t) {
-        panel.style.setProperty('--c', tierColour(t.id));
+        card(tierColour(t.id));
         const i = data.tiers.indexOf(t);
-        panel.replaceChildren(el('span', 'eyebrow', `Tier ${i + 1} of ${data.tiers.length} · ${t.note}`));
+        panel.append(el('span', 'eyebrow', `Tier ${i + 1} of ${data.tiers.length} · ${t.note}`));
         panel.append(el('h2', null, t.name));
         panel.append(el('p', 'story', t.story || t.note));
         panel.append(paneList('In this tier', panes.filter(p => p.tier === t.id).map(p => p.id)));
@@ -774,8 +982,8 @@
 
       function renderPane(p) {
         const t = tierById[p.tier];
-        panel.style.setProperty('--c', tierColour(p.tier));
-        panel.replaceChildren(button('eyebrow', t.name, () => { endWalk(); showTier(t.id, { focus: true }); }));
+        card(tierColour(p.tier));
+        panel.append(button('eyebrow', t.name, () => showTier(t.id)));
         panel.append(el('h2', null, p.name));
         panel.append(el('span', 'chip', p.status === 'live' ? 'In use today' : 'Coming in phase ' + p.phase));
         panel.append(el('p', 'what', p.what));
@@ -786,32 +994,30 @@
 
       // ── What can be told ─────────────────────────────────────────
       function select(id, { focus = false } = {}) {
+        endWalk();
         selected = id;
         shownTier = null;
         const near = id ? neighbours(id) : [];
         light(new Set(id ? [id, ...near] : []), id);
-        if (nave) nave.select(id, near);
         markRail(id ? byId[id].tier : null);
-        if (!id) { renderHint(); setHash(null); return; }
+        if (!id) { renderHint(); setHash(null); if (nave) nave.select(null); return; }
         renderPane(byId[id]);
-        panel.scrollTop = 0;
         setHash(id);
-        if (naveOn()) { if (focus) showStage(); }
-        else keepClear(paneButton(id), focus);
+        // The card is in place before the camera frames what it leaves open.
+        if (nave) nave.select(id, near);
+        if (!naveOn()) keepClear(paneButton(id), focus);
       }
 
-      function showTier(id, { focus = false } = {}) {
+      function showTier(id) {
+        endWalk();
         selected = null;
         shownTier = id;
         light(new Set(panes.filter(p => p.tier === id).map(p => p.id)), null);
         markRail(id);
         renderTier(tierById[id]);
-        if (walk.on) panel.append(walkControls());
-        panel.scrollTop = 0;
-        if (nave) nave.showTier(id);
         setHash(null);
-        if (naveOn()) { if (focus) showStage(); }
-        else keepClear(host.children[data.tiers.findIndex(t => t.id === id)], focus);
+        if (nave) nave.showTier(id);
+        if (!naveOn()) keepClear(host.children[data.tiers.findIndex(t => t.id === id)], true);
       }
 
       function rest() {
@@ -820,88 +1026,62 @@
       }
 
       // ── The walk: the camera tells the tower from top to foot ────
-      // It moves on by itself every few seconds, but never while a keyboard
-      // is inside the panel, and Pause holds it still. While walking, the
-      // panel stops announcing itself; a short line says where you are.
+      // The HUD fades and big captions tell each tier. It moves on by itself
+      // every few seconds, but never while a keyboard is on its controls,
+      // and Pause holds it still. A tap anywhere takes the wheel back.
       const walk = { on: false, i: 0, timer: 0, paused: false, steps: [] };
-      const say = document.querySelector('.say');
+      const ctl = role => stage.querySelector(`.tour [data-role="${role}"]`);
+      const fill = stage.querySelector('.tour-line i');
       const dwell = () => window.__workshopDwell || 9000;
-      const held = () => walk.paused || !!panel.querySelector(':focus-visible');
-
-      function walkControls() {
-        const box = el('div', 'tour-box');
-        const row = el('div', 'tour');
-        const back = button(null, '‹', () => go(walk.i - 1));
-        back.setAttribute('aria-label', 'Back');
-        back.dataset.role = 'back';
-        back.disabled = walk.i === 0;
-        const pause = button(null, 'Pause', () => {
-          walk.paused = !walk.paused;
-          pause.setAttribute('aria-pressed', String(walk.paused));
-          fill.classList.toggle('paused', walk.paused);
-          schedule();
-        });
-        pause.dataset.role = 'pause';
-        pause.setAttribute('aria-pressed', String(walk.paused));
-        const step = el('span', 'tour__step', `${walk.i + 1} of ${walk.steps.length}`);
-        const last = walk.i === walk.steps.length - 1;
-        const next = button(null, last ? 'Done' : '›', () => (last ? stopWalk() : go(walk.i + 1)));
-        next.setAttribute('aria-label', last ? 'End the walk' : 'Next');
-        next.dataset.role = 'next';
-        row.append(back, step, pause, next);
-        const bar = el('div', 'tour__bar');
-        const fill = el('i');
-        if (!last) fill.className = 'run' + (held() ? ' paused' : '');
-        fill.style.setProperty('--dwell', dwell() / 1000 + 's');
-        bar.append(fill);
-        box.append(row, bar);
-        return box;
-      }
+      const held = () => walk.paused || !!stage.querySelector('.tour :focus-visible');
 
       function schedule() {
         clearTimeout(walk.timer);
-        if (!walk.on || walk.i >= walk.steps.length - 1) return;
-        const fill = panel.querySelector('.tour__bar i');
-        if (held()) {
-          if (fill) fill.classList.add('paused');
-          walk.timer = setTimeout(schedule, 700);
-          return;
-        }
-        if (fill) fill.classList.remove('paused');
+        if (!walk.on) return;
+        const last = walk.i >= walk.steps.length - 1;
+        fill.classList.toggle('paused', held() || last);
+        if (last) return;
+        if (held()) { walk.timer = setTimeout(schedule, 700); return; }
         walk.timer = setTimeout(() => go(walk.i + 1), dwell());
       }
 
       function go(i) {
         if (!walk.on) return;
-        // The panel is rebuilt each step; carry the keyboard to the same control.
-        const role = panel.contains(document.activeElement) && document.activeElement.dataset.role;
         walk.i = Math.max(0, Math.min(i, walk.steps.length - 1));
         const s = walk.steps[walk.i];
+        const cap = stage.querySelector('.caption');
+        let eyebrow, title, text, lit;
         if (s.tier) {
-          showTier(s.tier, { focus: true });
-          say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}: ${tierById[s.tier].name}`;
+          const t = tierById[s.tier];
+          const n = data.tiers.indexOf(t);
+          eyebrow = `Tier ${n + 1} of ${data.tiers.length}`;
+          title = t.name; text = t.story || t.note;
+          lit = panes.filter(p => p.tier === t.id).map(p => p.id);
+          markRail(t.id);
         } else {
-          selected = null; shownTier = null;
-          setHash(null);
+          ({ eyebrow, title, text } = s);
+          lit = s.set || [];
           markRail(null);
-          panel.style.setProperty('--c', '201, 162, 39');
-          panel.replaceChildren(el('span', 'eyebrow', s.eyebrow), el('h2', null, s.title), el('p', 'story', s.text));
-          const ids = s.set || [];
-          light(new Set(ids), null);
-          if (ids.length) panel.append(paneList('Still to come', ids));
-          panel.append(walkControls());
-          panel.scrollTop = 0;
-          if (nave) nave.showSet(ids.length ? ids : null);
-          say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}: ${s.title}`;
         }
-        if (role) {
-          const again = panel.querySelector(`[data-role="${role}"]:not(:disabled)`) || panel.querySelector('[data-role="next"]');
-          again.focus({ preventScroll: true });
-        }
+        light(new Set(lit), null);
+        // Fresh nodes, so the caption rises in again for every step; then the
+        // camera frames what the caption leaves open.
+        cap.replaceChildren(el('span', 'eyebrow', eyebrow), el('h2', null, title), el('p', null, text));
+        if (nave) { if (s.tier) nave.showTier(s.tier); else nave.showSet(lit.length ? lit : null); }
+        say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}. ${title}. ${text}`;
+        const last = walk.i === walk.steps.length - 1;
+        ctl('back').disabled = walk.i === 0;
+        stage.querySelector('.tour__step').textContent = `${walk.i + 1} of ${walk.steps.length}`;
+        ctl('next').disabled = last;
+        fill.style.setProperty('--dwell', dwell() / 1000 + 's');
+        fill.classList.remove('run');
+        void fill.offsetWidth; // restart the thread of progress
+        fill.classList.add('run');
         schedule();
       }
 
       function startWalk() {
+        select(null);
         walk.steps = [
           { eyebrow: 'The Workshop', title: 'A tower of glass', text: data.prologue },
           ...data.tiers.filter(t => panes.some(p => p.tier === t.id)).map(t => ({ tier: t.id })),
@@ -909,45 +1089,53 @@
         ];
         walk.on = true;
         walk.paused = false;
-        panel.setAttribute('aria-live', 'off');
-        panel.classList.add('walking');
+        ctl('pause').setAttribute('aria-pressed', 'false');
+        stage.classList.add('is-walking');
         if (nave) nave.endIntro();
-        showStage(true);
         go(0);
-        panel.querySelector('[data-role="next"]').focus({ preventScroll: true });
+        ctl('next').focus({ preventScroll: true });
       }
 
-      // Taking the wheel (a tap, a tier, a link, the window) ends the walk;
-      // its controls go with it, and a step that only the walk could show
-      // gives way to the tower at rest.
+      // Any other choice ends the walk; a step only the walk could show gives
+      // way to the tower at rest, and the keyboard returns to the dock.
       function endWalk() {
         if (!walk.on) return;
+        const hadFocus = stage.querySelector('.tour').contains(document.activeElement);
         walk.on = false;
         clearTimeout(walk.timer);
-        panel.setAttribute('aria-live', 'polite');
-        panel.classList.remove('walking');
+        stage.classList.remove('is-walking');
         say.textContent = '';
-        const box = panel.querySelector('.tour-box');
-        if (box) box.remove();
-        if (!selected && !shownTier) rest();
+        markRail(null);
+        light(new Set(), null);
+        if (nave) nave.showTier(null);
+        if (hadFocus) stage.querySelector('.dock .walk').focus({ preventScroll: true });
       }
-      function stopWalk() {
-        endWalk();
-        rest();
-      }
-      panel.addEventListener('focusin', () => { if (walk.on) schedule(); });
-      panel.addEventListener('focusout', () => { if (walk.on) setTimeout(schedule, 0); });
+
+      ctl('back').addEventListener('click', () => go(walk.i - 1));
+      ctl('next').addEventListener('click', () => go(walk.i + 1));
+      ctl('end').addEventListener('click', () => { endWalk(); rest(); });
+      ctl('pause').addEventListener('click', () => {
+        walk.paused = !walk.paused;
+        ctl('pause').setAttribute('aria-pressed', String(walk.paused));
+        schedule();
+      });
+      stage.querySelector('.tour').addEventListener('focusin', () => schedule());
+      stage.querySelector('.tour').addEventListener('focusout', () => setTimeout(schedule, 0));
+      stage.querySelector('.dock .walk').addEventListener('click', startWalk);
 
       // ── Nave or window ───────────────────────────────────────────
-      // The part of the stage left open: below the tier rail (or the top of
-      // the screen) and above the panel (or the bottom of the screen), in
-      // stage pixels. The nave centres what it tells there.
+      // The part of the screen left open: below the top bar, above the card
+      // (on a phone) and the dock. The nave centres what it tells there.
       function bandOf(h) {
-        const c = stage.getBoundingClientRect();
-        const top = Math.max(-c.top, rail.offsetHeight - 10);
-        let bottom = Math.min(h, innerHeight - c.top);
-        if (!wide.matches) bottom = Math.min(bottom, panel.getBoundingClientRect().top - c.top);
-        return bottom - top < 120 ? null : { top, bottom };
+        const top = stage.querySelector('.topbar').getBoundingClientRect().bottom - 14;
+        let bottom = stage.querySelector(walk.on ? '.caption' : '.dock').getBoundingClientRect().top - 8;
+        let left = 48, right = innerWidth; // past the tier lights at the left
+        if (!panel.classList.contains('is-empty')) {
+          const p = panel.getBoundingClientRect();
+          if (wide.matches) right = p.left - 8; else bottom = Math.min(bottom, p.top - 8);
+        }
+        bottom = Math.min(bottom, h);
+        return bottom - top < 120 || right - left < 160 ? null : { top, bottom, left, right };
       }
 
       function idFromHash() {
@@ -955,21 +1143,33 @@
       }
 
       function setMode(mode) {
+        endWalk();
         root.classList.remove('nave-pending');
         root.classList.toggle('nave-on', mode === 'nave');
         modes.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
         if (nave) nave.setActive(mode === 'nave');
         if (mode === 'window') {
-          endWalk();
+          window.scrollTo(0, 0);
           if (selected) keepClear(paneButton(selected), false);
           if (!selected && !shownTier) renderHint();
+          panel.classList.remove('is-empty');
+        } else if (!selected && !shownTier) {
+          renderHint();
         }
+      }
+
+      function greet() {
+        // A first word on how to move, gone at the first touch or soon after.
+        toast.classList.add('on');
+        const hide = () => toast.classList.remove('on');
+        setTimeout(hide, 6500);
+        stage.addEventListener('pointerdown', hide, { once: true });
       }
 
       async function raise() {
         if (!root.classList.contains('nave-pending')) return;
         let gaveUp = false;
-        const timer = setTimeout(() => { gaveUp = true; root.classList.remove('nave-pending'); }, 10000);
+        const timer = setTimeout(() => { gaveUp = true; root.classList.remove('nave-pending'); panel.classList.remove('is-empty'); }, 10000);
         try {
           const { createNave } = await import('./workshop/nave.js');
           if (gaveUp) return;
@@ -979,23 +1179,23 @@
             tagHost: stage.querySelector('.tags'),
             colourOf: tierColour,
             onPick: id => {
-              const walking = walk.on;
-              endWalk();
+              if (walk.on) { endWalk(); if (id) select(id); return; }
               if (id && id !== selected) select(id);
-              else if ((selected || shownTier) && !walking) rest();
+              else if (selected || shownTier) rest();
             },
             bandOf,
             reducedMotion: still.matches,
-            onLost: () => { nave = null; modes.hidden = true; setMode('window'); },
+            onLost: () => { nave = null; modes.hidden = true; stage.querySelector('[data-mode="window"]').hidden = true; setMode('window'); },
           });
           modes.hidden = false;
           setMode('nave');
           if (selected) nave.select(selected, neighbours(selected));
-          else nave.startIntro();
+          else { nave.startIntro(); setTimeout(greet, 4200); }
           window.__nave = nave;
         } catch (e) {
           nave = null;
           root.classList.remove('nave-pending', 'nave-on');
+          panel.classList.remove('is-empty');
         } finally {
           clearTimeout(timer);
         }
@@ -1025,19 +1225,21 @@
             b.style.setProperty('--c', `var(--${p.tier})`);
             b.setAttribute('aria-pressed', 'false');
             if (p.status === 'planned') b.append(el('span', 'pane__phase', 'phase ' + p.phase));
-            b.addEventListener('click', () => { endWalk(); if (selected === p.id) rest(); else select(p.id); });
+            b.addEventListener('click', () => { if (selected === p.id) rest(); else select(p.id); });
             row.append(b);
           });
           tier.append(row);
           host.append(tier);
 
-          const r = button(null, t.name, () => { endWalk(); if (shownTier === t.id) rest(); else showTier(t.id, { focus: true }); });
+          const r = button(null, null, () => { if (shownTier === t.id) rest(); else showTier(t.id); });
+          r.append(el('span', null, t.name));
           r.dataset.tier = t.id;
           r.style.setProperty('--c', tierColour(t.id));
           r.setAttribute('aria-current', 'false');
           rail.append(r);
         });
         renderHint();
+        if (!naveOn()) panel.classList.remove('is-empty');
         // A keyboard walking the (hidden) window turns the nave to each pane.
         win.addEventListener('focusin', e => { if (nave && e.target.matches('.pane:focus-visible')) nave.focus(e.target.dataset.id); });
         win.addEventListener('focusout', () => { if (nave) nave.focus(null); });
@@ -1046,33 +1248,40 @@
         raise();
       }
 
-      stage.addEventListener('pointerdown', () => stage.classList.add('touched'), { once: true });
       document.addEventListener('keydown', e => {
-        if (walk.on && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.target.closest('input, textarea')) {
+        if (help.open) return;
+        if (walk.on && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
           go(walk.i + (e.key === 'ArrowRight' ? 1 : -1));
           return;
         }
         if (e.key !== 'Escape' || !(selected || shownTier || walk.on)) return;
         const back = selected ? paneButton(selected) : shownTier ? railButton(shownTier) : null;
-        const inPanel = panel.contains(document.activeElement) || document.activeElement === document.body;
-        stopWalk();
-        if (inPanel && back) back.focus({ preventScroll: true });
+        const inCard = panel.contains(document.activeElement) || document.activeElement === document.body;
+        const walking = walk.on;
+        endWalk();
+        rest();
+        if (!walking && inCard && back) back.focus({ preventScroll: true });
       });
       window.addEventListener('hashchange', () => {
         const id = idFromHash();
-        if (byId[id]) { if (id !== selected) { endWalk(); select(id, { focus: true }); } }
+        if (byId[id]) { if (id !== selected) select(id, { focus: true }); }
         else if (selected) rest();
       });
       modes.addEventListener('click', e => {
         const b = e.target.closest('button[data-mode]');
         if (b) setMode(b.dataset.mode);
       });
+      stage.querySelector('[data-mode="window"]').addEventListener('click', () => setMode('window'));
+      stage.querySelector('.help-open').addEventListener('click', () => help.showModal());
+      help.querySelector('.help__close').addEventListener('click', () => help.close());
+      help.addEventListener('click', e => { if (e.target === help) help.close(); });
 
       fetch('workshop/glass.json')
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(build)
         .catch(() => {
           root.classList.remove('nave-pending');
+          panel.classList.remove('is-empty');
           host.append(el('p', 'panel__hint', 'The glass could not be fetched just now. Please try again in a moment.'));
         });
     })();

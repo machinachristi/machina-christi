@@ -227,10 +227,13 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   const reveal = new Map([...tierAt.keys()].map(id => [id, 1]));
   let introT = null;                 // seconds into the opening shot, or null
   const INTRO = 4.2;
-  const home = new THREE.Vector3(0, topY / 2 + 0.3, 0);
-  const view = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
-  const goal = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
-  let fit = 20, w = 1, h = 1, offY = 0, lastInput = performance.now();
+  // At rest the camera looks down on the whole tower from a little above, so
+  // its terraces read as rings, and stands back far enough for all of it.
+  const REST_PHI = 1.02;
+  const home = new THREE.Vector3(0, crossY / 2 - 0.1, 0);
+  const view = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
+  const goal = { theta: 0.5, phi: REST_PHI, dist: 20, target: home.clone() };
+  let fit = 20, w = 1, h = 1, offY = 0, offX = 0, lastInput = performance.now();
   let active = true, onScreen = true, pageShown = !document.hidden, raf = 0, last = 0, ready = false, settled = false;
   const running = () => active && onScreen && pageShown;
 
@@ -240,7 +243,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
 
   function restShot() {
     goal.target.copy(home);
-    goal.phi = 1.1;
+    goal.phi = REST_PHI;
     goal.dist = fit;
   }
 
@@ -249,12 +252,15 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     const { y, r } = tierAt.get(id);
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const half = r + 1.1;
-    // Fit the part of the stage the panel and the rail leave open.
+    // Fit the part of the screen the card, the bars and the rail leave open,
+    // with room to spare, never closer than a little over half the rest view.
     const band = bandOf(h);
-    const open = band ? Math.max(0.3, (band.bottom - band.top) / h) : 1;
+    const openH = band ? Math.max(0.3, (band.bottom - band.top) / h) : 1;
+    const openW = band ? Math.max(0.4, (band.right - band.left) / w) : 1;
     goal.target.set(0, y + 0.3, 0);
-    goal.phi = 0.8;
-    goal.dist = Math.max(half / (t * camera.aspect), (half * 0.7 + 1.4) / (t * open), 7);
+    goal.phi = 0.85;
+    goal.dist = Math.max(half / (t * camera.aspect * openW), (half * 0.75 + 1.4) / (t * openH)) * 1.15;
+    goal.dist = THREE.MathUtils.clamp(goal.dist, fit * 0.5, fit);
   }
 
   function told() {
@@ -343,11 +349,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    // Far enough back that the whole tower fits, letting a narrow phone
-    // crop the widest terrace a little rather than shrink everything.
+    // Far enough back that the whole tower, cross to widest terrace, fits
+    // between the top bar and the dock with a little room on every side.
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const old = fit;
-    fit = Math.max((topY / 2 + 2.4) / t, (maxR / (t * camera.aspect)) * 0.86);
+    const halfW = maxR + 0.3;
+    const halfH = ((crossY + 1.0) / 2) * Math.sin(REST_PHI) + maxR * Math.cos(REST_PHI);
+    const open = Math.max(0.5, (h - 150) / h); // the top bar and the dock
+    fit = Math.max(halfH / (t * open), halfW / (t * camera.aspect)) * 1.12;
+    // The haze begins just behind the tower as seen from rest, wherever that is.
+    scene.fog.near = fit * 0.95;
+    scene.fog.far = fit * 2.6;
     goal.dist *= fit / old;
     view.dist *= fit / old;
     if (state.tier) tierShot(state.tier);
@@ -383,18 +395,34 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     return best;
   }
 
+  // The nave fills the screen, so every gesture belongs to the camera: one
+  // finger (or the mouse) turns the tower any way, two fingers pinch to draw
+  // near and drag to slide the view, the wheel zooms, a right-drag slides.
   const pts = new Map();
-  let down = null, pinch0 = 0, dist0 = 0;
+  let down = null, pinch0 = 0, dist0 = 0, mid0 = null, panning = false;
   const spread = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
-  const clampDist = d => THREE.MathUtils.clamp(d, fit * 0.28, fit * 1.35);
+  const midpoint = () => { const [a, b] = [...pts.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  const clampDist = d => THREE.MathUtils.clamp(d, fit * 0.2, fit * 1.5);
+  const right = new THREE.Vector3(), up = new THREE.Vector3();
+  function slide(dx, dy) {
+    // Move the point the camera circles, in the plane of the screen, then keep
+    // it within the tower's reach so the view can never be lost.
+    const per = (2 * goal.dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    up.setFromMatrixColumn(camera.matrixWorld, 1);
+    goal.target.addScaledVector(right, -dx * per).addScaledVector(up, dy * per);
+    goal.target.x = THREE.MathUtils.clamp(goal.target.x, -maxR, maxR);
+    goal.target.z = THREE.MathUtils.clamp(goal.target.z, -maxR, maxR);
+    goal.target.y = THREE.MathUtils.clamp(goal.target.y, -0.5, crossY);
+  }
 
   canvas.addEventListener('pointerdown', e => {
     if (introT !== null) { endIntro(); return; }
     canvas.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInput = performance.now();
-    if (pts.size === 1) down = { x: e.clientX, y: e.clientY, t: lastInput, moved: 0 };
-    if (pts.size === 2) { pinch0 = spread(); dist0 = goal.dist; down = null; }
+    if (pts.size === 1) { down = { x: e.clientX, y: e.clientY, t: lastInput, moved: 0 }; panning = e.button === 2 || e.shiftKey; }
+    if (pts.size === 2) { pinch0 = spread(); dist0 = goal.dist; mid0 = midpoint(); down = null; }
     wake();
   });
   canvas.addEventListener('pointermove', e => {
@@ -412,11 +440,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     if (pts.size === 1 && down) {
       down.moved += Math.abs(dx) + Math.abs(dy);
       if (down.moved > 6) {
-        goal.theta -= dx * 0.008;
-        if (e.pointerType === 'mouse') goal.phi = THREE.MathUtils.clamp(goal.phi - dy * 0.006, 0.5, 1.45);
+        if (panning) slide(dx, dy);
+        else {
+          goal.theta -= dx * 0.008;
+          goal.phi = THREE.MathUtils.clamp(goal.phi - dy * 0.006, 0.35, 1.5);
+        }
       }
     } else if (pts.size === 2) {
       goal.dist = clampDist(dist0 * (pinch0 / spread()));
+      const m = midpoint();
+      slide(m.x - mid0.x, m.y - mid0.y);
+      mid0 = m;
     }
     wake();
   });
@@ -429,14 +463,12 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   };
   canvas.addEventListener('pointerup', release);
   canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
   canvas.addEventListener('pointerleave', () => { if (state.hover) { state.hover = null; canvas.classList.remove('is-pointing'); wake(); } });
-  // The wheel scrolls the page as usual; only a pinch on a trackpad (which
-  // arrives as ctrl+wheel) or ctrl/cmd+wheel draws near.
   canvas.addEventListener('wheel', e => {
-    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     endIntro();
-    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * 0.004));
+    goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
     lastInput = performance.now();
     wake();
   }, { passive: false });
@@ -497,14 +529,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     // Keep the chosen light in the part of the stage the panel leaves open.
     const band = state.selected || state.tier || state.set ? bandOf(h) : null;
     const want = band ? h / 2 - (band.top + band.bottom) / 2 : 0;
-    offY = ease(offY, want, reducedMotion ? 1 : 1 - Math.exp(-dt * 5));
-    if (Math.abs(offY) > 0.5) camera.setViewOffset(w, h, 0, offY, w, h);
+    const wantX = band ? w / 2 - (band.left + band.right) / 2 : 0;
+    const ko = reducedMotion ? 1 : 1 - Math.exp(-dt * 5);
+    offY = ease(offY, want, ko);
+    offX = ease(offX, wantX, ko);
+    if (Math.abs(offY) > 0.5 || Math.abs(offX) > 0.5) camera.setViewOffset(w, h, offX, offY, w, h);
     else if (camera.view && camera.view.enabled) camera.clearViewOffset();
     camera.updateMatrixWorld();
 
     const k = 1 - Math.exp(-dt * 6);
     let settling = introT !== null || Math.abs(goal.theta - view.theta) > 1e-3 || Math.abs(goal.dist - view.dist) > 1e-2 ||
-      view.target.distanceToSquared(goal.target) > 1e-4 || Math.abs(want - offY) > 0.5;
+      view.target.distanceToSquared(goal.target) > 1e-4 || Math.abs(want - offY) > 0.5 || Math.abs(wantX - offX) > 0.5;
 
     for (const p of prisms.values()) {
       const L = LOOK[p.kind], i = level(p);
@@ -604,6 +639,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   wake();
 
   return {
+    reset() { restShot(); goal.theta = nearestTurn(0.5); told(); },
     select,
     showTier,
     showSet,

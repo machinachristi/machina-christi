@@ -59,7 +59,12 @@ test.describe('workshop nave (3D)', () => {
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
     await expect(page.locator('html')).toHaveClass(/nave-on/);
-    await expect(page.locator('.modes')).toBeVisible();
+    // The glass fills the screen; one small dock, and no card until something is chosen.
+    await expect(page.locator('.dock')).toBeVisible();
+    await expect(page.locator('.panel')).toBeHidden();
+    const box = await page.locator('.nave canvas').boundingBox();
+    expect(box.width).toBe(390);
+    expect(box.height).toBe(780);
     // The window's panes stay in the page (visually set aside) for keyboards
     // and screen readers.
     await expect(page.locator('.pane')).toHaveCount(glass.panes.length);
@@ -106,7 +111,8 @@ test.describe('workshop nave (3D)', () => {
     await expect(page.locator('.pane[data-id="blob"]')).toBeFocused();
     await page.locator('.touches button').first().focus();
     await page.keyboard.press('Escape');
-    await expect(page.locator('.panel .panel__hint')).toBeVisible();
+    // In the nave nothing chosen means no card at all.
+    await expect(page.locator('.panel')).toBeHidden();
     await expect(page.locator('.pane[data-id="blob"]')).toBeFocused();
   });
 
@@ -115,7 +121,7 @@ test.describe('workshop nave (3D)', () => {
     await expect(page.locator('.nave[data-intro="playing"]')).toBeAttached({ timeout: 20000 });
     await page.locator('.nave canvas').click({ position: { x: 20, y: 200 } });
     await expect(page.locator('.nave[data-intro="done"]')).toBeAttached();
-    await expect(page.locator('.panel .walk')).toBeVisible();
+    await expect(page.locator('.dock .walk')).toBeVisible();
   });
 
   test('the tier rail tells one tier at a time', async ({ page }) => {
@@ -138,61 +144,71 @@ test.describe('workshop nave (3D)', () => {
     await expect(page.locator('.panel h2')).toHaveText(t.name);
   });
 
-  test('the walk goes down the tower, step by step, and gives way to a tap', async ({ page }) => {
+  test('the walk tells the tower in captions, step by step', async ({ page }) => {
     await page.addInitScript(() => { window.__workshopDwell = 600000; }); // no step moves on by itself mid-test
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
     const tiers = glass.tiers.filter(t => glass.panes.some(p => p.tier === t.id));
     const steps = tiers.length + 2;
-    await page.locator('.panel .walk').click();
-    await expect(page.locator('.panel .story')).toHaveText(glass.prologue);
+    await page.locator('.dock .walk').click();
+    // The HUD gives way to the caption and the walk's own controls.
+    await expect(page.locator('.dock .walk')).toBeHidden();
+    await expect(page.locator('.caption p')).toHaveText(glass.prologue);
     await expect(page.locator('.tour__step')).toHaveText(`1 of ${steps}`);
-    await page.locator('.tour [data-role="next"]').click();
-    await expect(page.locator('.panel h2')).toHaveText(tiers[0].name);
-    await page.keyboard.press('ArrowRight');
-    await expect(page.locator('.panel h2')).toHaveText(tiers[1].name);
-    await page.locator('.tour button[aria-label="Back"]').click();
-    await expect(page.locator('.panel h2')).toHaveText(tiers[0].name);
-    // The keyboard stays on the controls as the panel changes step.
-    await page.locator('.tour [data-role="next"]').focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('.panel h2')).toHaveText(tiers[1].name);
     await expect(page.locator('.tour [data-role="next"]')).toBeFocused();
-    await page.keyboard.press('ArrowLeft');
-    // The last step is the road ahead: every planned pane, listed.
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.caption h2')).toHaveText(tiers[0].name);
+    await expect(page.locator('.caption p')).toHaveText(tiers[0].story);
+    // The keyboard stays on the controls as the step changes.
+    await expect(page.locator('.tour [data-role="next"]')).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.caption h2')).toHaveText(tiers[1].name);
+    await page.locator('.tour [data-role="back"]').click();
+    await expect(page.locator('.caption h2')).toHaveText(tiers[0].name);
     for (let i = 1; i < steps; i++) await page.keyboard.press('ArrowRight');
-    await expect(page.locator('.panel .story')).toHaveText(glass.epilogue);
-    await expect(page.locator('.panel .touches button')).toHaveCount(glass.panes.filter(p => p.status === 'planned').length);
-    // Choosing a pane ends the walk.
-    await page.locator('.panel .touches button').first().click();
-    await expect(page.locator('.tour')).toHaveCount(0);
-    await expect(page.locator('.panel .chip')).toBeVisible();
-    // And Escape ends a walk too.
+    await expect(page.locator('.caption p')).toHaveText(glass.epilogue);
+    await expect(page.locator('.tour [data-role="next"]')).toBeDisabled();
+    // Pause is a steady toggle.
+    await page.locator('.tour [data-role="pause"]').click();
+    await expect(page.locator('.tour [data-role="pause"]')).toHaveAttribute('aria-pressed', 'true');
+    // Escape ends it, and the dock returns.
     await page.keyboard.press('Escape');
-    await page.locator('.panel .walk').click();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.panel .walk')).toBeVisible();
+    await expect(page.locator('.tour')).toBeHidden();
+    await expect(page.locator('.dock .walk')).toBeVisible();
   });
 
   test('leaving the walk any way never strands its controls', async ({ page }) => {
     await page.addInitScript(() => { window.__workshopDwell = 600000; });
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
-    // A tap on empty glass during the prologue.
-    await page.locator('.panel .walk').click();
+    // A tap on empty sky during the walk.
+    await page.locator('.dock .walk').click();
     await expect(page.locator('.tour')).toBeVisible();
-    await page.locator('.nave canvas').click({ position: { x: 6, y: 120 } });
-    await expect(page.locator('.tour')).toHaveCount(0);
-    await expect(page.locator('.panel .walk')).toBeVisible();
-    // Switching to the window and back during a tier step.
-    await page.locator('.panel .walk').click();
+    await page.locator('.nave canvas').click({ position: { x: 200, y: 110 } });
+    await expect(page.locator('.tour')).toBeHidden();
+    await expect(page.locator('.dock .walk')).toBeVisible();
+    // The end button.
+    await page.locator('.dock .walk').click();
+    await page.locator('.tour [data-role="end"]').click();
+    await expect(page.locator('.tour')).toBeHidden();
+    // A pane chosen by keyboard ends it too.
+    await page.locator('.dock .walk').click();
     await page.locator('.tour [data-role="next"]').click();
-    await page.locator('.modes button[data-mode="window"]').click();
-    await expect(page.locator('.tour')).toHaveCount(0);
-    await page.locator('.modes button[data-mode="nave"]').click();
-    await expect(page.locator('.tour')).toHaveCount(0);
-    await expect(page.locator('.panel h2')).toHaveText(glass.tiers[0].name);
-    await expect(page.locator('.panel')).toHaveAttribute('aria-live', 'polite');
+    await page.locator('.pane[data-id="blob"]').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.tour')).toBeHidden();
+    await expect(page.locator('.panel h2')).toHaveText('Blob Storage');
+  });
+
+  test('the help sheet holds the words and the credit', async ({ page }) => {
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    await page.locator('.help-open').click();
+    await expect(page.locator('.help')).toBeVisible();
+    await expect(page.locator('.help')).toContainText('RepoSense');
+    expect(await smallText(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.help')).toBeHidden();
   });
 
   test('if three.js cannot load, the window stands instead', async ({ page }) => {
@@ -218,7 +234,7 @@ test.describe('workshop nave (3D)', () => {
   test('the Window switch brings back the stained glass', async ({ page }) => {
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
-    await page.locator('.modes button[data-mode="window"]').click();
+    await page.locator('.dock [data-mode="window"]').click();
     await expect(page.locator('.nave')).toBeHidden();
     await page.locator('.pane[data-id="functions"]').click();
     await expect(page.locator('.panel h2')).toHaveText('Functions');
@@ -240,7 +256,7 @@ test.describe('workshop window (reduced motion)', () => {
     const someP = glass.panes.find(p => p.status === 'planned');
     if (someP) await expect(page.locator(`.pane[data-id="${someP.id}"] .pane__phase`)).toHaveText('phase ' + someP.phase);
     await expect(page.locator('.nave')).toBeHidden();
-    await expect(page.locator('.panel .walk')).toBeHidden();
+    await expect(page.locator('.dock .walk')).toBeHidden();
     expect(three).toEqual([]);
     expect(errors).toEqual([]);
   });
