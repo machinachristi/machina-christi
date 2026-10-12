@@ -288,6 +288,24 @@
     }
     @media (max-width: 919px) { html.nave-on .panel { max-height: 42dvh; } }
     @media (max-height: 500px) and (max-width: 919px) { .panel, html.nave-on .panel { max-height: 36dvh; } }
+    /* A phone on its side has the width but not the height: the panel
+       stands beside the glass, as on a wide screen. */
+    @media (orientation: landscape) and (max-height: 500px) and (max-width: 919px) {
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 14px; align-items: start; }
+      .panel, html.nave-on .panel {
+        position: sticky;
+        top: 8px;
+        bottom: auto;
+        margin: 0;
+        max-height: calc(100dvh - 16px);
+        border: 1px solid rgba(201, 162, 39, 0.3);
+        border-radius: 10px;
+        box-shadow: none;
+      }
+      .nave { margin: 0; height: calc(100dvh - 16px); min-height: 0; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 12px; }
+      .tour-box { bottom: -16px; margin-bottom: -16px; padding-bottom: 14px; }
+      .panel .legend { display: none; }
+    }
     .panel__hint { font-size: 15px; font-style: italic; line-height: 1.6; color: rgba(232, 213, 163, 0.72); }
     .panel h2 {
       font-weight: normal;
@@ -494,6 +512,18 @@
     .tour__bar i { display: block; height: 100%; width: 0; background: var(--gold); }
     .tour__bar i.run { animation: dwell var(--dwell, 8s) linear forwards; }
     .tour__bar i.paused { animation-play-state: paused; }
+    .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .tour button[aria-pressed="true"] { background: rgba(201, 162, 39, 0.3); }
+    /* Walking, the controls stay in reach at the panel's foot. */
+    .tour-box {
+      position: sticky;
+      bottom: calc(-1 * max(18px, env(safe-area-inset-bottom)));
+      margin: 0 -20px calc(-1 * max(18px, env(safe-area-inset-bottom)));
+      padding: 0 20px max(14px, env(safe-area-inset-bottom));
+      background: rgba(11, 10, 8, 0.98);
+    }
+    @media (min-width: 920px) { .tour-box { bottom: -16px; margin-bottom: -16px; padding-bottom: 14px; } }
+    /* On a short screen the walk keeps to its story; the list waits for a tap. */
     @keyframes dwell { to { width: 100%; } }
     .tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
     .tag {
@@ -619,6 +649,7 @@
       </section>
       </div>
 
+      <p class="say" aria-live="polite"></p>
       <aside class="panel" aria-live="polite">
         <p class="panel__hint">Tap any pane of glass to see what it does and what it touches.</p>
       </aside>
@@ -640,7 +671,8 @@
       const stage = document.querySelector('.nave');
       const rail  = document.querySelector('.rail');
       const modes = document.querySelector('.modes');
-      const wide  = matchMedia('(min-width: 920px)');
+      // Wide: the panel stands beside the glass (a wide screen, or a phone on its side).
+      const wide  = matchMedia('(min-width: 920px), (orientation: landscape) and (max-height: 500px)');
       const still = matchMedia('(prefers-reduced-motion: reduce)');
       let data = null, panes = [], byId = {}, tierById = {}, nave = null;
       // What the panel is telling: nothing, one pane, or one tier.
@@ -684,7 +716,7 @@
       function markRail(tierId) {
         rail.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', String(b.dataset.tier === tierId)));
         const b = tierId && railButton(tierId);
-        if (b) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: glide() });
+        if (b) rail.scrollTo({ left: b.offsetLeft - (rail.clientWidth - b.offsetWidth) / 2, behavior: glide() });
       }
 
       // On a phone the panel rests over the bottom of the screen; keep the
@@ -772,10 +804,11 @@
         selected = null;
         shownTier = id;
         light(new Set(panes.filter(p => p.tier === id).map(p => p.id)), null);
-        if (nave) nave.showTier(id);
         markRail(id);
         renderTier(tierById[id]);
+        if (walk.on) panel.append(walkControls());
         panel.scrollTop = 0;
+        if (nave) nave.showTier(id);
         setHash(null);
         if (naveOn()) { if (focus) showStage(); }
         else keepClear(host.children[data.tiers.findIndex(t => t.id === id)], focus);
@@ -787,19 +820,29 @@
       }
 
       // ── The walk: the camera tells the tower from top to foot ────
+      // It moves on by itself every few seconds, but never while a keyboard
+      // is inside the panel, and Pause holds it still. While walking, the
+      // panel stops announcing itself; a short line says where you are.
       const walk = { on: false, i: 0, timer: 0, paused: false, steps: [] };
-      const DWELL = 9000;
+      const say = document.querySelector('.say');
+      const dwell = () => window.__workshopDwell || 9000;
+      const held = () => walk.paused || !!panel.querySelector(':focus-visible');
 
       function walkControls() {
         const box = el('div', 'tour-box');
         const row = el('div', 'tour');
         const back = button(null, '‹', () => go(walk.i - 1));
         back.setAttribute('aria-label', 'Back');
+        back.dataset.role = 'back';
         back.disabled = walk.i === 0;
-        const pause = button(null, walk.paused ? 'Play' : 'Pause', () => {
+        const pause = button(null, 'Pause', () => {
           walk.paused = !walk.paused;
-          go(walk.i);
+          pause.setAttribute('aria-pressed', String(walk.paused));
+          fill.classList.toggle('paused', walk.paused);
+          schedule();
         });
+        pause.dataset.role = 'pause';
+        pause.setAttribute('aria-pressed', String(walk.paused));
         const step = el('span', 'tour__step', `${walk.i + 1} of ${walk.steps.length}`);
         const last = walk.i === walk.steps.length - 1;
         const next = button(null, last ? 'Done' : '›', () => (last ? stopWalk() : go(walk.i + 1)));
@@ -808,20 +851,35 @@
         row.append(back, step, pause, next);
         const bar = el('div', 'tour__bar');
         const fill = el('i');
-        if (!walk.paused && !last) fill.className = 'run';
-        fill.style.setProperty('--dwell', DWELL / 1000 + 's');
+        if (!last) fill.className = 'run' + (held() ? ' paused' : '');
+        fill.style.setProperty('--dwell', dwell() / 1000 + 's');
         bar.append(fill);
         box.append(row, bar);
         return box;
       }
 
+      function schedule() {
+        clearTimeout(walk.timer);
+        if (!walk.on || walk.i >= walk.steps.length - 1) return;
+        const fill = panel.querySelector('.tour__bar i');
+        if (held()) {
+          if (fill) fill.classList.add('paused');
+          walk.timer = setTimeout(schedule, 700);
+          return;
+        }
+        if (fill) fill.classList.remove('paused');
+        walk.timer = setTimeout(() => go(walk.i + 1), dwell());
+      }
+
       function go(i) {
         if (!walk.on) return;
+        // The panel is rebuilt each step; carry the keyboard to the same control.
+        const role = panel.contains(document.activeElement) && document.activeElement.dataset.role;
         walk.i = Math.max(0, Math.min(i, walk.steps.length - 1));
-        clearTimeout(walk.timer);
         const s = walk.steps[walk.i];
         if (s.tier) {
           showTier(s.tier, { focus: true });
+          say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}: ${tierById[s.tier].name}`;
         } else {
           selected = null; shownTier = null;
           setHash(null);
@@ -830,12 +888,17 @@
           panel.replaceChildren(el('span', 'eyebrow', s.eyebrow), el('h2', null, s.title), el('p', 'story', s.text));
           const ids = s.set || [];
           light(new Set(ids), null);
-          if (nave) nave.showSet(ids.length ? ids : null);
           if (ids.length) panel.append(paneList('Still to come', ids));
+          panel.append(walkControls());
+          panel.scrollTop = 0;
+          if (nave) nave.showSet(ids.length ? ids : null);
+          say.textContent = `Step ${walk.i + 1} of ${walk.steps.length}: ${s.title}`;
         }
-        panel.append(walkControls());
-        panel.scrollTop = 0;
-        if (!walk.paused && walk.i < walk.steps.length - 1) walk.timer = setTimeout(() => go(walk.i + 1), DWELL);
+        if (role) {
+          const again = panel.querySelector(`[data-role="${role}"]:not(:disabled)`) || panel.querySelector('[data-role="next"]');
+          again.focus({ preventScroll: true });
+        }
+        schedule();
       }
 
       function startWalk() {
@@ -846,34 +909,45 @@
         ];
         walk.on = true;
         walk.paused = false;
+        panel.setAttribute('aria-live', 'off');
+        panel.classList.add('walking');
         if (nave) nave.endIntro();
         showStage(true);
         go(0);
-        const next = panel.querySelector('[data-role="next"]');
-        if (next) next.focus({ preventScroll: true });
+        panel.querySelector('[data-role="next"]').focus({ preventScroll: true });
       }
 
-      // Taking the wheel (a tap, a tier, a link) quietly ends the walk.
+      // Taking the wheel (a tap, a tier, a link, the window) ends the walk;
+      // its controls go with it, and a step that only the walk could show
+      // gives way to the tower at rest.
       function endWalk() {
         if (!walk.on) return;
         walk.on = false;
         clearTimeout(walk.timer);
+        panel.setAttribute('aria-live', 'polite');
+        panel.classList.remove('walking');
+        say.textContent = '';
+        const box = panel.querySelector('.tour-box');
+        if (box) box.remove();
+        if (!selected && !shownTier) rest();
       }
       function stopWalk() {
         endWalk();
         rest();
       }
+      panel.addEventListener('focusin', () => { if (walk.on) schedule(); });
+      panel.addEventListener('focusout', () => { if (walk.on) setTimeout(schedule, 0); });
 
       // ── Nave or window ───────────────────────────────────────────
-      // How far to lift the nave's picture so what is told sits in the
-      // middle of what the panel leaves open (phones; zero beside it).
-      function coverOf(h) {
-        if (wide.matches) return 0;
-        const c = stage.getBoundingClientRect(), p = panel.getBoundingClientRect();
-        const top = Math.max(0, -c.top) + 56; // below the tier rail
-        const bottom = Math.min(h, p.top - c.top, innerHeight - c.top);
-        if (bottom - top < 120) return 0;
-        return h / 2 - (top + bottom) / 2;
+      // The part of the stage left open: below the tier rail (or the top of
+      // the screen) and above the panel (or the bottom of the screen), in
+      // stage pixels. The nave centres what it tells there.
+      function bandOf(h) {
+        const c = stage.getBoundingClientRect();
+        const top = Math.max(-c.top, rail.offsetHeight - 10);
+        let bottom = Math.min(h, innerHeight - c.top);
+        if (!wide.matches) bottom = Math.min(bottom, panel.getBoundingClientRect().top - c.top);
+        return bottom - top < 120 ? null : { top, bottom };
       }
 
       function idFromHash() {
@@ -904,8 +978,13 @@
             canvas: stage.querySelector('canvas'),
             tagHost: stage.querySelector('.tags'),
             colourOf: tierColour,
-            onPick: id => { endWalk(); if (id && id !== selected) select(id); else if (selected || shownTier) rest(); },
-            coverOf,
+            onPick: id => {
+              const walking = walk.on;
+              endWalk();
+              if (id && id !== selected) select(id);
+              else if ((selected || shownTier) && !walking) rest();
+            },
+            bandOf,
             reducedMotion: still.matches,
             onLost: () => { nave = null; modes.hidden = true; setMode('window'); },
           });

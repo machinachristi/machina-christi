@@ -139,6 +139,7 @@ test.describe('workshop nave (3D)', () => {
   });
 
   test('the walk goes down the tower, step by step, and gives way to a tap', async ({ page }) => {
+    await page.addInitScript(() => { window.__workshopDwell = 600000; }); // no step moves on by itself mid-test
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
     const tiers = glass.tiers.filter(t => glass.panes.some(p => p.tier === t.id));
@@ -152,6 +153,12 @@ test.describe('workshop nave (3D)', () => {
     await expect(page.locator('.panel h2')).toHaveText(tiers[1].name);
     await page.locator('.tour button[aria-label="Back"]').click();
     await expect(page.locator('.panel h2')).toHaveText(tiers[0].name);
+    // The keyboard stays on the controls as the panel changes step.
+    await page.locator('.tour [data-role="next"]').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.panel h2')).toHaveText(tiers[1].name);
+    await expect(page.locator('.tour [data-role="next"]')).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
     // The last step is the road ahead: every planned pane, listed.
     for (let i = 1; i < steps; i++) await page.keyboard.press('ArrowRight');
     await expect(page.locator('.panel .story')).toHaveText(glass.epilogue);
@@ -165,6 +172,27 @@ test.describe('workshop nave (3D)', () => {
     await page.locator('.panel .walk').click();
     await page.keyboard.press('Escape');
     await expect(page.locator('.panel .walk')).toBeVisible();
+  });
+
+  test('leaving the walk any way never strands its controls', async ({ page }) => {
+    await page.addInitScript(() => { window.__workshopDwell = 600000; });
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    // A tap on empty glass during the prologue.
+    await page.locator('.panel .walk').click();
+    await expect(page.locator('.tour')).toBeVisible();
+    await page.locator('.nave canvas').click({ position: { x: 6, y: 120 } });
+    await expect(page.locator('.tour')).toHaveCount(0);
+    await expect(page.locator('.panel .walk')).toBeVisible();
+    // Switching to the window and back during a tier step.
+    await page.locator('.panel .walk').click();
+    await page.locator('.tour [data-role="next"]').click();
+    await page.locator('.modes button[data-mode="window"]').click();
+    await expect(page.locator('.tour')).toHaveCount(0);
+    await page.locator('.modes button[data-mode="nave"]').click();
+    await expect(page.locator('.tour')).toHaveCount(0);
+    await expect(page.locator('.panel h2')).toHaveText(glass.tiers[0].name);
+    await expect(page.locator('.panel')).toHaveAttribute('aria-live', 'polite');
   });
 
   test('if three.js cannot load, the window stands instead', async ({ page }) => {

@@ -27,7 +27,7 @@ const LOOK = {
   planned: { e: [0.02, 0.06, 0.30, 0.55], o: [0.08, 0.22, 0.32, 0.4],  g: [0, 0, 0.18, 0.4],        l: [0.2, 0.7, 0.95, 1] },
 };
 
-export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, coverOf, reducedMotion, onLost }) {
+export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, bandOf, reducedMotion, onLost }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.setClearColor(0x000000, 0);
@@ -249,12 +249,16 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     const { y, r } = tierAt.get(id);
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const half = r + 1.1;
+    // Fit the part of the stage the panel and the rail leave open.
+    const band = bandOf(h);
+    const open = band ? Math.max(0.3, (band.bottom - band.top) / h) : 1;
     goal.target.set(0, y + 0.3, 0);
     goal.phi = 0.8;
-    goal.dist = Math.max(half / (t * camera.aspect), (half * 0.7 + 1.4) / t, 7);
+    goal.dist = Math.max(half / (t * camera.aspect), (half * 0.7 + 1.4) / (t * open), 7);
   }
 
   function told() {
+    endIntro();
     stage.classList.toggle('has-selection', !!(state.selected || state.tier || state.set));
     if (reducedMotion) snap();
     lastInput = performance.now();
@@ -491,7 +495,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     camera.lookAt(view.target);
 
     // Keep the chosen light in the part of the stage the panel leaves open.
-    const want = state.selected || state.tier || state.set ? coverOf(h) : 0;
+    const band = state.selected || state.tier || state.set ? bandOf(h) : null;
+    const want = band ? h / 2 - (band.top + band.bottom) / 2 : 0;
     offY = ease(offY, want, reducedMotion ? 1 : 1 - Math.exp(-dt * 5));
     if (Math.abs(offY) > 0.5) camera.setViewOffset(w, h, 0, offY, w, h);
     else if (camera.view && camera.view.enabled) camera.clearViewOffset();
