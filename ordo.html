@@ -330,7 +330,8 @@
           }
           const key = toDateKey(d);
           const entry = calendar[key];
-          const gospelLink = `<p><a class="enter" href="${usccbUrl(d)}" target="_blank" rel="noopener">read today&rsquo;s gospel &middot; usccb</a></p>`;
+          const whose = key === toDateKey(today) ? 'today&rsquo;s' : 'the day&rsquo;s';
+          const gospelLink = `<p><a class="enter" href="${usccbUrl(d)}" target="_blank" rel="noopener">read ${whose} gospel &middot; usccb</a></p>`;
 
           if (!entry || entry.grade === 0) {
             celebrationEl.innerHTML = `<p class="celebration">${entry ? escapeHtml(entry.name) : 'Ordinary Weekday'}</p>${gospelLink}`;
