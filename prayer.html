@@ -115,6 +115,9 @@
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
     a { color: inherit; }
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    /* The `hidden` attribute must win over the display rules below
+       (.toggles is flex, .chip inline-flex), or hidden controls still show. */
+    [hidden] { display: none !important; }
 
     /* ── Settings: two quiet switches ─────────────────────────── */
     .toggles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1em; }
