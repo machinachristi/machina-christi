@@ -5,8 +5,13 @@
 // be lit. Golden threads join the panes that touch, and light falls from a
 // cross above through every terrace.
 //
-// The page (workshop.html) owns the data, the selection and the panel; this
-// module only draws, and reports taps. It uses the three.js Eden already
+// It tells its story with the camera: an opening shot in which the light
+// falls from the cross and wakes each terrace in turn, then shots the page
+// asks for: a whole tier (the guided walk and the tier rail), one pane and
+// its neighbours, or a chosen few (the road ahead).
+//
+// The page (workshop.html) owns the data, the selection, the walk and the
+// panel; this module only draws, and reports taps. It uses the three.js Eden already
 // ships (world-app/vendor), so the Workshop downloads nothing new.
 import * as THREE from 'three';
 
@@ -67,7 +72,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   const prisms = new Map();
   const prismMeshes = [];
   const rims = new Map();
-  const tierTags = [];
+  const tierAt = new Map(); // tier id → { i, y, r }
 
   tiers.forEach((t, i) => {
     const y = topY - i * STEP;
@@ -82,8 +87,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     rim.rotation.x = Math.PI / 2;
     rim.position.y = y - 0.02;
     scene.add(rim);
-    rims.set(t.id, { mat: rimMat, cur: 0.45 });
-    tierTags.push({ el: tag(`${t.name}`, 'tag tag--tier', null, t.id), y: y - 0.05, r: r + 0.66, on: false, w: 0 });
+    rims.set(t.id, { mat: rimMat, cur: 0 });
+    tierAt.set(t.id, { i, y, r });
 
     const inTier = panes.filter(p => p.tier === t.id);
     const offset = i * 2.39996; // the golden angle, so no two terraces line up
@@ -111,9 +116,9 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       scene.add(halo);
       const label = tag(p.name, 'tag', kind === 'planned' ? 'phase ' + p.phase : null, p.tier);
       prisms.set(p.id, {
-        id: p.id, kind, mesh, mat, lineMat, halo, pos, angle: a, label, on: false,
+        id: p.id, tier: t.id, kind, mesh, mat, lineMat, halo, pos, angle: a, label, on: false,
         top: pos.clone().add(new THREE.Vector3(0, PRISM_H / 2 + 0.12, 0)),
-        cur: { e: look.e[1], o: look.o[1], g: look.g[1], l: look.l[1], s: 1 },
+        cur: { e: 0, o: 0, g: 0, l: 0, s: 1 },
       });
     });
   });
@@ -185,10 +190,10 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       if (out.lengthSq() < 0.09) out.set(Math.sin(seen.size), 0, Math.cos(seen.size));
       out.normalize().multiplyScalar(0.8 + a.distanceTo(b) * 0.12);
       const curve = new THREE.QuadraticBezierCurve3(a.clone(), mid.add(out).add(new THREE.Vector3(0, 0.5, 0)), b.clone());
-      const mat = new THREE.MeshBasicMaterial({ color: GOLD, opacity: 0.1, ...additive });
+      const mat = new THREE.MeshBasicMaterial({ color: GOLD, opacity: 0, ...additive });
       const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.016, 5, false), mat);
       scene.add(mesh);
-      threads.push({ a: p.id, b: t, curve, mat, cur: 0.1 });
+      threads.push({ a: p.id, b: t, ta: p.tier, tb: byId[t].tier, curve, mat, cur: 0 });
     }
   }
   // Sparks that run along the lit threads, outward from the chosen pane.
@@ -216,7 +221,12 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   }
 
   // ── State ────────────────────────────────────────────────────────
-  const state = { selected: null, lit: new Set(), hover: null, focus: null };
+  // What the camera is telling: one pane (selected, with its lit
+  // neighbours), one tier, a chosen set, or (all null) the whole tower.
+  const state = { selected: null, lit: new Set(), tier: null, set: null, hover: null, focus: null };
+  const reveal = new Map([...tierAt.keys()].map(id => [id, 1]));
+  let introT = null;                 // seconds into the opening shot, or null
+  const INTRO = 4.2;
   const home = new THREE.Vector3(0, topY / 2 + 0.3, 0);
   const view = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
   const goal = { theta: 0.5, phi: 1.1, dist: 20, target: home.clone() };
@@ -226,8 +236,51 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
 
   function nearestTurn(to) { return to + TAU * Math.round((goal.theta - to) / TAU); }
 
+  function clearSparks() { sparks.forEach(s => { s.s.visible = false; s.curve = null; }); }
+
+  function restShot() {
+    goal.target.copy(home);
+    goal.phi = 1.1;
+    goal.dist = fit;
+  }
+
+  // A tier fills the frame: looking down a little onto its terrace.
+  function tierShot(id) {
+    const { y, r } = tierAt.get(id);
+    const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const half = r + 1.1;
+    goal.target.set(0, y + 0.3, 0);
+    goal.phi = 0.8;
+    goal.dist = Math.max(half / (t * camera.aspect), (half * 0.7 + 1.4) / t, 7);
+  }
+
+  function told() {
+    stage.classList.toggle('has-selection', !!(state.selected || state.tier || state.set));
+    if (reducedMotion) snap();
+    lastInput = performance.now();
+    wake();
+  }
+
+  function showTier(id) {
+    state.selected = null; state.lit = new Set(); state.set = null;
+    state.tier = id && tierAt.has(id) ? id : null;
+    clearSparks();
+    if (state.tier) tierShot(state.tier); else restShot();
+    told();
+  }
+
+  function showSet(ids) {
+    state.selected = null; state.lit = new Set(); state.tier = null;
+    state.set = ids && ids.length ? new Set(ids) : null;
+    clearSparks();
+    restShot();
+    told();
+  }
+
   function select(id, lit) {
+    endIntro();
     state.selected = id;
+    state.tier = null; state.set = null;
     state.lit = new Set(lit || []);
     if (id) {
       const p = prisms.get(id);
@@ -237,20 +290,32 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       goal.dist = Math.min(goal.dist, fit * 0.62);
       // Send a spark out along each lit thread.
       let n = 0;
-      sparks.forEach(s => { s.s.visible = false; s.curve = null; });
+      clearSparks();
       threads.forEach(t => {
         if (n >= sparks.length || (t.a !== id && t.b !== id)) return;
         Object.assign(sparks[n++], { curve: t.curve, fwd: t.a === id, phase: Math.random() });
       });
     } else {
-      goal.target.copy(home);
-      goal.phi = 1.1;
-      goal.dist = fit;
-      sparks.forEach(s => { s.s.visible = false; s.curve = null; });
+      restShot();
+      clearSparks();
     }
-    if (reducedMotion) snap();
-    stage.classList.toggle('has-selection', !!id);
-    lastInput = performance.now();
+    told();
+  }
+
+  // The opening shot: the camera begins beside the cross and draws back down
+  // the tower while the light wakes each terrace from the top. Any touch
+  // ends it early, gliding straight to where it was going.
+  function startIntro() {
+    if (reducedMotion) return;
+    introT = 0;
+    reveal.forEach((_, id) => reveal.set(id, 0));
+    stage.dataset.intro = 'playing';
+  }
+  function endIntro() {
+    if (introT === null) return;
+    introT = null;
+    reveal.forEach((_, id) => reveal.set(id, 1));
+    stage.dataset.intro = 'done';
     wake();
   }
 
@@ -281,7 +346,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     fit = Math.max((topY / 2 + 2.4) / t, (maxR / (t * camera.aspect)) * 0.86);
     goal.dist *= fit / old;
     view.dist *= fit / old;
-    tierTags.forEach(tt => { tt.w = tt.el.offsetWidth; });
+    if (state.tier) tierShot(state.tier);
     wake();
   }
   new ResizeObserver(resize).observe(stage);
@@ -320,6 +385,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   const clampDist = d => THREE.MathUtils.clamp(d, fit * 0.28, fit * 1.35);
 
   canvas.addEventListener('pointerdown', e => {
+    if (introT !== null) { endIntro(); return; }
     canvas.setPointerCapture(e.pointerId);
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInput = performance.now();
@@ -365,6 +431,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   canvas.addEventListener('wheel', e => {
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
+    endIntro();
     goal.dist = clampDist(goal.dist * Math.exp(e.deltaY * 0.004));
     lastInput = performance.now();
     wake();
@@ -375,11 +442,13 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
   // ── The frame ────────────────────────────────────────────────────
   const ease = (cur, to, k) => cur + (to - cur) * k;
 
-  function level(id) {
-    if (id === state.selected) return 3;
-    if (!state.selected) return 1;
-    return state.lit.has(id) ? 2 : 0;
+  function level(p) {
+    if (state.selected) return p.id === state.selected ? 3 : state.lit.has(p.id) ? 2 : 0;
+    if (state.tier) return p.tier === state.tier ? 2 : 0;
+    if (state.set) return state.set.has(p.id) ? 2 : 0;
+    return 1;
   }
+  const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 
   function placeTag(el, x, y, show, cls = '') {
     if (show) el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ${cls}`;
@@ -393,13 +462,26 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
     last = now;
     const idle = now - lastInput > 5000;
-    if (!state.selected && idle && !pts.size && !reducedMotion) goal.theta += dt * 0.07;
+    // The tower turns slowly by itself, a little faster while a tier is told.
+    if (!state.selected && !pts.size && !reducedMotion && (idle || state.tier)) goal.theta += dt * (state.tier ? 0.1 : 0.07);
 
-    const kc = reducedMotion ? 1 : 1 - Math.exp(-dt * 3);
-    view.theta = ease(view.theta, goal.theta, kc);
-    view.phi = ease(view.phi, goal.phi, kc);
-    view.dist = ease(view.dist, goal.dist, kc);
-    view.target.lerp(goal.target, kc);
+    if (introT !== null) {
+      introT += dt;
+      const tiersIn = [...tierAt.entries()];
+      for (const [id, { i }] of tiersIn) reveal.set(id, smooth((introT - 0.6 - i * 0.38) / 0.7));
+      const u = smooth(introT / (INTRO - 0.4));
+      view.target.set(0, THREE.MathUtils.lerp(crossY - 0.4, home.y, u), 0);
+      view.dist = THREE.MathUtils.lerp(fit * 0.3, goal.dist, u);
+      view.phi = THREE.MathUtils.lerp(1.42, goal.phi, u);
+      view.theta = goal.theta - (1 - u) * 1.2;
+      if (introT >= INTRO) endIntro();
+    } else {
+      const kc = reducedMotion ? 1 : 1 - Math.exp(-dt * 2.6);
+      view.theta = ease(view.theta, goal.theta, kc);
+      view.phi = ease(view.phi, goal.phi, kc);
+      view.dist = ease(view.dist, goal.dist, kc);
+      view.target.lerp(goal.target, kc);
+    }
     const s = Math.sin(view.phi);
     camera.position.set(
       view.target.x + view.dist * s * Math.sin(view.theta),
@@ -409,20 +491,21 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
     camera.lookAt(view.target);
 
     // Keep the chosen light in the part of the stage the panel leaves open.
-    const want = state.selected ? coverOf(h) : 0;
+    const want = state.selected || state.tier || state.set ? coverOf(h) : 0;
     offY = ease(offY, want, reducedMotion ? 1 : 1 - Math.exp(-dt * 5));
     if (Math.abs(offY) > 0.5) camera.setViewOffset(w, h, 0, offY, w, h);
     else if (camera.view && camera.view.enabled) camera.clearViewOffset();
     camera.updateMatrixWorld();
 
     const k = 1 - Math.exp(-dt * 6);
-    let settling = Math.abs(goal.theta - view.theta) > 1e-3 || Math.abs(goal.dist - view.dist) > 1e-2 ||
+    let settling = introT !== null || Math.abs(goal.theta - view.theta) > 1e-3 || Math.abs(goal.dist - view.dist) > 1e-2 ||
       view.target.distanceToSquared(goal.target) > 1e-4 || Math.abs(want - offY) > 0.5;
 
     for (const p of prisms.values()) {
-      const L = LOOK[p.kind], i = level(p.id);
+      const L = LOOK[p.kind], i = level(p);
       const near = p.id === state.hover || p.id === state.focus;
-      const to = { e: L.e[i] + (near ? 0.3 : 0), o: L.o[i], g: L.g[i] + (near ? 0.15 : 0), l: L.l[i], s: i === 3 ? 1.18 : near ? 1.08 : 1 };
+      const r = reveal.get(p.tier);
+      const to = { e: (L.e[i] + (near ? 0.3 : 0)) * r, o: L.o[i] * r, g: (L.g[i] + (near ? 0.15 : 0)) * r, l: L.l[i] * r, s: i === 3 ? 1.18 : near ? 1.08 : 1 };
       for (const key in to) {
         const d = to[key] - p.cur[key];
         if (Math.abs(d) > 1e-3) { p.cur[key] += d * k; settling = true; }
@@ -433,15 +516,19 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       p.lineMat.opacity = p.cur.l;
       p.mesh.scale.setScalar(p.cur.s);
     }
+    const woven = introT === null ? 1 : smooth((introT - 3) / 1);
     for (const t of threads) {
-      const on = state.selected && (t.a === state.selected || t.b === state.selected);
-      const to = !state.selected ? 0.1 : on ? 0.85 : 0.03;
+      let to;
+      if (state.selected) to = t.a === state.selected || t.b === state.selected ? 0.85 : 0.03;
+      else if (state.tier) to = t.ta === state.tier && t.tb === state.tier ? 0.6 : t.ta === state.tier || t.tb === state.tier ? 0.28 : 0.02;
+      else if (state.set) to = 0.03;
+      else to = 0.1 * woven;
       t.cur = ease(t.cur, to, k);
       t.mat.opacity = t.cur;
     }
-    const selTier = state.selected && byId[state.selected].tier;
+    const selTier = state.selected ? byId[state.selected].tier : state.tier;
     for (const [id, r] of rims) {
-      r.cur = ease(r.cur, !state.selected ? 0.45 : id === selTier ? 0.9 : 0.2, k);
+      r.cur = ease(r.cur, (!selTier ? (state.set ? 0.25 : 0.45) : id === selTier ? 0.9 : 0.15) * reveal.get(id), k);
       r.mat.opacity = r.cur;
     }
     for (const sp of sparks) {
@@ -460,15 +547,15 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
 
     renderer.render(scene, camera);
 
-    // Labels: the chosen light and its neighbours; whatever is under the
-    // pointer or keyboard; and, at rest, the names of the terraces. The most
-    // important are placed first, and a label that would overlap one already
-    // placed waits until the tower turns and makes room.
+    // Labels: whatever the camera is telling (one light and its neighbours,
+    // a tier, or a chosen few), and whatever is under the pointer or the
+    // keyboard. The most important are placed first, and a label that would
+    // overlap one already placed waits until the tower turns and makes room.
     const placed = [];
     const queue = [];
     const sinT = Math.sin(view.theta), cosT = Math.cos(view.theta);
     for (const p of prisms.values()) {
-      const show = p.id === state.hover || p.id === state.focus || (state.selected && (p.id === state.selected || state.lit.has(p.id)));
+      const show = introT === null && (p.id === state.hover || p.id === state.focus || level(p) >= 2);
       if (!show) { placeTag(p.label, 0, 0, false); continue; }
       v.copy(p.top).project(camera);
       const facing = p.pos.x * sinT + p.pos.z * cosT;
@@ -491,19 +578,6 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
       el.style.setProperty('--fade', t.facing < -0.3 && t.rank < 500 ? '0.62' : '1');
       placeTag(el, left, top, ok);
     }
-    const rx = Math.cos(view.theta), rz = -Math.sin(view.theta);
-    for (const tt of tierTags) {
-      const show = !state.selected;
-      let x = 0, y = 0, ok = show;
-      if (show) {
-        v.set(rx * tt.r, tt.y, rz * tt.r).project(camera);
-        x = Math.min(((v.x + 1) / 2) * w + 10, w - tt.w - 8);
-        y = ((1 - v.y) / 2) * h;
-        ok = v.z < 1 && y > 0 && y < h;
-      }
-      placeTag(tt.el, x, y, ok, 'translate(0, -50%)');
-    }
-
     if (!ready) { ready = true; stage.dataset.ready = '1'; }
     // The dust and the slow turn keep it alive; with reduced motion asked
     // for, it rests as soon as everything has settled, to spare the battery.
@@ -521,10 +595,15 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, cov
 
   resize();
   goal.dist = view.dist = fit;
+  stage.dataset.intro = 'done';
   wake();
 
   return {
     select,
+    showTier,
+    showSet,
+    startIntro,
+    endIntro,
     focus,
     setActive(on) { active = on; if (on) { resize(); wake(); } },
     // For the tests: where a light sits on screen, and which light a point hits.

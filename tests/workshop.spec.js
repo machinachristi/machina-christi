@@ -40,6 +40,11 @@ test.describe('workshop data', () => {
     }
   });
 
+  test('the walk has its words: a prologue, an epilogue, and a story for every tier', () => {
+    expect(glass.prologue && glass.epilogue).toBeTruthy();
+    for (const t of glass.tiers) expect(t.story, `${t.id}: needs a story`).toBeTruthy();
+  });
+
   test('every tier has its colour in the page', async ({ page }) => {
     await page.goto('/workshop.html');
     const missing = await page.evaluate(ids => ids.filter(id =>
@@ -65,6 +70,7 @@ test.describe('workshop nave (3D)', () => {
   test('tapping a light explains it and keeps it above the panel', async ({ page }) => {
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.nave[data-intro="done"]')).toBeAttached({ timeout: 20000 });
     await page.locator('.nave').scrollIntoViewIfNeeded();
     // Tap whichever live light is in plain view (the tower may stand in front of others).
     const t = await page.evaluate(ids => {
@@ -102,6 +108,63 @@ test.describe('workshop nave (3D)', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.panel .panel__hint')).toBeVisible();
     await expect(page.locator('.pane[data-id="blob"]')).toBeFocused();
+  });
+
+  test('opens with a shot down the tower, which a touch can skip', async ({ page }) => {
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-intro="playing"]')).toBeAttached({ timeout: 20000 });
+    await page.locator('.nave canvas').click({ position: { x: 20, y: 200 } });
+    await expect(page.locator('.nave[data-intro="done"]')).toBeAttached();
+    await expect(page.locator('.panel .walk')).toBeVisible();
+  });
+
+  test('the tier rail tells one tier at a time', async ({ page }) => {
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.rail button')).toHaveCount(new Set(glass.panes.map(p => p.tier)).size);
+    const i = glass.tiers.findIndex(t => t.id === 'house');
+    const t = glass.tiers[i];
+    await page.locator('.rail button[data-tier="house"]').click();
+    await expect(page.locator('.panel h2')).toHaveText(t.name);
+    await expect(page.locator('.panel .eyebrow')).toContainText(`Tier ${i + 1} of ${glass.tiers.length}`);
+    await expect(page.locator('.panel .story')).toHaveText(t.story);
+    const names = glass.panes.filter(p => p.tier === 'house').map(p => p.name);
+    await expect(page.locator('.panel .touches button')).toHaveText(names);
+    await expect(page.locator('.rail button[data-tier="house"]')).toHaveAttribute('aria-current', 'true');
+    // A pane's panel names its tier, and that name leads back to the tier.
+    await page.locator('.panel .touches button', { hasText: 'Functions' }).click();
+    await expect(page.locator('.panel h2')).toHaveText('Functions');
+    await page.locator('.panel button.eyebrow').click();
+    await expect(page.locator('.panel h2')).toHaveText(t.name);
+  });
+
+  test('the walk goes down the tower, step by step, and gives way to a tap', async ({ page }) => {
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    const tiers = glass.tiers.filter(t => glass.panes.some(p => p.tier === t.id));
+    const steps = tiers.length + 2;
+    await page.locator('.panel .walk').click();
+    await expect(page.locator('.panel .story')).toHaveText(glass.prologue);
+    await expect(page.locator('.tour__step')).toHaveText(`1 of ${steps}`);
+    await page.locator('.tour [data-role="next"]').click();
+    await expect(page.locator('.panel h2')).toHaveText(tiers[0].name);
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.panel h2')).toHaveText(tiers[1].name);
+    await page.locator('.tour button[aria-label="Back"]').click();
+    await expect(page.locator('.panel h2')).toHaveText(tiers[0].name);
+    // The last step is the road ahead: every planned pane, listed.
+    for (let i = 1; i < steps; i++) await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.panel .story')).toHaveText(glass.epilogue);
+    await expect(page.locator('.panel .touches button')).toHaveCount(glass.panes.filter(p => p.status === 'planned').length);
+    // Choosing a pane ends the walk.
+    await page.locator('.panel .touches button').first().click();
+    await expect(page.locator('.tour')).toHaveCount(0);
+    await expect(page.locator('.panel .chip')).toBeVisible();
+    // And Escape ends a walk too.
+    await page.keyboard.press('Escape');
+    await page.locator('.panel .walk').click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.panel .walk')).toBeVisible();
   });
 
   test('if three.js cannot load, the window stands instead', async ({ page }) => {
@@ -149,6 +212,7 @@ test.describe('workshop window (reduced motion)', () => {
     const someP = glass.panes.find(p => p.status === 'planned');
     if (someP) await expect(page.locator(`.pane[data-id="${someP.id}"] .pane__phase`)).toHaveText('phase ' + someP.phase);
     await expect(page.locator('.nave')).toBeHidden();
+    await expect(page.locator('.panel .walk')).toBeHidden();
     expect(three).toEqual([]);
     expect(errors).toEqual([]);
   });
