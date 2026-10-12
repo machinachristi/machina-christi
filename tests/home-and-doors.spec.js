@@ -260,3 +260,25 @@ test.describe('runner game-over navigation', () => {
     await page.waitForURL('**/index.html');
   });
 });
+
+// Some browsers block site storage outright (Safari's "Block All Cookies",
+// locked-down in-app browsers): touching localStorage throws. The runner must
+// still start and play — it just won't remember the best distance.
+test.describe('runner with site storage blocked', () => {
+  test('the game still starts and plays', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'localStorage', {
+        get() { throw new DOMException('The operation is insecure.', 'SecurityError'); },
+      });
+    });
+    const errors = watchErrors(page);
+    await page.goto('/game.html');
+    await page.waitForFunction(() => typeof startButton !== 'undefined' && startButton);
+    const tap = await page.evaluate(() => ({ x: startButton.x + startButton.w / 2, y: startButton.y + startButton.h / 2 }));
+    await page.mouse.click(tap.x, tap.y);
+    await expect.poll(() => page.evaluate(() => gameState)).toBe('playing');
+    await page.evaluate(() => endGame());   // writes the best distance
+    expect(await page.evaluate(() => gameState)).toBe('gameover');
+    expect(errors).toEqual([]);
+  });
+});
