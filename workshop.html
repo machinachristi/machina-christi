@@ -292,7 +292,7 @@
        stands beside the glass, as on a wide screen. */
     @media (orientation: landscape) and (max-height: 500px) and (max-width: 919px) {
       .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 14px; align-items: start; }
-      .panel, html.nave-on .panel {
+      .panel {
         position: sticky;
         top: 8px;
         bottom: auto;
@@ -302,8 +302,6 @@
         border-radius: 10px;
         box-shadow: none;
       }
-      .nave { margin: 0; height: calc(100dvh - 16px); min-height: 0; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 12px; }
-      .tour-box { bottom: -16px; margin-bottom: -16px; padding-bottom: 14px; }
       .panel .legend { display: none; }
     }
     .panel__hint { font-size: 15px; font-style: italic; line-height: 1.6; color: rgba(232, 213, 163, 0.72); }
@@ -441,7 +439,8 @@
     }
     .icon-btn:hover { border-color: rgba(201, 162, 39, 0.7); }
     .icon-btn:focus-visible, .dock button:focus-visible, .tour button:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
-    .topbar__name { font-size: 17px; letter-spacing: 0.28em; text-transform: uppercase; color: #ecd28a; text-shadow: 0 0 18px rgba(201, 162, 39, 0.35); }
+    .topbar__name { font-size: 17px; letter-spacing: 0.28em; text-indent: 0; text-transform: uppercase; color: #ecd28a; text-shadow: 0 0 18px rgba(201, 162, 39, 0.35); }
+    .topbar__name::after { display: none; }
     .topbar__sub { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
 
     /* The tiers as a column of lights down the left edge, stacked like the
@@ -450,8 +449,7 @@
       position: absolute;
       z-index: 3;
       left: max(6px, env(safe-area-inset-left));
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(max(10px, env(safe-area-inset-top)) + 66px);
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -472,7 +470,7 @@
       align-items: center;
       gap: 10px;
       width: 40px;
-      min-height: 36px;
+      min-height: 34px;
       padding: 0 13px;
       font-family: var(--serif);
       font-size: 14px;
@@ -618,8 +616,8 @@
       position: fixed;
       z-index: 12;
       top: auto;
-      left: 10px;
-      right: 10px;
+      left: max(10px, env(safe-area-inset-left));
+      right: max(10px, env(safe-area-inset-right));
       bottom: calc(70px + env(safe-area-inset-bottom));
       width: auto;
       margin: 0;
@@ -633,13 +631,17 @@
       animation: card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     html.nave-on .panel.is-empty { display: none; }
+    @media (max-height: 720px) { html.nave-on .panel { max-height: 40dvh; } }
     html.nave-on .panel__close { display: grid; float: right; width: 36px; height: 36px; margin: -4px -8px 4px 10px; font-size: 18px; }
     @keyframes card-in { from { opacity: 0; transform: translateY(10px); } }
     @media (min-width: 920px) {
-      html.nave-on .panel { left: auto; right: 18px; top: 76px; bottom: auto; width: 360px; max-height: calc(100dvh - 170px); }
+      html.nave-on .panel { left: auto; right: max(18px, env(safe-area-inset-right)); top: 76px; bottom: auto; width: 360px; max-height: calc(100dvh - 170px); }
+      /* With a card open, the dock stands in the middle of what is left. */
+      .nave.has-card .dock, .nave.has-card .tour { left: calc((100vw - 378px) / 2); }
     }
     @media (orientation: landscape) and (max-height: 500px) {
-      html.nave-on .panel { left: auto; right: 10px; top: 58px; bottom: 10px; width: 300px; max-height: none; }
+      html.nave-on .panel { left: auto; right: max(10px, env(safe-area-inset-right)); top: 58px; bottom: max(10px, env(safe-area-inset-bottom)); width: 300px; max-height: none; }
+      .nave.has-card .dock, .nave.has-card .tour { left: calc((100vw - 320px) / 2); }
       .caption { bottom: calc(70px + env(safe-area-inset-bottom)); padding-top: 14px; }
       .caption p { font-size: 15px; }
     }
@@ -809,7 +811,7 @@
         <div class="topbar">
           <a class="icon-btn" href="index.html" aria-label="Home">&lsaquo;</a>
           <div>
-            <p class="topbar__name">Workshop</p>
+            <h1 class="topbar__name">Workshop</h1>
             <p class="topbar__sub">how Machina Christi is built</p>
           </div>
         </div>
@@ -959,8 +961,14 @@
       // ── The card ─────────────────────────────────────────────────
       function card(colour) {
         panel.classList.remove('is-empty');
+        stage.classList.add('has-card');
         panel.style.setProperty('--c', colour);
-        panel.replaceChildren(button('icon-btn panel__close', '×', () => { const was = selected; rest(); if (was && !naveOn()) paneButton(was).focus(); }));
+        panel.replaceChildren(button('icon-btn panel__close', '×', () => {
+          // Closing the card returns the keyboard to what it was about.
+          const back = selected ? paneButton(selected) : shownTier ? railButton(shownTier) : null;
+          rest();
+          if (back) back.focus({ preventScroll: true });
+        }));
         panel.firstChild.setAttribute('aria-label', 'Close');
         panel.scrollTop = 0;
       }
@@ -982,6 +990,7 @@
         panel.style.removeProperty('--c');
         // In the nave nothing is chosen, so there is no card at all.
         panel.classList.add('is-empty');
+        stage.classList.remove('has-card');
         panel.replaceChildren(el('p', 'panel__hint', 'Tap any pane of glass to see what it does and what it touches.'));
         panel.append(document.querySelector('header .legend').cloneNode(true));
       }
@@ -1287,6 +1296,14 @@
         if (b) setMode(b.dataset.mode);
       });
       stage.querySelector('[data-mode="window"]').addEventListener('click', () => setMode('window'));
+      // If the page itself has been zoomed, a pinch on the glass zooms the
+      // page back out rather than the camera, so no one is trapped.
+      if (window.visualViewport) {
+        const canvas = stage.querySelector('canvas');
+        const free = () => { canvas.style.touchAction = visualViewport.scale > 1.01 ? 'pinch-zoom' : ''; };
+        visualViewport.addEventListener('resize', free);
+        free();
+      }
       stage.querySelector('.help-open').addEventListener('click', () => help.showModal());
       help.querySelector('.help__close').addEventListener('click', () => help.close());
       help.addEventListener('click', e => { if (e.target === help) help.close(); });

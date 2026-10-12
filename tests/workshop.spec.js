@@ -119,8 +119,9 @@ test.describe('workshop nave (3D)', () => {
   test('opens with a shot down the tower, which a touch can skip', async ({ page }) => {
     await page.goto('/workshop.html');
     await expect(page.locator('.nave[data-intro="playing"]')).toBeAttached({ timeout: 20000 });
-    await page.locator('.nave canvas').click({ position: { x: 20, y: 200 } });
-    await expect(page.locator('.nave[data-intro="done"]')).toBeAttached();
+    await page.locator('.nave canvas').click({ position: { x: 200, y: 300 } });
+    // Skipped, not merely finished: it ends at once rather than after its ~4.6s.
+    await expect(page.locator('.nave[data-intro="done"]')).toBeAttached({ timeout: 1200 });
     await expect(page.locator('.dock .walk')).toBeVisible();
   });
 
@@ -210,6 +211,47 @@ test.describe('workshop nave (3D)', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.help')).toBeHidden();
   });
+
+  test('draws one frame per tick, never two loops at once', async ({ page }) => {
+    await page.addInitScript(() => {
+      // Count every frame asked for, against the browser's own ticks.
+      const ask = window.requestAnimationFrame.bind(window);
+      let asked = 0, ticks = 0;
+      window.requestAnimationFrame = cb => { asked++; return ask(cb); };
+      const tick = () => { ticks++; ask(tick); };
+      ask(tick);
+      window.__frames = () => ({ asked, ticks });
+    });
+    await page.goto('/workshop.html');
+    await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+    await page.locator('.nave canvas').click({ position: { x: 200, y: 300 } }); // skip the opening
+    await page.waitForTimeout(400);
+    const a = await page.evaluate(() => window.__frames());
+    await page.waitForTimeout(1500);
+    const b = await page.evaluate(() => window.__frames());
+    const ratio = (b.asked - a.asked) / Math.max(1, b.ticks - a.ticks);
+    expect(ratio).toBeLessThan(1.4);
+  });
+
+  for (const [w, h, name] of [[844, 390, 'a phone on its side'], [375, 667, 'a small phone']]) {
+    test(`fills the screen and keeps the card clear of the dock and the lights on ${name}`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await page.goto('/workshop.html#functions');
+      await expect(page.locator('.nave[data-ready]')).toBeVisible({ timeout: 20000 });
+      const box = await page.locator('.nave canvas').boundingBox();
+      expect([box.x, box.y, box.width, box.height]).toEqual([0, 0, w, h]);
+      await expect(page.locator('.panel h2')).toHaveText('Functions');
+      const overlap = await page.evaluate(() => {
+        const card = document.querySelector('.panel').getBoundingClientRect();
+        const hit = r => r.left < card.right && r.right > card.left && r.top < card.bottom && r.bottom > card.top;
+        const dock = [...document.querySelectorAll('.dock button')].filter(b => hit(b.getBoundingClientRect())).map(b => b.textContent);
+        const lights = [...document.querySelectorAll('.rail button')].filter(b => hit(b.getBoundingClientRect())).map(b => b.dataset.tier);
+        return { dock, lights };
+      });
+      expect(overlap).toEqual({ dock: [], lights: [] });
+      expect(await smallText(page)).toEqual([]);
+    });
+  }
 
   test('if three.js cannot load, the window stands instead', async ({ page }) => {
     const errors = watchErrors(page);
@@ -321,5 +363,5 @@ test('the home Workshop gate leads here', async ({ page }) => {
   await page.locator('.portal--workshop').focus();
   await page.keyboard.press('Enter');
   await page.waitForURL('**/workshop.html');
-  await expect(page.locator('h1')).toHaveText('Workshop');
+  await expect(page.locator('h1:visible')).toHaveText('Workshop');
 });

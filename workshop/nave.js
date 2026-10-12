@@ -55,7 +55,6 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 220);
-  camera.layers.enable(1); // layer 1: the sky, stars and ground, which never bloom
   const time = { value: 0 };
 
   // A soft round glow, drawn once and shared by the motes and sparks.
@@ -74,7 +73,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     return t;
   })();
   const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
-  const background = o => { o.layers.set(1); scene.add(o); return o; };
+  const background = o => { scene.add(o); return o; };
 
   // ── The layout: steps, and a tower for every pane ─────────────────
   const panes = data.panes;
@@ -384,7 +383,6 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
     const shaft = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, ...additive }));
     shaft.position.y = hgt / 2 - 0.3;
-    shaft.layers.set(1);
     scene.add(shaft);
   }
 
@@ -400,7 +398,6 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   }
   moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
   const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: glowTex, color: 0xf2d58a, size: 0.06, opacity: 0.45, ...additive }));
-  motes.layers.set(1);
   scene.add(motes);
 
   // A ring of light at the foot of the chosen tower.
@@ -441,13 +438,14 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   });
 
   // ── Glow: the brightest light blooms, as it does at dusk ──────────
-  // The scene is drawn once more at half size into a float buffer, its
-  // brightest parts kept and blurred at two scales, and the blur laid over
-  // the finished picture. Drawn this way the picture keeps the canvas's own
-  // smooth edges, and the glow can simply be left off on a slow device.
+  // The finished picture is copied once, its brightest parts kept and
+  // blurred at two scales, and the blur laid back over it. The scene is drawn
+  // only once, the picture keeps the canvas's own smooth edges, the glow is
+  // made in the same colours the eye sees, and on a slow device it can simply
+  // be left off.
   const glow = (() => {
     const opts = { type: THREE.HalfFloatType, depthBuffer: false };
-    const src = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+    let src = null;
     const a = new THREE.WebGLRenderTarget(1, 1, opts), b = new THREE.WebGLRenderTarget(1, 1, opts);
     const c = new THREE.WebGLRenderTarget(1, 1, opts), d = new THREE.WebGLRenderTarget(1, 1, opts);
     const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -458,7 +456,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     const pass = { depthTest: false, depthWrite: false };
     const bright = new THREE.ShaderMaterial({
       ...pass,
-      uniforms: { tSrc: { value: null }, uThreshold: { value: 0.72 }, uKnee: { value: 0.4 } },
+      uniforms: { tSrc: { value: null }, uThreshold: { value: 0.78 }, uKnee: { value: 0.22 } },
       vertexShader: QUAD_VS,
       fragmentShader: `
         uniform sampler2D tSrc; uniform float uThreshold, uKnee; varying vec2 vUv;
@@ -507,18 +505,17 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       size(pw, ph) {
         const hw = Math.max(1, Math.round(pw / 2)), hh = Math.max(1, Math.round(ph / 2));
         const qw = Math.max(1, Math.round(pw / 4)), qh = Math.max(1, Math.round(ph / 4));
-        src.setSize(hw, hh); a.setSize(hw, hh); b.setSize(hw, hh);
+        if (src) src.dispose();
+        src = new THREE.FramebufferTexture(Math.max(1, pw), Math.max(1, ph));
+        src.minFilter = src.magFilter = THREE.LinearFilter;
+        a.setSize(hw, hh); b.setSize(hw, hh);
         c.setSize(qw, qh); d.setSize(qw, qh);
         this.hw = hw; this.hh = hh; this.qw = qw; this.qh = qh;
       },
       draw() {
-        // The bright parts of the scene, without the sky, stars and ground.
-        camera.layers.disable(1);
-        renderer.setRenderTarget(src);
-        renderer.clear();
-        renderer.render(scene, camera);
-        camera.layers.enable(1);
-        bright.uniforms.tSrc.value = src.texture; run(bright, a);
+        // Straight after the scene has been drawn to the screen.
+        renderer.copyFramebufferToTexture(src);
+        bright.uniforms.tSrc.value = src; run(bright, a);
         blur.uniforms.tSrc.value = a.texture; blur.uniforms.uDir.value.set(1 / this.hw, 0); run(blur, b);
         blur.uniforms.tSrc.value = b.texture; blur.uniforms.uDir.value.set(0, 1 / this.hh); run(blur, a);
         blur.uniforms.tSrc.value = a.texture; blur.uniforms.uDir.value.set(1.5 / this.qw, 0); run(blur, c);
@@ -526,7 +523,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
         blur.uniforms.tSrc.value = d.texture; blur.uniforms.uDir.value.set(3 / this.qw, 0); run(blur, c);
         blur.uniforms.tSrc.value = c.texture; blur.uniforms.uDir.value.set(0, 3 / this.qh); run(blur, d);
       },
-      over() { quad.material = blend; renderer.render(quadScene, cam); },
+      over() { quad.material = blend; renderer.setRenderTarget(null); renderer.render(quadScene, cam); },
     };
   })();
 
@@ -655,6 +652,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
   }
 
   function focus(id) {
+    if (id) endIntro();
     state.focus = id;
     // Turn the city so a tower reached by keyboard faces the visitor.
     if (id) goal.theta = nearestTurn(prisms.get(id).angle);
@@ -832,10 +830,13 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
 
   function frame(now) {
     raf = 0;
-    // Left alone for a while, the city keeps breathing at a gentler pace.
-    if (settled && now - lastInput > 20000 && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
+    // Left alone for a while, the city keeps breathing at a gentler pace,
+    // and that pace is not mistaken for a device that cannot keep up.
+    const resting = settled && now - lastInput > 20000;
+    if (resting && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
-    if (last) adapt((now - last) / 1000);
+    if (resting) slow = 0;
+    else if (last) adapt((now - last) / 1000);
     last = now;
     time.value = now / 1000;
     const idle = now - lastInput > 5000;
@@ -936,11 +937,10 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
       moteGeo.attributes.position.needsUpdate = true;
     }
 
-    if (glow.on) glow.draw();
     renderer.setRenderTarget(null);
     renderer.clear();
     renderer.render(scene, camera);
-    if (glow.on) glow.over();
+    if (glow.on) { glow.draw(); glow.over(); }
 
     // Labels: whatever the camera is telling (one tower and its neighbours,
     // a tier, or a chosen few), and whatever is under the pointer or the
@@ -950,7 +950,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     const queue = [];
     const sinT = Math.sin(view.theta), cosT = Math.cos(view.theta);
     for (const p of prisms.values()) {
-      const show = introT === null && (p.id === state.hover || p.id === state.focus || level(p) >= 2);
+      const show = p.id === state.hover || p.id === state.focus || (introT === null && level(p) >= 2);
       if (!show) { placeTag(p.label, 0, 0, false); continue; }
       v.copy(p.top).project(camera);
       const facing = p.pos.x * sinT + p.pos.z * cosT;
@@ -978,7 +978,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     // The dust, the windows and the slow turn keep it alive; with reduced
     // motion asked for, it rests as soon as everything has settled.
     settled = !settling;
-    if ((!reducedMotion || settling) && running()) raf = requestAnimationFrame(frame);
+    // (Something above may already have asked for the next frame: one loop only.)
+    if (!raf && (!reducedMotion || settling) && running()) raf = requestAnimationFrame(frame);
   }
 
   function wake() {
