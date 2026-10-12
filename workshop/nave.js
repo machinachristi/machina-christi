@@ -795,6 +795,18 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     wake();
   }, { passive: false });
 
+  // A software renderer (a blocklisted graphics driver, or a test machine)
+  // starts without the glow and at plain sharpness, sparing the processor.
+  {
+    const gl = renderer.getContext();
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+    if (/swiftshader|llvmpipe|softpipe|software/i.test(name) && window.__naveQuality !== 'high') {
+      glow.on = false;
+      pixelRatio = 1;
+    }
+  }
+
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); cancelAnimationFrame(raf); onLost && onLost(); });
 
   // ── The frame ────────────────────────────────────────────────────
@@ -835,6 +847,7 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     const resting = settled && now - lastInput > 20000;
     if (resting && last && now - last < 50) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
+    const lastFrame = last;
     if (resting) slow = 0;
     else if (last) adapt((now - last) / 1000);
     last = now;
@@ -844,7 +857,8 @@ export function createNave({ stage, canvas, tagHost, data, colourOf, onPick, ban
     if (!state.selected && !pts.size && !reducedMotion && (idle || state.tier)) goal.theta += dt * (state.tier ? 0.08 : 0.05);
 
     if (introT !== null) {
-      introT += dt;
+      // The opening keeps to the clock, however slowly frames arrive.
+      introT += lastFrame ? Math.min(0.25, (now - lastFrame) / 1000) : 0.016;
       for (const [id, { i }] of tierAt) reveal.set(id, smooth((introT - 0.7 - i * 0.4) / 0.8));
       const u = smooth(introT / (INTRO - 0.4));
       view.target.set(0, THREE.MathUtils.lerp(crossY - 0.3, home.y, u), 0);
