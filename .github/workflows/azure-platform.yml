@@ -23,6 +23,7 @@ on:
       - 'infra/**'
       - 'functions/**'
       - 'ordo/calendar-*.json'
+      - 'db/**'
       - '.github/workflows/azure-platform.yml'
   pull_request:
     branches: [main]
@@ -30,6 +31,7 @@ on:
       - 'infra/**'
       - 'functions/**'
       - 'ordo/calendar-*.json'
+      - 'db/**'
       - '.github/workflows/azure-platform.yml'
   workflow_dispatch: # re-run a deploy by hand (works from main only)
 
