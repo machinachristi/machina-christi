@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 // One-off / annual maintenance script: fetches the General Roman Calendar
 // from the Liturgical Calendar API and writes a compact static JSON file
-// (ordo/calendar-<year>.json) for the Ordo page to read at
-// request time. The site has no build step (see the CI workflow comment
-// about avoiding Azure's Oryx auto-detection), so this is run locally by
-// hand — re-run it each year to add the next year's file.
+// (ordo/calendar-<year>.json) for the Ordo page to read at request time.
+// The API (functions/, /api/season) carries a copy of the same files for the
+// day's feast and colour; `season` is litcal's own season label, kept as the
+// answer key the API's season formula is tested against.
+// The site has no build step (see the CI workflow comment about avoiding
+// Azure's Oryx auto-detection), so this is run locally by hand — re-run it
+// each year to add the next year's file.
 //
 // Usage: node scripts/fetch-calendar.mjs 2026 2027
 
@@ -19,6 +22,14 @@ async function fetchYear(year) {
   if (!res.ok) throw new Error(`litcal ${year}: HTTP ${res.status}`);
   const data = await res.json();
   return data.litcal;
+}
+
+// The celebration's liturgical colour: litcal lists the preferred one first
+// (rose Sundays come as ['rose', 'purple']). It says "purple"; the Church's
+// own word, and the one the API uses, is "violet".
+function colorOf(e) {
+  const c = (e.color && e.color[0]) || null;
+  return c === 'purple' ? 'violet' : c;
 }
 
 // One winning celebration per date: the highest-graded non-vigil entry.
@@ -43,10 +54,15 @@ function reduceToOnePerDate(events) {
         name: prev.name ?? e.name,
         grade: prev.grade ?? e.grade,
         grade_lcl: prev.grade_lcl ?? e.grade_lcl,
+        color: prev.color ?? colorOf(e),
+        season: prev.season ?? e.liturgical_season,
         weekday_name: e.name,
       });
     } else if (prev.grade === undefined || e.grade > prev.grade) {
-      byDate.set(date, { ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl });
+      byDate.set(date, {
+        ...prev, name: e.name, grade: e.grade, grade_lcl: e.grade_lcl,
+        color: colorOf(e), season: e.liturgical_season,
+      });
     }
   }
 

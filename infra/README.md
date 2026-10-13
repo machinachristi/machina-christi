@@ -73,7 +73,7 @@ the Function app:
 |---|---|
 | DNS | `api` CNAME → the Function app's `azurewebsites.net` name, proxied; `asuid.api` TXT = the app's domain-verification ID (proves ownership) |
 | Azure | `hostNameBindings` in `main.bicep` (no certificate binding: Cloudflare in Full mode accepts Azure's default one) |
-| Cache Rule | `api` host + GET → eligible for cache, honoring the origin's `Cache-Control` (bypass if absent). `/api/health` is `no-store`, so it is never cached |
+| Cache Rule | `api` host + GET → eligible for cache, honoring the origin's `Cache-Control` (bypass if absent). `/api/health` is `no-store`, so it is never cached; `/api/season?date=…` is `public, max-age=86400`, so each date is cached at the edge for a day (the query string is part of the cache key) |
 | Rate limiting rule | `api` host: more than 20 requests per 10 s from one IP → block (429) for 10 s. The free plan allows one rule |
 | Browser Cache TTL | Respect Existing Headers, so Cloudflare doesn't stretch the site's short cache times |
 
@@ -81,7 +81,9 @@ The Function app accepts requests only from Cloudflare's address ranges
 (`cloudflare-ips.json`, refreshed with `scripts/refresh-cloudflare-ips.sh`), so
 its `azurewebsites.net` address can't be used to bypass the rate limit. The
 deployment site (scm) is separate and stays open to CI, which signs in with
-Entra. The deploy's health check goes through `api.machinachristi.com`.
+Entra. The deploy's health check calls the app's `azurewebsites.net` address
+directly, after briefly allow-listing the GitHub runner's IP (Cloudflare's Bot
+Fight Mode blocks GitHub runners).
 
 ## Deploying by hand
 
@@ -109,11 +111,28 @@ Node.js, Azure Functions v4 programming model. Each file in
 - `GET /api/health` returns `{ status, service, commit, builtAt, time }`. It proves
   the whole chain (code → deploy → running → telemetry) and tells you which commit
   is live.
+- `GET /api/season?date=YYYY-MM-DD` returns the liturgical day:
+  `{ date, season: { key, name, week }, celebration, color }`. The site sends the
+  visitor's local date. Without `date` it answers for today in UTC (cached 5 min).
+  - The **season** is computed (`functions/src/lib/season.js`): Easter by the
+    Gregorian computus, every other boundary from Easter and Christmas. Works for
+    any year 1583–4099.
+  - The **celebration** and its colour come from the Ordo calendar files
+    (`ordo/calendar-<year>.json`), which `npm run copy-data` copies into
+    `functions/src/data/` before tests, local runs and deploys. `celebration` is
+    `null` on a plain weekday or a year without a file. `optional: true` marks an
+    optional memorial, which doesn't change the day's colour.
+  - **Yearly upkeep:** before each new year, run `node scripts/fetch-calendar.mjs
+    <next year>` and commit the file. Changing `ordo/calendar-*.json` redeploys
+    the API. If it's forgotten, the season and colour still work; only the feast
+    names disappear.
+  - The tests cross-check the season and week number against litcal's own labels
+    for every day in the calendar files.
 - `cd functions && npm test` runs the unit tests (Node's built-in test runner).
 - Run it locally with Azure Functions Core Tools: in `functions/`, copy
   `local.settings.example.json` to `local.settings.json` (git ignores it), then
-  `npm install` and `func start`. The health endpoint is at
-  `http://localhost:7071/api/health`.
+  `npm install` and `npm start`. The endpoints are at
+  `http://localhost:7071/api/health` and `http://localhost:7071/api/season`.
 
 ## Reading the telemetry (KQL)
 
@@ -124,6 +143,7 @@ The starter queries are defined in `main.bicep`:
 - API requests by endpoint, last 24 hours
 - API failures and exceptions, last 7 days
 - Health endpoint: calls per hour and speed
+- Season API: calls that reached Azure, per day and date asked (few calls = Cloudflare is caching well)
 - Free allowance watch: GB ingested this month, by table
 - Site: page views, referrers, countries, time on page, CSP reports, script errors
 
