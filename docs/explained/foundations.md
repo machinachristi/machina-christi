@@ -35,6 +35,33 @@ same output and touches nothing else — like 2 + 2. The easiest kind of code to
 trust and to test.
 *Here:* the season formula: give it a date, it gives back the season.
 
+**Database.** A filing cabinet for information, with labelled drawers (tables)
+and a card for each thing in a drawer (rows). Unlike a single file, you can ask
+it precise questions and change one card without rewriting everything.
+*Here:* Azure SQL holds Ordo's saints.
+
+**SQL.** The language for asking a database questions: "show me every saint
+who died in the 4th century" is one short sentence of SQL. T-SQL is Microsoft's
+dialect of it.
+
+**Schema.** The layout of the cabinet: which drawers exist, what goes on each
+card, and how cards in different drawers point at each other (a feast day card
+points at the saint cards it celebrates).
+
+**Migration.** A numbered, written-down change to the cabinet's layout or
+contents ("add a drawer for patron causes"). They're applied in order, each
+exactly once, and never edited afterwards — like entries in a ledger. That way
+the cabinet in the cloud can always be rebuilt from the files.
+
+**Transaction.** A group of changes that either all happen or none do, like a
+bank transfer that can't take money out without putting it in. A *dry run* does
+the work inside a transaction and then cancels it: a rehearsal that keeps nothing.
+
+**Managed identity.** A staff badge Azure gives to a piece of software, so it can
+prove who it is without a password. No password means nothing to leak, forget
+or rotate.
+*Here:* the API, the deploy robot and the database all use badges.
+
 ## Speed and cost
 
 **Cache.** Keeping a copy of an answer so you don't have to ask again — a sticky
@@ -54,6 +81,14 @@ throws the answer away. It stops strange sites quietly reading things on your
 behalf.
 *Here:* the API gives the note to machinachristi.com and nobody else, which is
 also why the season accent only appears on the real site, not on test copies.
+
+## Networks and security
+
+**Firewall.** A list at the door saying who may even knock. It works alongside
+sign-in: the firewall decides who can reach the door, the badge decides who gets in.
+
+**Default deny.** Start with every door shut and open only the ones you need,
+rather than starting open and trying to remember what to shut.
 
 ## Making changes safely
 

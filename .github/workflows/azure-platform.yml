@@ -2,7 +2,8 @@ name: Azure Platform
 
 # Infrastructure (infra/main.bicep) and the API (functions/) ship together:
 #   pull request → test, then preview the Azure changes (what-if) in the run summary
-#   merge to main → test, apply the Bicep, deploy the API, check /api/health
+#   merge to main → test, apply the Bicep, migrate the database, deploy the API,
+#                   check /api/health
 #
 # Sign-in is OIDC: GitHub vouches for this run and Azure returns a token that
 # lasts minutes. No password or key is stored; the AZURE_* repo variables are
@@ -22,6 +23,7 @@ on:
       - 'infra/**'
       - 'functions/**'
       - 'ordo/calendar-*.json'
+      - 'db/**'
       - '.github/workflows/azure-platform.yml'
   pull_request:
     branches: [main]
@@ -29,6 +31,7 @@ on:
       - 'infra/**'
       - 'functions/**'
       - 'ordo/calendar-*.json'
+      - 'db/**'
       - '.github/workflows/azure-platform.yml'
   workflow_dispatch: # re-run a deploy by hand (works from main only)
 
@@ -131,6 +134,11 @@ jobs:
           echo "Function app: $app ($host)"
           echo "app=$app" >> "$GITHUB_OUTPUT"
           echo "host=$host" >> "$GITHUB_OUTPUT"
+          for k in sqlServerName sqlServerFqdn sqlDatabaseName funcIdentityName funcIdentityPrincipalId; do
+            v=$(jq -r ".$k.value" <<<"$outputs")
+            test -n "$v" && test "$v" != null
+            echo "$k=$v" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Package the API
         working-directory: functions
@@ -139,6 +147,25 @@ jobs:
           npm run copy-data  # the Ordo calendar files ride along in src/data
           printf '{"commit":"%s","builtAt":"%s"}\n' "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build.json
           zip -qr ../api.zip host.json package.json package-lock.json build.json src node_modules
+
+      # Database changes (db/migrations) go in before the code that relies on
+      # them. Entra sign-in as this deploy identity (a member of the
+      # sql-machina-admins group); the runner's address is let through the SQL
+      # firewall only for this step.
+      - name: Apply database migrations
+        working-directory: functions
+        env:
+          SQL_SERVER: ${{ steps.infra.outputs.sqlServerFqdn }}
+          SQL_SERVER_NAME: ${{ steps.infra.outputs.sqlServerName }}
+          SQL_DATABASE: ${{ steps.infra.outputs.sqlDatabaseName }}
+          SQLVAR_FUNC_IDENTITY_NAME: ${{ steps.infra.outputs.funcIdentityName }}
+          SQLVAR_FUNC_IDENTITY_PRINCIPAL_ID: ${{ steps.infra.outputs.funcIdentityPrincipalId }}
+        run: |
+          ip=$(curl -fsS -m 20 https://api.ipify.org)
+          az sql server firewall-rule create -g "$RESOURCE_GROUP" -s "$SQL_SERVER_NAME" -n ci-migrate \
+            --start-ip-address "$ip" --end-ip-address "$ip" -o none
+          trap 'az sql server firewall-rule delete -g "$RESOURCE_GROUP" -s "$SQL_SERVER_NAME" -n ci-migrate -o none || true' EXIT
+          node scripts/migrate.js | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Deploy the API
         env:

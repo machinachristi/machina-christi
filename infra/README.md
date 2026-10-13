@@ -18,6 +18,8 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Application Insights | `appi-machina` | Requests, failures, timings for the API. Accepts only Entra-signed senders |
 | Application Insights (browser) | `appi-machina-web` | Page views, time on page, script errors, CSP reports. Accepts the public connection string, so it writes to its own workspace: a flood can't touch the API's data |
 | CI identities | `id-machina-github-deploy`, `id-machina-github-preview` | What GitHub Actions signs in as (OIDC). See below |
+| SQL server + database | `sql-machina-<suffix>` / `machina` (free offer, serverless, auto-pause) | Ordo's saints. Entra sign-in only; visitors never query it (see below) |
+| Entra group (by hand) | `sql-machina-admins` | The SQL server's admin: the owner and the deploy identity. Not managed by CI, so CI can't widen its own access |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
 storage and Function app names must be unique across all of Azure.
@@ -60,8 +62,8 @@ Runs when `infra/`, `functions/` or the workflow itself changes:
 
 - **Pull request:** API unit tests, Bicep compile/lint, then a what-if preview
   (as the read-only identity). The preview is in the run's summary page.
-- **Merge to main:** the same tests, then apply `main.bicep`, deploy the API with
-  a build stamp, and wait until `/api/health` reports the new commit. A manual
+- **Merge to main:** the same tests, then apply `main.bicep`, apply any new
+  database migrations, deploy the API with a build stamp, and wait until `/api/health` reports the new commit. A manual
   re-run is available from the Actions tab (on main).
 
 ## API hostname and Cloudflare
@@ -133,6 +135,33 @@ Node.js, Azure Functions v4 programming model. Each file in
   `local.settings.example.json` to `local.settings.json` (git ignores it), then
   `npm install` and `npm start`. The endpoints are at
   `http://localhost:7071/api/health` and `http://localhost:7071/api/season`.
+
+## The database (Azure SQL)
+
+Ordo's saints live in the `machina` database on `sql-machina-<suffix>`, on the
+[free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer):
+100,000 vCore-seconds of compute, 32 GB of data and 32 GB of backups a month.
+
+- **Visitors never query it.** A daily job publishes what the site needs as JSON,
+  so the database sleeps nearly all the time (it pauses after 15 minutes idle;
+  only awake time counts against the allowance).
+- **It can't bill.** When the monthly allowance runs out it pauses until the next
+  month (`freeLimitExhaustionBehavior: AutoPause`), and the site keeps its last
+  published copy.
+- **Region is locked.** The first free database fixes the region (East US 2) for
+  every free database in the subscription.
+- **Sign-in is Entra only**; no SQL passwords exist. The admin is the
+  `sql-machina-admins` group (created by hand: `az ad group create`, members added
+  with `az ad group member add`). The Function app's identity gets a read-only
+  database user from a migration.
+- **Firewall:** "Allow Azure services" (the Function app has no fixed outbound
+  address); the deploy adds its runner's address only while it migrates. Locking
+  this down to the API's own network is planned (AB#73).
+- **Changes** are numbered T-SQL migrations in `db/migrations`, applied by the
+  deploy before the API itself. See `db/README.md` for the rules and for
+  rehearsing a migration (`--dry-run`) before merging.
+- The subscription needed the `Microsoft.Sql` resource provider registered (done
+  by hand once; CI can't register providers).
 
 ## Reading the telemetry (KQL)
 
