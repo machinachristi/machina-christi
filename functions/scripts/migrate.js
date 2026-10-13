@@ -10,13 +10,20 @@
 //
 // --dry-run applies every pending migration inside one transaction and then
 // rolls it all back: a rehearsal against the real database that changes nothing.
+//
+// --bootstrap instead runs db/bootstrap.sql (who may do what in the database).
+// Only a member of sql-machina-admins can; it isn't recorded as a migration.
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 const sql = require('mssql');
 const { listMigrations, splitBatches, substitute, pending } = require('./migrations');
 
-const DIR = path.join(__dirname, '..', '..', 'db', 'migrations');
+const fs = require('node:fs');
+
+const DB = path.join(__dirname, '..', '..', 'db');
+const DIR = path.join(DB, 'migrations');
 const dryRun = process.argv.includes('--dry-run');
+const bootstrap = process.argv.includes('--bootstrap');
 
 function token() {
   if (process.env.SQL_ACCESS_TOKEN) return process.env.SQL_ACCESS_TOKEN;
@@ -58,6 +65,18 @@ async function main() {
   });
 
   try {
+    if (bootstrap) {
+      const text = fs.readFileSync(path.join(DB, 'bootstrap.sql'), 'utf8');
+      for (const b of splitBatches(substitute(text, vars))) await pool.request().batch(b);
+      const users = await pool.request().query(`SELECT p.name, STRING_AGG(r.name, ', ') AS roles
+        FROM sys.database_principals p
+        LEFT JOIN sys.database_role_members m ON m.member_principal_id = p.principal_id
+        LEFT JOIN sys.database_principals r ON r.principal_id = m.role_principal_id
+        WHERE p.type IN ('E', 'X') GROUP BY p.name`);
+      for (const u of users.recordset) console.log(`${u.name}: ${u.roles ?? '(no roles)'}`);
+      return;
+    }
+
     const whole = new sql.Transaction(pool); // one transaction for a dry run
     if (dryRun) await whole.begin();
     const run = () => new sql.Request(dryRun ? whole : pool);

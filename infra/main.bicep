@@ -32,16 +32,6 @@ param logDailyCapGb string = '0.10'
 @description('Daily ingestion cap in GB for the browser\'s workspace (log-machina-web). About 50 MB: hundreds of times today\'s real traffic.')
 param webLogDailyCapGb string = '0.05'
 
-@description('Object ID of the Entra group that administers the SQL server: sql-machina-admins, holding the owner and the GitHub deploy identity. It was created and is managed by hand (not by CI), so CI cannot widen its own database access. Not a secret: it is an identifier.')
-param sqlAdminGroupObjectId string = '73f3ec44-adf7-446c-bc42-02a652fc264d'
-
-@description('Display name of that group.')
-param sqlAdminGroupName string = 'sql-machina-admins'
-
-@description('Minutes of no activity before the database pauses itself (the free offer counts only awake time). 15 is the least Azure allows.')
-@minValue(15)
-param sqlAutoPauseMinutes int = 15
-
 @description('Most Function instances that may run at once. One is plenty for today\'s traffic and caps how fast a flood could use up the free grant; raise it once Cloudflare rate-limits the API.')
 @minValue(1)
 param maxInstances int = 1
@@ -450,67 +440,32 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
 
 // ── Database: Azure SQL, free offer ─────────────────────────────────────────
 //
-// Holds Ordo's saints. Visitors never query it: a daily job publishes what the
-// site needs as JSON, so the database sleeps nearly all the time and the free
-// monthly allowance (100,000 vCore-seconds, about 55 hours awake at 0.5 vCore)
-// is never at risk. If the allowance ever runs out, the database pauses until
-// next month instead of billing; the site keeps its last published copy.
-//
-// Sign-in is Entra only (no SQL passwords exist). The admin is the
-// sql-machina-admins group. Everything else gets a database user created by
-// a migration (db/migrations), e.g. the Function app's identity, read-only.
+// Ordo's saints. The server and database are created by people
+// (bootstrap.bicep → modules/sql.bicep), because a server's settings include
+// who administers it; this file only refers to them and manages the firewall.
+// Visitors never query the database: a job publishes JSON when the data
+// changes, and weekly.
 
-resource sql 'Microsoft.Sql/servers@2023-08-01' = {
-  name: 'sql-machina-${suffix}'
-  location: location
-  tags: tags
-  properties: {
-    version: '12.0'
-    minimalTlsVersion: '1.2'
-    publicNetworkAccess: 'Enabled'
-    administrators: {
-      administratorType: 'ActiveDirectory'
-      azureADOnlyAuthentication: true
-      login: sqlAdminGroupName
-      sid: sqlAdminGroupObjectId
-      principalType: 'Group'
-      tenantId: tenant().tenantId
-    }
-  }
+resource sql 'Microsoft.Sql/servers@2023-08-01' existing = {
+  name: 'sql-machina-cus-${suffix}'
+}
+
+resource sqlDb 'Microsoft.Sql/servers/databases@2023-08-01' existing = {
+  parent: sql
+  name: 'machina'
 }
 
 // The Function app (Flex Consumption) has no fixed outbound address, so
 // connections from inside Azure are allowed through the firewall; Entra-only
 // sign-in still turns away anyone without a database user. The deploy adds
 // its runner's own address for the length of a migration and removes it.
+// Locking this to the API's own network is planned (AB#73).
 resource sqlAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
   parent: sql
   name: 'AllowAllWindowsAzureIps'
   properties: {
     startIpAddress: '0.0.0.0'
     endIpAddress: '0.0.0.0'
-  }
-}
-
-resource sqlDb 'Microsoft.Sql/servers/databases@2023-08-01' = {
-  parent: sql
-  name: 'machina'
-  location: location
-  tags: tags
-  sku: {
-    name: 'GP_S_Gen5_2'
-    tier: 'GeneralPurpose'
-    family: 'Gen5'
-    capacity: 2
-  }
-  properties: {
-    useFreeLimit: true
-    freeLimitExhaustionBehavior: 'AutoPause'
-    autoPauseDelay: sqlAutoPauseMinutes
-    minCapacity: json('0.5')
-    maxSizeBytes: 34359738368 // 32 GB, the free limit
-    zoneRedundant: false
-    requestedBackupStorageRedundancy: 'Local'
   }
 }
 
