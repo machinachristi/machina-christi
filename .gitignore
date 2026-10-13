@@ -12,6 +12,10 @@ node_modules/
 functions/build.json
 functions/local.settings.json
 
+# The API's copy of ordo/calendar-*.json (functions/scripts/copy-calendar.js);
+# the ordo/ files are the one source of truth
+functions/src/data/
+
 # Playwright output
 playwright-report/
 test-results/

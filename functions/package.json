@@ -5,7 +5,11 @@
   "description": "Machina Christi API: Azure Functions, Node.js v4 programming model",
   "main": "src/functions/*.js",
   "scripts": {
-    "test": "node --test"
+    "copy-data": "node scripts/copy-calendar.js",
+    "pretest": "npm run copy-data",
+    "test": "node --test",
+    "prestart": "npm run copy-data",
+    "start": "func start"
   },
   "engines": {
     "node": ">=22"

@@ -21,12 +21,14 @@ on:
     paths:
       - 'infra/**'
       - 'functions/**'
+      - 'ordo/calendar-*.json'
       - '.github/workflows/azure-platform.yml'
   pull_request:
     branches: [main]
     paths:
       - 'infra/**'
       - 'functions/**'
+      - 'ordo/calendar-*.json'
       - '.github/workflows/azure-platform.yml'
   workflow_dispatch: # re-run a deploy by hand (works from main only)
 
@@ -134,6 +136,7 @@ jobs:
         working-directory: functions
         run: |
           npm ci --omit=dev --no-audit --no-fund
+          npm run copy-data  # the Ordo calendar files ride along in src/data
           printf '{"commit":"%s","builtAt":"%s"}\n' "${GITHUB_SHA::7}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build.json
           zip -qr ../api.zip host.json package.json package-lock.json build.json src node_modules
 

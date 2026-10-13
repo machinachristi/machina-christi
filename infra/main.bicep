@@ -171,6 +171,13 @@ var apiQueries = [
     displayName: 'Health endpoint: calls per hour and speed'
     query: 'AppRequests\n| where Name == "health"\n| summarize Calls = count(), AvgMs = round(avg(DurationMs), 1), MaxMs = max(DurationMs) by bin(TimeGenerated, 1h)\n| order by TimeGenerated desc'
   }
+  {
+    // Every row here is a visit Cloudflare could NOT answer from its cache: the
+    // fewer origin calls per date asked, the better the edge is doing its job.
+    name: 'season-origin-hits'
+    displayName: 'Season API: calls that reached Azure, per day and date asked'
+    query: 'AppRequests\n| where TimeGenerated > ago(7d) and Name == "season"\n| extend Asked = coalesce(extract(@"[?&]date=([0-9-]+)", 1, Url), "(today)")\n| summarize OriginCalls = count(), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1) by Day = bin(TimeGenerated, 1d), Asked\n| order by Day desc, OriginCalls desc'
+  }
   allowanceQuery
 ]
 
