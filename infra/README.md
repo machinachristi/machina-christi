@@ -143,7 +143,7 @@ The starter queries are defined in `main.bicep`:
 - API requests by endpoint, last 24 hours
 - API failures and exceptions, last 7 days
 - Health endpoint: calls per hour and speed
-- Season API: calls that reached Azure, per day and date asked (few calls = Cloudflare is caching well)
+- Season API: calls that reached Azure, per day (few calls = Cloudflare is caching well; Azure logs URLs without the `?date=` part, so dates asked aren't recorded)
 - Free allowance watch: GB ingested this month, by table
 - Site: page views, referrers, countries, time on page, CSP reports, script errors
 
