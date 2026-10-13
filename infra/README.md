@@ -18,8 +18,8 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Application Insights | `appi-machina` | Requests, failures, timings for the API. Accepts only Entra-signed senders |
 | Application Insights (browser) | `appi-machina-web` | Page views, time on page, script errors, CSP reports. Accepts the public connection string, so it writes to its own workspace: a flood can't touch the API's data |
 | CI identities | `id-machina-github-deploy`, `id-machina-github-preview` | What GitHub Actions signs in as (OIDC). See below |
-| SQL server + database | `sql-machina-<suffix>` / `machina` (free offer, serverless, auto-pause) | Ordo's saints. Entra sign-in only; visitors never query it (see below) |
-| Entra group (by hand) | `sql-machina-admins` | The SQL server's admin: the owner and the deploy identity. Not managed by CI, so CI can't widen its own access |
+| SQL server + database | `sql-machina-cus-<suffix>` / `machina` (Central US; free offer, serverless, auto-pause) | Ordo's saints. Entra sign-in only; visitors never query it (see below) |
+| Entra group (by hand) | `sql-machina-admins` | The SQL server's admin: people only (the owner) |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
 storage and Function app names must be unique across all of Azure.
@@ -27,8 +27,10 @@ storage and Function app names must be unique across all of Azure.
 ## Two files, two levels of trust
 
 - **`bootstrap.bicep`** (subscription scope): both resource groups, the budget,
-  and CI's identities with their permissions. A person deploys it by hand, once,
-  and again only when one of those changes.
+  CI's identities with their permissions, and the SQL server and database
+  (`modules/sql.bicep`, because a server's settings include who administers it).
+  A person deploys it by hand, once, and again only when one of those changes.
+  Its budget-alert address is passed at deploy time and never committed.
 - **`main.bicep`** (resource group scope): the platform. GitHub Actions applies it
   on every merge to main.
 
@@ -36,7 +38,7 @@ GitHub Actions signs in with OIDC (no stored secret) as one of two identities:
 
 | Identity | Who may use it | What it may do in `rg-machina-platform` |
 |---|---|---|
-| `id-machina-github-deploy` | Runs on `main` only | **Contributor**, plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included) |
+| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases), plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
 | `id-machina-github-preview` | Pull request runs | **Reader** plus a custom **What-If Runner** role: it can preview changes and change nothing |
 
 Why it's built this way:
@@ -138,22 +140,37 @@ Node.js, Azure Functions v4 programming model. Each file in
 
 ## The database (Azure SQL)
 
-Ordo's saints live in the `machina` database on `sql-machina-<suffix>`, on the
-[free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer):
+Ordo's saints live in the `machina` database on `sql-machina-cus-<suffix>`, on
+the [free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer):
 100,000 vCore-seconds of compute, 32 GB of data and 32 GB of backups a month.
 
-- **Visitors never query it.** A daily job publishes what the site needs as JSON,
-  so the database sleeps nearly all the time (it pauses after 15 minutes idle;
-  only awake time counts against the allowance).
+- **Visitors never query it.** A job publishes what the site needs as JSON when
+  the data changes, and weekly as a safety net. The database pauses after 60
+  minutes idle (a free-offer database that auto-pauses at the allowance's end
+  must keep Azure's default delay), so each wake costs at least 1,800
+  vCore-seconds: roughly 5–8 wakes a month stays well inside the allowance.
 - **It can't bill.** When the monthly allowance runs out it pauses until the next
   month (`freeLimitExhaustionBehavior: AutoPause`), and the site keeps its last
   published copy.
-- **Region is locked.** The first free database fixes the region (East US 2) for
-  every free database in the subscription.
-- **Sign-in is Entra only**; no SQL passwords exist. The admin is the
-  `sql-machina-admins` group (created by hand: `az ad group create`, members added
-  with `az ad group member add`). The Function app's identity gets a read-only
-  database user from a migration.
+- **Region: Central US**, unlike the rest of the platform. SQL provisioning is
+  restricted for this subscription in East US 2, East US and North Central US.
+  Check a region before using it:
+  `az rest --method get --url "https://management.azure.com/subscriptions/<sub>/providers/Microsoft.Sql/locations/<region>/capabilities?api-version=2023-08-01" --query "{status:status,reason:reason}"`.
+  The first free database fixes the region for all free databases in the
+  subscription. (The failed East US 2 attempt left the name
+  `sql-machina-<suffix>` reserved there, hence `-cus-`.)
+- **People own the server; CI works inside one room.**
+  - The server and database are created by `bootstrap.bicep`, by hand, because a
+    server's settings include who administers it and Azure can't let CI change
+    one without the other. CI's role, *Machina Deployer*, may not write or delete
+    SQL servers or databases (so it can't change the admin or switch the free
+    database to billing). It may open and close SQL firewall rules.
+  - Sign-in is Entra only; no SQL passwords exist. The server's admin is the
+    `sql-machina-admins` group: people only (created with `az ad group create`).
+  - Inside the database, `db/bootstrap.sql` (run once by an admin:
+    `node scripts/migrate.js --bootstrap`) gives the deploy identity tables and
+    data only (`db_ddladmin`, `db_datareader`, `db_datawriter`), and the Function
+    app's identity read-only access (`api_reader`: `SELECT` on schema `dbo`).
 - **Firewall:** "Allow Azure services" (the Function app has no fixed outbound
   address); the deploy adds its runner's address only while it migrates. Locking
   this down to the API's own network is planned (AB#73).

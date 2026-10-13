@@ -1,6 +1,8 @@
 // What GitHub Actions may do in the platform resource group.
 //
-//   deploy  - Contributor: create and change resources here.
+//   deploy  - Machina Deployer: Contributor, except SQL servers and databases,
+//             which people manage (bootstrap.bicep). Create and change the
+//             rest of the platform.
 //           - Role Based Access Control Administrator, with a condition: it may
 //             grant (or remove) only the roles in platform-roles.json, and only
 //             for service principals (managed identities are service
@@ -17,12 +19,12 @@ targetScope = 'resourceGroup'
 param deployPrincipalId string
 param previewPrincipalId string
 param whatIfRoleId string
+param deployRoleId string
 
 // CI may never grant data roles to its own identities.
 var ciPrincipalIds = '${deployPrincipalId}, ${previewPrincipalId}'
 
 var builtInRoles = {
-  contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
   rbacAdministrator: 'f58310d9-a9f6-439a-9e8d-f62e7b41a168'
   reader: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
 }
@@ -63,8 +65,8 @@ AND
 var assignments = [
   {
     principalId: deployPrincipalId
-    roleId: builtInRoles.contributor
-    description: 'GitHub Actions (main): deploy the platform'
+    roleId: deployRoleId
+    description: 'GitHub Actions (main): deploy the platform (not SQL servers or databases)'
     condition: null
   }
   {

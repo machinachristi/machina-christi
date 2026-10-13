@@ -30,6 +30,15 @@ param budgetStartDate string = '2026-10-01'
 @description('GitHub repository (owner/name) whose workflows may sign in to Azure.')
 param githubRepo string = 'machinachristi/machina-christi'
 
+@description('Region for the SQL server and database. Not the platform\'s region: SQL provisioning is restricted for this subscription in East US 2 (checked 2026-10-13 with the Microsoft.Sql/locations/<region>/capabilities API).')
+param sqlLocation string = 'centralus'
+
+@description('Object ID of the Entra group that administers the SQL server: sql-machina-admins, people only, managed by hand.')
+param sqlAdminGroupObjectId string = '73f3ec44-adf7-446c-bc42-02a652fc264d'
+
+@description('Display name of that group.')
+param sqlAdminGroupName string = 'sql-machina-admins'
+
 var tags = {
   project: 'machina-christi'
   managedBy: 'bicep'
@@ -110,6 +119,62 @@ resource whatIfRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
+// CI's deploy role: Contributor, less SQL servers and databases. A server's
+// settings include who administers it and Azure can't separate the two, so
+// CI may not write (or delete) servers or databases; people do that here.
+// CI may still open and close SQL firewall rules for its migrations. The
+// first list is Contributor's own exclusions, kept identical.
+resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(subscription().id, 'machina-deployer')
+  properties: {
+    roleName: 'Machina Deployer'
+    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases (their admins and billing settings stay with people).'
+    type: 'CustomRole'
+    permissions: [
+      {
+        actions: [
+          '*'
+        ]
+        notActions: [
+          'Microsoft.Authorization/*/Delete'
+          'Microsoft.Authorization/*/Write'
+          'Microsoft.Authorization/elevateAccess/Action'
+          'Microsoft.Blueprint/blueprintAssignments/write'
+          'Microsoft.Blueprint/blueprintAssignments/delete'
+          'Microsoft.Compute/galleries/share/action'
+          'Microsoft.Purview/consents/write'
+          'Microsoft.Purview/consents/delete'
+          'Microsoft.Resources/deploymentStacks/manageDenySetting/action'
+          'Microsoft.Subscription/cancel/action'
+          'Microsoft.Subscription/enable/action'
+          // the SQL server, its admins and sign-in rules, and the database
+          // (whose settings include what happens when the free allowance ends)
+          'Microsoft.Sql/servers/write'
+          'Microsoft.Sql/servers/delete'
+          'Microsoft.Sql/servers/administrators/*'
+          'Microsoft.Sql/servers/azureADOnlyAuthentications/*'
+          'Microsoft.Sql/servers/databases/write'
+          'Microsoft.Sql/servers/databases/delete'
+        ]
+      }
+    ]
+    assignableScopes: [
+      platformRg.id
+    ]
+  }
+}
+
+module sql 'modules/sql.bicep' = {
+  scope: platformRg
+  name: 'sql'
+  params: {
+    location: sqlLocation
+    adminGroupObjectId: sqlAdminGroupObjectId
+    adminGroupName: sqlAdminGroupName
+    tags: tags
+  }
+}
+
 module identities 'modules/ci-identities.bicep' = {
   scope: ciRg
   name: 'ci-identities'
@@ -127,6 +192,7 @@ module access 'modules/ci-access.bicep' = {
     deployPrincipalId: identities.outputs.deployPrincipalId
     previewPrincipalId: identities.outputs.previewPrincipalId
     whatIfRoleId: whatIfRole.name
+    deployRoleId: deployerRole.name
   }
 }
 
@@ -137,3 +203,5 @@ output deployClientId string = identities.outputs.deployClientId
 output previewClientId string = identities.outputs.previewClientId
 output tenantId string = tenant().tenantId
 output subscriptionId string = subscription().subscriptionId
+output sqlServerName string = sql.outputs.serverName
+output sqlDatabaseName string = sql.outputs.databaseName
