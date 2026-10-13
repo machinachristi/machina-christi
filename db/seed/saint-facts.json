@@ -1,0 +1,2825 @@
+{
+ "_about": "Facts about Ordo's saints from Wikidata (public domain, CC0). Each person links to the Wikidata item the facts came from. Made by scripts/fetch-saint-facts.mjs; do not edit by hand (pin items in saint-facts-overrides.json instead).",
+ "Achilleus the Martyr": {
+  "wikidata": "Q721711",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q721711",
+  "label": "Nereus and Achilleus",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 290,
+   "precision": "century"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Agatha of Sicily": {
+  "wikidata": "Q200895",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q200895",
+  "label": "Agatha of Sicily",
+  "matched_by": "Wikipedia search, article \"Agatha of Sicily\"",
+  "death": {
+   "year": 261,
+   "precision": "day",
+   "date": "0261-02-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Agnes of Rome": {
+  "wikidata": "Q210096",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q210096",
+  "label": "Agnes of Rome",
+  "matched_by": "Wikipedia search, article \"Agnes of Rome\"",
+  "death": {
+   "year": 304,
+   "precision": "day",
+   "date": "0304-01-21"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Albert the Great": {
+  "wikidata": "Q60059",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q60059",
+  "label": "Albertus Magnus",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 1280,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Aloysius Gonzaga": {
+  "wikidata": "Q310307",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q310307",
+  "label": "Aloysius Gonzaga",
+  "matched_by": "Wikipedia search, article \"Aloysius Gonzaga\"",
+  "death": {
+   "year": 1591,
+   "precision": "day",
+   "date": "1591-06-21"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Alphonsus Mary Liguori": {
+  "wikidata": "Q273334",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q273334",
+  "label": "Alphonsus Maria de Liguori",
+  "matched_by": "Wikipedia search, article \"Alphonsus Liguori\"",
+  "death": {
+   "year": 1787,
+   "precision": "day",
+   "date": "1787-08-01"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Ambrose of Milan": {
+  "wikidata": "Q43689",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43689",
+  "label": "Ambrose",
+  "matched_by": "Wikipedia search, article \"Ambrose\"",
+  "death": {
+   "year": 397,
+   "precision": "day",
+   "date": "0397-04-04"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q852389",
+    "label": "beekeeper"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Andrew Dũng-Lạc": {
+  "wikidata": "Q496924",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q496924",
+  "label": "Andrew Dung-Lac",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Andrew_Dũng-Lạc)",
+  "death": {
+   "year": 1839,
+   "precision": "day",
+   "date": "1839-12-21"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Andrew Kim Tae-gŏn": {
+  "wikidata": "Q343569",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q343569",
+  "label": "Andrew Kim Taegon",
+  "matched_by": "Wikipedia search, article \"Andrew Kim Taegon\"",
+  "death": {
+   "year": 1846,
+   "precision": "day",
+   "date": "1846-09-16"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Andrew the Apostle": {
+  "wikidata": "Q43399",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43399",
+  "label": "Andrew the Apostle",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 60,
+   "precision": "day",
+   "date": "0060-11-30"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q159",
+    "label": "Russia"
+   },
+   {
+    "wikidata": "Q583941",
+    "label": "Imperial Russian Navy"
+   },
+   {
+    "wikidata": "Q465283",
+    "label": "Russian Navy"
+   },
+   {
+    "wikidata": "Q180538",
+    "label": "fishery"
+   },
+   {
+    "wikidata": "Q349613",
+    "label": "sea shipping"
+   },
+   {
+    "wikidata": "Q22",
+    "label": "Scotland"
+   },
+   {
+    "wikidata": "Q41",
+    "label": "Greece"
+   },
+   {
+    "wikidata": "Q218",
+    "label": "Romania"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Angela Merici": {
+  "wikidata": "Q236216",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q236216",
+  "label": "Angela Merici",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Angela_Merici)",
+  "death": {
+   "year": 1540,
+   "precision": "day",
+   "date": "1540-01-27"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Anne, mother of Mary": {
+  "wikidata": "Q164294",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q164294",
+  "label": "Saint Anne",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 12,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Anselm of Canterbury": {
+  "wikidata": "Q43939",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43939",
+  "label": "Anselm of Canterbury",
+  "matched_by": "Wikipedia search, article \"Anselm of Canterbury\"",
+  "death": {
+   "year": 1109,
+   "precision": "day",
+   "date": "1109-04-21"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Anthony Mary Claret": {
+  "wikidata": "Q162973",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q162973",
+  "label": "Anthony Mary Claret",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Anthony_Mary_Claret)",
+  "death": {
+   "year": 1870,
+   "precision": "day",
+   "date": "1870-10-24"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Anthony Zaccaria": {
+  "wikidata": "Q380099",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q380099",
+  "label": "Anthony Maria Zaccaria",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Anthony_Mary_Zaccaria)",
+  "death": {
+   "year": 1539,
+   "precision": "day",
+   "date": "1539-07-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Anthony the Great": {
+  "wikidata": "Q170547",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q170547",
+  "label": "Anthony the Great",
+  "matched_by": "Wikipedia search, article \"Anthony the Great\"",
+  "death": {
+   "year": 357,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Apollinaris of Ravenna": {
+  "wikidata": "Q320199",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q320199",
+  "label": "Apollinaris of Ravenna",
+  "matched_by": "Wikipedia search, article \"Apollinaris of Ravenna\"",
+  "death": {
+   "year": 75,
+   "precision": "day",
+   "date": "0075-07-23"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Athanasius of Alexandria": {
+  "wikidata": "Q44024",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44024",
+  "label": "Athanasius of Alexandria",
+  "matched_by": "Wikipedia search, article \"Athanasius of Alexandria\"",
+  "death": {
+   "year": 373,
+   "precision": "day",
+   "date": "0373-05-02"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Augustine Zhao Rong": {
+  "wikidata": "Q552659",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q552659",
+  "label": "Augustinus Zhao Rong",
+  "matched_by": "Wikipedia search, article \"Augustine Zhao Rong\"",
+  "death": {
+   "year": 1815,
+   "precision": "day",
+   "date": "1815-01-21"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Augustine of Canterbury": {
+  "wikidata": "Q32520",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q32520",
+  "label": "Augustine of Canterbury",
+  "matched_by": "Wikipedia search, article \"Augustine of Canterbury\"",
+  "death": {
+   "year": 605,
+   "precision": "decade"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Augustine of Hippo": {
+  "wikidata": "Q8018",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q8018",
+  "label": "Augustine of Hippo",
+  "matched_by": "Wikipedia search, article \"Augustine of Hippo\"",
+  "death": {
+   "year": 430,
+   "precision": "day",
+   "date": "0430-08-28"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Barnabas the Apostle": {
+  "wikidata": "Q185856",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q185856",
+  "label": "Barnabas",
+  "matched_by": "Wikipedia search, article \"Barnabas\"",
+  "death": {
+   "year": 61,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Bartholomew the Apostle": {
+  "wikidata": "Q43982",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43982",
+  "label": "Bartholomew the Apostle",
+  "matched_by": "Wikipedia search, article \"Bartholomew the Apostle\"",
+  "death": {
+   "year": 100,
+   "precision": "century"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q3689045",
+    "label": "Contrada Sovrana dell'Istrice"
+   },
+   {
+    "wikidata": "Q1365005",
+    "label": "Roman Catholic Archdiocese of Messina-Lipari-Santa Lucia del Mela"
+   },
+   {
+    "wikidata": "Q742057",
+    "label": "Roman Catholic Diocese of Patti"
+   },
+   {
+    "wikidata": "Q209614",
+    "label": "Roman Catholic Archdiocese of Campobasso–Boiano"
+   },
+   {
+    "wikidata": "Q1267695",
+    "label": "Roman Catholic Archdiocese of Benevento"
+   },
+   {
+    "wikidata": "Q179883",
+    "label": "Aeolian Islands"
+   },
+   {
+    "wikidata": "Q399",
+    "label": "Armenia"
+   },
+   {
+    "wikidata": "Q52063",
+    "label": "Anghiari"
+   },
+   {
+    "wikidata": "Q241758",
+    "label": "Arsoli"
+   },
+   {
+    "wikidata": "Q47125",
+    "label": "Avezzano"
+   },
+   {
+    "wikidata": "Q2610850",
+    "label": "Capezzano"
+   },
+   {
+    "wikidata": "Q51351",
+    "label": "Carpineto della Nora"
+   },
+   {
+    "wikidata": "Q152355",
+    "label": "cobbler"
+   },
+   {
+    "wikidata": "Q329737",
+    "label": "butcher"
+   },
+   {
+    "wikidata": "Q242468",
+    "label": "tailor"
+   },
+   {
+    "wikidata": "Q1794",
+    "label": "Frankfurt"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Basil the Great": {
+  "wikidata": "Q44258",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44258",
+  "label": "Basil of Caesarea",
+  "matched_by": "Wikipedia search, article \"Basil of Caesarea\"",
+  "death": {
+   "year": 379,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Bede the Venerable": {
+  "wikidata": "Q154938",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q154938",
+  "label": "Bede",
+  "matched_by": "Wikipedia search, article \"Bede\"",
+  "death": {
+   "year": 735,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Benedict of Nursia": {
+  "wikidata": "Q44265",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44265",
+  "label": "Benedict of Nursia",
+  "matched_by": "Wikipedia search, article \"Benedict of Nursia\"",
+  "death": {
+   "year": 547,
+   "precision": "day",
+   "date": "0547-03-23"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Bernard of Clairvaux": {
+  "wikidata": "Q188411",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q188411",
+  "label": "Bernard of Clairvaux",
+  "matched_by": "Wikipedia search, article \"Bernard of Clairvaux\"",
+  "death": {
+   "year": 1153,
+   "precision": "day",
+   "date": "1153-08-20"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Bernardine of Siena": {
+  "wikidata": "Q316295",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q316295",
+  "label": "Bernardino of Siena",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Bernardino_of_Siena)",
+  "death": {
+   "year": 1444,
+   "precision": "day",
+   "date": "1444-05-20"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Blaise of Sebaste": {
+  "wikidata": "Q151967",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q151967",
+  "label": "Blaise of Sebaste",
+  "matched_by": "Wikipedia search, article \"Saint Blaise\"",
+  "death": {
+   "year": 316,
+   "precision": "year"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q16364",
+    "label": "throat"
+   },
+   {
+    "wikidata": "Q2854916",
+    "label": "otolaryngologist"
+   },
+   {
+    "wikidata": "Q1524582",
+    "label": "rancher"
+   },
+   {
+    "wikidata": "Q25450409",
+    "label": "agricultural activity"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Bonaventure": {
+  "wikidata": "Q43746",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43746",
+  "label": "Bonaventure",
+  "matched_by": "Wikipedia search, article \"Bonaventure\"",
+  "death": {
+   "year": 1274,
+   "precision": "day",
+   "date": "1274-07-15"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q56409126",
+    "label": "Cochiti Pueblo"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Boniface of Mainz": {
+  "wikidata": "Q160445",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q160445",
+  "label": "Saint Boniface",
+  "matched_by": "Wikipedia search, article \"Saint Boniface\"",
+  "death": {
+   "year": 754,
+   "precision": "day",
+   "date": "0754-06-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Bridget of Sweden": {
+  "wikidata": "Q204996",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q204996",
+  "label": "Bridget of Sweden",
+  "matched_by": "Wikipedia search, article \"Bridget of Sweden\"",
+  "death": {
+   "year": 1373,
+   "precision": "day",
+   "date": "1373-07-23"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q46",
+    "label": "Europe"
+   },
+   {
+    "wikidata": "Q34",
+    "label": "Sweden"
+   },
+   {
+    "wikidata": "Q179115",
+    "label": "widow"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Bruno of Cologne": {
+  "wikidata": "Q312314",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q312314",
+  "label": "Bruno of Cologne",
+  "matched_by": "Wikipedia search, article \"Bruno of Cologne\"",
+  "death": {
+   "year": 1101,
+   "precision": "day",
+   "date": "1101-10-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Callistus I": {
+  "wikidata": "Q122376",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q122376",
+  "label": "Callixtus I",
+  "matched_by": "Wikipedia search, article \"Pope Callixtus I\"",
+  "death": {
+   "year": 222,
+   "precision": "day",
+   "date": "0222-09-18"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Camillus de Lellis": {
+  "wikidata": "Q332656",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q332656",
+  "label": "Camillus de Lellis",
+  "matched_by": "Wikipedia search, article \"Camillus de Lellis\"",
+  "death": {
+   "year": 1614,
+   "precision": "day",
+   "date": "1614-07-14"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Casimir of Poland": {
+  "wikidata": "Q312057",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q312057",
+  "label": "Saint Casimir",
+  "matched_by": "Wikipedia search, article \"Saint Casimir\"",
+  "death": {
+   "year": 1484,
+   "precision": "day",
+   "date": "1484-03-04"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Catherine of Alexandria": {
+  "wikidata": "Q179718",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q179718",
+  "label": "Catherine of Alexandria",
+  "matched_by": "Wikipedia search, article \"Catherine of Alexandria\"",
+  "death": {
+   "year": 305,
+   "precision": "year"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q48256",
+    "label": "Dnipro"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Catherine of Siena": {
+  "wikidata": "Q229190",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q229190",
+  "label": "Catherine of Siena",
+  "matched_by": "Wikipedia search, article \"Catherine of Siena\"",
+  "death": {
+   "year": 1380,
+   "precision": "day",
+   "date": "1380-04-29"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q38",
+    "label": "Italy"
+   },
+   {
+    "wikidata": "Q46",
+    "label": "Europe"
+   },
+   {
+    "wikidata": "Q3877600",
+    "label": "Nobile Contrada dell'Oca"
+   },
+   {
+    "wikidata": "Q3689047",
+    "label": "Contrada del Drago"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Cecilia of Rome": {
+  "wikidata": "Q80513",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q80513",
+  "label": "Saint Cecilia",
+  "matched_by": "Wikipedia search, article \"Cecilia of Rome\"",
+  "death": {
+   "year": 230,
+   "precision": "day",
+   "date": "0230-11-22"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q639669",
+    "label": "musician"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Charbel Makhlouf": {
+  "wikidata": "Q331876",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q331876",
+  "label": "Charbel Makhluf",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Sharbel_Makhluf)",
+  "death": {
+   "year": 1898,
+   "precision": "day",
+   "date": "1898-12-24"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Charles Borromeo": {
+  "wikidata": "Q216946",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q216946",
+  "label": "Charles Borromeo",
+  "matched_by": "Wikipedia search, article \"Charles Borromeo\"",
+  "death": {
+   "year": 1584,
+   "precision": "day",
+   "date": "1584-11-03"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q808384",
+    "label": "Sisters of Mercy of St. Borromeo"
+   },
+   {
+    "wikidata": "Q1210",
+    "label": "Lombardy"
+   },
+   {
+    "wikidata": "Q38",
+    "label": "Italy"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Charles Lwanga": {
+  "wikidata": "Q560121",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q560121",
+  "label": "Karoli Lwanga",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Charles_Lwanga)",
+  "death": {
+   "year": 1886,
+   "precision": "day",
+   "date": "1886-06-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Christopher Magallanes": {
+  "wikidata": "Q1152723",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q1152723",
+  "label": "Cristóbal Magallanes Jara",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Cristóbal_Magallanes_Jara)",
+  "death": {
+   "year": 1927,
+   "precision": "day",
+   "date": "1927-05-25"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Clare of Assisi": {
+  "wikidata": "Q191107",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q191107",
+  "label": "Clare of Assisi",
+  "matched_by": "Wikipedia search, article \"Clare of Assisi\"",
+  "death": {
+   "year": 1253,
+   "precision": "day",
+   "date": "1253-08-11"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q3041498",
+    "label": "eye disease"
+   },
+   {
+    "wikidata": "Q211423",
+    "label": "goldsmith"
+   },
+   {
+    "wikidata": "Q54599",
+    "label": "Obando"
+   },
+   {
+    "wikidata": "Q1554220",
+    "label": "Santa Clara Pueblo"
+   },
+   {
+    "wikidata": "Q28966333",
+    "label": "needleworker"
+   },
+   {
+    "wikidata": "Q281795",
+    "label": "gilder"
+   },
+   {
+    "wikidata": "Q1509440",
+    "label": "embroiderer"
+   },
+   {
+    "wikidata": "Q289",
+    "label": "television"
+   },
+   {
+    "wikidata": "Q852100",
+    "label": "laundry"
+   },
+   {
+    "wikidata": "Q733658",
+    "label": "Poor Clares"
+   },
+   {
+    "wikidata": "Q20103",
+    "label": "Assisi"
+   },
+   {
+    "wikidata": "Q2044",
+    "label": "Florence"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Clement I": {
+  "wikidata": "Q42887",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q42887",
+  "label": "Clement",
+  "matched_by": "Wikipedia search, article \"Clement of Rome\"",
+  "death": {
+   "year": 99,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Cosmas the Physician": {
+  "wikidata": "Q76486",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q76486",
+  "label": "Saints Cosmas and Damian",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [
+   {
+    "wikidata": "Q170022",
+    "label": "House of Medici"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Cyprian of Carthage": {
+  "wikidata": "Q190240",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q190240",
+  "label": "Cyprian",
+  "matched_by": "Wikipedia search, article \"Cyprian\"",
+  "death": {
+   "year": 258,
+   "precision": "day",
+   "date": "0258-09-14"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Cyril of Alexandria": {
+  "wikidata": "Q44079",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44079",
+  "label": "Cyril of Alexandria",
+  "matched_by": "Wikipedia search, article \"Cyril of Alexandria\"",
+  "death": {
+   "year": 444,
+   "precision": "day",
+   "date": "0444-06-27"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Cyril of Jerusalem": {
+  "wikidata": "Q298654",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q298654",
+  "label": "Cyril of Jerusalem",
+  "matched_by": "Wikipedia search, article \"Cyril of Jerusalem\"",
+  "death": {
+   "year": 386,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Cyril the Philosopher": {
+  "wikidata": "Q44079",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44079",
+  "label": "Cyril of Alexandria",
+  "matched_by": "Wikipedia search, article \"Cyril of Alexandria\"",
+  "death": {
+   "year": 444,
+   "precision": "day",
+   "date": "0444-06-27"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Damasus I": {
+  "wikidata": "Q130997",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q130997",
+  "label": "Damasus I",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Pope_Damasus_I)",
+  "death": {
+   "year": 384,
+   "precision": "day",
+   "date": "0384-12-11"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Damian the Physician": {
+  "wikidata": "Q76486",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q76486",
+  "label": "Saints Cosmas and Damian",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [
+   {
+    "wikidata": "Q170022",
+    "label": "House of Medici"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Denis of Paris": {
+  "wikidata": "Q244380",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q244380",
+  "label": "Denis of Paris",
+  "matched_by": "Wikipedia search, article \"Denis of Paris\"",
+  "death": {
+   "year": 250,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Dominic de Guzmán": {
+  "wikidata": "Q44091",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44091",
+  "label": "Saint Dominic",
+  "matched_by": "Wikipedia search, article \"Dominic de Guzmán\"",
+  "death": {
+   "year": 1221,
+   "precision": "day",
+   "date": "1221-08-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Elizabeth of Hungary": {
+  "wikidata": "Q159862",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q159862",
+  "label": "Elizabeth of Hungary",
+  "matched_by": "Wikipedia search, article \"Elizabeth of Hungary\"",
+  "death": {
+   "year": 1231,
+   "precision": "day",
+   "date": "1231-11-17"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Elizabeth of Portugal": {
+  "wikidata": "Q235857",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q235857",
+  "label": "Elizabeth of Aragon",
+  "matched_by": "Wikipedia search, article \"Elizabeth of Portugal\"",
+  "death": {
+   "year": 1336,
+   "precision": "day",
+   "date": "1336-07-04"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Ephrem the Syrian": {
+  "wikidata": "Q200608",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q200608",
+  "label": "Ephrem the Syrian",
+  "matched_by": "Wikipedia search, article \"Ephrem the Syrian\"",
+  "death": {
+   "year": 373,
+   "precision": "day",
+   "date": "0373-06-09"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Eusebius of Vercelli": {
+  "wikidata": "Q181489",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q181489",
+  "label": "Eusebius of Vercelli",
+  "matched_by": "Wikipedia search, article \"Eusebius of Vercelli\"",
+  "death": {
+   "year": 371,
+   "precision": "day",
+   "date": "0371-08-01"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Fabian": {
+  "wikidata": "Q131159",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q131159",
+  "label": "Fabian",
+  "matched_by": "Wikipedia search, article \"Pope Fabian\"",
+  "death": {
+   "year": 250,
+   "precision": "day",
+   "date": "0250-01-20"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Faustina Kowalska": {
+  "wikidata": "Q18978",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q18978",
+  "label": "Santa Faustina Kowalska",
+  "matched_by": "Wikipedia search, article \"Faustina Kowalska\"",
+  "death": {
+   "year": 1938,
+   "precision": "day",
+   "date": "1938-10-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Felicity of Carthage": {
+  "wikidata": "Q771956",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q771956",
+  "label": "Perpetua and Felicity",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 203,
+   "precision": "day",
+   "date": "0203-03-07"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Fidelis of Sigmaringen": {
+  "wikidata": "Q470613",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q470613",
+  "label": "Fidelis of Sigmaringen",
+  "matched_by": "Wikipedia search, article \"Fidelis of Sigmaringen\"",
+  "death": {
+   "year": 1622,
+   "precision": "day",
+   "date": "1622-04-24"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Frances of Rome": {
+  "wikidata": "Q239129",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q239129",
+  "label": "Frances of Rome",
+  "matched_by": "Wikipedia search, article \"Frances of Rome\"",
+  "death": {
+   "year": 1440,
+   "precision": "day",
+   "date": "1440-03-09"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Francis Xavier": {
+  "wikidata": "Q163900",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q163900",
+  "label": "Francis Xavier",
+  "matched_by": "Wikipedia search, article \"Francis Xavier\"",
+  "death": {
+   "year": 1552,
+   "precision": "day",
+   "date": "1552-12-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Francis de Sales": {
+  "wikidata": "Q231256",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q231256",
+  "label": "Francis de Sales",
+  "matched_by": "Wikipedia search, article \"Francis de Sales\"",
+  "death": {
+   "year": 1622,
+   "precision": "day",
+   "date": "1622-12-28"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Francis of Assisi": {
+  "wikidata": "Q676555",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q676555",
+  "label": "Francis of Assisi",
+  "matched_by": "Wikipedia search, article \"Francis of Assisi\"",
+  "death": {
+   "year": 1226,
+   "precision": "day",
+   "date": "1226-10-03"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q2249676",
+    "label": "environment"
+   },
+   {
+    "wikidata": "Q38",
+    "label": "Italy"
+   },
+   {
+    "wikidata": "Q729",
+    "label": "animal"
+   },
+   {
+    "wikidata": "Q62",
+    "label": "San Francisco"
+   },
+   {
+    "wikidata": "Q215536",
+    "label": "merchant"
+   },
+   {
+    "wikidata": "Q18425404",
+    "label": "First Franciscan Order"
+   },
+   {
+    "wikidata": "Q9295862",
+    "label": "Third Order of Saint Francis"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Gabriel the Archangel": {
+  "wikidata": "Q81989",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q81989",
+  "label": "Gabriel",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [
+   {
+    "wikidata": "Q101621566",
+    "label": "State Secret Protection Service"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "George the Martyr": {
+  "wikidata": "Q48438",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q48438",
+  "label": "Saint George",
+  "matched_by": "Wikipedia search, article \"Saint George\"",
+  "death": {
+   "year": 303,
+   "precision": "day",
+   "date": "0303-04-23"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q4040",
+    "label": "Aragon"
+   },
+   {
+    "wikidata": "Q199442",
+    "label": "Kingdom of Aragon"
+   },
+   {
+    "wikidata": "Q204920",
+    "label": "Crown of Aragon"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Gregory of Narek": {
+  "wikidata": "Q969758",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q969758",
+  "label": "Gregory of Narek",
+  "matched_by": "Wikipedia search, article \"Gregory of Narek\"",
+  "death": {
+   "year": 1003,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Gregory of Nazianzus": {
+  "wikidata": "Q44011",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44011",
+  "label": "Gregory of Nazianzus",
+  "matched_by": "Wikipedia search, article \"Gregory of Nazianzus\"",
+  "death": {
+   "year": 389,
+   "precision": "day",
+   "date": "0389-01-25"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Gregory the Great": {
+  "wikidata": "Q42827",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q42827",
+  "label": "Gregory I",
+  "matched_by": "Wikipedia search, article \"Pope Gregory I\"",
+  "death": {
+   "year": 604,
+   "precision": "day",
+   "date": "0604-03-12"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Hedwig": {
+  "wikidata": "Q57520",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q57520",
+  "label": "Hedwig of Silesia",
+  "matched_by": "Wikipedia search, article \"Hedwig of Silesia\"",
+  "death": {
+   "year": 1243,
+   "precision": "day",
+   "date": "1243-10-15"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Henry II, Holy Roman Emperor": {
+  "wikidata": "Q103556",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q103556",
+  "label": "Henry II, Holy Roman Emperor",
+  "matched_by": "Wikipedia search, article \"Henry II, Holy Roman Emperor\"",
+  "death": {
+   "year": 1024,
+   "precision": "day",
+   "date": "1024-07-13"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Hilary of Poitiers": {
+  "wikidata": "Q44344",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44344",
+  "label": "Hilary of Poitiers",
+  "matched_by": "Wikipedia search, article \"Hilary of Poitiers\"",
+  "death": {
+   "year": 367,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Hippolytus of Rome": {
+  "wikidata": "Q207113",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q207113",
+  "label": "Hippolytus",
+  "matched_by": "Wikipedia search, article \"Hippolytus of Rome\"",
+  "death": {
+   "year": 235,
+   "precision": "decade"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Ignatius of Antioch": {
+  "wikidata": "Q44170",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44170",
+  "label": "Ignatius of Antioch",
+  "matched_by": "Wikipedia search, article \"Ignatius of Antioch\"",
+  "death": {
+   "year": 108,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Ignatius of Loyola": {
+  "wikidata": "Q44281",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44281",
+  "label": "Ignatius of Loyola",
+  "matched_by": "Wikipedia search, article \"Ignatius of Loyola\"",
+  "death": {
+   "year": 1556,
+   "precision": "day",
+   "date": "1556-07-31"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q4991371",
+    "label": "soldier"
+   },
+   {
+    "wikidata": "Q126756",
+    "label": "Basques"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Irenaeus of Lyon": {
+  "wikidata": "Q182123",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q182123",
+  "label": "Irenaeus",
+  "matched_by": "Wikipedia search, article \"Irenaeus\"",
+  "death": {
+   "year": 202,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Isaac Jogues": {
+  "wikidata": "Q588832",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q588832",
+  "label": "Isaac Jogues",
+  "matched_by": "Wikipedia search, article \"Isaac Jogues\"",
+  "death": {
+   "year": 1646,
+   "precision": "day",
+   "date": "1646-10-18"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "James, son of Alphaeus": {
+  "wikidata": "Q44047",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44047",
+  "label": "James, son of Alphaeus",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 62,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "James, son of Zebedee": {
+  "wikidata": "Q43999",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43999",
+  "label": "St. James the Elder",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 44,
+   "precision": "year"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q2730732",
+    "label": "equestrian"
+   },
+   {
+    "wikidata": "Q2295938",
+    "label": "furrier"
+   },
+   {
+    "wikidata": "Q365461",
+    "label": "tanner"
+   },
+   {
+    "wikidata": "Q29",
+    "label": "Spain"
+   },
+   {
+    "wikidata": "Q3908",
+    "label": "Galicia"
+   },
+   {
+    "wikidata": "Q757097",
+    "label": "Order of Santiago"
+   },
+   {
+    "wikidata": "Q59653198",
+    "label": "Cavalry of Spanish Army"
+   },
+   {
+    "wikidata": "Q5655783",
+    "label": "Academia de Caballería de Valladolid"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Jane Frances de Chantal": {
+  "wikidata": "Q234521",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q234521",
+  "label": "Jane Frances de Chantal",
+  "matched_by": "Wikipedia search, article \"Jane Frances de Chantal\"",
+  "death": {
+   "year": 1641,
+   "precision": "day",
+   "date": "1641-12-13"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Januarius of Benevento": {
+  "wikidata": "Q315312",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q315312",
+  "label": "Januarius",
+  "matched_by": "Wikipedia search, article \"Januarius\"",
+  "death": {
+   "year": 305,
+   "precision": "day",
+   "date": "0305-09-19"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q2634",
+    "label": "Naples"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Jean de Brébeuf": {
+  "wikidata": "Q713402",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q713402",
+  "label": "Jean de Brébeuf",
+  "matched_by": "Wikipedia search, article \"Jean de Brébeuf\"",
+  "death": {
+   "year": 1649,
+   "precision": "day",
+   "date": "1649-03-16"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Jerome Emiliani": {
+  "wikidata": "Q451914",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q451914",
+  "label": "Gerolamo Emiliani",
+  "matched_by": "Wikipedia search, article \"Gerolamo Emiliani\"",
+  "death": {
+   "year": 1537,
+   "precision": "day",
+   "date": "1537-02-08"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Jerome of Stridon": {
+  "wikidata": "Q44248",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44248",
+  "label": "Jerome",
+  "matched_by": "Wikipedia search, article \"Jerome\"",
+  "death": {
+   "year": 420,
+   "precision": "day",
+   "date": "0420-09-30"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Joachim, father of Mary": {
+  "wikidata": "Q314700",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q314700",
+  "label": "Joachim",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": -10,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Baptist de la Salle": {
+  "wikidata": "Q312758",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q312758",
+  "label": "Jean-Baptiste de La Salle",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Jean-Baptiste_de_La_Salle)",
+  "death": {
+   "year": 1719,
+   "precision": "day",
+   "date": "1719-04-07"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Bosco": {
+  "wikidata": "Q146183",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q146183",
+  "label": "John Bosco",
+  "matched_by": "the Wikipedia article the Ordo bio cites (John_Bosco)",
+  "death": {
+   "year": 1888,
+   "precision": "day",
+   "date": "1888-01-31"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Chrysostom": {
+  "wikidata": "Q43706",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43706",
+  "label": "John Chrysostom",
+  "matched_by": "Wikipedia search, article \"John Chrysostom\"",
+  "death": {
+   "year": 407,
+   "precision": "day",
+   "date": "0407-09-14"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Damascene": {
+  "wikidata": "Q51884",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q51884",
+  "label": "John of Damascus",
+  "matched_by": "Wikipedia search, article \"John of Damascus\"",
+  "death": {
+   "year": 749,
+   "precision": "day",
+   "date": "0749-12-04"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Eudes": {
+  "wikidata": "Q441714",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q441714",
+  "label": "Jean Eudes",
+  "matched_by": "Wikipedia search, article \"John Eudes\"",
+  "death": {
+   "year": 1680,
+   "precision": "day",
+   "date": "1680-08-19"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John I": {
+  "wikidata": "Q160916",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q160916",
+  "label": "John I",
+  "matched_by": "Wikipedia search, article \"Pope John I\"",
+  "death": {
+   "year": 526,
+   "precision": "day",
+   "date": "0526-05-20"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Mary Vianney": {
+  "wikidata": "Q243816",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q243816",
+  "label": "Jean-Marie Vianney",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 1859,
+   "precision": "day",
+   "date": "1859-08-04"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John Paul II": {
+  "wikidata": "Q989",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q989",
+  "label": "John Paul II",
+  "matched_by": "Wikipedia search, article \"Pope John Paul II\"",
+  "death": {
+   "year": 2005,
+   "precision": "day",
+   "date": "2005-04-02"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John XXIII": {
+  "wikidata": "Q23873",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q23873",
+  "label": "John XXIII",
+  "matched_by": "Wikipedia search, article \"Pope John XXIII\"",
+  "death": {
+   "year": 1963,
+   "precision": "day",
+   "date": "1963-06-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John of Avila": {
+  "wikidata": "Q174880",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q174880",
+  "label": "Teresa of Ávila",
+  "matched_by": "Wikipedia search, article \"Teresa of Ávila\"",
+  "death": {
+   "year": 1582,
+   "precision": "day",
+   "date": "1582-10-15"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q29",
+    "label": "Spain"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "John of Capestrano": {
+  "wikidata": "Q310359",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q310359",
+  "label": "John of Capistrano",
+  "matched_by": "Wikipedia search, article \"John of Capistrano\"",
+  "death": {
+   "year": 1456,
+   "precision": "day",
+   "date": "1456-10-23"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John of God": {
+  "wikidata": "Q320171",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q320171",
+  "label": "John of God",
+  "matched_by": "Wikipedia search, article \"John of God\"",
+  "death": {
+   "year": 1550,
+   "precision": "day",
+   "date": "1550-03-08"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John of Kanty": {
+  "wikidata": "Q275624",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q275624",
+  "label": "John Cantius",
+  "matched_by": "the Wikipedia article the Ordo bio cites (John_of_Kanty)",
+  "death": {
+   "year": 1473,
+   "precision": "day",
+   "date": "1473-12-24"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John of the Cross": {
+  "wikidata": "Q190388",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q190388",
+  "label": "John of the Cross",
+  "matched_by": "Wikipedia search, article \"John of the Cross\"",
+  "death": {
+   "year": 1591,
+   "precision": "day",
+   "date": "1591-12-14"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "John the Apostle": {
+  "wikidata": "Q43600",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43600",
+  "label": "Matthew the Apostle",
+  "matched_by": "Wikipedia search, article \"Matthew the Apostle\"",
+  "death": {
+   "year": 74,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Josaphat Kuntsevych": {
+  "wikidata": "Q355884",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q355884",
+  "label": "Josaphat Kuntsevych",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Josaphat_Kuntsevych)",
+  "death": {
+   "year": 1623,
+   "precision": "day",
+   "date": "1623-11-12"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Joseph": {
+  "wikidata": "Q128267",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q128267",
+  "label": "Saint Joseph",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 20,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Juan Diego Cuauhtlatoatzin": {
+  "wikidata": "Q335539",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q335539",
+  "label": "Juan Diego Cuauhtlatoatzin",
+  "matched_by": "Wikipedia search, article \"Juan Diego\"",
+  "death": {
+   "year": 1548,
+   "precision": "day",
+   "date": "1548-05-30"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q103817",
+    "label": "indigenous people"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Jude the Apostle": {
+  "wikidata": "Q43945",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43945",
+  "label": "Jude the Apostle",
+  "matched_by": "Wikipedia search, article \"Jude the Apostle\"",
+  "death": {
+   "year": 62,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Justin Martyr": {
+  "wikidata": "Q185117",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q185117",
+  "label": "Justin Martyr",
+  "matched_by": "Wikipedia search, article \"Justin Martyr\"",
+  "death": {
+   "year": 165,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Lawrence of Brindisi": {
+  "wikidata": "Q313803",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q313803",
+  "label": "Lawrence of Brindisi",
+  "matched_by": "Wikipedia search, article \"Lawrence of Brindisi\"",
+  "death": {
+   "year": 1619,
+   "precision": "day",
+   "date": "1619-07-22"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Lawrence of Rome": {
+  "wikidata": "Q17590",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q17590",
+  "label": "Lawrence of Rome",
+  "matched_by": "Wikipedia search, article \"Saint Lawrence\"",
+  "death": {
+   "year": 258,
+   "precision": "day",
+   "date": "0258-08-10"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q11967",
+    "label": "Huesca"
+   },
+   {
+    "wikidata": "Q371748",
+    "label": "San Lorenzo de El Escorial"
+   },
+   {
+    "wikidata": "Q52546",
+    "label": "San Lorenzo"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Leo the Great": {
+  "wikidata": "Q43954",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43954",
+  "label": "Leo I",
+  "matched_by": "Wikipedia search, article \"Pope Leo I\"",
+  "death": {
+   "year": 461,
+   "precision": "day",
+   "date": "0461-11-11"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Louis IX of France": {
+  "wikidata": "Q346",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q346",
+  "label": "Louis IX of France",
+  "matched_by": "Wikipedia search, article \"Louis IX of France\"",
+  "death": {
+   "year": 1270,
+   "precision": "day",
+   "date": "1270-08-25"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Lucy of Syracuse": {
+  "wikidata": "Q183240",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q183240",
+  "label": "Saint Lucy",
+  "matched_by": "Wikipedia search, article \"Saint Lucy\"",
+  "death": {
+   "year": 304,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Luke the Evangelist": {
+  "wikidata": "Q128538",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q128538",
+  "label": "Luke the Evangelist",
+  "matched_by": "Wikipedia search, article \"Luke the Evangelist\"",
+  "death": {
+   "year": 84,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Marcellinus the Exorcist": {
+  "wikidata": "Q449701",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q449701",
+  "label": "Marcellinus and Peter",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Margaret of Scotland": {
+  "wikidata": "Q230507",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q230507",
+  "label": "Saint Margaret of Scotland",
+  "matched_by": "Wikipedia search, article \"Saint Margaret of Scotland\"",
+  "death": {
+   "year": 1093,
+   "precision": "day",
+   "date": "1093-11-16"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q22",
+    "label": "Scotland"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Maria Goretti": {
+  "wikidata": "Q234697",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q234697",
+  "label": "Maria Goretti",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Maria_Goretti)",
+  "death": {
+   "year": 1902,
+   "precision": "day",
+   "date": "1902-07-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Mark the Evangelist": {
+  "wikidata": "Q31966",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q31966",
+  "label": "Mark the Evangelist",
+  "matched_by": "Wikipedia search, article \"Mark the Evangelist\"",
+  "death": {
+   "year": 68,
+   "precision": "day",
+   "date": "0068-04-25"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Martha of Bethany": {
+  "wikidata": "Q232453",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q232453",
+  "label": "Martha",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 100,
+   "precision": "century"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Martin I": {
+  "wikidata": "Q172390",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q172390",
+  "label": "Martin I",
+  "matched_by": "Wikipedia search, article \"Pope Martin I\"",
+  "death": {
+   "year": 655,
+   "precision": "day",
+   "date": "0655-09-19"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Martin de Porres": {
+  "wikidata": "Q313293",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q313293",
+  "label": "Martin de Porres",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Martin_de_Porres)",
+  "death": {
+   "year": 1639,
+   "precision": "day",
+   "date": "1639-11-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Martin of Tours": {
+  "wikidata": "Q133704",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q133704",
+  "label": "Martin of Tours",
+  "matched_by": "Wikipedia search, article \"Martin of Tours\"",
+  "death": {
+   "year": 397,
+   "precision": "day",
+   "date": "0397-11-08"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Mary Magdalene": {
+  "wikidata": "Q63070",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q63070",
+  "label": "Mary Magdalene",
+  "matched_by": "Wikipedia search, article \"Mary Magdalene\"",
+  "death": {
+   "year": 100,
+   "precision": "century"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Matthew the Apostle": {
+  "wikidata": "Q43600",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43600",
+  "label": "Matthew the Apostle",
+  "matched_by": "Wikipedia search, article \"Matthew the Apostle\"",
+  "death": {
+   "year": 74,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Matthias the Apostle": {
+  "wikidata": "Q43669",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43669",
+  "label": "Thomas the Apostle",
+  "matched_by": "Wikipedia search, article \"Thomas the Apostle\"",
+  "death": {
+   "year": 72,
+   "precision": "day",
+   "date": "0072-07-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Maximilian Mary Kolbe": {
+  "wikidata": "Q153850",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q153850",
+  "label": "Maximilian Kolbe",
+  "matched_by": "Wikipedia search, article \"Maximilian Kolbe\"",
+  "death": {
+   "year": 1941,
+   "precision": "day",
+   "date": "1941-08-14"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q41311803",
+    "label": "blood donor"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Methodius of Thessaloniki": {
+  "wikidata": "Q239925",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q239925",
+  "label": "Saints Cyril and Methodius",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Michael the Archangel": {
+  "wikidata": "Q45581",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q45581",
+  "label": "Michael",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [
+   {
+    "wikidata": "Q1899",
+    "label": "Kyiv"
+   },
+   {
+    "wikidata": "Q183",
+    "label": "Germany"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Monica of Hippo": {
+  "wikidata": "Q234689",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q234689",
+  "label": "Monica of Hippo",
+  "matched_by": "Wikipedia search, article \"Saint Monica\"",
+  "death": {
+   "year": 387,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Nereus the Martyr": {
+  "wikidata": "Q721711",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q721711",
+  "label": "Nereus and Achilleus",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 290,
+   "precision": "century"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Nicholas of Myra": {
+  "wikidata": "Q44269",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44269",
+  "label": "Saint Nicholas",
+  "matched_by": "Wikipedia search, article \"Saint Nicholas\"",
+  "death": {
+   "year": 350,
+   "precision": "century"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q7569",
+    "label": "child"
+   },
+   {
+    "wikidata": "Q38883",
+    "label": "cooper"
+   },
+   {
+    "wikidata": "Q45199",
+    "label": "sailor"
+   },
+   {
+    "wikidata": "Q331432",
+    "label": "fisher"
+   },
+   {
+    "wikidata": "Q215536",
+    "label": "merchant"
+   },
+   {
+    "wikidata": "Q135301631",
+    "label": "broadcaster"
+   },
+   {
+    "wikidata": "Q28056408",
+    "label": "falsely accused"
+   },
+   {
+    "wikidata": "Q28056392",
+    "label": "repentant thief"
+   },
+   {
+    "wikidata": "Q836904",
+    "label": "brewer"
+   },
+   {
+    "wikidata": "Q105186",
+    "label": "pharmacist"
+   },
+   {
+    "wikidata": "Q890527",
+    "label": "archer"
+   },
+   {
+    "wikidata": "Q176637",
+    "label": "pawnbroker"
+   },
+   {
+    "wikidata": "Q36405",
+    "label": "Aberdeen"
+   },
+   {
+    "wikidata": "Q129610",
+    "label": "Galway"
+   },
+   {
+    "wikidata": "Q159",
+    "label": "Russia"
+   },
+   {
+    "wikidata": "Q41",
+    "label": "Greece"
+   },
+   {
+    "wikidata": "Q1129369",
+    "label": "Hellenic Navy"
+   },
+   {
+    "wikidata": "Q24826",
+    "label": "Liverpool"
+   },
+   {
+    "wikidata": "Q3519",
+    "label": "Bari"
+   },
+   {
+    "wikidata": "Q919908",
+    "label": "Siġġiewi"
+   },
+   {
+    "wikidata": "Q649",
+    "label": "Moscow"
+   },
+   {
+    "wikidata": "Q727",
+    "label": "Amsterdam"
+   },
+   {
+    "wikidata": "Q1137",
+    "label": "Lorraine"
+   },
+   {
+    "wikidata": "Q155019",
+    "label": "Duchy of Lorraine"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Norbert of Xanten": {
+  "wikidata": "Q160374",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q160374",
+  "label": "Norbert of Xanten",
+  "matched_by": "Wikipedia search, article \"Norbert of Xanten\"",
+  "death": {
+   "year": 1134,
+   "precision": "day",
+   "date": "1134-06-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Padre Pio of Pietrelcina": {
+  "wikidata": "Q193754",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q193754",
+  "label": "Padre Pio",
+  "matched_by": "Wikipedia search, article \"Padre Pio\"",
+  "death": {
+   "year": 1968,
+   "precision": "day",
+   "date": "1968-09-30"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Patrick of Ireland": {
+  "wikidata": "Q165479",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q165479",
+  "label": "Saint Patrick",
+  "matched_by": "Wikipedia search, article \"Saint Patrick\"",
+  "death": {
+   "year": 461,
+   "precision": "day",
+   "date": "0461-03-17"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Paul Chŏng Ha-sang": {
+  "wikidata": "Q179935",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q179935",
+  "label": "Paul Chong Hasang",
+  "matched_by": "Wikipedia search, article \"Paul Chong Hasang\"",
+  "death": {
+   "year": 1839,
+   "precision": "day",
+   "date": "1839-09-22"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Paul Miki": {
+  "wikidata": "Q380649",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q380649",
+  "label": "Paul Miki",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Paul_Miki)",
+  "death": {
+   "year": 1597,
+   "precision": "day",
+   "date": "1597-02-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Paul VI": {
+  "wikidata": "Q16975",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q16975",
+  "label": "Paul VI",
+  "matched_by": "Wikipedia search, article \"Pope Paul VI\"",
+  "death": {
+   "year": 1978,
+   "precision": "day",
+   "date": "1978-08-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Paul the Apostle": {
+  "wikidata": "Q9200",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q9200",
+  "label": "Paul the Apostle",
+  "matched_by": "Wikipedia search, article \"Paul the Apostle\"",
+  "death": {
+   "year": 66,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Paulinus of Nola": {
+  "wikidata": "Q132473",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q132473",
+  "label": "Paulinus of Nola",
+  "matched_by": "Wikipedia search, article \"Paulinus of Nola\"",
+  "death": {
+   "year": 431,
+   "precision": "day",
+   "date": "0431-06-22"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Perpetua of Carthage": {
+  "wikidata": "Q771956",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q771956",
+  "label": "Perpetua and Felicity",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 203,
+   "precision": "day",
+   "date": "0203-03-07"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter Canisius": {
+  "wikidata": "Q44624",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q44624",
+  "label": "Peter Canisius",
+  "matched_by": "Wikipedia search, article \"Peter Canisius\"",
+  "death": {
+   "year": 1597,
+   "precision": "day",
+   "date": "1597-12-21"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q278471",
+    "label": "Roman Catholic Diocese of Innsbruck"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Peter Chanel": {
+  "wikidata": "Q380651",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q380651",
+  "label": "Peter Chanel",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Peter_Chanel)",
+  "death": {
+   "year": 1841,
+   "precision": "day",
+   "date": "1841-04-28"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter Chrysologus": {
+  "wikidata": "Q328742",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q328742",
+  "label": "Peter Chrysologus",
+  "matched_by": "Wikipedia search, article \"Peter Chrysologus\"",
+  "death": {
+   "year": 450,
+   "precision": "day",
+   "date": "0450-07-31"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter Claver": {
+  "wikidata": "Q167458",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q167458",
+  "label": "Peter Claver",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Peter_Claver)",
+  "death": {
+   "year": 1654,
+   "precision": "day",
+   "date": "1654-09-08"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter Damian": {
+  "wikidata": "Q258369",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q258369",
+  "label": "Peter Damian",
+  "matched_by": "Wikipedia search, article \"Peter Damian\"",
+  "death": {
+   "year": 1072,
+   "precision": "month"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter the Apostle": {
+  "wikidata": "Q33923",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q33923",
+  "label": "Saint Peter",
+  "matched_by": "Wikipedia search, article \"Saint Peter\"",
+  "death": {
+   "year": 65,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Peter the Exorcist": {
+  "wikidata": "Q449701",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q449701",
+  "label": "Marcellinus and Peter",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Philip Neri": {
+  "wikidata": "Q217791",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q217791",
+  "label": "Philip Neri",
+  "matched_by": "Wikipedia search, article \"Philip Neri\"",
+  "death": {
+   "year": 1595,
+   "precision": "day",
+   "date": "1595-05-26"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Philip the Apostle": {
+  "wikidata": "Q217791",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q217791",
+  "label": "Philip Neri",
+  "matched_by": "Wikipedia search, article \"Philip Neri\"",
+  "death": {
+   "year": 1595,
+   "precision": "day",
+   "date": "1595-05-26"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Pius V": {
+  "wikidata": "Q131945",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q131945",
+  "label": "Pius V",
+  "matched_by": "Wikipedia search, article \"Pope Pius V\"",
+  "death": {
+   "year": 1572,
+   "precision": "day",
+   "date": "1572-05-01"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Pius X": {
+  "wikidata": "Q43739",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43739",
+  "label": "Pius X",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Pope_Pius_X)",
+  "death": {
+   "year": 1914,
+   "precision": "day",
+   "date": "1914-08-20"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Polycarp of Smyrna": {
+  "wikidata": "Q192371",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q192371",
+  "label": "Polycarp",
+  "matched_by": "Wikipedia search, article \"Polycarp\"",
+  "death": {
+   "year": 155,
+   "precision": "day",
+   "date": "0155-02-23"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Pope Cornelius": {
+  "wikidata": "Q54798",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q54798",
+  "label": "Cornelius",
+  "matched_by": "Wikipedia search, article \"Pope Cornelius\"",
+  "death": {
+   "year": 253,
+   "precision": "month"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Pope Pontian": {
+  "wikidata": "Q132113",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q132113",
+  "label": "Pontian",
+  "matched_by": "Wikipedia search, article \"Pope Pontian\"",
+  "death": {
+   "year": 235,
+   "precision": "month"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Raphael the Archangel": {
+  "wikidata": "Q56951",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q56951",
+  "label": "Raphael",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": null,
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Raymond of Penyafort": {
+  "wikidata": "Q318980",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q318980",
+  "label": "Raymond of Penyafort",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Raymond_of_Penyafort)",
+  "death": {
+   "year": 1275,
+   "precision": "day",
+   "date": "1275-01-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Rita of Cascia": {
+  "wikidata": "Q153024",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q153024",
+  "label": null,
+  "matched_by": "the Wikipedia article the Ordo bio cites (Rita_of_Cascia)",
+  "death": {
+   "year": 1457,
+   "precision": "day",
+   "date": "1457-05-22"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q17130772",
+    "label": "incorrigibility"
+   },
+   {
+    "wikidata": "Q184753",
+    "label": "wound"
+   },
+   {
+    "wikidata": "Q814207",
+    "label": "illness"
+   },
+   {
+    "wikidata": "Q600571",
+    "label": "abuse"
+   },
+   {
+    "wikidata": "Q7560",
+    "label": "mother"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Robert Bellarmine": {
+  "wikidata": "Q298664",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q298664",
+  "label": "Robert Bellarmine",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Robert_Bellarmine)",
+  "death": {
+   "year": 1621,
+   "precision": "day",
+   "date": "1621-09-17"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Romuald of Ravenna": {
+  "wikidata": "Q379691",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q379691",
+  "label": "Romuald",
+  "matched_by": "Wikipedia search, article \"Romuald\"",
+  "death": {
+   "year": 1027,
+   "precision": "day",
+   "date": "1027-06-19"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Rose of Lima": {
+  "wikidata": "Q244383",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q244383",
+  "label": "Rose of Lima",
+  "matched_by": "Wikipedia search, article \"Rose of Lima\"",
+  "death": {
+   "year": 1617,
+   "precision": "day",
+   "date": "1617-08-24"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Scholastica of Nursia": {
+  "wikidata": "Q231300",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q231300",
+  "label": "Scholastica",
+  "matched_by": "Wikipedia search, article \"Scholastica\"",
+  "death": {
+   "year": 547,
+   "precision": "day",
+   "date": "0547-02-10"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q3914",
+    "label": "school"
+   },
+   {
+    "wikidata": "Q27318",
+    "label": "test"
+   },
+   {
+    "wikidata": "Q571",
+    "label": "book"
+   },
+   {
+    "wikidata": "Q852376",
+    "label": "convulsion"
+   },
+   {
+    "wikidata": "Q1476",
+    "label": "Le Mans"
+   },
+   {
+    "wikidata": "Q8434",
+    "label": "education"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Simon the Zealot": {
+  "wikidata": "Q12871",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q12871",
+  "label": "Simon the Zealot",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 107,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Sixtus II": {
+  "wikidata": "Q127385",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q127385",
+  "label": "Sixtus II",
+  "matched_by": "Wikipedia search, article \"Pope Sixtus II\"",
+  "death": {
+   "year": 258,
+   "precision": "day",
+   "date": "0258-08-06"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Stephen of Hungary": {
+  "wikidata": "Q177903",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q177903",
+  "label": "Stephen I of Hungary",
+  "matched_by": "Wikipedia search, article \"Stephen I of Hungary\"",
+  "death": {
+   "year": 1038,
+   "precision": "day",
+   "date": "1038-08-15"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Stephen the Protomartyr": {
+  "wikidata": "Q161775",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q161775",
+  "label": "Saint Stephen",
+  "matched_by": "Wikipedia search, article \"Saint Stephen\"",
+  "death": {
+   "year": 36,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Sylvester I": {
+  "wikidata": "Q47149",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q47149",
+  "label": "Sylvester I",
+  "matched_by": "Wikipedia search, article \"Pope Sylvester I\"",
+  "death": {
+   "year": 335,
+   "precision": "day",
+   "date": "0335-12-31"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Teresa Benedicta of the Cross": {
+  "wikidata": "Q76749",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q76749",
+  "label": "Edith Stein",
+  "matched_by": "pinned by hand (saint-facts-overrides.json)",
+  "death": {
+   "year": 1942,
+   "precision": "day",
+   "date": "1942-08-09"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Teresa of Calcutta": {
+  "wikidata": "Q30547",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q30547",
+  "label": "Mother Teresa",
+  "matched_by": "Wikipedia search, article \"Mother Teresa\"",
+  "death": {
+   "year": 1997,
+   "precision": "day",
+   "date": "1997-09-05"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Teresa of Jesus": {
+  "wikidata": "Q174880",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q174880",
+  "label": "Teresa of Ávila",
+  "matched_by": "Wikipedia search, article \"Teresa of Ávila\"",
+  "death": {
+   "year": 1582,
+   "precision": "day",
+   "date": "1582-10-15"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q29",
+    "label": "Spain"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Thomas Aquinas": {
+  "wikidata": "Q9438",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q9438",
+  "label": "Thomas Aquinas",
+  "matched_by": "Wikipedia search, article \"Thomas Aquinas\"",
+  "death": {
+   "year": 1274,
+   "precision": "day",
+   "date": "1274-03-07"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q1622272",
+    "label": "university teacher"
+   },
+   {
+    "wikidata": "Q619553",
+    "label": "apologist"
+   },
+   {
+    "wikidata": "Q30022685",
+    "label": "Belcastro"
+   },
+   {
+    "wikidata": "Q30022281",
+    "label": "Aquino"
+   },
+   {
+    "wikidata": "Q133500",
+    "label": "learning"
+   },
+   {
+    "wikidata": "Q207894",
+    "label": "chastity"
+   },
+   {
+    "wikidata": "Q1234713",
+    "label": "theologian"
+   },
+   {
+    "wikidata": "Q48282",
+    "label": "student"
+   },
+   {
+    "wikidata": "Q127327158",
+    "label": "theology teacher"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Thomas Becket": {
+  "wikidata": "Q192236",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q192236",
+  "label": "Thomas Becket",
+  "matched_by": "Wikipedia search, article \"Thomas Becket\"",
+  "death": {
+   "year": 1170,
+   "precision": "day",
+   "date": "1170-12-29"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Thomas the Apostle": {
+  "wikidata": "Q43669",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q43669",
+  "label": "Thomas the Apostle",
+  "matched_by": "Wikipedia search, article \"Thomas the Apostle\"",
+  "death": {
+   "year": 72,
+   "precision": "day",
+   "date": "0072-07-03"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Thérèse of the Child Jesus": {
+  "wikidata": "Q181715",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q181715",
+  "label": "Thérèse of Lisieux",
+  "matched_by": "the Wikipedia article the Ordo bio cites (Thérèse_of_Lisieux)",
+  "death": {
+   "year": 1897,
+   "precision": "day",
+   "date": "1897-09-30"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Timothy of Ephesus": {
+  "wikidata": "Q212647",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q212647",
+  "label": "Timothy",
+  "matched_by": "Wikipedia search, article \"Saint Timothy\"",
+  "death": {
+   "year": 97,
+   "precision": "year"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Titus of Crete": {
+  "wikidata": "Q320136",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q320136",
+  "label": "Saint Titus",
+  "matched_by": "Wikipedia search, article \"Saint Titus\"",
+  "death": {
+   "year": 107,
+   "precision": "decade"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Turibius of Mogrovejo": {
+  "wikidata": "Q467993",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q467993",
+  "label": "Turibius of Mongrovejo",
+  "matched_by": "Wikipedia search, article \"Turibius of Mogrovejo\"",
+  "death": {
+   "year": 1606,
+   "precision": "day",
+   "date": "1606-03-23"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Vincent de Paul": {
+  "wikidata": "Q244413",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q244413",
+  "label": "Vincent de Paul",
+  "matched_by": "Wikipedia search, article \"Vincent de Paul\"",
+  "death": {
+   "year": 1660,
+   "precision": "day",
+   "date": "1660-09-27"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ },
+ "Vincent of Saragossa": {
+  "wikidata": "Q318974",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q318974",
+  "label": "Vincent of Saragossa",
+  "matched_by": "Wikipedia search, article \"Vincent of Saragossa\"",
+  "death": {
+   "year": 304,
+   "precision": "year"
+  },
+  "patronages": [
+   {
+    "wikidata": "Q21771805",
+    "label": "winemaker"
+   },
+   {
+    "wikidata": "Q45",
+    "label": "Portugal"
+   },
+   {
+    "wikidata": "Q597",
+    "label": "Lisbon"
+   },
+   {
+    "wikidata": "Q8818",
+    "label": "Valencia"
+   },
+   {
+    "wikidata": "Q1365819",
+    "label": "Archdiocese of Valencia in Spain"
+   }
+  ],
+  "retrieved": "2026-10-13"
+ },
+ "Wenceslaus": {
+  "wikidata": "Q196527",
+  "wikidata_url": "https://www.wikidata.org/wiki/Q196527",
+  "label": "Saint Wenceslaus I, Duke of Bohemia",
+  "matched_by": "Wikipedia search, article \"Wenceslaus I, Duke of Bohemia\"",
+  "death": {
+   "year": 935,
+   "precision": "day",
+   "date": "0935-09-28"
+  },
+  "patronages": [],
+  "retrieved": "2026-10-13"
+ }
+}
