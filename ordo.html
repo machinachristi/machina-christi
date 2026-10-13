@@ -92,6 +92,12 @@
       height: 1px;
       margin: 0.7em 0 1.1em;
       background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+      transition: background 1.2s ease;
+    }
+    /* The rule takes the liturgical colour of the day shown (assets/season.js). */
+    html[data-season] h1::after {
+      background: linear-gradient(90deg, rgba(var(--season), 0.9), transparent);
+      box-shadow: 0 0 10px rgba(var(--season), 0.35);
     }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
 
@@ -209,6 +215,7 @@
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
   <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js" defer></script>
 </head>
 <body>
   <div class="wrap">
@@ -320,6 +327,9 @@
         nextLink.href = linkFor(next);
         todayLink.href = 'ordo.html';
         todayLink.style.visibility = toDateKey(d) === toDateKey(today) ? 'hidden' : 'visible';
+
+        // assets/season.js follows this: the accent shows the day on screen.
+        document.documentElement.dataset.seasonDate = toDateKey(d);
 
         const seq = ++renderSeq;
         const year = d.getFullYear();

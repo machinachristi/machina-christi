@@ -125,6 +125,8 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.6), transparent);
     }
+    /* The season line under the rule: its colour comes from assets/season.js. */
+    .hero .season { margin-top: -3px; max-width: 30ch; }
 
     /* ── The gallery of gates ──────────────────────────────────
        A row of thresholds standing along the way. The strip is a
@@ -407,11 +409,15 @@
     }
   </style>
   <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js" defer></script>
 </head>
 <body>
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
     <div class="rule" aria-hidden="true"></div>
+    <!-- The Church's season, filled in by assets/season.js; stays hidden if
+         the season can't be fetched. -->
+    <p class="season" data-season-line hidden></p>
   </header>
 
   <nav class="gallery" aria-label="Experiences">

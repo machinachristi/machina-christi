@@ -47,6 +47,14 @@ never reach our server at all; it's faster for them and costs us nothing.
 answer comes from somewhere near you rather than from one faraway computer.
 *Here:* Cloudflare.
 
+**CORS (the permission slip).** Browsers are careful: a page from one website
+may only read answers from another web address if that address hands back a
+note saying "this website is allowed to read me". Without the note, the browser
+throws the answer away. It stops strange sites quietly reading things on your
+behalf.
+*Here:* the API gives the note to machinachristi.com and nobody else, which is
+also why the season accent only appears on the real site, not on test copies.
+
 ## Making changes safely
 
 **Branch.** A photocopy of the whole project you can scribble on while the real

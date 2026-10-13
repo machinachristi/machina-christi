@@ -12,6 +12,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const LIVE = 'https://machinachristi.com';
 const INGESTION = /\.in\.applicationinsights\.azure\.com$/;
+// The site's own API (assets/season.js asks it for the day's season).
+const API = 'https://api.machinachristi.com';
 const SDK_PATH = /\/assets\/vendor\/ai\.[\d.]+\.gbl\.min\.js$/;
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'staticwebapp.config.json'), 'utf8'));
 
@@ -74,7 +76,7 @@ async function asLiveSite(page) {
       } catch {
         for (const line of body.split('\n')) if (line.trim()) seen.sent.push(JSON.parse(line));
       }
-    } else if (url.origin !== LIVE) {
+    } else if (url.origin !== LIVE && url.origin !== API) {
       seen.offsite.push(r.url());
     }
   });
@@ -99,8 +101,21 @@ async function asLiveSite(page) {
       contentType: 'application/json',
       body: JSON.stringify({ itemsReceived: 1, itemsAccepted: 1, errors: [] }),
     }));
+  // Stand in for the season API, as production's CORS would answer it.
+  await page.route(`${API}/api/season**`, route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': LIVE },
+      body: JSON.stringify({
+        date: '2026-10-13',
+        season: { key: 'ordinary', name: 'Ordinary Time', week: 28 },
+        celebration: null,
+        color: 'green',
+      }),
+    }));
   // Anything else off-site never leaves the test machine.
-  await page.route(url => url.origin !== LIVE && !INGESTION.test(url.host) && /^https?:/.test(url.protocol),
+  await page.route(url => url.origin !== LIVE && url.origin !== API && !INGESTION.test(url.host) && /^https?:/.test(url.protocol),
     route => route.abort());
 
   seen.pageViews = () => seen.sent.filter(e => e.data && e.data.baseType === 'PageviewData');
@@ -131,6 +146,7 @@ test.describe('security headers', () => {
     expect(h['Content-Security-Policy']).toContain("base-uri 'self'");
     // The full policy is report-only until production reports are clean.
     expect(h['Content-Security-Policy-Report-Only']).toContain("default-src 'self'");
+    expect(h['Content-Security-Policy-Report-Only']).toMatch(/connect-src [^;]*https:\/\/api\.machinachristi\.com/);
     expect(h['X-Frame-Options']).toBe('SAMEORIGIN');
     expect(h['X-Content-Type-Options']).toBe('nosniff');
     expect(h['Permissions-Policy']).toContain('camera=()');
