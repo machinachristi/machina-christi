@@ -2,9 +2,12 @@
 
 Ordo's saints live in an Azure SQL database (`machina` on
 `sql-machina-cus-<suffix>`, Central US; created by `infra/bootstrap.bicep`).
-Visitors never query it: a job publishes what the site needs as JSON when the
-data changes, and weekly, so it sleeps nearly all the time and stays inside the
-free offer.
+Visitors never query it: a job (`publishSaints`,
+`functions/src/functions/publish-saints.js`) publishes what the site needs as
+one JSON snapshot when the data changes (the deploy runs it after any migration)
+and weekly, so it sleeps nearly all the time and stays inside the free offer.
+`/api/season` serves the day's saint from that snapshot. Plain-words version:
+`docs/explained/phase-2-saints-database.md`.
 
 ## Migrations
 

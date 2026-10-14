@@ -48,6 +48,9 @@ const QUERIES = {
 async function publishSaints(_timer, context) {
   const started = Date.now();
   const pool = await connectWithRetry(config(), { log: m => context.log(m) });
+  // How long the database took to answer: about a minute when it was asleep,
+  // under a second when awake. The "Saints publish runs" query charts it.
+  const connectMs = Date.now() - started;
   let rows;
   try {
     rows = {};
@@ -59,7 +62,7 @@ async function publishSaints(_timer, context) {
   if (!snapshot.counts.feasts) throw new Error('the database returned no feasts; keeping the last snapshot');
   const bytes = await writeSnapshot(snapshot);
   const c = snapshot.counts;
-  context.log(`published saints snapshot: ${c.feasts} feasts, ${c.people} people, ${c.patronages} patronages, ${bytes} bytes, ${Date.now() - started} ms`);
+  context.log(`published saints snapshot: ${c.feasts} feasts, ${c.people} people, ${c.patronages} patronages, ${bytes} bytes; database connect ${connectMs} ms, total ${Date.now() - started} ms`);
 }
 
 app.timer('publishSaints', {

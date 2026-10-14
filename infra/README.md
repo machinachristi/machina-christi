@@ -208,6 +208,11 @@ The starter queries are defined in `main.bicep`:
 - API failures and exceptions, last 7 days
 - Health endpoint: calls per hour and speed
 - Season API: calls that reached Azure, per day (few calls = Cloudflare is caching well; Azure logs URLs without the `?date=` part, so dates asked aren't recorded)
+- Saints publish runs: one row per run of `publishSaints`, with `ConnectMs` (how
+  long the database took to answer: about a minute means it was asleep and woke
+  for this run), `WakeRetries`, total time, feasts and snapshot size
+- Saints snapshot: times the API couldn't read it and fell back to the bundled
+  bios (empty is good; one entry right before a first-ever publish is expected)
 - Free allowance watch: GB ingested this month, by table
 - Site: page views, referrers, countries, time on page, CSP reports, script errors
 
@@ -217,7 +222,18 @@ The starter queries are defined in `main.bicep`:
 |---|---|
 | Functions Flex: 250,000 executions + 100,000 GB-s | 512 MB instances, one at a time (raise once Cloudflare rate-limits the API) |
 | Log Analytics: 5 GB ingestion (shared by both workspaces) | Hard daily caps of 0.10 + 0.05 GB (about 4.6 GB/month). Traces are sampled; requests are always kept |
-| Storage | Not free, but cents: a few MB of packages and host state |
+| Storage | Not free, but cents: a few MB of packages and host state, plus the ~190 KB saints snapshot |
+| Azure SQL free offer: 100,000 vCore-seconds, 32 GB data, 32 GB backups | Visitors never query it; it wakes only for the weekly publish, a deploy that migrates, or an admin. Each wake costs at least 1,800 vCore-seconds (an hour at 0.5 vCore). At the allowance's end it pauses until next month rather than billing |
+
+**How much of the database's month is left:**
+
+```bash
+az monitor metrics list --resource $(az sql db show -g rg-machina-platform -s sql-machina-cus-<suffix> -n machina --query id -o tsv) \
+  --metrics free_amount_remaining --interval PT1H --offset 1d --aggregation Minimum -o table
+```
+
+(vCore-seconds left this month. Hours with no number are hours the database was
+asleep. On 2026-10-14, after two days of building and migrating: about 97,000.)
 
 ## Site security headers (`staticwebapp.config.json`)
 
