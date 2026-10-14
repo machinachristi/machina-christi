@@ -56,6 +56,12 @@ var hostStorageRoles = [
 
 var deploymentContainer = 'app-package'
 
+// The saints snapshot the publish job writes and /api/season reads
+// (functions/src/functions/publish-saints.js). Private: only the Function app
+// reads it, with its identity (it already holds Blob Data Owner on this
+// account for the host).
+var snapshotContainer = 'ordo-snapshot'
+
 // Only Cloudflare may reach the API, so its rate limit and cache can't be
 // bypassed through the azurewebsites.net address. Ranges: cloudflare-ips.json.
 var cloudflareIps = loadJsonContent('cloudflare-ips.json')
@@ -276,6 +282,14 @@ resource packages 'Microsoft.Storage/storageAccounts/blobServices/containers@202
   }
 }
 
+resource snapshots 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: snapshotContainer
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
 // ── API: Function app on Flex Consumption ───────────────────────────────────
 
 // The app's identity. User-assigned, so it exists and holds its roles before
@@ -381,6 +395,25 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
           name: 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING'
           value: 'ClientId=${funcIdentity.properties.clientId};Authorization=AAD'
         }
+        // The saints publish job: reads the database as this identity (a
+        // read-only database user, db/bootstrap.sql) and writes the snapshot
+        // that /api/season serves.
+        {
+          name: 'FUNC_IDENTITY_CLIENT_ID'
+          value: funcIdentity.properties.clientId
+        }
+        {
+          name: 'SQL_SERVER'
+          value: sql.properties.fullyQualifiedDomainName
+        }
+        {
+          name: 'SQL_DATABASE'
+          value: sqlDb.name
+        }
+        {
+          name: 'SAINTS_SNAPSHOT_URL'
+          value: '${storage.properties.primaryEndpoints.blob}${snapshotContainer}/saints.json'
+        }
       ]
     }
     functionAppConfig: {
@@ -444,7 +477,7 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
 // (bootstrap.bicep → modules/sql.bicep), because a server's settings include
 // who administers it; this file only refers to them and manages the firewall.
 // Visitors never query the database: a job publishes JSON when the data
-// changes, and weekly.
+// changes, and weekly (functions/src/functions/publish-saints.js).
 
 resource sql 'Microsoft.Sql/servers@2023-08-01' existing = {
   name: 'sql-machina-cus-${suffix}'

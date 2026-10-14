@@ -13,7 +13,7 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Budget | `budget-machina-monthly` ($1, subscription-wide) | Email at 50% / 100% / forecast 100%. Any spend at all is a signal |
 | Function app | `func-machina-<suffix>` (Flex Consumption, Node 24, 512 MB) | The API. Scales to zero; one instance at most for now |
 | Managed identity | `id-machina-func` | How the API proves who it is to storage and App Insights. No keys exist |
-| Storage | `stmachina<suffix>` | Function host state and deployment packages. Account keys are switched off |
+| Storage | `stmachina<suffix>` | Function host state, deployment packages and the saints snapshot (`ordo-snapshot/saints.json`). Account keys are switched off |
 | Log Analytics | `log-machina`, `log-machina-web` | Where telemetry lands: the API's and the browser's, apart. 30-day retention; hard daily caps of 0.10 and 0.05 GB |
 | Application Insights | `appi-machina` | Requests, failures, timings for the API. Accepts only Entra-signed senders |
 | Application Insights (browser) | `appi-machina-web` | Page views, time on page, script errors, CSP reports. Accepts the public connection string, so it writes to its own workspace: a flood can't touch the API's data |
@@ -65,8 +65,10 @@ Runs when `infra/`, `functions/` or the workflow itself changes:
 - **Pull request:** API unit tests, Bicep compile/lint, then a what-if preview
   (as the read-only identity). The preview is in the run's summary page.
 - **Merge to main:** the same tests, then apply `main.bicep`, apply any new
-  database migrations, deploy the API with a build stamp, and wait until `/api/health` reports the new commit. A manual
-  re-run is available from the Actions tab (on main).
+  database migrations, deploy the API with a build stamp, and wait until `/api/health` reports the new commit. If a
+  migration ran, it then republishes the saints snapshot and waits until
+  `/api/season` serves it. A manual re-run is available from the Actions tab (on
+  main), with a "Republish the saints snapshot" box.
 
 ## API hostname and Cloudflare
 
@@ -116,7 +118,7 @@ Node.js, Azure Functions v4 programming model. Each file in
   the whole chain (code → deploy → running → telemetry) and tells you which commit
   is live.
 - `GET /api/season?date=YYYY-MM-DD` returns the liturgical day:
-  `{ date, season: { key, name, week }, celebration, color }`. The site sends the
+  `{ date, season: { key, name, week }, celebration, color, saint }`. The site sends the
   visitor's local date. Without `date` it answers for today in UTC (cached 5 min).
   - The **season** is computed (`functions/src/lib/season.js`): Easter by the
     Gregorian computus, every other boundary from Easter and Christmas. Works for
@@ -132,6 +134,21 @@ Node.js, Azure Functions v4 programming model. Each file in
     names disappear.
   - The tests cross-check the season and week number against litcal's own labels
     for every day in the calendar files.
+  - The **saint** is the day's celebration looked up in the saints snapshot:
+    `{ feast, bio, bioSource, people: [{ name, wikidata, died, patronages,
+    factsSource }], from, publishedAt }`. Every fact names its source. `from` is
+    `"database"` when it came from the snapshot, or `"static"` when the snapshot
+    couldn't be read and the site's own bios (`ordo/saints.json`, bundled like the
+    calendars) answered instead (bio and source only). `null` on days with no
+    celebration, and on Sundays and feasts of the Lord, which aren't saints' days.
+- **`publishSaints`** (timer, Sundays 04:00 UTC) reads the database as the
+  Function app's identity (read-only) and writes the saints snapshot to
+  `ordo-snapshot/saints.json` in the storage account. `/api/season` reads that
+  blob, keeping it in memory for 5 minutes, never the database. If the database
+  can't be reached the run fails and the last snapshot stays. The deploy also
+  runs it after a migration, through the host's admin endpoint and the master key
+  (`POST /admin/functions/publishSaints`); that adds no permission, since the
+  deploy identity already deploys the app's code.
 - `cd functions && npm test` runs the unit tests (Node's built-in test runner).
 - Run it locally with Azure Functions Core Tools: in `functions/`, copy
   `local.settings.example.json` to `local.settings.json` (git ignores it), then
@@ -144,8 +161,9 @@ Ordo's saints live in the `machina` database on `sql-machina-cus-<suffix>`, on
 the [free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer):
 100,000 vCore-seconds of compute, 32 GB of data and 32 GB of backups a month.
 
-- **Visitors never query it.** A job publishes what the site needs as JSON when
-  the data changes, and weekly as a safety net. The database pauses after 60
+- **Visitors never query it.** A job (`publishSaints`, see the API above)
+  publishes what the site needs as JSON when the data changes, and weekly as a
+  safety net. The database pauses after 60
   minutes idle (a free-offer database that auto-pauses at the allowance's end
   must keep Azure's default delay), so each wake costs at least 1,800
   vCore-seconds: roughly 5–8 wakes a month stays well inside the allowance.

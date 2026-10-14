@@ -2,6 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { app } = require('@azure/functions');
 const { seasonFor } = require('../lib/season');
+const { saintFor } = require('../lib/snapshot');
+const { readSnapshot } = require('../lib/snapshot-store');
 
 // GET /api/season?date=YYYY-MM-DD: the liturgical season, the day's
 // celebration (when the Ordo calendar covers that year) and the day's colour.
@@ -9,6 +11,10 @@ const { seasonFor } = require('../lib/season');
 // wherever they are. Answers for a given date never change, so they're
 // cacheable: Cloudflare keeps each date at the edge (query string is part of
 // the cache key) and most visits never reach this function.
+//
+// The day's saint comes from the saints snapshot the publish job stores
+// (publish-saints.js), never from the database itself. If the snapshot can't
+// be read, the site's own bios (ordo/saints.json, bundled) answer instead.
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const calendars = new Map();
@@ -29,6 +35,18 @@ function calendarFor(year) {
   return calendars.get(year);
 }
 
+let staticBios;
+function bundledBios() {
+  if (staticBios === undefined) {
+    try {
+      staticBios = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'saints.json'), 'utf8'));
+    } catch {
+      staticBios = null;
+    }
+  }
+  return staticBios;
+}
+
 // A real calendar date, within the years the Easter algorithm and the
 // Gregorian calendar both cover.
 function isValidDate(key) {
@@ -39,7 +57,7 @@ function isValidDate(key) {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === key;
 }
 
-async function season(request) {
+async function season(request, context) {
   const asked = request.query.get('date');
   if (asked !== null && !isValidDate(asked)) {
     return {
@@ -59,6 +77,9 @@ async function season(request) {
     ? { name: day.name, rank: day.grade_lcl, optional: Boolean(day.weekday_name), color: day.color }
     : null;
   const color = celebration && !celebration.optional && celebration.color ? celebration.color : s.color;
+  const saint = celebration
+    ? saintFor(celebration.name, await readSnapshot({ log: m => context?.log(m) }), bundledBios())
+    : null;
 
   return {
     status: 200,
@@ -72,6 +93,7 @@ async function season(request) {
       season: { key: s.key, name: s.name, week: s.week },
       celebration,
       color,
+      saint,
     },
   };
 }

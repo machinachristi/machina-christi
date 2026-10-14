@@ -3,7 +3,8 @@ name: Azure Platform
 # Infrastructure (infra/main.bicep) and the API (functions/) ship together:
 #   pull request → test, then preview the Azure changes (what-if) in the run summary
 #   merge to main → test, apply the Bicep, migrate the database, deploy the API,
-#                   check /api/health
+#                   check /api/health, and republish the saints snapshot when
+#                   a migration changed the database
 #
 # Sign-in is OIDC: GitHub vouches for this run and Azure returns a token that
 # lasts minutes. No password or key is stored; the AZURE_* repo variables are
@@ -34,6 +35,11 @@ on:
       - 'db/**'
       - '.github/workflows/azure-platform.yml'
   workflow_dispatch: # re-run a deploy by hand (works from main only)
+    inputs:
+      publish_saints:
+        description: Republish the saints snapshot even if no migration ran
+        type: boolean
+        default: false
 
 # Deploys to the one shared environment run one at a time, and are never
 # cancelled halfway.
@@ -153,6 +159,7 @@ jobs:
       # change tables and data only (db/bootstrap.sql); the runner's address
       # is let through the SQL firewall only for this step.
       - name: Apply database migrations
+        id: migrate
         working-directory: functions
         env:
           SQL_SERVER: ${{ steps.infra.outputs.sqlServerFqdn }}
@@ -203,4 +210,46 @@ jobs:
             sleep 15
           done
           echo "::error::/api/health never reported commit $want"
+          exit 1
+
+      # The saints snapshot (what /api/season serves) is published weekly by a
+      # timer, and here, at once, when a migration changed the data. The
+      # deploy runs the job through the Functions host's admin endpoint, with
+      # the app's master key: no new permission, since this identity already
+      # deploys the app's code. The key is masked in the log and lives only
+      # for this step. Then it waits until /api/season serves the new copy.
+      - name: Publish the saints snapshot
+        if: steps.migrate.outputs.applied != '0' || inputs.publish_saints
+        env:
+          APP: ${{ steps.infra.outputs.app }}
+          HOST: ${{ steps.infra.outputs.host }}
+        run: |
+          ip=$(curl -fsS -m 20 https://api.ipify.org)
+          az functionapp config access-restriction add -g "$RESOURCE_GROUP" -n "$APP" \
+            --rule-name ci-publish --action Allow --ip-address "$ip/32" --priority 50 -o none
+          trap 'az functionapp config access-restriction remove -g "$RESOURCE_GROUP" -n "$APP" --rule-name ci-publish -o none || true' EXIT
+          key=$(az functionapp keys list -g "$RESOURCE_GROUP" -n "$APP" --query masterKey -o tsv)
+          echo "::add-mask::$key"
+          since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          for i in $(seq 1 10); do
+            code=$(curl -sS -m 30 -o /dev/null -w '%{http_code}' -X POST "https://$HOST/admin/functions/publishSaints" \
+              -H "x-functions-key: $key" -H 'Content-Type: application/json' -d '{"input":""}' || true)
+            echo "start publish, try $i: HTTP $code"
+            [ "$code" = 202 ] && break
+            [ "$i" = 10 ] && { echo "::error::could not start the publish job"; exit 1; }
+            sleep 15
+          done
+          # The database may be asleep (waking takes about a minute), and the
+          # app keeps the snapshot it read for 5 minutes. 2026-01-21 is
+          # St Agnes, a day with a saint in the bundled calendar.
+          for i in $(seq 1 40); do
+            at=$(curl -fsS -m 30 "https://$HOST/api/season?date=2026-01-21" | jq -r '.saint.publishedAt // empty' || true)
+            echo "try $i: snapshot published at ${at:-(none yet)}"
+            if [ -n "$at" ] && [[ "$at" > "$since" ]]; then
+              echo "### Saints snapshot published at \`$at\`" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::error::/api/season never served a snapshot newer than $since"
           exit 1

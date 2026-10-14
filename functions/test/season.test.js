@@ -107,6 +107,7 @@ test('/api/season: an ordinary weekday', async () => {
     season: { key: 'ordinary', name: 'Ordinary Time', week: 28 },
     celebration: null,
     color: 'green',
+    saint: null,
   });
 });
 
