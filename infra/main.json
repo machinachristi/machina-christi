@@ -1,0 +1,740 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "2630935404462571712"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "apiLocation": {
+      "type": "string",
+      "defaultValue": "centralus",
+      "metadata": {
+        "description": "Region for the API and its private network: the database's region (Central US), since a SQL virtual network rule admits only subnets in the server's own region."
+      }
+    },
+    "suffix": {
+      "type": "string",
+      "defaultValue": "[take(uniqueString(resourceGroup().id), 6)]",
+      "metadata": {
+        "description": "Stable suffix for names that must be unique across all of Azure (storage, function app)."
+      }
+    },
+    "apiHostname": {
+      "type": "string",
+      "defaultValue": "api.machinachristi.com",
+      "metadata": {
+        "description": "Public hostname for the API. Cloudflare proxies it (DNS: a proxied CNAME to the Function app, plus the asuid TXT record that proves ownership). TLS to Azure uses its own certificate; Cloudflare terminates the public one."
+      }
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "defaultValue": [
+        "https://machinachristi.com",
+        "https://www.machinachristi.com"
+      ],
+      "metadata": {
+        "description": "Browser origins allowed to call the API."
+      }
+    },
+    "logDailyCapGb": {
+      "type": "string",
+      "defaultValue": "0.10",
+      "metadata": {
+        "description": "Daily ingestion cap in GB for the API's workspace (log-machina)."
+      }
+    },
+    "webLogDailyCapGb": {
+      "type": "string",
+      "defaultValue": "0.05",
+      "metadata": {
+        "description": "Daily ingestion cap in GB for the browser's workspace (log-machina-web). About 50 MB: hundreds of times today's real traffic."
+      }
+    },
+    "maxInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Most Function instances that may run at once. One is plenty for today's traffic and caps how fast a flood could use up the free grant; raise it once Cloudflare rate-limits the API."
+      }
+    }
+  },
+  "variables": {
+    "copy": [
+      {
+        "name": "cloudflareRules",
+        "count": "[length(variables('cloudflareRanges'))]",
+        "input": {
+          "name": "[format('cloudflare-{0}', add(copyIndex('cloudflareRules'), 1))]",
+          "priority": "[add(100, copyIndex('cloudflareRules'))]",
+          "action": "Allow",
+          "ipAddress": "[variables('cloudflareRanges')[copyIndex('cloudflareRules')]]",
+          "description": "Cloudflare proxy"
+        }
+      }
+    ],
+    "$fxv#0": {
+      "storageBlobDataOwner": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b",
+      "storageQueueDataContributor": "974c5e8b-45b9-4653-ba55-5f855dd0fb88",
+      "storageTableDataContributor": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3",
+      "monitoringMetricsPublisher": "3913510d-42f4-4e42-8a64-420c390055eb"
+    },
+    "$fxv#1": {
+      "_comment": "Cloudflare proxy address ranges (https://www.cloudflare.com/ips/). Refresh with scripts/refresh-cloudflare-ips.sh, then redeploy.",
+      "ipv4": [
+        "103.21.244.0/22",
+        "103.22.200.0/22",
+        "103.31.4.0/22",
+        "104.16.0.0/13",
+        "104.24.0.0/14",
+        "108.162.192.0/18",
+        "131.0.72.0/22",
+        "141.101.64.0/18",
+        "162.158.0.0/15",
+        "172.64.0.0/13",
+        "173.245.48.0/20",
+        "188.114.96.0/20",
+        "190.93.240.0/20",
+        "197.234.240.0/22",
+        "198.41.128.0/17"
+      ],
+      "ipv6": [
+        "2400:cb00::/32",
+        "2405:8100::/32",
+        "2405:b500::/32",
+        "2606:4700::/32",
+        "2803:f800::/32",
+        "2a06:98c0::/29",
+        "2c0f:f248::/32"
+      ]
+    },
+    "tags": {
+      "project": "machina-christi",
+      "managedBy": "bicep"
+    },
+    "roles": "[variables('$fxv#0')]",
+    "hostStorageRoles": [
+      "[variables('roles').storageBlobDataOwner]",
+      "[variables('roles').storageQueueDataContributor]",
+      "[variables('roles').storageTableDataContributor]"
+    ],
+    "deploymentContainer": "app-package",
+    "snapshotContainer": "ordo-snapshot",
+    "cloudflareIps": "[variables('$fxv#1')]",
+    "cloudflareRanges": "[concat(variables('cloudflareIps').ipv4, variables('cloudflareIps').ipv6)]",
+    "allowanceQuery": {
+      "name": "free-allowance-watch",
+      "displayName": "Free allowance watch: GB ingested this month, by table (this workspace)",
+      "query": "Usage\n| where TimeGenerated > startofmonth(now()) and IsBillable\n| summarize GB = round(sum(Quantity) / 1000, 3) by DataType\n| order by GB desc"
+    },
+    "apiQueries": [
+      {
+        "name": "api-requests-24h",
+        "displayName": "API requests by endpoint, last 24 hours",
+        "query": "AppRequests\n| where TimeGenerated > ago(24h)\n| summarize Requests = count(), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1), P95Ms = round(percentile(DurationMs, 95), 1) by Name\n| order by Requests desc"
+      },
+      {
+        "name": "api-failures",
+        "displayName": "API failures and exceptions, last 7 days",
+        "query": "AppRequests\n| where TimeGenerated > ago(7d) and Success == false\n| join kind=leftouter (AppExceptions | project OperationId, ExceptionType, OuterMessage) on OperationId\n| project TimeGenerated, Name, ResultCode, DurationMs, ExceptionType, OuterMessage\n| order by TimeGenerated desc"
+      },
+      {
+        "name": "health-checks",
+        "displayName": "Health endpoint: calls per hour and speed",
+        "query": "AppRequests\n| where Name == \"health\"\n| summarize Calls = count(), AvgMs = round(avg(DurationMs), 1), MaxMs = max(DurationMs) by bin(TimeGenerated, 1h)\n| order by TimeGenerated desc"
+      },
+      {
+        "name": "season-origin-hits",
+        "displayName": "Season API: calls that reached Azure, per day",
+        "query": "AppRequests\n| where TimeGenerated > ago(30d) and Name == \"season\"\n| summarize OriginCalls = count(), Refused = countif(ResultCode startswith \"4\"), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1) by Day = bin(TimeGenerated, 1d)\n| order by Day desc"
+      },
+      {
+        "name": "saints-publish-runs",
+        "displayName": "Saints publish runs: result, database wake time, size",
+        "query": "AppRequests\n| where TimeGenerated > ago(90d) and Name == \"publishSaints\"\n| project TimeGenerated, OperationId, Success, TotalMs = round(DurationMs)\n| join kind=leftouter (AppTraces\n    | where Message startswith \"published saints snapshot\" or Message startswith \"connect attempt\"\n    | summarize Detail = take_anyif(Message, Message startswith \"published\"), WakeRetries = countif(Message startswith \"connect attempt\") by OperationId) on OperationId\n| extend ConnectMs = toint(extract(@\"database connect (\\d+) ms\", 1, Detail)), Feasts = toint(extract(@\"(\\d+) feasts\", 1, Detail)), Bytes = toint(extract(@\"(\\d+) bytes\", 1, Detail))\n| project TimeGenerated, Success, ConnectMs, WakeRetries, TotalMs, Feasts, Bytes\n| order by TimeGenerated desc"
+      },
+      {
+        "name": "saints-snapshot-fallbacks",
+        "displayName": "Saints snapshot: times the API could not read it (empty is good)",
+        "query": "AppTraces\n| where TimeGenerated > ago(30d) and Message startswith \"saints snapshot unavailable\"\n| summarize Times = count(), Last = max(TimeGenerated) by Message\n| order by Last desc"
+      },
+      "[variables('allowanceQuery')]"
+    ],
+    "siteQueries": [
+      {
+        "name": "site-page-views",
+        "displayName": "Site: page views by page, last 7 days",
+        "query": "AppPageViews\n| where TimeGenerated > ago(7d)\n| summarize Views = count() by Page = tostring(parse_url(Url).Path)\n| order by Views desc"
+      },
+      {
+        "name": "site-referrers",
+        "displayName": "Site: how visitors arrive (referrer), last 30 days",
+        "query": "AppPageViews\n| where TimeGenerated > ago(30d)\n| extend Ref = tostring(Properties.refUri)\n| extend Source = iff(isempty(Ref), \"(direct or hidden)\", tostring(parse_url(Ref).Host))\n| where Source !in (\"machinachristi.com\", \"www.machinachristi.com\")\n| summarize Views = count() by Source\n| order by Views desc"
+      },
+      {
+        "name": "site-countries",
+        "displayName": "Site: page views by country, last 30 days",
+        "query": "AppPageViews\n| where TimeGenerated > ago(30d)\n| summarize Views = count() by ClientCountryOrRegion\n| order by Views desc"
+      },
+      {
+        "name": "site-time-on-page",
+        "displayName": "Site: time on page (visible seconds), last 30 days",
+        "query": "AppEvents\n| where TimeGenerated > ago(30d) and Name == \"page-time\"\n| summarize Seconds = sum(todouble(Measurements.visibleSeconds)) by OperationId, Page = tostring(Properties.page)\n| summarize Visits = count(), MedianSeconds = round(percentile(Seconds, 50), 1), P90Seconds = round(percentile(Seconds, 90), 1) by Page\n| order by Visits desc"
+      },
+      {
+        "name": "site-csp-reports",
+        "displayName": "Site: Content Security Policy reports, last 30 days",
+        "query": "AppEvents\n| where TimeGenerated > ago(30d) and Name == \"csp-violation\"\n| summarize Reports = count(), Last = max(TimeGenerated) by Page = tostring(Properties.page), Directive = tostring(Properties.directive), Blocked = tostring(Properties.blocked), Disposition = tostring(Properties.disposition)\n| order by Reports desc"
+      },
+      {
+        "name": "site-script-errors",
+        "displayName": "Site: script errors, last 7 days",
+        "query": "AppExceptions\n| where TimeGenerated > ago(7d) and ClientType == \"Browser\"\n| summarize Count = count(), Last = max(TimeGenerated) by Page = OperationName, Message = OuterMessage\n| order by Count desc"
+      },
+      "[variables('allowanceQuery')]"
+    ],
+    "apiSiteConfig": {
+      "minTlsVersion": "1.2",
+      "ftpsState": "Disabled",
+      "ipSecurityRestrictions": "[variables('cloudflareRules')]",
+      "ipSecurityRestrictionsDefaultAction": "Deny",
+      "cors": {
+        "allowedOrigins": "[parameters('allowedOrigins')]"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "log-machina",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "workspaceCapping": {
+          "dailyQuotaGb": "[json(parameters('logDailyCapGb'))]"
+        },
+        "features": {
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "appi-machina",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina')]",
+        "IngestionMode": "LogAnalytics",
+        "Flow_Type": "Bluefield",
+        "Request_Source": "rest",
+        "DisableLocalAuth": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina')]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "log-machina-web",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "workspaceCapping": {
+          "dailyQuotaGb": "[json(parameters('webLogDailyCapGb'))]"
+        },
+        "features": {
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "appi-machina-web",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina-web')]",
+        "IngestionMode": "LogAnalytics",
+        "Flow_Type": "Bluefield",
+        "Request_Source": "rest",
+        "DisableLocalAuth": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina-web')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "apiSavedQueries",
+        "count": "[length(variables('apiQueries'))]"
+      },
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+      "apiVersion": "2020-08-01",
+      "name": "[format('{0}/{1}', 'log-machina', variables('apiQueries')[copyIndex()].name)]",
+      "properties": {
+        "category": "Machina Christi",
+        "displayName": "[variables('apiQueries')[copyIndex()].displayName]",
+        "query": "[variables('apiQueries')[copyIndex()].query]",
+        "version": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "siteSavedQueries",
+        "count": "[length(variables('siteQueries'))]"
+      },
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+      "apiVersion": "2020-08-01",
+      "name": "[format('{0}/{1}', 'log-machina-web', variables('siteQueries')[copyIndex()].name)]",
+      "properties": {
+        "category": "Machina Christi",
+        "displayName": "[variables('siteQueries')[copyIndex()].displayName]",
+        "query": "[variables('siteQueries')[copyIndex()].query]",
+        "version": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', 'log-machina-web')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[format('stmachina{0}', parameters('suffix'))]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "tags": "[variables('tags')]",
+      "properties": {
+        "accessTier": "Hot",
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": false,
+        "allowCrossTenantReplication": false,
+        "defaultToOAuthAuthentication": true,
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', format('stmachina{0}', parameters('suffix')), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/{2}', format('stmachina{0}', parameters('suffix')), 'default', variables('deploymentContainer'))]",
+      "properties": {
+        "publicAccess": "None"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('stmachina{0}', parameters('suffix')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/{2}', format('stmachina{0}', parameters('suffix')), 'default', variables('snapshotContainer'))]",
+      "properties": {
+        "publicAccess": "None"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('stmachina{0}', parameters('suffix')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "id-machina-func",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "copy": {
+        "name": "hostStorageAccess",
+        "count": "[length(variables('hostStorageRoles'))]"
+      },
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix')))]",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), variables('hostStorageRoles')[copyIndex()])]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('hostStorageRoles')[copyIndex()])]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal",
+        "description": "Function app: host storage and deployment packages"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Insights/components', 'appi-machina')]",
+      "name": "[guid(resourceId('Microsoft.Insights/components', 'appi-machina'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), variables('roles').monitoringMetricsPublisher)]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roles').monitoringMetricsPublisher)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal",
+        "description": "Function app: send telemetry with Entra auth"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', 'appi-machina')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "vnet-machina",
+      "location": "[parameters('apiLocation')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.50.0.0/24"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "func",
+            "properties": {
+              "addressPrefix": "10.50.0.0/27",
+              "delegations": [
+                {
+                  "name": "flex",
+                  "properties": {
+                    "serviceName": "Microsoft.App/environments"
+                  }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[parameters('apiLocation')]"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "asp-machina",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "tier": "FlexConsumption",
+        "name": "FC1"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[format('func-machina-{0}', parameters('suffix'))]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "tags": "[variables('tags')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'))]": {}
+        }
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'asp-machina')]",
+        "httpsOnly": true,
+        "siteConfig": "[union(variables('apiSiteConfig'), createObject('appSettings', createArray(createObject('name', 'AzureWebJobsStorage__blobServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob), createObject('name', 'AzureWebJobsStorage__queueServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.queue), createObject('name', 'AzureWebJobsStorage__tableServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.table), createObject('name', 'AzureWebJobsStorage__credential', 'value', 'managedidentity'), createObject('name', 'AzureWebJobsStorage__clientId', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference(resourceId('Microsoft.Insights/components', 'appi-machina'), '2020-02-02').ConnectionString), createObject('name', 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING', 'value', format('ClientId={0};Authorization=AAD', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId)), createObject('name', 'FUNC_IDENTITY_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId), createObject('name', 'SQL_SERVER', 'value', reference(resourceId('Microsoft.Sql/servers', format('sql-machina-cus-{0}', parameters('suffix'))), '2023-08-01').fullyQualifiedDomainName), createObject('name', 'SQL_DATABASE', 'value', 'machina'), createObject('name', 'SAINTS_SNAPSHOT_URL', 'value', format('{0}{1}/saints.json', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob, variables('snapshotContainer'))))))]",
+        "functionAppConfig": {
+          "deployment": {
+            "storage": {
+              "type": "blobContainer",
+              "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob, variables('deploymentContainer'))]",
+              "authentication": {
+                "type": "UserAssignedIdentity",
+                "userAssignedIdentityResourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]"
+              }
+            }
+          },
+          "scaleAndConcurrency": {
+            "maximumInstanceCount": "[parameters('maxInstances')]",
+            "instanceMemoryMB": 512
+          },
+          "runtime": {
+            "name": "node",
+            "version": "24"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', 'appi-machina')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]",
+        "hostStorageAccess",
+        "[extensionResourceId(resourceId('Microsoft.Insights/components', 'appi-machina'), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Insights/components', 'appi-machina'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), variables('roles').monitoringMetricsPublisher))]",
+        "[resourceId('Microsoft.Web/serverfarms', 'asp-machina')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-{0}', parameters('suffix')), parameters('apiHostname'))]",
+      "properties": {
+        "hostNameType": "Verified",
+        "siteName": "[format('func-machina-{0}', parameters('suffix'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-{0}', parameters('suffix')), 'scm')]",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-{0}', parameters('suffix')), 'ftp')]",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "asp-machina-cus",
+      "location": "[parameters('apiLocation')]",
+      "kind": "functionapp",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "tier": "FlexConsumption",
+        "name": "FC1"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[format('func-machina-cus-{0}', parameters('suffix'))]",
+      "location": "[parameters('apiLocation')]",
+      "kind": "functionapp,linux",
+      "tags": "[variables('tags')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'))]": {}
+        }
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'asp-machina-cus')]",
+        "httpsOnly": true,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-machina', 'func')]",
+        "siteConfig": "[union(variables('apiSiteConfig'), createObject('appSettings', concat(createArray(createObject('name', 'AzureWebJobsStorage__blobServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob), createObject('name', 'AzureWebJobsStorage__queueServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.queue), createObject('name', 'AzureWebJobsStorage__tableServiceUri', 'value', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.table), createObject('name', 'AzureWebJobsStorage__credential', 'value', 'managedidentity'), createObject('name', 'AzureWebJobsStorage__clientId', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference(resourceId('Microsoft.Insights/components', 'appi-machina'), '2020-02-02').ConnectionString), createObject('name', 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING', 'value', format('ClientId={0};Authorization=AAD', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId)), createObject('name', 'FUNC_IDENTITY_CLIENT_ID', 'value', reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').clientId), createObject('name', 'SQL_SERVER', 'value', reference(resourceId('Microsoft.Sql/servers', format('sql-machina-cus-{0}', parameters('suffix'))), '2023-08-01').fullyQualifiedDomainName), createObject('name', 'SQL_DATABASE', 'value', 'machina'), createObject('name', 'SAINTS_SNAPSHOT_URL', 'value', format('{0}{1}/saints.json', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob, variables('snapshotContainer')))), createArray(createObject('name', 'API_REGION', 'value', parameters('apiLocation'))))))]",
+        "functionAppConfig": {
+          "deployment": {
+            "storage": {
+              "type": "blobContainer",
+              "value": "[format('{0}{1}', reference(resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix'))), '2023-05-01').primaryEndpoints.blob, variables('deploymentContainer'))]",
+              "authentication": {
+                "type": "UserAssignedIdentity",
+                "userAssignedIdentityResourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]"
+              }
+            }
+          },
+          "scaleAndConcurrency": {
+            "maximumInstanceCount": "[parameters('maxInstances')]",
+            "instanceMemoryMB": 512
+          },
+          "runtime": {
+            "name": "node",
+            "version": "24"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', 'appi-machina')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func')]",
+        "hostStorageAccess",
+        "[extensionResourceId(resourceId('Microsoft.Insights/components', 'appi-machina'), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Insights/components', 'appi-machina'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), variables('roles').monitoringMetricsPublisher))]",
+        "[resourceId('Microsoft.Web/serverfarms', 'asp-machina-cus')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('stmachina{0}', parameters('suffix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-machina')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-cus-{0}', parameters('suffix')), parameters('apiHostname'))]",
+      "properties": {
+        "hostNameType": "Verified",
+        "siteName": "[format('func-machina-cus-{0}', parameters('suffix'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-cus-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-cus-{0}', parameters('suffix')), 'scm')]",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-cus-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+      "apiVersion": "2024-04-01",
+      "name": "[format('{0}/{1}', format('func-machina-cus-{0}', parameters('suffix')), 'ftp')]",
+      "properties": {
+        "allow": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-machina-cus-{0}', parameters('suffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/virtualNetworkRules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', format('sql-machina-cus-{0}', parameters('suffix')), 'api-subnet')]",
+      "properties": {
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-machina', 'func')]",
+        "ignoreMissingVnetServiceEndpoint": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-machina')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', format('sql-machina-cus-{0}', parameters('suffix')), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      }
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[format('func-machina-cus-{0}', parameters('suffix'))]"
+    },
+    "functionAppHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', format('func-machina-cus-{0}', parameters('suffix'))), '2024-04-01').defaultHostName]"
+    },
+    "apiHostname": {
+      "type": "string",
+      "value": "[parameters('apiHostname')]"
+    },
+    "oldFunctionAppName": {
+      "type": "string",
+      "value": "[format('func-machina-{0}', parameters('suffix'))]"
+    },
+    "oldFunctionAppHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', format('func-machina-{0}', parameters('suffix'))), '2024-04-01').defaultHostName]"
+    },
+    "vnetName": {
+      "type": "string",
+      "value": "vnet-machina"
+    },
+    "appInsightsName": {
+      "type": "string",
+      "value": "appi-machina"
+    },
+    "webAppInsightsName": {
+      "type": "string",
+      "value": "appi-machina-web"
+    },
+    "webLogWorkspaceName": {
+      "type": "string",
+      "value": "log-machina-web"
+    },
+    "logWorkspaceName": {
+      "type": "string",
+      "value": "log-machina"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[format('stmachina{0}', parameters('suffix'))]"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "value": "[format('sql-machina-cus-{0}', parameters('suffix'))]"
+    },
+    "sqlServerFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Sql/servers', format('sql-machina-cus-{0}', parameters('suffix'))), '2023-08-01').fullyQualifiedDomainName]"
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "value": "machina"
+    },
+    "funcIdentityName": {
+      "type": "string",
+      "value": "id-machina-func"
+    },
+    "funcIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-machina-func'), '2023-01-31').principalId]"
+    }
+  }
+}

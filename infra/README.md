@@ -11,7 +11,9 @@ and its "Smart Detection" action group to every new Application Insights.)
 |---|---|---|
 | Resource groups | `rg-machina-platform`, `rg-machina-ci` (East US 2) | The platform, and apart from it, the identities CI signs in as |
 | Budget | `budget-machina-monthly` ($1, subscription-wide) | Email at 50% / 100% / forecast 100%. Any spend at all is a signal |
-| Function app | `func-machina-<suffix>` (Flex Consumption, Node 24, 512 MB) | The API. Scales to zero; one instance at most for now |
+| Function app | `func-machina-cus-<suffix>` (Central US; Flex Consumption, Node 24, 512 MB) | The API. Scales to zero; one instance at most for now. Runs inside `vnet-machina` |
+| Function app (old, being retired) | `func-machina-<suffix>` (East US 2) | The API before the move to Central US (AB#73); serves until Cloudflare's CNAME is switched, then deleted |
+| Virtual network | `vnet-machina` (Central US, `10.50.0.0/24`), subnet `func` (`/27`) | The API's private network. The subnet carries a `Microsoft.Sql` service endpoint, and the database admits only it (see "The API's network") |
 | Managed identity | `id-machina-func` | How the API proves who it is to storage and App Insights. No keys exist |
 | Storage | `stmachina<suffix>` | Function host state, deployment packages and the saints snapshot (`ordo-snapshot/saints.json`). Account keys are switched off |
 | Log Analytics | `log-machina`, `log-machina-web` | Where telemetry lands: the API's and the browser's, apart. 30-day retention; hard daily caps of 0.10 and 0.05 GB |
@@ -114,7 +116,7 @@ until deploy time (principal IDs, storage endpoints) and defaults Azure fills in
 Node.js, Azure Functions v4 programming model. Each file in
 `functions/src/functions/` registers its endpoints.
 
-- `GET /api/health` returns `{ status, service, commit, builtAt, time }`. It proves
+- `GET /api/health` returns `{ status, service, commit, builtAt, region, time }`. It proves
   the whole chain (code → deploy → running → telemetry) and tells you which commit
   is live.
 - `GET /api/season?date=YYYY-MM-DD` returns the liturgical day:
@@ -155,6 +157,31 @@ Node.js, Azure Functions v4 programming model. Each file in
   `npm install` and `npm start`. The endpoints are at
   `http://localhost:7071/api/health` and `http://localhost:7071/api/season`.
 
+## The API's network
+
+The API (Central US) runs inside `vnet-machina`, subnet `func`: delegated to
+`Microsoft.App/environments` (what Flex Consumption needs), with a
+`Microsoft.Sql` service endpoint. The database has a virtual network rule for
+that subnet, so reaching its door takes being inside this network, and getting
+in still takes a badge with a database user.
+
+- **Why Central US:** a service endpoint and a SQL virtual network rule work only
+  within one region, and the database is in Central US. A private endpoint would
+  work across regions but costs about $8 a month; this costs nothing.
+- **Internet still works** (Application Insights, Entra) through Azure's own
+  outbound addresses; no NAT gateway.
+- **Proven first** with a throwaway copy (2026-10-14): a Flex app joins a subnet
+  that carries the SQL service endpoint; with the rule, a knock gets as far as
+  "login failed" (network passed); without it, "Client is not allowed"
+  (error 40914); from outside Azure, refused even with an admin badge.
+- **The move is blue-green:** the new app runs beside the old East US 2 one, both
+  bound to `api.machinachristi.com`; Cloudflare's CNAME decides which one gets
+  visitors. `/api/health` reports `region`. After the switch, the old app and the
+  database's "allow Azure services" rule are deleted on purpose (an incremental
+  Bicep deploy never removes what a file stops declaring).
+- The subscription needed `Microsoft.App` and `Microsoft.Network` registered
+  (done by hand; CI can't register providers).
+
 ## The database (Azure SQL)
 
 Ordo's saints live in the `machina` database on `sql-machina-cus-<suffix>`, on
@@ -189,9 +216,9 @@ the [free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer
     `node scripts/migrate.js --bootstrap`) gives the deploy identity tables and
     data only (`db_ddladmin`, `db_datareader`, `db_datawriter`), and the Function
     app's identity read-only access (`api_reader`: `SELECT` on schema `dbo`).
-- **Firewall:** "Allow Azure services" (the Function app has no fixed outbound
-  address); the deploy adds its runner's address only while it migrates. Locking
-  this down to the API's own network is planned (AB#73).
+- **Firewall:** a virtual network rule for the API's subnet (see "The API's
+  network"); the deploy adds its runner's address only while it migrates. "Allow
+  Azure services" stays only until the old East US 2 app is retired (AB#73).
 - **Changes** are numbered T-SQL migrations in `db/migrations`, applied by the
   deploy before the API itself. See `db/README.md` for the rules and for
   rehearsing a migration (`--dry-run`) before merging.

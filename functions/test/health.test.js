@@ -10,4 +10,5 @@ test('health reports ok, the build, and is never cached', async () => {
   assert.equal(res.jsonBody.service, 'machina-christi-api');
   assert.equal(typeof res.jsonBody.commit, 'string');
   assert.ok(!Number.isNaN(Date.parse(res.jsonBody.time)));
+  assert.equal(res.jsonBody.region, 'dev'); // API_REGION isn't set outside Azure
 });
