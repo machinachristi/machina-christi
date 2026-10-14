@@ -9,6 +9,7 @@ afterthought: every phase of work adds to them.
   comparison. Start here if a word in any other page is unfamiliar.
 - **One page per phase or big feature**, written when the work is finished:
   - [Phase 1 — the website that knows what day it is in the Church](phase-1-season-api.md)
+  - [Phase 2 — the saints get a home of their own](phase-2-saints-database.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.

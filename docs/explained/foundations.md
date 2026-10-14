@@ -62,6 +62,11 @@ prove who it is without a password. No password means nothing to leak, forget
 or rotate.
 *Here:* the API, the deploy robot and the database all use badges.
 
+**Source (provenance).** Where a fact came from, kept with the fact, like a
+footnote. It lets anyone check it, and lets us fix it when the source is fixed.
+*Here:* the database refuses a bio or a date of death that doesn't point at its
+source; the site links each one.
+
 **Scheduled job (timer).** A program that nobody asks for: it runs by itself
 on a clock, like a dishwasher set to start at 2 a.m.
 *Here:* every Sunday the "librarian" wakes the database and writes out the
@@ -99,10 +104,30 @@ behalf.
 *Here:* the API gives the note to machinachristi.com and nobody else, which is
 also why the season accent only appears on the real site, not on test copies.
 
+**Sleeping (serverless) database.** A database that switches itself off when
+nobody's using it and wakes when someone knocks, like lights on a motion
+sensor. Cheap, but the first knock waits while it wakes.
+*Here:* Azure SQL's free offer sleeps after an hour alone and takes about a
+minute to wake, which is why visitors read a published snapshot instead.
+
+**Cache-busting (versioning).** Changing the question slightly (adding
+"version 2") so every cache treats it as new and fetches a fresh answer,
+instead of serving a copy kept from before. Like reprinting a menu with a new
+date so nobody reads the old one pinned by the door.
+*Here:* when the season answer gained the day's saint, old copies kept by
+Cloudflare and browsers hid it until the question became `…&v=2`.
+
 ## Networks and security
 
 **Firewall.** A list at the door saying who may even knock. It works alongside
 sign-in: the firewall decides who can reach the door, the badge decides who gets in.
+
+**Role and least privilege.** A role is a named set of permissions, like a job
+description: "may file cards, may not change the locks". Least privilege means
+giving each person or program the smallest role that lets it do its job, so a
+mistake or a break-in can only do small damage.
+*Here:* you own the database server; the deploy robot may change tables and
+data but not the server or its owner; the API may only read.
 
 **Default deny.** Start with every door shut and open only the ones you need,
 rather than starting open and trying to remember what to shut.
