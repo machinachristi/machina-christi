@@ -11,6 +11,9 @@ targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
 
+@description('Region for the API and its private network: the database\'s region (Central US), since a SQL virtual network rule admits only subnets in the server\'s own region.')
+param apiLocation string = 'centralus'
+
 @description('Stable suffix for names that must be unique across all of Azure (storage, function app).')
 param suffix string = take(uniqueString(resourceGroup().id), 6)
 
@@ -340,6 +343,155 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
+// Both copies of the app (see "Moving to Central US" below) share these.
+var apiSiteConfig = {
+  minTlsVersion: '1.2'
+  ftpsState: 'Disabled'
+  // Anything not listed is denied. The deployment site (scm) has its own
+  // list and stays reachable for CI, which signs in with Entra.
+  ipSecurityRestrictions: cloudflareRules
+  ipSecurityRestrictionsDefaultAction: 'Deny'
+  cors: {
+    allowedOrigins: allowedOrigins
+  }
+}
+
+var apiAppSettings = [
+  // Host storage via identity: service addresses instead of a connection
+  // string (the account-name shortcut doesn't cover tables).
+  {
+    name: 'AzureWebJobsStorage__blobServiceUri'
+    value: storage.properties.primaryEndpoints.blob
+  }
+  {
+    name: 'AzureWebJobsStorage__queueServiceUri'
+    value: storage.properties.primaryEndpoints.queue
+  }
+  {
+    name: 'AzureWebJobsStorage__tableServiceUri'
+    value: storage.properties.primaryEndpoints.table
+  }
+  {
+    name: 'AzureWebJobsStorage__credential'
+    value: 'managedidentity'
+  }
+  {
+    name: 'AzureWebJobsStorage__clientId'
+    value: funcIdentity.properties.clientId
+  }
+  // The connection string says where to send; the authentication string
+  // makes the app prove who it is with Entra.
+  {
+    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+    value: appi.properties.ConnectionString
+  }
+  {
+    name: 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING'
+    value: 'ClientId=${funcIdentity.properties.clientId};Authorization=AAD'
+  }
+  // The saints publish job: reads the database as this identity (a
+  // read-only database user, db/bootstrap.sql) and writes the snapshot
+  // that /api/season serves.
+  {
+    name: 'FUNC_IDENTITY_CLIENT_ID'
+    value: funcIdentity.properties.clientId
+  }
+  {
+    name: 'SQL_SERVER'
+    value: sql.properties.fullyQualifiedDomainName
+  }
+  {
+    name: 'SQL_DATABASE'
+    value: sqlDb.name
+  }
+  {
+    name: 'SAINTS_SNAPSHOT_URL'
+    value: '${storage.properties.primaryEndpoints.blob}${snapshotContainer}/saints.json'
+  }
+]
+
+var apiFunctionAppConfig = {
+  deployment: {
+    storage: {
+      type: 'blobContainer'
+      value: '${storage.properties.primaryEndpoints.blob}${deploymentContainer}'
+      authentication: {
+        type: 'UserAssignedIdentity'
+        userAssignedIdentityResourceId: funcIdentity.id
+      }
+    }
+  }
+  scaleAndConcurrency: {
+    maximumInstanceCount: maxInstances
+    instanceMemoryMB: 512
+  }
+  runtime: {
+    name: 'node'
+    version: '24'
+  }
+}
+
+// ── The API's private network (Central US) ──────────────────────────────────
+//
+// The app sits in a subnet of its own network, and the database admits only
+// that subnet (a service endpoint plus a virtual network rule): reaching the
+// database's door takes both being inside this network and holding a badge
+// with a database user. A service endpoint works only within one region, and
+// the database is in Central US, so the app is too.
+//
+// Free: virtual networks, subnets and service endpoints cost nothing. The app
+// still reaches the internet (Application Insights, Entra) through Azure's own
+// outbound addresses, so no NAT gateway is needed. Proven on 2026-10-14 with a
+// throwaway copy (see infra/README.md, "The API's network").
+
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
+  name: 'vnet-machina'
+  location: apiLocation
+  tags: tags
+  properties: {
+    addressSpace: {
+      addressPrefixes: ['10.50.0.0/24']
+    }
+    subnets: [
+      {
+        // Flex Consumption: at least /27, delegated to Microsoft.App/environments,
+        // no underscore in the name.
+        name: 'func'
+        properties: {
+          addressPrefix: '10.50.0.0/27'
+          delegations: [
+            {
+              name: 'flex'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+            }
+          ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Sql'
+              locations: [apiLocation]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource funcSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' existing = {
+  parent: vnet
+  name: 'func'
+}
+
+// ── Moving to Central US (AB#73) ────────────────────────────────────────────
+//
+// A Flex app can't change region, so the API moves blue-green: a new app in
+// Central US (funcCus) runs beside the old one in East US 2 (func), both
+// answering api.machinachristi.com; deploys go to the new one only. Once
+// Cloudflare's CNAME points at the new app and it's proven, the old app and
+// the database's "allow Azure services" rule are removed (PR B).
+
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: 'asp-machina'
   location: location
@@ -354,6 +506,7 @@ resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   }
 }
 
+// The old app (East US 2): still serving until Cloudflare is switched.
 resource func 'Microsoft.Web/sites@2024-04-01' = {
   name: 'func-machina-${suffix}'
   location: location
@@ -368,90 +521,8 @@ resource func 'Microsoft.Web/sites@2024-04-01' = {
   properties: {
     serverFarmId: plan.id
     httpsOnly: true
-    siteConfig: {
-      minTlsVersion: '1.2'
-      ftpsState: 'Disabled'
-      // Anything not listed is denied. The deployment site (scm) has its own
-      // list and stays reachable for CI, which signs in with Entra.
-      ipSecurityRestrictions: cloudflareRules
-      ipSecurityRestrictionsDefaultAction: 'Deny'
-      cors: {
-        allowedOrigins: allowedOrigins
-      }
-      appSettings: [
-        // Host storage via identity: service addresses instead of a connection
-        // string (the account-name shortcut doesn't cover tables).
-        {
-          name: 'AzureWebJobsStorage__blobServiceUri'
-          value: storage.properties.primaryEndpoints.blob
-        }
-        {
-          name: 'AzureWebJobsStorage__queueServiceUri'
-          value: storage.properties.primaryEndpoints.queue
-        }
-        {
-          name: 'AzureWebJobsStorage__tableServiceUri'
-          value: storage.properties.primaryEndpoints.table
-        }
-        {
-          name: 'AzureWebJobsStorage__credential'
-          value: 'managedidentity'
-        }
-        {
-          name: 'AzureWebJobsStorage__clientId'
-          value: funcIdentity.properties.clientId
-        }
-        // The connection string says where to send; the authentication string
-        // makes the app prove who it is with Entra.
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: appi.properties.ConnectionString
-        }
-        {
-          name: 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING'
-          value: 'ClientId=${funcIdentity.properties.clientId};Authorization=AAD'
-        }
-        // The saints publish job: reads the database as this identity (a
-        // read-only database user, db/bootstrap.sql) and writes the snapshot
-        // that /api/season serves.
-        {
-          name: 'FUNC_IDENTITY_CLIENT_ID'
-          value: funcIdentity.properties.clientId
-        }
-        {
-          name: 'SQL_SERVER'
-          value: sql.properties.fullyQualifiedDomainName
-        }
-        {
-          name: 'SQL_DATABASE'
-          value: sqlDb.name
-        }
-        {
-          name: 'SAINTS_SNAPSHOT_URL'
-          value: '${storage.properties.primaryEndpoints.blob}${snapshotContainer}/saints.json'
-        }
-      ]
-    }
-    functionAppConfig: {
-      deployment: {
-        storage: {
-          type: 'blobContainer'
-          value: '${storage.properties.primaryEndpoints.blob}${deploymentContainer}'
-          authentication: {
-            type: 'UserAssignedIdentity'
-            userAssignedIdentityResourceId: funcIdentity.id
-          }
-        }
-      }
-      scaleAndConcurrency: {
-        maximumInstanceCount: maxInstances
-        instanceMemoryMB: 512
-      }
-      runtime: {
-        name: 'node'
-        version: '24'
-      }
-    }
+    siteConfig: union(apiSiteConfig, { appSettings: apiAppSettings })
+    functionAppConfig: apiFunctionAppConfig
   }
   dependsOn: [
     hostStorageAccess
@@ -487,6 +558,82 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
   }
 }
 
+// The new app (Central US), inside the private network. Same identity, same
+// settings, same Cloudflare-only front door; it also says where it runs
+// (/api/health reports API_REGION).
+resource planCus 'Microsoft.Web/serverfarms@2024-04-01' = {
+  name: 'asp-machina-cus'
+  location: apiLocation
+  kind: 'functionapp'
+  tags: tags
+  sku: {
+    tier: 'FlexConsumption'
+    name: 'FC1'
+  }
+  properties: {
+    reserved: true // Linux
+  }
+}
+
+resource funcCus 'Microsoft.Web/sites@2024-04-01' = {
+  name: 'func-machina-cus-${suffix}'
+  location: apiLocation
+  kind: 'functionapp,linux'
+  tags: tags
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${funcIdentity.id}': {}
+    }
+  }
+  properties: {
+    serverFarmId: planCus.id
+    httpsOnly: true
+    virtualNetworkSubnetId: funcSubnet.id
+    siteConfig: union(apiSiteConfig, {
+      appSettings: concat(apiAppSettings, [
+        {
+          name: 'API_REGION'
+          value: apiLocation
+        }
+      ])
+    })
+    functionAppConfig: apiFunctionAppConfig
+  }
+  dependsOn: [
+    hostStorageAccess
+    metricsPublisher
+  ]
+}
+
+// The same hostname on the new app. Azure accepts it on a second app because
+// the asuid.api TXT record proves the domain belongs to this subscription;
+// which app actually receives visitors is decided by Cloudflare's CNAME.
+resource apiHostBindingCus 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
+  parent: funcCus
+  name: apiHostname
+  properties: {
+    hostNameType: 'Verified'
+    siteName: funcCus.name
+  }
+}
+
+resource scmBasicAuthCus 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
+  parent: funcCus
+  name: 'scm'
+  properties: {
+    allow: false
+  }
+}
+
+resource ftpBasicAuthCus 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
+  parent: funcCus
+  name: 'ftp'
+  properties: {
+    allow: false
+  }
+}
+
 // ── Database: Azure SQL, free offer ─────────────────────────────────────────
 //
 // Ordo's saints. The server and database are created by people
@@ -504,11 +651,22 @@ resource sqlDb 'Microsoft.Sql/servers/databases@2023-08-01' existing = {
   name: 'machina'
 }
 
-// The Function app (Flex Consumption) has no fixed outbound address, so
-// connections from inside Azure are allowed through the firewall; Entra-only
-// sign-in still turns away anyone without a database user. The deploy adds
-// its runner's own address for the length of a migration and removes it.
-// Locking this to the API's own network is planned (AB#73).
+// The API's subnet may reach the database (service endpoint + this rule).
+resource sqlFromApiSubnet 'Microsoft.Sql/servers/virtualNetworkRules@2023-08-01' = {
+  parent: sql
+  name: 'api-subnet'
+  properties: {
+    virtualNetworkSubnetId: funcSubnet.id
+    ignoreMissingVnetServiceEndpoint: false
+  }
+}
+
+// Until the old East US 2 app is retired, connections from anywhere inside
+// Azure are still allowed through the firewall (that app has no fixed address
+// and no network of its own); Entra-only sign-in still turns away anyone
+// without a database user. Removed in PR B (AB#73), by a deliberate delete:
+// dropping it from this file alone wouldn't remove it from Azure. The deploy
+// adds its runner's own address for the length of a migration and removes it.
 resource sqlAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
   parent: sql
   name: 'AllowAllWindowsAzureIps'
@@ -518,9 +676,13 @@ resource sqlAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
   }
 }
 
-output functionAppName string = func.name
-output functionAppHostName string = func.properties.defaultHostName
-output apiHostname string = apiHostBinding.name
+// Deploys go to the new app (Central US); the old one keeps its last build.
+output functionAppName string = funcCus.name
+output functionAppHostName string = funcCus.properties.defaultHostName
+output apiHostname string = apiHostBindingCus.name
+output oldFunctionAppName string = func.name
+output oldFunctionAppHostName string = func.properties.defaultHostName
+output vnetName string = vnet.name
 output appInsightsName string = appi.name
 output webAppInsightsName string = appiWeb.name
 output webLogWorkspaceName string = logWeb.name
