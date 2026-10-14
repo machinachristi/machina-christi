@@ -203,6 +203,14 @@
       margin-bottom: 0;
     }
     .saint .attribution a { color: inherit; }
+    /* Facts from the database (death, patronages), each with its source. */
+    .saint .facts {
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(232, 213, 163, 0.66);
+      margin: 0.9em 0 0;
+    }
+    .saint .facts a { color: rgba(232, 213, 163, 0.5); }
 
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
 
@@ -300,11 +308,88 @@
         return key === todayKey ? 'ordo.html' : `ordo.html?date=${key}`;
       }
 
-      // Fetch each data file exactly once and keep the parsed result. saints.json
-      // is ~120KB; re-downloading and re-parsing it on every day change is what
-      // made the celebration lag behind the header. The calendar is cached per
-      // year, so paging within a year is instant after the first load.
-      const saintsData = fetch('./ordo/saints.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+      // Fetch each data file exactly once and keep the parsed result. The
+      // calendar is cached per year, so paging within a year is instant after
+      // the first load.
+      //
+      // Saints' bios come from the API first (assets/season.js asks it for the
+      // day on screen anyway; the answer includes the saint, from the
+      // database's published snapshot, with death dates and patronages). Only
+      // when that fails, or off the live site, is the bundled saints.json
+      // (~120KB) downloaded, once.
+      let saintsFile = null;
+      function bundledSaints() {
+        saintsFile = saintsFile || fetch('./ordo/saints.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+        return saintsFile;
+      }
+      // season.js is deferred, so it's ready by DOMContentLoaded.
+      const seasonReady = new Promise(resolve => {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', resolve, { once: true });
+        else resolve();
+      });
+      function apiSaint(key, name) {
+        return seasonReady
+          .then(() => (window.mcSeason ? window.mcSeason.get(key) : null))
+          .then(v => (v && v.saint && v.saint.feast === name && v.saint.bio ? v.saint : null))
+          .catch(() => null);
+      }
+
+      // One shape for both sources: { bio, sourceName, sourceUrl, people }.
+      function saintFor(key, name) {
+        return apiSaint(key, name).then(api => {
+          if (api) {
+            const t = (api.bioSource && api.bioSource.title) || '';
+            return {
+              bio: api.bio,
+              sourceName: /Butler/.test(t) ? 'Butler’s Lives of the Saints (1894)' : t,
+              sourceUrl: api.bioSource && api.bioSource.url,
+              people: api.people || [],
+            };
+          }
+          return bundledSaints().then(saints => {
+            const b = saints[name];
+            if (!b) return null;
+            return {
+              bio: b.excerpt,
+              sourceName: b.source_name || 'Butler’s Lives of the Saints (1894)',
+              sourceUrl: b.source_url,
+              people: [],
+            };
+          });
+        });
+      }
+
+      const safeUrl = u => (/^https:\/\//.test(u || '') ? escapeHtml(u) : null);
+      const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+      // "died in 304", "died c. 300", "died in the 4th century"; years before
+      // 1 are BC. Only as precise as the source says.
+      function died(d) {
+        if (!d || d.year == null) return null;
+        const y = d.year > 0 ? String(d.year) : `${-d.year} BC`;
+        if (d.precision === 'century' && d.century) return `died in the ${ordinal(d.century)} century`;
+        if (d.precision === 'decade' || d.precision === 'century') return `died c. ${y}`;
+        return `died in ${y}`;
+      }
+      // One line per person: death and patronages, then where they're from.
+      function factsHtml(people) {
+        const MAX_PATRONAGES = 6;
+        const lines = people.map(p => {
+          const bits = [];
+          const d = died(p.died);
+          if (d) bits.push(d);
+          if (p.patronages && p.patronages.length) {
+            const shown = p.patronages.slice(0, MAX_PATRONAGES).join(', ');
+            bits.push(`patron of ${shown}${p.patronages.length > MAX_PATRONAGES ? ', and more' : ''}`);
+          }
+          if (!bits.length) return '';
+          const who = people.length > 1 ? `${escapeHtml(p.name)}: ` : '';
+          const text = who + escapeHtml(bits.join(' · ')).replace(/^./, c => c.toUpperCase());
+          const src = p.factsSource && safeUrl(p.factsSource.url);
+          return text + (src ? ` <a href="${src}" target="_blank" rel="noopener">(Wikidata)</a>` : '');
+        }).filter(Boolean);
+        return lines.length ? `<p class="facts">${lines.join('<br>')}</p>` : '';
+      }
+
       const calendarCache = {};
       function calendarFor(year) {
         if (!calendarCache[year]) {
@@ -382,19 +467,20 @@
               `<p class="celebration">${escapeHtml(entry.name)}</p>`;
           }
           // The feast block needs nothing beyond the calendar — show it now;
-          // the bio joins once saints.json has arrived (instant after the
-          // first load, since the parsed file is kept for the whole visit).
+          // the bio joins once the API (or the bundled file) answers.
           saintEl.innerHTML = feastHtml;
           if (!isSaint) return;
-          saintsData.then(saints => {
+          saintFor(key, entry.name).then(saint => {
             if (seq !== renderSeq) return;
-            const bio = saints[entry.name] || null;
-            const sourceName = bio && bio.source_name ? bio.source_name : 'Butler&rsquo;s Lives of the Saints';
-            const sourceSuffix = bio && bio.source_name ? '' : ' (1894)';
-            saintEl.innerHTML = feastHtml + (bio
+            const url = saint && safeUrl(saint.sourceUrl);
+            const source = saint && (url
+              ? `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(saint.sourceName)}</a>`
+              : escapeHtml(saint.sourceName));
+            saintEl.innerHTML = feastHtml + (saint
               ? `<div class="saint">
-                  <blockquote>${escapeHtml(bio.excerpt)}</blockquote>
-                  <p class="attribution">&mdash; <a href="${bio.source_url}" target="_blank" rel="noopener">${sourceName}</a>${sourceSuffix}</p>
+                  <blockquote>${escapeHtml(saint.bio)}</blockquote>
+                  <p class="attribution">&mdash; ${source}</p>
+                  ${factsHtml(saint.people)}
                 </div>`
               : `<p class="notice">A bio for ${escapeHtml(entry.name.replace(/,.*$/, ''))} isn&rsquo;t available yet.</p>`);
           });

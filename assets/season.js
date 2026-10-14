@@ -15,6 +15,10 @@
 // By default it shows the visitor's own today. A page that shows another day
 // (Ordo's date browser) sets <html data-season-date="YYYY-MM-DD">, and the
 // accent follows it.
+//
+// The answer also names the day's saint, when there is one (from the saints
+// snapshot the API publishes from the database). The season line links it to
+// Ordo, and Ordo reads the saint's bio through window.mcSeason.get(date).
 (() => {
   'use strict';
 
@@ -86,13 +90,16 @@
 
   // "Ordinary Time · Week 28", "Lent · Week 4", "Christmas" — plus the day's
   // feast when one replaces the weekday, unless it only restates the season
-  // ("28th Sunday of Ordinary Time").
+  // ("28th Sunday of Ordinary Time"). A saint's day (optional memorials too)
+  // becomes a link to Ordo, under the saint's short name ("Saint Agnes").
   function label(v) {
     const { name, week } = v.season;
-    const parts = [week ? `${name} · Week ${week}` : name];
+    const season = week ? `${name} · Week ${week}` : name;
     const c = v.celebration;
-    if (c && !c.optional && !/Sunday of |Weekday/.test(c.name)) parts.push(c.name);
-    return parts;
+    const saint = v.saint && v.saint.feast;
+    if (saint && /^Saints?\b/.test(saint)) return { season, feast: saint.replace(/,.*$/, ''), full: saint };
+    if (c && !c.optional && !/Sunday of |Weekday/.test(c.name)) return { season, feast: c.name };
+    return { season };
   }
 
   function ensureStyle() {
@@ -115,6 +122,14 @@
       }
       html[data-season] [data-season-line]:not([hidden]) { opacity: 1; }
       [data-season-line] .mc-season-feast { display: block; color: rgba(232, 213, 163, 0.72); }
+      [data-season-line] .mc-season-feast a {
+        display: inline-block; padding: 4px 10px; min-height: 32px;
+        color: rgba(232, 213, 163, 0.88); text-decoration: none;
+        text-decoration-line: underline; text-decoration-color: rgba(var(--season), 0.45);
+        text-underline-offset: 4px;
+      }
+      [data-season-line] .mc-season-feast a:hover,
+      [data-season-line] .mc-season-feast a:focus-visible { color: #f3e3b4; text-decoration-color: rgba(var(--season), 0.9); }
       @media (prefers-reduced-motion: reduce) {
         .mc-season-glow, [data-season-line] { transition: none; }
       }`;
@@ -132,13 +147,26 @@
     root.style.setProperty('--season', RGB[v.color]);
     root.dataset.season = v.season.key;
     root.dataset.seasonColor = v.color;
-    const [season, feast] = label(v);
+    const { season, feast, full } = label(v);
     for (const el of document.querySelectorAll('[data-season-line]')) {
       el.textContent = season;
       if (feast) {
         const f = document.createElement('span');
         f.className = 'mc-season-feast';
-        f.textContent = feast;
+        if (full) {
+          // A saint's day: a link to Ordo, open on the same day this line shows.
+          const a = document.createElement('a');
+          a.href = v.date === today() ? '/ordo.html' : `/ordo.html?date=${v.date}`;
+          a.setAttribute('aria-label', `${full}: read about the saint of the day in Ordo`);
+          a.textContent = feast;
+          const arrow = document.createElement('span');
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.textContent = ' ›';
+          a.appendChild(arrow);
+          f.appendChild(a);
+        } else {
+          f.textContent = feast;
+        }
         el.appendChild(f);
       }
       el.hidden = false;
@@ -161,6 +189,10 @@
       if (v) apply(v); else clear();
     });
   }
+
+  // For pages that want the whole answer (Ordo's saint bios): a promise of
+  // the API's answer for that date, or null.
+  window.mcSeason = { get };
 
   refresh();
   new MutationObserver(refresh).observe(root, { attributes: true, attributeFilter: ['data-season-date'] });
