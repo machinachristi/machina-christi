@@ -27,7 +27,14 @@
 
   const API = 'https://api.machinachristi.com/api/season';
   const TIMEOUT_MS = 5000;
-  const STORE_PREFIX = 'mc_season_';
+  // The shape of the API's answer, as this script expects it. Bump it when the
+  // answer gains something the page needs (2: the day's saint): the version
+  // rides in the question (?v=), so Cloudflare and the browser treat it as a
+  // new question instead of serving an older answer they kept for the day,
+  // and remembered answers from before are set aside the same way.
+  const ANSWER_VERSION = 2;
+  const STORE_FAMILY = 'mc_season_';
+  const STORE_PREFIX = `${STORE_FAMILY}v${ANSWER_VERSION}_`;
 
   // Liturgical colours tuned for the site's near-black background
   // (rgb parts, used as rgba(var(--season), a) like the pages' own colours).
@@ -58,7 +65,7 @@
     try {
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const k = localStorage.key(i);
-        if (k && k.startsWith(STORE_PREFIX) && k !== STORE_PREFIX + key) localStorage.removeItem(k);
+        if (k && k.startsWith(STORE_FAMILY) && k !== STORE_PREFIX + key) localStorage.removeItem(k);
       }
       localStorage.setItem(STORE_PREFIX + key, JSON.stringify(v));
     } catch { /* fine: it's only a convenience */ }
@@ -75,7 +82,7 @@
     if (!pending.has(key)) {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-      pending.set(key, fetch(`${API}?date=${key}`, { signal: ctrl.signal })
+      pending.set(key, fetch(`${API}?date=${key}&v=${ANSWER_VERSION}`, { signal: ctrl.signal })
         .then(r => (r.ok ? r.json() : null))
         .then(v => {
           if (!valid(v)) return null;
