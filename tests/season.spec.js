@@ -1,5 +1,7 @@
 // The season accent (assets/season.js): a glow in the day's liturgical colour
-// and the season's name on the homepage and Ordo.
+// and the season's name on the homepage and Ordo; the saint of the day as a
+// link to Ordo; Ordo's saint bios from the API, with the bundled file as the
+// fallback.
 //
 // season.js only runs on the live site (the API answers only
 // machinachristi.com), so these tests serve the repo *as* the live site and
@@ -20,12 +22,35 @@ const DAYS = {
     celebration: { name: 'Saint Andrew, Apostle', rank: 'FEAST', optional: false, color: 'red' }, color: 'red',
   },
   '2026-12-24': { date: '2026-12-24', season: { key: 'advent', name: 'Advent', week: 4 }, celebration: null, color: 'violet' },
+  '2026-01-21': {
+    date: '2026-01-21', season: { key: 'ordinary', name: 'Ordinary Time', week: 2 },
+    celebration: { name: 'Saint Agnes, Virgin and Martyr', rank: 'MEMORIAL', optional: false, color: 'red' }, color: 'red',
+    saint: {
+      feast: 'Saint Agnes, Virgin and Martyr',
+      bio: 'From the database: a Roman girl of about thirteen.',
+      bioSource: { title: "Summary based on Butler's Lives of the Saints (1894), via catholicsaints.info", url: 'https://catholicsaints.info/agnes/', license: 'Public domain (1894)' },
+      people: [{
+        name: 'Agnes of Rome', slug: 'agnes-of-rome', wikidata: 'Q229574',
+        died: { year: 304, precision: 'year', century: 4 },
+        patronages: ['girls', 'virgins'],
+        factsSource: { title: 'Wikidata: Agnes of Rome', url: 'https://www.wikidata.org/wiki/Q229574', license: 'CC0' },
+      }],
+      from: 'database', publishedAt: '2026-10-14T10:30:00.000Z',
+    },
+  },
+  // An optional memorial: the weekday stands, but the saint is still linked.
+  '2026-10-14': {
+    date: '2026-10-14', season: { key: 'ordinary', name: 'Ordinary Time', week: 28 },
+    celebration: { name: 'Saint Callistus I, Pope and Martyr', rank: 'OPTIONAL MEMORIAL', optional: true, color: 'red' }, color: 'green',
+    saint: { feast: 'Saint Callistus I, Pope and Martyr', bio: 'A pope.', bioSource: null, people: [], from: 'static', publishedAt: null },
+  },
 };
 
 // Serve the repo as the live site and answer the season API from DAYS (or
 // with `status` to simulate an outage). Returns the dates the page asked for.
 async function liveSite(page, { today = '2026-10-13', status = 200 } = {}) {
   const asked = [];
+  const files = [];
   const errors = [];
   page.on('console', m => {
     // A failed fetch is reported by the browser itself; the page must not add its own.
@@ -36,6 +61,7 @@ async function liveSite(page, { today = '2026-10-13', status = 200 } = {}) {
 
   await page.route(`${LIVE}/**`, route => {
     let rel = decodeURIComponent(new URL(route.request().url()).pathname);
+    files.push(rel);
     if (rel.endsWith('/')) rel += 'index.html';
     const file = path.join(ROOT, rel);
     if (!file.startsWith(ROOT + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
@@ -56,7 +82,7 @@ async function liveSite(page, { today = '2026-10-13', status = 200 } = {}) {
   });
   // Anything else off-site never leaves the test machine.
   await page.route(url => ![LIVE, API].includes(url.origin) && /^https?:/.test(url.protocol), route => route.abort());
-  return { asked, errors };
+  return { asked, errors, files };
 }
 
 const line = page => page.locator('.hero [data-season-line]');
@@ -125,4 +151,62 @@ test('off the live site, the API is never called', async ({ page }) => {
   await page.waitForTimeout(300);
   expect(calls).toEqual([]);
   await expect(line(page)).toBeHidden();
+});
+
+const saintLink = page => page.locator('.hero [data-season-line] .mc-season-feast a');
+
+test('the saint of the day links to Ordo, and the homepage still fits a small phone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const { errors } = await liveSite(page, { today: '2026-01-21' });
+  await page.goto(`${LIVE}/`);
+  await expect(saintLink(page)).toHaveText('Saint Agnes ›');
+  await expect(saintLink(page)).toHaveAttribute('href', '/ordo.html');
+  await expect(saintLink(page)).toHaveAttribute('aria-label', /Saint Agnes, Virgin and Martyr/);
+  const size = await saintLink(page).evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+  expect(size).toBeGreaterThanOrEqual(14);
+  const box = await saintLink(page).boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(32); // big enough to tap
+
+  // No scrolling: the page is one screen, and the centred gate sits inside it.
+  await page.waitForTimeout(1300); // the line fades in; the gallery settles
+  const fit = await page.evaluate(() => ({
+    scroll: document.scrollingElement.scrollHeight, height: innerHeight,
+    gate: document.querySelector('.portal').getBoundingClientRect().bottom,
+  }));
+  expect(fit.scroll).toBeLessThanOrEqual(fit.height);
+  expect(fit.gate).toBeLessThanOrEqual(fit.height);
+  expect(errors).toEqual([]);
+
+  await saintLink(page).click();
+  await expect(page).toHaveURL(`${LIVE}/ordo.html`);
+  await expect(page.locator('.saint blockquote')).toContainText('From the database');
+});
+
+test('an optional memorial\'s saint is linked too', async ({ page }) => {
+  await liveSite(page, { today: '2026-10-14' });
+  await page.goto(`${LIVE}/`);
+  await expect(line(page)).toContainText('Ordinary Time · Week 28');
+  await expect(saintLink(page)).toHaveText('Saint Callistus I ›');
+  await expect(page.locator('html')).toHaveAttribute('data-season-color', 'green');
+});
+
+test('Ordo shows the saint from the API, with sourced facts, without the bundled file', async ({ page }) => {
+  const { files, errors } = await liveSite(page);
+  await page.goto(`${LIVE}/ordo.html?date=2026-01-21`);
+  await expect(page.locator('.saint blockquote')).toHaveText('From the database: a Roman girl of about thirteen.');
+  await expect(page.locator('.saint .attribution a')).toHaveText('Butler’s Lives of the Saints (1894)');
+  await expect(page.locator('.saint .attribution a')).toHaveAttribute('href', 'https://catholicsaints.info/agnes/');
+  await expect(page.locator('.saint .facts')).toContainText('Died in 304 · patron of girls, virgins');
+  await expect(page.locator('.saint .facts a')).toHaveAttribute('href', 'https://www.wikidata.org/wiki/Q229574');
+  expect(files).not.toContain('/ordo/saints.json');
+  expect(errors).toEqual([]);
+});
+
+test('if the API is down, Ordo uses the bundled bios', async ({ page }) => {
+  const { files, errors } = await liveSite(page, { status: 503 });
+  await page.goto(`${LIVE}/ordo.html?date=2026-01-21`);
+  await expect(page.locator('.saint blockquote')).toContainText('Agnes was a Roman girl');
+  await expect(page.locator('.saint .facts')).toHaveCount(0);
+  expect(files).toContain('/ordo/saints.json');
+  expect(errors).toEqual([]);
 });
