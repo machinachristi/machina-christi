@@ -210,3 +210,21 @@ test('if the API is down, Ordo uses the bundled bios', async ({ page }) => {
   expect(files).toContain('/ordo/saints.json');
   expect(errors).toEqual([]);
 });
+
+test('answers remembered or cached before the saint was added are not reused', async ({ page }) => {
+  const { asked } = await liveSite(page, { today: '2026-01-21' });
+  const urls = [];
+  page.on('request', r => { if (r.url().startsWith(API)) urls.push(r.url()); });
+  // An answer remembered under the old name, without a saint.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mc_season_2026-01-21', JSON.stringify({ date: '2026-01-21', season: { key: 'ordinary', name: 'Ordinary Time', week: 2 }, celebration: null, color: 'green' }));
+    } catch {}
+  });
+  await page.goto(`${LIVE}/`);
+  await expect(saintLink(page)).toHaveText('Saint Agnes ›');
+  expect(asked).toEqual(['2026-01-21']);
+  expect(urls[0]).toContain('&v=2'); // a new question for every cache on the way
+  const keys = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('mc_season_')));
+  expect(keys).toEqual(['mc_season_v2_2026-01-21']);
+});
