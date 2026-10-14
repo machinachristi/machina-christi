@@ -62,7 +62,24 @@ prove who it is without a password. No password means nothing to leak, forget
 or rotate.
 *Here:* the API, the deploy robot and the database all use badges.
 
+**Scheduled job (timer).** A program that nobody asks for: it runs by itself
+on a clock, like a dishwasher set to start at 2 a.m.
+*Here:* every Sunday the "librarian" wakes the database and writes out the
+saints.
+
+**Blob storage.** A cupboard for files in the cloud. "Blob" just means "a lump
+of data", whatever's in it: a photo, a video, a JSON file. Much cheaper and
+simpler than a database, but it can only hand back whole files, not answer
+questions.
+*Here:* the saints snapshot and the API's own packages.
+
 ## Speed and cost
+
+**Snapshot (publishing).** Copying what you need from a slow or costly place
+into a quick, cheap one, ahead of time. A newspaper is printed once in the
+night and read by thousands; nobody phones the reporters.
+*Here:* the database sleeps; once a week (and after every change) its saints
+are printed to one JSON file, and the API reads only that file.
 
 **Cache.** Keeping a copy of an answer so you don't have to ask again — a sticky
 note on the fridge instead of phoning your mum every time. The trick is knowing
@@ -89,6 +106,19 @@ sign-in: the firewall decides who can reach the door, the badge decides who gets
 
 **Default deny.** Start with every door shut and open only the ones you need,
 rather than starting open and trying to remember what to shut.
+
+**Fallback (graceful degradation).** A plan B that kicks in by itself when plan
+A fails, so a visitor sees something slightly older or simpler, not an error.
+Like candles in the drawer for a power cut.
+*Here:* if the saints snapshot can't be read, the API answers from the bios
+bundled with the site; if the database is asleep or broken, last week's
+snapshot stays up.
+
+**Master key.** One key that can start or change anything in an app. Handing
+it out is only safe to someone who could already do all that, so it adds no
+power. The deploy robot installs the app's code, so it could make the app do
+anything anyway.
+*Here:* the deploy uses it to start the librarian right after a change.
 
 ## Making changes safely
 

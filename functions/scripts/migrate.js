@@ -15,7 +15,7 @@
 // Only a member of sql-machina-admins can; it isn't recorded as a migration.
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
-const sql = require('mssql');
+const { sql, connectWithRetry } = require('../src/lib/sql');
 const { listMigrations, splitBatches, substitute, pending } = require('./migrations');
 
 const fs = require('node:fs');
@@ -31,21 +31,6 @@ function token() {
     '--query', 'accessToken', '-o', 'tsv'], { encoding: 'utf8' }).trim();
 }
 
-// A paused database wakes on the first connection, which is refused while it
-// starts (error 40613, usually under a minute). Keep knocking for a while.
-async function connect(config) {
-  const deadline = Date.now() + 4 * 60 * 1000;
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await new sql.ConnectionPool(config).connect();
-    } catch (err) {
-      if (Date.now() > deadline) throw err;
-      console.log(`connect attempt ${attempt} failed (${err.message.split('\n')[0]}); the database may be waking, retrying in 15 s`);
-      await new Promise(r => setTimeout(r, 15000));
-    }
-  }
-}
-
 async function main() {
   const server = process.env.SQL_SERVER;
   const database = process.env.SQL_DATABASE;
@@ -55,7 +40,7 @@ async function main() {
     .map(([k, v]) => [k.slice('SQLVAR_'.length), v]));
 
   const migrations = listMigrations(DIR);
-  const pool = await connect({
+  const pool = await connectWithRetry({
     server,
     database,
     authentication: { type: 'azure-active-directory-access-token', options: { token: token() } },
@@ -108,6 +93,9 @@ async function main() {
         throw new Error(`${m.id} failed, nothing from it was kept: ${err.message}`);
       }
     }
+
+    // The deploy republishes the saints snapshot when anything was applied.
+    if (process.env.GITHUB_OUTPUT && !dryRun) fs.appendFileSync(process.env.GITHUB_OUTPUT, `applied=${todo.length}\n`);
 
     if (dryRun) {
       await whole.rollback();
