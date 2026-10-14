@@ -309,7 +309,7 @@ resource snapshots 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   }
 }
 
-// ── API: Function app on Flex Consumption ───────────────────────────────────
+// ── API: identity, permissions and settings ─────────────────────────────────
 
 // The app's identity. User-assigned, so it exists and holds its roles before
 // the app first starts (no wait for permissions to catch up).
@@ -343,7 +343,8 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
-// Both copies of the app (see "Moving to Central US" below) share these.
+// The Function app's settings (kept as variables so a second copy, as in a
+// region move, can share them exactly).
 var apiSiteConfig = {
   minTlsVersion: '1.2'
   ftpsState: 'Disabled'
@@ -484,83 +485,12 @@ resource funcSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' exist
   name: 'func'
 }
 
-// ── Moving to Central US (AB#73) ────────────────────────────────────────────
+// ── API: the Function app (Central US) ──────────────────────────────────────
 //
-// A Flex app can't change region, so the API moves blue-green: a new app in
-// Central US (funcCus) runs beside the old one in East US 2 (func), both
-// answering api.machinachristi.com; deploys go to the new one only. Once
-// Cloudflare's CNAME points at the new app and it's proven, the old app and
-// the database's "allow Azure services" rule are removed (PR B).
-
-resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name: 'asp-machina'
-  location: location
-  kind: 'functionapp'
-  tags: tags
-  sku: {
-    tier: 'FlexConsumption'
-    name: 'FC1'
-  }
-  properties: {
-    reserved: true // Linux
-  }
-}
-
-// The old app (East US 2): still serving until Cloudflare is switched.
-resource func 'Microsoft.Web/sites@2024-04-01' = {
-  name: 'func-machina-${suffix}'
-  location: location
-  kind: 'functionapp,linux'
-  tags: tags
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${funcIdentity.id}': {}
-    }
-  }
-  properties: {
-    serverFarmId: plan.id
-    httpsOnly: true
-    siteConfig: union(apiSiteConfig, { appSettings: apiAppSettings })
-    functionAppConfig: apiFunctionAppConfig
-  }
-  dependsOn: [
-    hostStorageAccess
-    metricsPublisher
-  ]
-}
-
-// The custom hostname, so Azure answers requests addressed to it. No
-// certificate binding: Cloudflare (Full mode) accepts Azure's default one.
-resource apiHostBinding 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
-  parent: func
-  name: apiHostname
-  properties: {
-    hostNameType: 'Verified'
-    siteName: func.name
-  }
-}
-
-// Deploys sign in with Entra; the old username/password publishing is off.
-resource scmBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
-  parent: func
-  name: 'scm'
-  properties: {
-    allow: false
-  }
-}
-
-resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
-  parent: func
-  name: 'ftp'
-  properties: {
-    allow: false
-  }
-}
-
-// The new app (Central US), inside the private network. Same identity, same
-// settings, same Cloudflare-only front door; it also says where it runs
-// (/api/health reports API_REGION).
+// Inside the private network above. It moved here from East US 2 on
+// 2026-10-14 (AB#73), blue-green: a new app beside the old one, Cloudflare's
+// CNAME switched, then the old app deleted. Hence "-cus" in the names. It says
+// where it runs (/api/health reports API_REGION).
 resource planCus 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: 'asp-machina-cus'
   location: apiLocation
@@ -606,9 +536,11 @@ resource funcCus 'Microsoft.Web/sites@2024-04-01' = {
   ]
 }
 
-// The same hostname on the new app. Azure accepts it on a second app because
-// the asuid.api TXT record proves the domain belongs to this subscription;
-// which app actually receives visitors is decided by Cloudflare's CNAME.
+// The custom hostname, so Azure answers requests addressed to it. The
+// asuid.api TXT record proves the domain belongs to this subscription (which
+// also let two apps hold it during the move); Cloudflare's CNAME decides which
+// app receives visitors. No certificate binding: Cloudflare (Full mode)
+// accepts Azure's default one.
 resource apiHostBindingCus 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
   parent: funcCus
   name: apiHostname
@@ -618,6 +550,7 @@ resource apiHostBindingCus 'Microsoft.Web/sites/hostNameBindings@2024-04-01' = {
   }
 }
 
+// Deploys sign in with Entra; the old username/password publishing is off.
 resource scmBasicAuthCus 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
   parent: funcCus
   name: 'scm'
@@ -651,7 +584,10 @@ resource sqlDb 'Microsoft.Sql/servers/databases@2023-08-01' existing = {
   name: 'machina'
 }
 
-// The API's subnet may reach the database (service endpoint + this rule).
+// The only network allowed in: the API's subnet (service endpoint + this
+// rule). Nothing else in Azure may even reach the door ("Allow Azure services"
+// was deleted on 2026-10-14, AB#73). The deploy adds its runner's own address
+// for the length of a migration and removes it; an admin does the same by hand.
 resource sqlFromApiSubnet 'Microsoft.Sql/servers/virtualNetworkRules@2023-08-01' = {
   parent: sql
   name: 'api-subnet'
@@ -661,27 +597,9 @@ resource sqlFromApiSubnet 'Microsoft.Sql/servers/virtualNetworkRules@2023-08-01'
   }
 }
 
-// Until the old East US 2 app is retired, connections from anywhere inside
-// Azure are still allowed through the firewall (that app has no fixed address
-// and no network of its own); Entra-only sign-in still turns away anyone
-// without a database user. Removed in PR B (AB#73), by a deliberate delete:
-// dropping it from this file alone wouldn't remove it from Azure. The deploy
-// adds its runner's own address for the length of a migration and removes it.
-resource sqlAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
-  parent: sql
-  name: 'AllowAllWindowsAzureIps'
-  properties: {
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'
-  }
-}
-
-// Deploys go to the new app (Central US); the old one keeps its last build.
 output functionAppName string = funcCus.name
 output functionAppHostName string = funcCus.properties.defaultHostName
 output apiHostname string = apiHostBindingCus.name
-output oldFunctionAppName string = func.name
-output oldFunctionAppHostName string = func.properties.defaultHostName
 output vnetName string = vnet.name
 output appInsightsName string = appi.name
 output webAppInsightsName string = appiWeb.name
