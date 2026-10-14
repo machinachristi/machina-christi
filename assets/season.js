@@ -31,7 +31,9 @@
   // answer gains something the page needs (2: the day's saint): the version
   // rides in the question (?v=), so Cloudflare and the browser treat it as a
   // new question instead of serving an older answer they kept for the day,
-  // and remembered answers from before are set aside the same way.
+  // and remembered answers from before are set aside the same way. This file
+  // itself is cached for an hour, so the pages load it as season.js?v=N:
+  // bump that too, in every page, whenever this file changes.
   const ANSWER_VERSION = 2;
   const STORE_FAMILY = 'mc_season_';
   const STORE_PREFIX = `${STORE_FAMILY}v${ANSWER_VERSION}_`;

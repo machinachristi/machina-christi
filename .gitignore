@@ -24,3 +24,7 @@ test-results/
 
 # Python bytecode cache from the one-off scripts/*.py maintenance scripts
 __pycache__/
+
+# Compiled Bicep (az bicep build writes it next to the source); CI compiles its own.
+infra/main.json
+infra/bootstrap.json

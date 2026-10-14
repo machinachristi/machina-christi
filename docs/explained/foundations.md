@@ -122,6 +122,26 @@ Cloudflare and browsers hid it until the question became `…&v=2`.
 **Firewall.** A list at the door saying who may even knock. It works alongside
 sign-in: the firewall decides who can reach the door, the badge decides who gets in.
 
+**Region.** Which of the cloud provider's cities a piece of the system lives
+in (East US 2 is Virginia, Central US is Iowa). Things in the same region talk
+fastest, and some features only work within one region.
+*Here:* the API and the database both live in Central US.
+
+**Virtual network and subnet.** A private building in the cloud (the virtual
+network, or VNet), divided into hallways (subnets). What's inside can talk
+privately; the outside world can't wander in.
+*Here:* `vnet-machina`, with one hallway, `func`, for the API.
+
+**Service endpoint.** A pass that lets everyone in one hallway reach a
+particular Azure service by a private route, so that service can say "I only
+open the door to that hallway".
+*Here:* the database admits only the API's hallway.
+
+**Defence in depth.** Several independent locks instead of one, so a single
+failure (a stolen badge, a mistaken rule) isn't enough to get in.
+*Here:* to reach the saints, you must be inside our network *and* hold a badge
+with a database account; the API's badge can only read.
+
 **Role and least privilege.** A role is a named set of permissions, like a job
 description: "may file cards, may not change the locks". Least privilege means
 giving each person or program the smallest role that lets it do its job, so a
@@ -162,6 +182,12 @@ every day of 2026 and 2027.
 **CI (continuous integration).** A robot that runs all the tests on every pull
 request, so nothing gets merged on trust alone.
 *Here:* GitHub Actions — the "Smoke Test" and "Azure Platform" checks.
+
+**Blue-green deployment.** Replacing a live system by building the new one
+next to the old, switching visitors over, and only then removing the old one,
+like moving house by living in both for a day. There's never a moment without
+a working system, and if the new one misbehaves you switch back.
+*Here:* how the API moved from East US 2 to Central US.
 
 **Deploy.** Putting the new version where the public can reach it — moving the
 finished dish from the kitchen to the table.

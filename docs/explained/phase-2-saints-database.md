@@ -92,6 +92,39 @@ have expired within a day, but the proper fix is **cache-busting**: the
 question now carries a version number, so every cache treats it as new. Next
 time the answer changes shape, the number goes up.
 
+## Locking the library's door (AB#73)
+
+At first, the library's front door let in *anyone standing inside Azure* (any
+computer in Microsoft's cloud, including strangers'), as long as they then
+showed a valid badge at the desk. Nobody could get in without a badge, but
+strangers could still walk up and knock.
+
+So we gave the API a **private hallway** (a **virtual network**, with a
+**subnet** for the API) and told the library: "only open the door to people
+coming down that hallway" (a **service endpoint** plus a rule on the
+library's door). Now a stranger needs to be inside our building *and* hold a
+badge. Two locks instead of one: that's called *defence in depth*.
+
+There was a catch. That kind of hallway only works within one **region** (one
+of Azure's cities), and the API lived in East US 2 while the library lives in
+Central US. A private tunnel between cities exists, but costs about $8 a month.
+So instead we **moved the API to Central US**, for free.
+
+**How we moved a live service without anyone noticing (blue-green).**
+1. We first built a small throwaway copy of the whole idea, knocked on a test
+   library's door from inside and outside the hallway, and read the error
+   messages to prove each lock did its job. Then we deleted it.
+2. We built the new API in Central US *next to* the old one, both able to answer
+   for api.machinachristi.com, and tested the new one with a real publish
+   through the hallway.
+3. One change in Cloudflare (the address book) pointed visitors at the new one.
+   Azure's logs showed every request now answered from Central US, and none
+   from the old one.
+4. Only then did we lock the old door and take down the old API.
+
+At no point was there no working API. That's the whole trick of blue-green:
+never knock down the old house until everyone has moved into the new one.
+
 ## Watching it
 
 Two saved questions (queries) in Azure's logs show how it's doing: every
@@ -107,13 +140,18 @@ one-line command for how much of the month's free library time is left.
   Phase 3.)
 - **The calendar files** still need next year added before each new year
   (Phase 1's reminder): the saint for a day is found by the day's feast name.
-- **The library's door** currently lets in anything inside Azure (a password
-  badge is still needed). Locking it to the API's own network is the next job
-  (AB#73).
+- **Getting into the library yourself** (to look at the data) means opening a
+  temporary pass for your own computer's address, then closing it again: see
+  `db/README.md`. Since the door was locked to the API's hallway, even an admin
+  badge is turned away without one.
+- **Retiring anything in Azure is two steps**: remove it from the blueprint
+  (`infra/main.bicep`), then delete it. The blueprint never deletes things on its
+  own, on purpose: a typo in it should never be able to destroy something.
 
 ## New foundations met in this phase
 
 Database · SQL · schema · migration · transaction · managed identity · role and
 least privilege · firewall · default deny · scheduled job · blob storage ·
 snapshot · fallback · master key · source (provenance) · sleeping (serverless)
-database · cache-busting. See [foundations.md](foundations.md).
+database · cache-busting · region · virtual network and subnet · service
+endpoint · defence in depth · blue-green deployment. See [foundations.md](foundations.md).
