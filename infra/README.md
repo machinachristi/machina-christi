@@ -276,28 +276,26 @@ them.
 
 | Header | Value, in short | Why |
 |---|---|---|
-| `Content-Security-Policy` (enforced) | `frame-ancestors 'self'`, `base-uri 'self'`, `object-src 'none'`, `form-action 'self'`, `upgrade-insecure-requests` | Can't break a page; stops clickjacking and base-tag/plugin tricks. `'self'`, not `'none'`, because world.html frames Eden's garden |
-| `Content-Security-Policy-Report-Only` | the full policy: only this site, plus Cloudflare's analytics beacon and App Insights | Reports what it *would* block, without blocking. Inline scripts are allowed for now (many pages have them, and Cloudflare injects some) |
+| `Content-Security-Policy` (enforced since 2026-10-15, AB#51) | the full policy: scripts, styles, images, fonts and frames from this site only, plus Cloudflare's analytics beacon; connections to this site, the API and App Insights; `frame-ancestors 'self'`, `base-uri 'self'`, `object-src 'none'`, `form-action 'self'`, `upgrade-insecure-requests` | A script slipped into a page can't load code or send data anywhere else. Inline scripts are still allowed (many pages have them, and Cloudflare injects some). `frame-ancestors 'self'`, not `'none'`, because world.html frames Eden's garden |
 | `X-Frame-Options` | `SAMEORIGIN` | Older browsers' version of frame-ancestors |
 | `Permissions-Policy` | camera, microphone, location, motion sensors, payment, USB: off | The site uses none of them. Phase 6 (pronunciation) will turn the microphone on for Pray only |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Pages opened from elsewhere can't reach back into this one |
 
-**From report-only to enforced:** browser telemetry records would-be blocks as
-`csp-violation` events (query "Site: Content Security Policy reports"). That view
-has gaps: it misses visitors who opt out of tracking, anything before the
-telemetry script runs, more than 10 reports a page, and Cloudflare's own hidden
-frame. So before enforcing:
+**How it was switched on (and how to change it):** the full policy ran in
+report-only mode from Phase 0 until 2026-10-15. Before enforcing, the browser
+telemetry query "Site: Content Security Policy reports" was empty over every
+page view so far, and a sweep of the live site with each page's
+`securitypolicyviolation` events recorded from before load (all 13 pages, plus
+Listen on a prayer, the game, and entering Eden) found nothing that would be
+blocked. (Note: the built-in browser pane's console doesn't show CSP
+warnings; listen for the event instead.)
 
-1. The query has stayed empty for a week or two of real traffic.
-2. The live pages show no "[Report Only]" messages in the browser's developer
-   console, including Eden after entering and Pray with audio playing.
-3. Better still, once the API sits behind Cloudflare's rate limit, add a
-   `report-to` endpoint so the browser itself reports everything.
-
-Then rename the report-only header to `Content-Security-Policy`, merging the two.
-`tests/security-and-telemetry.spec.js` loads every page under these headers and
-fails on any violation. That catches most regressions, but not those that need
-interaction, sound, or Cloudflare's injected scripts.
+**Adding something new from another site** (a font, a script, an API) means
+adding its address to the right directive here first; otherwise the browser
+blocks it. `tests/security-and-telemetry.spec.js` loads every page, and Eden,
+under these headers and fails on any violation; violations in production show
+up in the telemetry query (now with disposition `enforce`), so a page the policy
+breaks is visible.
 
 ## Browser telemetry (`assets/telemetry.js`)
 
