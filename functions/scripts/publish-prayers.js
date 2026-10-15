@@ -83,9 +83,11 @@ async function record(sdk, credential, prayer, item, settings) {
   config.speechSynthesisOutputFormat = format;
   const ssml = P.buildSsml(prayer, item.lang, item.speed, settings);
 
-  // The free tier allows a limited number of requests a minute: wait and try
-  // again a few times rather than fail the run.
+  // The free tier allows about 20 requests a minute. Requests are spaced out
+  // (see pace()), and if the service still refuses or hangs up (seen as
+  // "Unable to contact server", WebSocket code 1006), wait and try again.
   for (let attempt = 1; ; attempt++) {
+    await pace();
     const synth = new sdk.SpeechSynthesizer(config, null);
     const marks = [];
     synth.bookmarkReached = (_, e) => marks.push({ name: e.text, offsetTicks: e.audioOffset });
@@ -95,11 +97,20 @@ async function record(sdk, credential, prayer, item, settings) {
       return { audio: Buffer.from(result.audioData), ...timing };
     }
     const details = sdk.CancellationDetails.fromResult(result);
-    const throttled = /429|throttl|too many/i.test(details.errorDetails ?? '');
-    if (!throttled || attempt >= 4) throw new Error(`${item.file}: ${details.errorDetails ?? sdk.ResultReason[result.reason]}`);
+    const busy = /429|throttl|too many|unable to contact server|1006/i.test(details.errorDetails ?? '');
+    if (!busy || attempt >= 5) throw new Error(`${item.file}: ${details.errorDetails ?? sdk.ResultReason[result.reason]}`);
     console.log(`  the free tier is busy; waiting before trying ${item.file} again`);
-    await new Promise(r => setTimeout(r, 15_000 * attempt));
+    await new Promise(r => setTimeout(r, 20_000 * attempt));
   }
+}
+
+// At most one request every 3.2 seconds: under the free tier's 20 a minute.
+const GAP_MS = 3200;
+let lastRequestAt = 0;
+async function pace() {
+  const wait = lastRequestAt + GAP_MS - Date.now();
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastRequestAt = Date.now();
 }
 
 async function publish(data) {
@@ -126,32 +137,31 @@ async function publish(data) {
   say(`### Prayers published`);
   say(`Read ${existing.resources.length} published prayers (${(existing.requestCharge ?? 0).toFixed(1)} RU).`);
 
-  const recordings = {};
+  // One prayer at a time: its recordings, then its document. If a run stops
+  // partway, every prayer already written keeps its recordings, and the next
+  // run only makes what's still missing.
   const sizes = {};
-  for (const item of items) {
-    const prayer = data.prayers.find(p => p.id === item.id);
-    if (item.reuse) {
-      recordings[`${item.id}/${item.lang}/${item.speed}`] = { file: item.file, hash: item.hash, starts: item.reuse.starts, duration: item.reuse.duration };
-      continue;
-    }
-    const made = await record(sdk, credential, prayer, item, data.audio);
-    await audio.getBlockBlobClient(item.file).uploadData(made.audio, {
-      blobHTTPHeaders: { blobContentType: 'audio/mpeg', blobCacheControl: CACHE_CONTROL },
-    });
-    sizes[item.file] = made.audio.length;
-    recordings[`${item.id}/${item.lang}/${item.speed}`] = { file: item.file, hash: item.hash, starts: made.starts, duration: made.duration };
-    console.log(`  recorded ${item.file}: ${made.duration}s, ${Math.round(made.audio.length / 1024)} KB`);
-  }
-
   const charges = {};
   for (const [order, prayer] of data.prayers.entries()) {
-    const mine = Object.fromEntries(Object.entries(recordings)
-      .filter(([k]) => k.startsWith(`${prayer.id}/`))
-      .map(([k, v]) => [k.slice(prayer.id.length + 1), v]));
-    const doc = P.buildDoc(prayer, order, mine, data.audio);
-    const res = await container.items.upsert(doc);
+    const recordings = {};
+    for (const item of items.filter(i => i.id === prayer.id)) {
+      const key = `${item.lang}/${item.speed}`;
+      if (item.reuse) {
+        recordings[key] = { file: item.file, hash: item.hash, starts: item.reuse.starts, duration: item.reuse.duration };
+        continue;
+      }
+      const made = await record(sdk, credential, prayer, item, data.audio);
+      await audio.getBlockBlobClient(item.file).uploadData(made.audio, {
+        blobHTTPHeaders: { blobContentType: 'audio/mpeg', blobCacheControl: CACHE_CONTROL },
+      });
+      sizes[item.file] = made.audio.length;
+      recordings[key] = { file: item.file, hash: item.hash, starts: made.starts, duration: made.duration };
+      console.log(`  recorded ${item.file}: ${made.duration}s, ${Math.round(made.audio.length / 1024)} KB`);
+    }
+    const res = await container.items.upsert(P.buildDoc(prayer, order, recordings, data.audio));
     charges[prayer.id] = res.requestCharge ?? 0;
     ru += charges[prayer.id];
+    console.log(`  published ${prayer.id} (${charges[prayer.id].toFixed(1)} RU)`);
   }
 
   // Prayers taken out of prayers.json come off the site too. Their
