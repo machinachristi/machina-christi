@@ -177,6 +177,7 @@
     </ul>
   </div>
 
+  <script src="/assets/pray-data.js?v=1"></script>
   <script>
     (() => {
       'use strict';
@@ -187,12 +188,12 @@
 
       const list = document.getElementById('prayers');
 
-      // Every prayer lives in one data file — adding a new one there is all it
-      // takes for it to appear here, and on its own page.
-      fetch('./pray/prayers.json')
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
-          list.innerHTML = data.prayers.map(p => `
+      // Every prayer lives in one data file (pray/prayers.json), published to
+      // the API; adding a new one there is all it takes for it to appear here,
+      // and on its own page. mcPray asks the API and falls back to the file.
+      window.mcPray.list()
+        .then(prayers => {
+          list.innerHTML = prayers.map(p => `
             <li>
               <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
                 <h2>${escapeHtml(p.title)}</h2>

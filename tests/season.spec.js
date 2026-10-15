@@ -70,7 +70,12 @@ async function liveSite(page, { today = '2026-10-13', status = 200 } = {}) {
     return route.fulfill({ status: 200, contentType: TYPES[path.extname(file)] || 'application/octet-stream', body: fs.readFileSync(file) });
   });
   await page.route(`${API}/**`, route => {
-    const date = new URL(route.request().url()).searchParams.get('date');
+    const url = new URL(route.request().url());
+    // Only the season API is stood in for here (Pray's prayers have their own
+    // tests, tests/pray-audio.spec.js): anything else is "not found", and the
+    // page falls back as it would.
+    if (url.pathname !== '/api/season') return route.fulfill({ status: 404, body: '' });
+    const date = url.searchParams.get('date');
     asked.push(date);
     if (status !== 200 || !DAYS[date]) return route.fulfill({ status: status === 200 ? 404 : status, body: '' });
     return route.fulfill({
