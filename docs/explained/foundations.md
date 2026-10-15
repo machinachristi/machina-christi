@@ -179,6 +179,19 @@ A good test is one you've seen fail when the code is wrong.
 *Here:* the season formula is checked against an independent calendar for
 every day of 2026 and 2027.
 
+**Core tests vs feature tests.** Two kinds of exam. A *core* test checks what
+must stay true however much the project changes ("the page loads", "nothing
+crashes", "it fits on a phone"), like a building inspector's safety rules.
+A *feature* test checks one particular thing someone once built ("there's a
+gate in the east"), like a photo of how a room was decorated. If a redesign is
+on purpose, the photo should be retaken; the safety rules never bend. Keeping
+them in separate files means you can let someone change one kind without
+letting them touch the other.
+*Here:* Eden's tests are split into `tests/world-core.spec.js` (locked: the
+weekly AI run may never edit it) and `tests/world-features.spec.js` (the run may
+add tests for new things, and update or retire a feature's test only when it
+deliberately reshaped that feature, explaining each change in its PR).
+
 **CI (continuous integration).** A robot that runs all the tests on every pull
 request, so nothing gets merged on trust alone.
 *Here:* GitHub Actions — the "Smoke Test" and "Azure Platform" checks.
@@ -200,7 +213,9 @@ something left over on someone's laptop.
 merge, like a signature a bank needs before releasing money. Other checks still
 run and report, but don't block on their own.
 *Here:* "Smoke Test" (the browser tests) and "World Diff Guard" (Eden's update
-rules) are required for `main`; the Azure preview isn't, so it's read before
+rules: which files the weekly AI run may change, no network or hidden code, and
+any borrowed three.js add-on must match the official copy byte for byte) are
+required for `main`; the Azure preview isn't, so it's read before
 asking to merge.
 
 **Stand-in (mock).** A pretend version of something a test can't use for real
