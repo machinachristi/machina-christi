@@ -409,6 +409,25 @@ var apiAppSettings = [
     name: 'SAINTS_SNAPSHOT_URL'
     value: '${storage.properties.primaryEndpoints.blob}${snapshotContainer}/saints.json'
   }
+  // Pray: the prayers (read from Cosmos DB) and their recordings (read from
+  // private blob storage and passed on to visitors), both as this identity,
+  // which may only read them (modules/pray.bicep). Addresses, not secrets.
+  {
+    name: 'COSMOS_ENDPOINT'
+    value: cosmos.properties.documentEndpoint
+  }
+  {
+    name: 'COSMOS_DATABASE'
+    value: prayDatabaseName
+  }
+  {
+    name: 'PRAYERS_CONTAINER'
+    value: prayersContainerName
+  }
+  {
+    name: 'PRAY_AUDIO_URL'
+    value: '${media.properties.primaryEndpoints.blob}${audioContainerName}'
+  }
 ]
 
 var apiFunctionAppConfig = {
@@ -597,6 +616,28 @@ resource sqlFromApiSubnet 'Microsoft.Sql/servers/virtualNetworkRules@2023-08-01'
   }
 }
 
+// ── Pray: Cosmos DB, Speech and the recordings ──────────────────────────────
+//
+// Created by people (bootstrap.bicep → modules/pray.bicep), with every data
+// role; CI only works inside them. This file just refers to them, so the API
+// knows where they are.
+
+var prayDatabaseName = 'machina'
+var prayersContainerName = 'prayers'
+var audioContainerName = 'pray-audio'
+
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' existing = {
+  name: 'cosmos-machina-${suffix}'
+}
+
+resource speech 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: 'speech-machina-${suffix}'
+}
+
+resource media 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+  name: 'stmachinamedia${suffix}'
+}
+
 output functionAppName string = funcCus.name
 output functionAppHostName string = funcCus.properties.defaultHostName
 output apiHostname string = apiHostBindingCus.name
@@ -611,3 +652,9 @@ output sqlServerFqdn string = sql.properties.fullyQualifiedDomainName
 output sqlDatabaseName string = sqlDb.name
 output funcIdentityName string = funcIdentity.name
 output funcIdentityPrincipalId string = funcIdentity.properties.principalId
+output cosmosEndpoint string = cosmos.properties.documentEndpoint
+output cosmosDatabaseName string = prayDatabaseName
+output prayersContainerName string = prayersContainerName
+output speechEndpoint string = speech.properties.endpoint
+output speechResourceId string = speech.id
+output audioContainerUrl string = '${media.properties.primaryEndpoints.blob}${audioContainerName}'

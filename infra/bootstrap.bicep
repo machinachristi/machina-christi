@@ -39,6 +39,9 @@ param sqlAdminGroupObjectId string = '73f3ec44-adf7-446c-bc42-02a652fc264d'
 @description('Display name of that group.')
 param sqlAdminGroupName string = 'sql-machina-admins'
 
+@description('Region for the Pray accounts (Cosmos DB, Speech, recordings storage): with the API and SQL.')
+param prayLocation string = 'centralus'
+
 var tags = {
   project: 'machina-christi'
   managedBy: 'bicep'
@@ -119,16 +122,20 @@ resource whatIfRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   }
 }
 
-// CI's deploy role: Contributor, less SQL servers and databases. A server's
-// settings include who administers it and Azure can't separate the two, so
-// CI may not write (or delete) servers or databases; people do that here.
-// CI may still open and close SQL firewall rules for its migrations. The
-// first list is Contributor's own exclusions, kept identical.
+// CI's deploy role: Contributor, less the data stores people own. A SQL
+// server's settings include who administers it and Azure can't separate the
+// two, so CI may not write (or delete) servers or databases; people do that
+// here. CI may still open and close SQL firewall rules for its migrations.
+// Likewise the Pray accounts (modules/pray.bicep): CI may not change or delete
+// Cosmos DB or Speech accounts, read their keys, or create Cosmos DB's own data
+// badges (sqlRoleAssignments are not Azure role assignments, so the ABAC rule
+// in ci-access.bicep wouldn't catch them). The first list is Contributor's own
+// exclusions, kept identical.
 resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: guid(subscription().id, 'machina-deployer')
   properties: {
     roleName: 'Machina Deployer'
-    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases (their admins and billing settings stay with people).'
+    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, nor read their keys or grant Cosmos DB data roles (their admins, access and billing settings stay with people).'
     type: 'CustomRole'
     permissions: [
       {
@@ -155,6 +162,19 @@ resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
           'Microsoft.Sql/servers/azureADOnlyAuthentications/*'
           'Microsoft.Sql/servers/databases/write'
           'Microsoft.Sql/servers/databases/delete'
+          // Cosmos DB: the account (free tier, throughput cap, keys off), its
+          // databases and containers, its keys and its own data badges
+          'Microsoft.DocumentDB/*/write'
+          'Microsoft.DocumentDB/*/delete'
+          'Microsoft.DocumentDB/databaseAccounts/listKeys/action'
+          'Microsoft.DocumentDB/databaseAccounts/readonlykeys/action'
+          'Microsoft.DocumentDB/databaseAccounts/regenerateKey/action'
+          'Microsoft.DocumentDB/databaseAccounts/listConnectionStrings/action'
+          // Speech: the account (free tier, keys off) and its keys
+          'Microsoft.CognitiveServices/*/write'
+          'Microsoft.CognitiveServices/*/delete'
+          'Microsoft.CognitiveServices/accounts/listKeys/action'
+          'Microsoft.CognitiveServices/accounts/regenerateKey/action'
         ]
       }
     ]
@@ -171,6 +191,19 @@ module sql 'modules/sql.bicep' = {
     location: sqlLocation
     adminGroupObjectId: sqlAdminGroupObjectId
     adminGroupName: sqlAdminGroupName
+    tags: tags
+  }
+}
+
+// Pray (Phase 4): the prayers' Cosmos DB, the Speech studio and the private
+// recordings storage, with every data role (CI writes, the API reads). Needs
+// main.bicep's API identity (id-machina-func) to exist already.
+module pray 'modules/pray.bicep' = {
+  scope: platformRg
+  name: 'pray'
+  params: {
+    location: prayLocation
+    deployPrincipalId: identities.outputs.deployPrincipalId
     tags: tags
   }
 }
@@ -205,3 +238,6 @@ output tenantId string = tenant().tenantId
 output subscriptionId string = subscription().subscriptionId
 output sqlServerName string = sql.outputs.serverName
 output sqlDatabaseName string = sql.outputs.databaseName
+output cosmosAccountName string = pray.outputs.cosmosAccountName
+output speechAccountName string = pray.outputs.speechAccountName
+output mediaAccountName string = pray.outputs.mediaAccountName
