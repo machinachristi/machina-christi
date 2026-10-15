@@ -79,6 +79,7 @@ import { createTender } from './tender.js';
 import { createFlags } from './flags.js';
 import { createFry } from './fry.js';
 import { createWatering } from './watering.js';
+import { createBlossom } from './blossom.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -258,6 +259,10 @@ export async function createGarden(scene, rng) {
     cleft.rock,
     ...rocks.state().houses.map(h => ({ x: h.x, z: h.z, r: 1.0 })),
   ];
+  // v28 (Isaiah 35:1-2): the ground blossoms wherever he walks, and sings
+  // as it does. Nothing is placed at build time — it needs only the rock to
+  // keep its flowers out of, so it comes straight after the solids.
+  const blossom = createBlossom(scene, solids);
   // v25 (Deuteronomy 32:11): the crag under the eagle's nest, and her two
   // young in it. Built after the creatures because it answers to her — it
   // is told each frame whether she is stirring them up — and on its own
@@ -418,6 +423,7 @@ export async function createGarden(scene, rng) {
     flags.update(hour.year);
     fry.update(dt, playerPos);
     watering.update(dt, playerPos);
+    blossom.update(dt, playerPos, hour.night);
     return hour;
   }
 
@@ -503,6 +509,9 @@ export async function createGarden(scene, rng) {
     fry: fry.state,
     watering: watering.state,
     tending: watering.caption,
+    blossom: blossom.state,
+    song: blossom.song,
+    alsoWalking: blossom.alsoWalking,
     solids,
     get carrying() { return watering.carrying; },
     get reverence() { return reverence; },

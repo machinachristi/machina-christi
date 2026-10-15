@@ -100,6 +100,9 @@ function updateNamingCaption() {
 const companion = createCharacter({ eve: !eve });
 companion.group.position.set(4.5, garden.heightAt(4.5, -8), -8);
 scene.add(companion.group);
+// The ground blossoms under the companion's feet too (v28, Isaiah 35:1), so
+// a first-time visitor sees it before they have moved at all.
+garden.alsoWalking(companion.group.position);
 
 // A second seeded RNG, independent of the garden's own, so the companion's
 // path stays deterministic across reloads and screenshots without disturbing
@@ -178,6 +181,7 @@ let reverent = false;
 // the dove steps out she calls once (Song of Solomon 2:14).
 let heardStrikes = 0;
 let heardCalls = 0;
+let heardNotes = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -248,6 +252,13 @@ renderer.setAnimationLoop(() => {
   if (dove.calls !== heardCalls) {
     heardCalls = dove.calls;
     ambience.call();
+  }
+  // "Rejoice even with joy and singing" (v28, Isaiah 35:2): a note for the
+  // flowers opening round his feet.
+  const bloom = garden.song();
+  if (bloom.notes !== heardNotes) {
+    heardNotes = bloom.notes;
+    ambience.bloom(bloom.note);
   }
   renderer.render(scene, camera);
 
@@ -493,6 +504,11 @@ window.__world = {
       watering: garden.watering(),
       flags: garden.flags(),
       fry: garden.fry(),
+      // v28: the ground blossoming wherever he walks (Isaiah 35:1-2 — `open`
+      // flowers standing open now, `byWalker` how many came up under his own
+      // feet rather than his companion's, `ringing` while his stillness is
+      // spreading them out round him, `notes` how many have been sung).
+      blossom: garden.blossom(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
