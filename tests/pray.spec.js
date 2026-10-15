@@ -165,6 +165,8 @@ test.describe('prayer page', () => {
     // used to wait for it and stay stuck while the voice read on.
     await stubSpeech(page, { beat: 300, dropStart: [1, 2] });
     await page.goto('/prayer.html?p=our-father');
+    // The lines arrive after the page loads; watch them only once they're there.
+    await expect(page.locator('.line')).toHaveCount(byId('our-father').lines.length);
     // Record every line the highlight lands on, in order.
     await page.evaluate(() => {
       window.__lit = [];

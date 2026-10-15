@@ -545,13 +545,10 @@
         const seek = () => { if (Math.abs(audio.currentTime - from) > 0.25) audio.currentTime = from; };
         try { seek(); } catch (e) { /* set again on loadedmetadata */ }
 
-        const finish = () => {
-          if (mine !== run) return;
-          audio.pause();
-          now = null;
-          mark(-1);
-          paint();
-        };
+        // The end (of the prayer, or of a single line's stretch) is a full
+        // stop: it also ends this run, so the frame loop below stands down
+        // instead of lighting the last line again.
+        const finish = () => { if (mine === run) stop(); };
         const place = () => {
           if (mine !== run) return;
           const t = audio.currentTime;
