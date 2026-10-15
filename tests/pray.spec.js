@@ -20,8 +20,10 @@ function watchErrors(page) {
 // models a device with no Thai voice; `none: true` a browser with no speech.
 // `beat` is how long each line takes to "say" — long by default so a test can
 // act while a line is still being read, short where a test waits for the end.
-function stubSpeech(page, { thai = true, none = false, beat = 1500 } = {}) {
-  return page.addInitScript(({ thai, none, beat }) => {
+// `dropStart` lists utterances (by the order they were queued) whose start
+// event never fires, as iOS sometimes does for queued speech.
+function stubSpeech(page, { thai = true, none = false, beat = 1500, dropStart = [] } = {}) {
+  return page.addInitScript(({ thai, none, beat, dropStart }) => {
     if (none) {
       Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true });
       Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: undefined, configurable: true });
@@ -38,7 +40,7 @@ function stubSpeech(page, { thai = true, none = false, beat = 1500 } = {}) {
       current = queue.shift() || null;
       if (!current) return;
       const u = current;
-      if (u.onstart) u.onstart({});
+      if (u.onstart && !dropStart.includes(u.__n)) u.onstart({});
       timer = setTimeout(() => { current = null; if (u.onend) u.onend({}); next(); }, beat);
     }
     const synth = {
@@ -46,6 +48,7 @@ function stubSpeech(page, { thai = true, none = false, beat = 1500 } = {}) {
       get pending() { return queue.length > 0; },
       getVoices: () => voices,
       speak(u) {
+        u.__n = window.__spoken.length;
         window.__spoken.push({ text: u.text, lang: u.lang, rate: u.rate, voice: u.voice ? u.voice.name : null });
         queue.push(u);
         if (!current) next();
@@ -64,7 +67,7 @@ function stubSpeech(page, { thai = true, none = false, beat = 1500 } = {}) {
     }
     Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
     window.SpeechSynthesisUtterance = FakeUtterance;
-  }, { thai, none, beat });
+  }, { thai, none, beat, dropStart });
 }
 
 const spoken = page => page.evaluate(() => window.__spoken);
@@ -155,6 +158,27 @@ test.describe('prayer page', () => {
     await expect(th.locator('.label')).toHaveText('Listen');
     await expect(page.locator('.line.is-speaking')).toHaveCount(0);
     expect(await page.evaluate(() => window.__cancels)).toBeGreaterThan(0);
+  });
+
+  test('the highlight keeps following the voice even when a line never reports starting', async ({ page }) => {
+    // iOS sometimes skips the start event of queued lines; the highlight
+    // used to wait for it and stay stuck while the voice read on.
+    await stubSpeech(page, { beat: 300, dropStart: [1, 2] });
+    await page.goto('/prayer.html?p=our-father');
+    // Record every line the highlight lands on, in order.
+    await page.evaluate(() => {
+      window.__lit = [];
+      const lines = [...document.querySelectorAll('.line')];
+      new MutationObserver(() => {
+        const i = lines.findIndex(el => el.classList.contains('is-speaking'));
+        if (window.__lit[window.__lit.length - 1] !== i) window.__lit.push(i);
+      }).observe(document.getElementById('lines'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    const th = page.locator('.listen[data-lang="th"]');
+    await th.click();
+    await expect(th).not.toHaveClass(/is-playing/, { timeout: 15000 });
+    const n = byId('our-father').lines.length;
+    expect(await page.evaluate(() => window.__lit)).toEqual([...Array(n).keys(), -1]);
   });
 
   test('Listen in English reads the English lines and settles when it finishes', async ({ page }) => {

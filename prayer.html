@@ -473,6 +473,13 @@
       let run = 0;
       let now = null;      // { lang, only } while something plays; only = line index for a single line
 
+      // The utterances of the run that's playing. Holding them here matters:
+      // once queued, nothing else in the page refers to them, and mobile
+      // browsers may then throw away their JavaScript side while the speech
+      // itself carries on, so their start/end events never arrive and the
+      // highlight stops following the voice.
+      let queued = [];
+
       function mark(i) {
         lineEls.forEach((el, j) => el.classList.toggle('is-speaking', j === i));
         if (i >= 0 && now && now.only === null) {
@@ -493,6 +500,7 @@
       function stop() {
         run++;
         now = null;
+        queued = [];
         if (synth && (synth.speaking || synth.pending)) synth.cancel();
         mark(-1);
         paint();
@@ -515,6 +523,7 @@
           const done = () => {
             if (mine !== run || n !== indices.length - 1) return;
             now = null;
+            queued = [];
             mark(-1);
             paint();
           };
@@ -522,9 +531,14 @@
           u.onstart = () => { began = performance.now(); if (mine === run) mark(i); };
           u.onend = () => {
             if (lang === 'th' && began && mine === run) checkHeard(u.text, performance.now() - began);
+            // The highlight moves on when a line ends, not only when the next
+            // one starts: iOS sometimes never reports the start of a queued
+            // line. (When the start does arrive, it marks the same line again.)
+            if (mine === run && n < indices.length - 1) mark(indices[n + 1]);
             done();
           };
           u.onerror = done;
+          queued.push(u);
           synth.speak(u);
         });
         paint();
