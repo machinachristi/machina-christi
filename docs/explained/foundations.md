@@ -209,6 +209,20 @@ the hour. Starting clean every time means a test can't pass just because of
 something left over on someone's laptop.
 *Here:* a new Linux machine for every check you see on a pull request.
 
+**Running tests side by side (workers).** To finish sooner, the test robot
+splits the exams between a few helpers ("workers") who sit them at the same
+time, like two cashiers instead of one queue. That's only safe when the exams
+don't share anything scarce. Two helpers both needing the one oven makes each
+dish late, and a test with a time limit then fails, even though nothing is
+broken. A test that passes or fails depending on luck like this is called
+*flaky*, and the fix is to find what's being shared, not to keep pressing
+"run again".
+*Here:* CI's runner has two workers and draws the Eden garden without a
+graphics chip, so two gardens at once each ran at half speed and the "rain
+arrives" check ran out of time. The Eden feature tests now wait for the core
+tests to finish, while the rest of the site's tests keep the second worker
+busy (`projects` in `tests/playwright.config.js`).
+
 **Required check.** A check GitHub must see pass before it lets a pull request
 merge, like a signature a bank needs before releasing money. Other checks still
 run and report, but don't block on their own.
