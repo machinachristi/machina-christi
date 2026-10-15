@@ -20,6 +20,19 @@ module.exports = defineConfig({
     deviceScaleFactor: 2,
     hasTouch: true,
   },
+  // The Eden world is drawn in software on CI's small two-core runners, so two
+  // gardens running side by side each get about half the speed — and the
+  // world's clock slows with its frame rate, so timed checks (the rain easing
+  // in) miss their window. Before the split (PR #90) every Eden test lived in
+  // one file, which always runs one test at a time; these projects keep that
+  // true: the feature checks start once the core checks are done, while the
+  // rest of the site's tests still share the second worker. (If a core check
+  // fails, the feature checks are skipped rather than run on a broken garden.)
+  projects: [
+    { name: 'site', testIgnore: /world-(core|features)\.spec\.js$/ },
+    { name: 'world-core', testMatch: /world-core\.spec\.js$/ },
+    { name: 'world-features', testMatch: /world-features\.spec\.js$/, dependencies: ['world-core'] },
+  ],
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',
     url: 'http://127.0.0.1:4173/index.html',
