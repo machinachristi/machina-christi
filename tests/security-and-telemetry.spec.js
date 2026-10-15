@@ -139,14 +139,17 @@ async function leave(page) {
 test.describe('security headers', () => {
   test('the config sets the headers the site relies on', () => {
     const h = config.globalHeaders;
-    // Enforced now: can't break a page, and stops clickjacking, base-tag and
-    // plugin tricks. Eden's garden is framed by world.html, hence 'self'.
-    expect(h['Content-Security-Policy']).toContain("frame-ancestors 'self'");
-    expect(h['Content-Security-Policy']).toContain("object-src 'none'");
-    expect(h['Content-Security-Policy']).toContain("base-uri 'self'");
-    // The full policy is report-only until production reports are clean.
-    expect(h['Content-Security-Policy-Report-Only']).toContain("default-src 'self'");
-    expect(h['Content-Security-Policy-Report-Only']).toMatch(/connect-src [^;]*https:\/\/api\.machinachristi\.com/);
+    // The full policy is enforced (AB#51, after production reports stayed
+    // clean): only this site, Cloudflare's analytics beacon, App Insights and
+    // the API. Eden's garden is framed by world.html, hence frame-ancestors 'self'.
+    const csp = h['Content-Security-Policy'];
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/api\.machinachristi\.com/);
+    expect(csp).toContain("frame-ancestors 'self'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain('upgrade-insecure-requests');
+    expect(h['Content-Security-Policy-Report-Only']).toBeUndefined();
     expect(h['X-Frame-Options']).toBe('SAMEORIGIN');
     expect(h['X-Content-Type-Options']).toBe('nosniff');
     expect(h['Permissions-Policy']).toContain('camera=()');
@@ -203,7 +206,7 @@ test.describe('telemetry is private', () => {
     expect(time.measurements.visibleSeconds).toBeGreaterThan(0.4);
   });
 
-  test('a would-be CSP block is reported, so the policy can be enforced safely', async ({ page }) => {
+  test('a CSP block is reported, so a page the policy breaks shows up in telemetry', async ({ page }) => {
     const seen = await asLiveSite(page);
     await page.goto(LIVE + '/about.html');
     await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
@@ -214,7 +217,7 @@ test.describe('telemetry is private', () => {
     await expect.poll(() => seen.events('csp-violation').length, { timeout: 15000 }).toBe(1);
     const report = seen.events('csp-violation')[0].data.baseData.properties;
     expect(report.directive).toBe('img-src');
-    expect(report.disposition).toBe('report');
+    expect(report.disposition).toBe('enforce');
     expect(report.blocked).toBe('https://example.com/not-allowed.png'); // no query string
   });
 
