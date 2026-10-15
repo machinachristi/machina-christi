@@ -1,4 +1,13 @@
 {
+  "audio": {
+    "voices": {
+      "th": "th-TH-NiwatNeural",
+      "en": "en-US-AndrewNeural"
+    },
+    "slowRate": "-30%",
+    "breakMs": 600,
+    "format": "Audio24Khz48KBitRateMonoMp3"
+  },
   "prayers": [
     {
       "id": "sign-of-the-cross",

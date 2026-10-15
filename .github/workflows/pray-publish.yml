@@ -1,0 +1,109 @@
+name: Pray Publish
+
+# Publishes the prayers (pray/prayers.json) to Cosmos DB, with recordings made
+# by Azure AI Speech and kept in private blob storage
+# (functions/scripts/publish-prayers.js). Content, not infrastructure, so it
+# has its own workflow apart from Azure Platform.
+#   pull request → test, then a dry run: which recordings this change would
+#                  make, and how many free characters that uses. No Azure.
+#   merge to main → record what changed and publish, as the deploy identity
+#                  (a managed identity; GitHub vouches for the run with OIDC,
+#                  and nothing secret is stored). Cosmos DB, Speech and the
+#                  storage all have keys switched off.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pray/prayers.json'
+      - 'functions/src/lib/prayers.js'
+      - 'functions/scripts/publish-prayers.js'
+      - '.github/workflows/pray-publish.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'pray/prayers.json'
+      - 'functions/src/lib/prayers.js'
+      - 'functions/scripts/publish-prayers.js'
+      - '.github/workflows/pray-publish.yml'
+  workflow_dispatch: # publish again by hand (works from main only)
+    inputs:
+      rerecord_all:
+        description: Record every prayer again, even if nothing changed
+        type: boolean
+        default: false
+
+# One publish at a time, never cancelled halfway.
+concurrency:
+  group: pray-publish-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-machina-platform
+  NODE_VERSION: '24'
+
+jobs:
+  check:
+    name: Prayer tests + dry run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # to compare with main's prayers.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Tests
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          node --test test/prayers.test.js
+      - name: Dry run
+        run: |
+          base=""
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            git show origin/main:pray/prayers.json > "$RUNNER_TEMP/base.json" && base="--base $RUNNER_TEMP/base.json"
+          fi
+          node functions/scripts/publish-prayers.js --dry-run $base
+
+  publish:
+    name: Record and publish
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # lets the run ask GitHub for its OIDC token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Find the accounts
+        # Addresses from the platform's last deploy (infra/main.bicep outputs).
+        run: |
+          outputs=$(az deployment group show -g "$RESOURCE_GROUP" -n machina-platform --query properties.outputs -o json)
+          for pair in COSMOS_ENDPOINT:cosmosEndpoint COSMOS_DATABASE:cosmosDatabaseName \
+                      PRAYERS_CONTAINER:prayersContainerName SPEECH_ENDPOINT:speechEndpoint \
+                      AUDIO_CONTAINER_URL:audioContainerUrl; do
+            v=$(jq -r ".${pair#*:}.value" <<<"$outputs")
+            test -n "$v" && test "$v" != null
+            echo "${pair%%:*}=$v" >> "$GITHUB_ENV"
+          done
+      - name: Record and publish
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/publish-prayers.js ${{ inputs.rerecord_all && '--rerecord-all' || '' }}
