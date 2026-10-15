@@ -424,6 +424,30 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).footprints.prints, { timeout: 100000 }).toBe(0);
   });
 
+  test('the ground blossoms where the walker goes, and round him when he stands still (v28, Isaiah 35:1-2)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    // Short steps across the open meadow south of the sacred trees — each
+    // far under blossom.js's teleport threshold, so each one counts as
+    // walking. Poll: a slow runner may need more steps than a fast one.
+    await frame.evaluate(() => window.__world.teleport(-2, -12));
+    const before = (await getState(page)).blossom.byWalker;
+    let step = 0;
+    await expect.poll(async () => {
+      step++;
+      await frame.evaluate((n) => window.__world.teleport(-2 - (n % 16) * 0.4, -12 - (n % 16) * 0.3), step);
+      await page.waitForTimeout(60);
+      return (await getState(page)).blossom.byWalker;
+    }, { timeout: 30000 }).toBeGreaterThan(before + 6);
+    // The flowers that came up under his own feet actually open.
+    await expect.poll(async () => (await getState(page)).blossom.mine, { timeout: 20000 }).toBeGreaterThan(6);
+
+    // Standing still, the blossoming spreads out round him without a step.
+    const stood = (await getState(page)).blossom.byWalker;
+    await expect.poll(async () => (await getState(page)).blossom.ringing, { timeout: 20000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).blossom.byWalker, { timeout: 20000 }).toBeGreaterThan(stood + 4);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

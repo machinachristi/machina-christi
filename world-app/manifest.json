@@ -1,5 +1,5 @@
 {
-  "version": 27,
+  "version": 28,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -326,12 +326,26 @@
         { "text": "The hind on the crag's stair has a fawn of her own. It keeps one ledge below her as she climbs, following each of her leaps a moment after she lands in a slower, higher leap of its own, and grazes at her side at the foot. It is named when he comes near.", "source": "Job 39:1" },
         { "text": "The shallows of the slow reach swarm with fry: a few small shoals wheeling just under the surface. Wade in among one and it scatters all at once, then slowly draws together again.", "source": "Genesis 1:20" }
       ]
+    },
+    {
+      "version": 28,
+      "date": "2026-10-15",
+      "focus": "the desert shall blossom",
+      "changes": [
+        { "text": "The ground blossoms wherever he walks. Flowers spring up out of the grass and the sand round his feet as he goes, open wide, and stand open behind him for half a minute and more, so he can turn and see the way he came written across the meadow in colour. Then each closes back into a bud and sinks into the grass again.", "source": "Isaiah 35:1" },
+        { "text": "Stand still in the open and the blossoming spreads out from him in a widening ring, so even a visitor who has not yet moved arrives to flowers opening round them.", "source": "Isaiah 35:2" },
+        { "text": "The one who walks with him leaves a lighter trail of flowers of their own wherever they wander.", "source": "Song of Solomon 2:12" },
+        { "text": "As the flowers open, a soft note sounds now and then, wandering a step or two at a time into a slow tune; standing still, the notes climb as the ring spreads.", "source": "Isaiah 35:2" },
+        { "text": "After dark the open flowers keep a faint light of their own, so the way he has walked glows on the meadow at night.", "source": "Psalm 119:105" },
+        { "text": "All of it is one draw call: each flower's whole life, from rising to sinking, is worked out on the graphics chip from the moment it was born.", "source": null }
+      ]
     }
   ],
   "next": [
     "Gather, the next of Adam's work: stand still under a fig or a pomegranate in fruit and a ripe one comes down into his hands, freely given, to eat (Genesis 2:16)",
     "Keep the flock: walk out to a lamb that has wandered far from the others and it follows at his heels back to them, and lies down (Isaiah 40:11)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
-    "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)"
+    "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)",
+    "The trees of the field clap their hands as he passes: a sacred tree he walks under for the first time each visit lets a soft rain of blossom down on him (Isaiah 55:12)"
   ]
 }

@@ -429,6 +429,35 @@ export function createAmbience() {
     }
   }
 
+  // "It shall blossom abundantly, and rejoice even with joy and singing"
+  // (Isaiah 35:2): one soft music-box note as flowers open round the walker.
+  // The scale is E major pentatonic from E4 — the reverence chime's own key —
+  // and blossom.js chooses the step, wandering a step or two at a time, so
+  // the notes make a slow tune rather than a scatter.
+  const BLOOM_STEPS = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+  let lastBloom = 0;
+  function bloom(step = 4) {
+    if (!ctx || ctx.state !== 'running' || muted || !master) return;
+    if (ctx.currentTime - lastBloom < 0.2) return;   // never a clatter
+    lastBloom = ctx.currentTime;
+    const semis = BLOOM_STEPS[Math.max(0, Math.min(BLOOM_STEPS.length - 1, step | 0))];
+    const f = 329.63 * Math.pow(2, semis / 12);
+    const t0 = ctx.currentTime + 0.02;
+    for (const [mul, type, amp, len] of [[1, 'sine', 0.017, 1.7], [2, 'triangle', 0.004, 0.7]]) {
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.value = f * mul;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(amp, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0002, t0 + len);
+      osc.connect(g).connect(master);
+      osc.start(t0);
+      osc.stop(t0 + len + 0.05);
+      osc.onended = () => { osc.disconnect(); g.disconnect(); };
+    }
+  }
+
   function ensureStarted() {
     if (!supported || muted) return;
     if (!ctx) {
@@ -575,5 +604,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, state };
+  return { update, setMuted, chime, thunder, call, bloom, state };
 }
