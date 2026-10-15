@@ -145,6 +145,9 @@ test.describe('security headers', () => {
     const csp = h['Content-Security-Policy'];
     expect(csp).toContain("default-src 'self'");
     expect(csp).toMatch(/connect-src [^;]*https:\/\/api\.machinachristi\.com/);
+    // Pray's recordings play through the API (private storage is never named).
+    expect(csp).toMatch(/media-src 'self' https:\/\/api\.machinachristi\.com;/);
+    expect(csp).not.toContain('blob.core.windows.net');
     expect(csp).toContain("frame-ancestors 'self'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");

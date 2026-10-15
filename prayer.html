@@ -381,6 +381,7 @@
     </div>
   </div>
 
+  <script src="/assets/pray-data.js?v=1"></script>
   <script>
     (() => {
       'use strict';
@@ -413,9 +414,13 @@
       let showRom = store.get('pray.rom', true);
 
       /* ── Reading aloud ─────────────────────────────────────────
-         The device's own text-to-speech voice (iPhones ship a Thai one).
-         Everything about sound lives in this block, so moving to recorded
-         audio later means replacing speak() and stop() and nothing else. */
+         Two ways to read a prayer aloud. When the prayer comes with
+         recordings (published to Cosmos DB, reached through the API), those
+         play: one MP3 per language and speed, with each line's start time, so
+         the highlight follows the recording exactly. Otherwise, or if a
+         recording won't play, the device's own text-to-speech voice reads it
+         (iPhones ship a Thai one). Everything about sound lives in this
+         block. */
       const synth = ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) ? window.speechSynthesis : null;
       const LANG = { th: 'th-TH', en: 'en-US' };
       const RATE = { normal: 1, slow: 0.7 };
@@ -451,7 +456,8 @@
       let silentThai = false;
       function refreshVoices() {
         voices = synth.getVoices();
-        if (!voices.length || silentThai) return;
+        // With recordings, the device's voices are only a fallback: no warnings.
+        if (!voices.length || silentThai || rec) return;
         if (pickVoice(LANG.th)) { voiceNote.hidden = true; return; }
         voiceTrouble('This device doesn&rsquo;t seem to have a Thai voice, so the Thai may not be read aloud.');
       }
@@ -480,7 +486,18 @@
       // highlight stops following the voice.
       let queued = [];
 
+      // Recordings: prayer.audio, when the prayer has them; `failed` remembers
+      // a language whose recording wouldn't play, so it falls back for good.
+      let rec = null;
+      const failed = {};
+      let audio = null;          // one <audio> element, made on first use
+      const recording = lang => (rec && !failed[lang] && rec[lang] && rec[lang][slow ? 'slow' : 'normal']) || null;
+      const canListen = () => !!synth || !!rec;
+
+      let marked = -1;
       function mark(i) {
+        if (i === marked) return;
+        marked = i;
         lineEls.forEach((el, j) => el.classList.toggle('is-speaking', j === i));
         if (i >= 0 && now && now.only === null) {
           lineEls[i].scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
@@ -501,12 +518,70 @@
         run++;
         now = null;
         queued = [];
+        if (audio && !audio.paused) audio.pause();
         if (synth && (synth.speaking || synth.pending)) synth.cancel();
         mark(-1);
         paint();
       }
 
+      // Play a recording: the whole prayer, or one line's stretch of it (from
+      // its start to the next line's). The highlight follows the playing
+      // position, checked every frame while the page is visible and on every
+      // timeupdate (a few times a second) when it isn't.
+      function playRecording(indices, lang, r) {
+        stop();
+        const mine = ++run;
+        const only = indices.length === 1 ? indices[0] : null;
+        now = { lang, only };
+        const from = r.starts[indices[0]] || 0;
+        const to = only === null ? Infinity : (r.starts[only + 1] ?? Infinity);
+
+        if (!audio) audio = new Audio();
+        audio.preload = 'none';
+        const url = window.mcPray.audioUrl(r.file);
+        if (audio.dataset.src !== url) { audio.src = url; audio.dataset.src = url; }
+        // Safari ignores a position set before the file's length is known,
+        // so it's set again once it is.
+        const seek = () => { if (Math.abs(audio.currentTime - from) > 0.25) audio.currentTime = from; };
+        try { seek(); } catch (e) { /* set again on loadedmetadata */ }
+
+        const finish = () => {
+          if (mine !== run) return;
+          audio.pause();
+          now = null;
+          mark(-1);
+          paint();
+        };
+        const place = () => {
+          if (mine !== run) return;
+          const t = audio.currentTime;
+          if (t >= to) { finish(); return; }
+          let i = indices[0];
+          for (const j of indices) if (r.starts[j] <= t + 0.05) i = j;
+          mark(i);
+        };
+        const frame = () => { if (mine === run) { place(); requestAnimationFrame(frame); } };
+        const fallBack = () => {
+          if (mine !== run) return;
+          failed[lang] = true;
+          stop();
+          if (synth) speak(indices, lang);
+        };
+        audio.onloadedmetadata = () => { if (mine === run) seek(); };
+        audio.ontimeupdate = place;
+        audio.onended = finish;
+        audio.onerror = fallBack;
+
+        const playing = audio.play();
+        if (playing && playing.catch) playing.catch(err => { if (err && err.name !== 'AbortError') fallBack(); });
+        mark(indices[0]);
+        requestAnimationFrame(frame);
+        paint();
+      }
+
       function speak(indices, lang) {
+        const r = recording(lang);
+        if (r) { playRecording(indices, lang, r); return; }
         stop();
         const mine = ++run;
         now = { lang, only: indices.length === 1 ? indices[0] : null };
@@ -550,13 +625,16 @@
         $('title').textContent = prayer.title;
         $('title-th').textContent = prayer.title_th;
         lines = prayer.lines;
+        rec = prayer.audio || null;
+        marked = -1;
 
-        // Each line is a button when the device can read aloud (tap to hear
-        // it in Thai), and plain text when it can't.
-        const tag = synth ? 'button' : 'div';
+        // Each line is a button when the prayer can be heard (tap to hear it
+        // in Thai), and plain text when it can't.
+        const listen = canListen();
+        const tag = listen ? 'button' : 'div';
         linesEl.innerHTML = lines.map((l, i) => `
           <li>
-            <${tag} ${synth ? 'type="button" ' : ''}class="line" data-i="${i}">
+            <${tag} ${listen ? 'type="button" ' : ''}class="line" data-i="${i}">
               <span class="th" lang="th">${escapeHtml(l.th)}</span>
               <span class="rom" lang="th-Latn">${escapeHtml(l.rom)}</span>
               <span class="en">${escapeHtml(l.en)}</span>
@@ -567,22 +645,28 @@
 
         if (prayer.source) {
           const s = $('source');
-          s.innerHTML = `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. English: the traditional wording.`;
+          const voiceName = v => String(v || '').replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
+          const voices = rec && rec.th && rec.en
+            ? ` Recorded voices: ${escapeHtml(voiceName(rec.th.voice))} (Thai) and ${escapeHtml(voiceName(rec.en.voice))} (English), synthetic neural voices made with Azure AI Speech.`
+            : '';
+          s.innerHTML = `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. English: the traditional wording.${voices}`;
           s.hidden = false;
         }
 
         $('toggles').hidden = false;
         $('guide').hidden = false;
 
-        if (synth) {
+        if (listen) {
           player.hidden = false;
           document.body.classList.add('has-player');
           const hint = $('tap-hint');
           if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) hint.textContent = 'Click any line to hear it in Thai.';
           hint.hidden = false;
-          refreshVoices();
-          if (synth.addEventListener) synth.addEventListener('voiceschanged', refreshVoices);
-          else synth.onvoiceschanged = refreshVoices;
+          if (synth) {
+            refreshVoices();
+            if (synth.addEventListener) synth.addEventListener('voiceschanged', refreshVoices);
+            else synth.onvoiceschanged = refreshVoices;
+          }
         } else {
           $('slow').hidden = true;
           voiceNote.textContent = 'This browser can’t read prayers aloud, but every line is here to read.';
@@ -608,7 +692,7 @@
       /* ── Listening ────────────────────────────────────────────── */
       player.addEventListener('click', e => {
         const b = e.target.closest('.listen');
-        if (!b || !synth || !lines.length) return;
+        if (!b || !canListen() || !lines.length) return;
         const lang = b.dataset.lang;
         if (now && now.lang === lang && now.only === null) { stop(); return; }
         speak(lines.map((_, i) => i), lang);
@@ -617,7 +701,7 @@
       // Tap a line to hear just that line in Thai; tap it again to stop.
       linesEl.addEventListener('click', e => {
         const b = e.target.closest('button.line');
-        if (!b || !synth) return;
+        if (!b || !canListen()) return;
         const i = Number(b.dataset.i);
         if (now && now.only === i) { stop(); return; }
         speak([i], 'th');
@@ -627,17 +711,18 @@
 
       // Leaving the page must silence it — some browsers keep reading after
       // navigation — and a return from the back/forward cache starts quiet.
-      window.addEventListener('pagehide', () => { if (synth) { run++; now = null; synth.cancel(); } });
+      window.addEventListener('pagehide', () => {
+        run++;
+        now = null;
+        if (audio) audio.pause();
+        if (synth) synth.cancel();
+      });
       window.addEventListener('pageshow', e => { if (e.persisted) { now = null; mark(-1); paint(); } });
 
       /* ── Load ─────────────────────────────────────────────────── */
       const id = new URLSearchParams(location.search).get('p');
-      fetch('./pray/prayers.json')
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
-          const prayer = data.prayers.find(p => p.id === id);
-          if (prayer) render(prayer); else notFound();
-        })
+      window.mcPray.get(id)
+        .then(prayer => { if (prayer) render(prayer); else notFound(); })
         .catch(() => {
           linesEl.innerHTML = '<li><p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
         });
