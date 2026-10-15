@@ -4,12 +4,22 @@
 # weekly-update automation self-attests in its prompt (SKILL.md, Step 4.2/4.3):
 #
 #   1. Diff-scope guard    — a feat/world-* / feature/world-* PR may only change
-#                            files under world-app/, plus manifest.json and
-#                            about-eden.html. Anything else = fail.
+#                            files under world-app/, plus manifest.json,
+#                            about-eden.html, and tests/world-features.spec.js
+#                            (the editable feature checks — never the locked
+#                            tests/world-core.spec.js or any other test file).
+#                            Anything else = fail.
 #   2. Malicious-pattern   — the ADDED lines of such a PR must not introduce
 #      guard                 network / dynamic-code calls: fetch(, XMLHttpRequest,
 #                            dynamic import(, eval(, new Function(, or a newly
 #                            added http:// / https:// / ws:// / wss:// URL.
+#   3. Vendored addons     — official three.js addons may be vendored under
+#                            world-app/vendor/addons/. They are exempt from guard 2
+#                            (upstream code carries URLs in its comments) ONLY if
+#                            every added/changed file is byte-identical to the same
+#                            path in the official npm package `three@<threeVersion>`
+#                            (the version world-app/manifest.json records), which
+#                            this script downloads and compares itself.
 #
 # The point is an *independent* backstop: the same unattended agent that writes
 # the diff also writes the self-check, and this repo pre-approves the push/merge
@@ -55,9 +65,11 @@ echo
 fail=0
 
 # --- Guard 1: file scope -------------------------------------------------------
-# Allowed: anything under world-app/, the root manifest.json, and about-eden.html.
+# Allowed: anything under world-app/, the root manifest.json, about-eden.html,
+# and the editable feature tests (tests/world-features.spec.js) — nothing else
+# under tests/.
 echo "== Guard 1: file scope =="
-ALLOWED_RE='^(world-app/|manifest\.json$|about-eden\.html$)'
+ALLOWED_RE='^(world-app/|manifest\.json$|about-eden\.html$|tests/world-features\.spec\.js$)'
 changed_count=0
 out_of_scope=""
 while IFS= read -r f; do
@@ -70,12 +82,44 @@ done < <(git diff --name-only "$BASE_SHA" "$HEAD_REF")
 
 if [ -n "$out_of_scope" ]; then
   echo "::error::feat/world-* PR changes files outside the allowed Eden scope."
-  echo "Allowed scope: world-app/**, manifest.json, about-eden.html"
+  echo "Allowed scope: world-app/**, manifest.json, about-eden.html, tests/world-features.spec.js"
   echo "Out-of-scope file(s):"
   printf '%s' "$out_of_scope" | sed 's/^/  /'
   fail=1
 else
-  echo "OK — all ${changed_count} changed file(s) are within world-app/**, manifest.json, about-eden.html"
+  echo "OK — all ${changed_count} changed file(s) are within world-app/**, manifest.json, about-eden.html, tests/world-features.spec.js"
+fi
+echo
+
+# --- Guard 3: vendored three.js addons must be byte-identical to upstream -------
+echo "== Guard 3: vendored three.js addons =="
+ADDONS_DIR='world-app/vendor/addons/'
+addon_files="$(git diff --name-only --diff-filter=AMR "$BASE_SHA" "$HEAD_REF" -- "$ADDONS_DIR")"
+if [ -z "$addon_files" ]; then
+  echo "OK — no vendored addon files added or changed"
+else
+  three_version="$(git show "$HEAD_REF:world-app/manifest.json" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["threeVersion"])')"
+  echo "Verifying against the official npm package three@${three_version}"
+  pkg_dir="$(mktemp -d)"
+  if ! (cd "$pkg_dir" && npm pack "three@${three_version}" --silent >/dev/null 2>&1 \
+        && tar -xzf three-*.tgz); then
+    echo "::error::could not download three@${three_version} to verify vendored addons"
+    fail=1
+  else
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      rel="${f#$ADDONS_DIR}"
+      upstream="$pkg_dir/package/examples/jsm/$rel"
+      if [ -f "$upstream" ] && cmp -s <(git show "$HEAD_REF:$f") "$upstream"; then
+        echo "  identical: $rel"
+      else
+        echo "::error::vendored addon differs from three@${three_version} (or has no upstream file): $f"
+        fail=1
+      fi
+    done <<< "$addon_files"
+  fi
+  rm -rf "$pkg_dir"
 fi
 echo
 
@@ -86,7 +130,9 @@ echo
 # false-positiving fetch(/eval(.
 echo "== Guard 2: malicious patterns (added lines only) =="
 PATTERN='(^|[^[:alnum:]_])(fetch|eval)[[:space:]]*\(|XMLHttpRequest|(^|[^[:alnum:]_])import[[:space:]]*\(|(^|[^[:alnum:]_])new[[:space:]]+Function[[:space:]]*\(|https?://|wss?://'
+# Vendored addons are excluded here — guard 3 proves they are untouched upstream code.
 added="$(git diff "$BASE_SHA" "$HEAD_REF" -- world-app/ about-eden.html manifest.json \
+          tests/world-features.spec.js ":(exclude)$ADDONS_DIR" \
           | grep '^+' | grep -v '^+++' || true)"
 hits="$(printf '%s\n' "$added" | grep -nE "$PATTERN" || true)"
 if [ -n "$hits" ]; then
@@ -104,7 +150,8 @@ if [ "$fail" -ne 0 ]; then
   echo "----------------------------------------------------------------------"
   echo "world-diff-guard: FAIL — this PR needs manual review before merging."
   echo "A legitimate Eden weekly update only touches world-app/** (plus"
-  echo "manifest.json / about-eden.html) and never introduces network or"
+  echo "manifest.json / about-eden.html / tests/world-features.spec.js), vendors"
+  echo "only unmodified official three.js addons, and never introduces network or"
   echo "dynamic-code calls. Resolve the findings above, or a human should merge"
   echo "this by hand after reviewing why it falls outside those bounds."
   echo "----------------------------------------------------------------------"
