@@ -164,6 +164,51 @@
       }
     },
     {
+      "id": "glory-be",
+      "title": "Glory Be",
+      "title_th": "บทพระสิริรุ่งโรจน์",
+      "about": "praise of the Holy Trinity",
+      "lines": [
+        {
+          "th": "พระสิริรุ่งโรจน์แด่พระบิดา",
+          "rom": "phrá-sì-rì-rûng-rôot dàe phrá-bì-daa",
+          "en": "Glory be to the Father,"
+        },
+        {
+          "th": "และพระบุตร",
+          "rom": "láe phrá-bùt",
+          "en": "and to the Son,"
+        },
+        {
+          "th": "และพระจิต",
+          "rom": "láe phrá-jìt",
+          "en": "and to the Holy Spirit,",
+          "lit": "and to the Spirit"
+        },
+        {
+          "th": "เหมือนในปฐมกาล",
+          "rom": "mǔean nai bpà-thǒm-má-gaan",
+          "en": "as it was in the beginning,",
+          "lit": "as at the first age"
+        },
+        {
+          "th": "บัดนี้และทุกเมื่อตลอดนิรันดร",
+          "rom": "bàt-níi láe thúk mûea dtà-làwt ní-ran-dawn",
+          "en": "is now, and ever shall be, world without end.",
+          "lit": "now and at every moment, for all eternity"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%AA%E0%B8%A3%E0%B8%A3%E0%B8%87%E0%B9%82%E0%B8%A3%E0%B8%88%E0%B8%99"
+      }
+    },
+    {
       "id": "o-blood-and-water",
       "title": "O Blood and Water",
       "title_th": "โอ้ พระโลหิตและน้ำ",
@@ -195,6 +240,501 @@
       "source": {
         "name": "Thai Divine Mercy prayers (บทภาวนาพระเมตตา), via thCath",
         "url": "https://thcath.com/pray/html/p42.php?pray=4"
+      }
+    },
+    {
+      "id": "apostles-creed",
+      "title": "The Apostles’ Creed",
+      "title_th": "บทข้าพเจ้าเชื่อ (สัญลักษณ์ของอัครสาวก)",
+      "about": "the faith of the Apostles, said at the start of the Rosary",
+      "lines": [
+        {
+          "th": "ข้าพเจ้าเชื่อในพระเจ้า",
+          "rom": "khâa-phá-jâo chûea nai phrá-jâo",
+          "en": "I believe in God,"
+        },
+        {
+          "th": "พระบิดาผู้ทรงสรรพานุภาพ ทรงเนรมิตฟ้าดิน",
+          "rom": "phrá-bì-daa phûu song sàp-phaa-nú-phâap, song nee-rá-mít fáa-din",
+          "en": "the Father almighty, Creator of heaven and earth,",
+          "lit": "the all-powerful Father, who made the sky and the earth"
+        },
+        {
+          "th": "ข้าพเจ้าเชื่อในพระเยซูคริสตเจ้า พระบุตรหนึ่งเดียวของพระเจ้า",
+          "rom": "khâa-phá-jâo chûea nai phrá-yee-suu-khrít-dtà-jâo, phrá-bùt nùeng-diao khǎwng phrá-jâo",
+          "en": "and in Jesus Christ, his only Son,",
+          "lit": "I believe in Jesus Christ, the one Son of God"
+        },
+        {
+          "th": "องค์พระผู้เป็นเจ้าของข้าพเจ้าทั้งหลาย",
+          "rom": "ong-phrá-phûu-bpen-jâo khǎwng khâa-phá-jâo tháng-lǎai",
+          "en": "our Lord,"
+        },
+        {
+          "th": "ทรงปฏิสนธิเดชะพระจิตเจ้า",
+          "rom": "song bpà-dtì-sǒn-thí dee-chá phrá-jìt-jâo",
+          "en": "who was conceived by the Holy Spirit,",
+          "lit": "conceived by the power of the Holy Spirit"
+        },
+        {
+          "th": "ทรงบังเกิดจากพระนางมารีย์พรหมจารี",
+          "rom": "song bang-gòet jàak phrá-naang maa-rii phrom-má-jaa-rii",
+          "en": "born of the Virgin Mary,"
+        },
+        {
+          "th": "ทรงรับทรมานสมัยปอนทิอัส ปิลาต",
+          "rom": "song ráp thaw-rá-maan sà-mǎi bpawn-thí-àt bpì-làat",
+          "en": "suffered under Pontius Pilate,",
+          "lit": "suffered in the time of Pontius Pilate"
+        },
+        {
+          "th": "ทรงถูกตรึงกางเขน สิ้นพระชนม์ และทรงถูกฝังไว้",
+          "rom": "song thùuk dtrueng gaang-khěen, sîn-phrá-chon, láe song thùuk fǎng wái",
+          "en": "was crucified, died and was buried;"
+        },
+        {
+          "th": "เสด็จสู่แดนมรณะ",
+          "rom": "sà-dèt sùu daen maw-rá-ná",
+          "en": "he descended into hell;",
+          "lit": "he went down to the land of the dead"
+        },
+        {
+          "th": "วันที่สามทรงกลับคืนพระชนมชีพจากบรรดาผู้ตาย",
+          "rom": "wan thîi sǎam song glàp khuen phrá-chon-má-chîip jàak ban-daa phûu dtaai",
+          "en": "on the third day he rose again from the dead;",
+          "lit": "on the third day he came back to life from among the dead"
+        },
+        {
+          "th": "เสด็จสู่สวรรค์",
+          "rom": "sà-dèt sùu sà-wǎn",
+          "en": "he ascended into heaven,"
+        },
+        {
+          "th": "ประทับเบื้องขวาพระเจ้า พระบิดาผู้ทรงสรรพานุภาพ",
+          "rom": "bprà-tháp bûeang-khwǎa phrá-jâo, phrá-bì-daa phûu song sàp-phaa-nú-phâap",
+          "en": "and is seated at the right hand of God the Father almighty;"
+        },
+        {
+          "th": "แล้วจะเสด็จมาพิพากษาผู้เป็นและผู้ตาย",
+          "rom": "láeo jà sà-dèt maa phí-phâak-sǎa phûu bpen láe phûu dtaai",
+          "en": "from there he will come to judge the living and the dead.",
+          "lit": "then he will come to judge the living and the dead"
+        },
+        {
+          "th": "ข้าพเจ้าเชื่อในพระจิตเจ้า",
+          "rom": "khâa-phá-jâo chûea nai phrá-jìt-jâo",
+          "en": "I believe in the Holy Spirit,"
+        },
+        {
+          "th": "พระศาสนจักรศักดิ์สิทธิ์สากล",
+          "rom": "phrá-sàat-sà-nà-jàk sàk-sìt sǎa-gon",
+          "en": "the holy catholic Church,",
+          "lit": "the holy, universal Church"
+        },
+        {
+          "th": "ความสัมพันธ์เป็นหนึ่งเดียวของผู้ศักดิ์สิทธิ์",
+          "rom": "khwaam-sǎm-phan bpen nùeng-diao khǎwng phûu sàk-sìt",
+          "en": "the communion of saints,",
+          "lit": "the bond that makes the holy ones one"
+        },
+        {
+          "th": "การอภัยบาป",
+          "rom": "gaan à-phai bàap",
+          "en": "the forgiveness of sins,"
+        },
+        {
+          "th": "การกลับคืนชีพของร่างกาย",
+          "rom": "gaan glàp khuen chîip khǎwng râang-gaai",
+          "en": "the resurrection of the body,",
+          "lit": "the body’s return to life"
+        },
+        {
+          "th": "และชีวิตนิรันดร",
+          "rom": "láe chii-wít ní-ran-dawn",
+          "en": "and life everlasting."
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%82%E0%B8%B2%E0%B8%9E%E0%B9%80%E0%B8%88%E0%B8%B2%E0%B9%80%E0%B8%8A%E0%B8%AD"
+      }
+    },
+    {
+      "id": "nicene-creed",
+      "title": "The Nicene Creed",
+      "title_th": "บทข้าพเจ้าเชื่อ (ในพิธีมิสซา)",
+      "about": "the Creed said at Sunday Mass",
+      "lines": [
+        {
+          "th": "ข้าพเจ้าเชื่อในพระเจ้าหนึ่งเดียว",
+          "rom": "khâa-phá-jâo chûea nai phrá-jâo nùeng-diao",
+          "en": "I believe in one God,"
+        },
+        {
+          "th": "พระบิดาผู้ทรงสรรพานุภาพ เนรมิตฟ้าดิน ทั้งสิ่งที่เห็นได้และเห็นไม่ได้",
+          "rom": "phrá-bì-daa phûu song sàp-phaa-nú-phâap, nee-rá-mít fáa-din, tháng sìng thîi hěn dâi láe hěn mâi dâi",
+          "en": "the Father almighty, maker of heaven and earth, of all things visible and invisible.",
+          "lit": "who made sky and earth, both the things that can be seen and those that cannot"
+        },
+        {
+          "th": "ข้าพเจ้าเชื่อในพระเยซูคริสตเจ้าพระบุตรหนึ่งเดียวของพระเจ้า",
+          "rom": "khâa-phá-jâo chûea nai phrá-yee-suu-khrít-dtà-jâo phrá-bùt nùeng-diao khǎwng phrá-jâo",
+          "en": "And in one Lord Jesus Christ, the only-begotten Son of God,",
+          "lit": "I believe in Jesus Christ, the one Son of God"
+        },
+        {
+          "th": "ทรงบังเกิดจากพระบิดาก่อนกาลเวลา",
+          "rom": "song bang-gòet jàak phrá-bì-daa gàwn gaan-wee-laa",
+          "en": "born of the Father before all ages.",
+          "lit": "born of the Father before time began"
+        },
+        {
+          "th": "ทรงเป็นพระเจ้าจากพระเจ้า",
+          "rom": "song bpen phrá-jâo jàak phrá-jâo",
+          "en": "God from God,"
+        },
+        {
+          "th": "ทรงเป็นองค์ความสว่าง จากองค์ความสว่าง",
+          "rom": "song bpen ong khwaam sà-wàang, jàak ong khwaam sà-wàang",
+          "en": "Light from Light,"
+        },
+        {
+          "th": "ทรงเป็นพระเจ้าแท้ จากพระเจ้าแท้",
+          "rom": "song bpen phrá-jâo tháe, jàak phrá-jâo tháe",
+          "en": "true God from true God,"
+        },
+        {
+          "th": "มิได้ทรงถูกสร้าง แต่ทรงบังเกิดร่วมพระธรรมชาติเดียวกับพระบิดา",
+          "rom": "mí-dâi song thùuk sâang, dtàe song bang-gòet rûam phrá-tham-má-châat diao gàp phrá-bì-daa",
+          "en": "begotten, not made, of one substance with the Father;",
+          "lit": "not created, but born sharing one and the same nature with the Father"
+        },
+        {
+          "th": "อาศัยพระบุตรนี้ ทุกสิ่งได้รับการเนรมิตขึ้นมา",
+          "rom": "aa-sǎi phrá-bùt níi, thúk sìng dâi-ráp gaan nee-rá-mít khûen maa",
+          "en": "through him all things were made.",
+          "lit": "through this Son, everything was created"
+        },
+        {
+          "th": "เพราะเห็นแก่เรามนุษย์ เพื่อทรงช่วยเราให้รอด พระองค์จึงเสด็จจากสวรรค์",
+          "rom": "phráw hěn gàe rao má-nút, phûea song chûai rao hâi râwt, phrá-ong jueng sà-dèt jàak sà-wǎn",
+          "en": "For us men and for our salvation he came down from heaven,",
+          "lit": "for the sake of us humans, to save us, he came down from heaven"
+        },
+        {
+          "th": "พระองค์ทรงรับสภาพมนุษย์ จากพระนางมารีย์พรหมจารี",
+          "rom": "phrá-ong song ráp sà-phâap má-nút, jàak phrá-naang maa-rii phrom-má-jaa-rii",
+          "en": "and became incarnate of the Virgin Mary",
+          "lit": "he took on human nature from the Virgin Mary (at Mass, all bow from here to “and became man”)"
+        },
+        {
+          "th": "ด้วยพระอานุภาพของพระจิตเจ้า",
+          "rom": "dûai phrá-aa-nú-phâap khǎwng phrá-jìt-jâo",
+          "en": "by the Holy Spirit,",
+          "lit": "by the power of the Holy Spirit"
+        },
+        {
+          "th": "และทรงบังเกิดเป็นมนุษย์",
+          "rom": "láe song bang-gòet bpen má-nút",
+          "en": "and became man.",
+          "lit": "and was born as a man"
+        },
+        {
+          "th": "สมัยปอนทิอัส ปิลาต พระองค์ทรงถูกตรึงกางเขนเพื่อเรา",
+          "rom": "sà-mǎi bpawn-thí-àt bpì-làat, phrá-ong song thùuk dtrueng gaang-khěen phûea rao",
+          "en": "For our sake he was crucified under Pontius Pilate;",
+          "lit": "in the time of Pontius Pilate he was crucified for us"
+        },
+        {
+          "th": "พระองค์สิ้นพระชนม์และถูกฝังไว้",
+          "rom": "phrá-ong sîn-phrá-chon láe thùuk fǎng wái",
+          "en": "he suffered death and was buried,",
+          "lit": "he died and was buried"
+        },
+        {
+          "th": "ทรงกลับคืนพระชนมชีพในวันที่สาม ตามความในพระคัมภีร์",
+          "rom": "song glàp khuen phrá-chon-má-chîip nai wan thîi sǎam, dtaam khwaam nai phrá-kham-phii",
+          "en": "and rose again on the third day in accordance with the Scriptures."
+        },
+        {
+          "th": "เสด็จสู่สวรรค์ ประทับเบื้องขวาพระบิดา",
+          "rom": "sà-dèt sùu sà-wǎn, bprà-tháp bûeang-khwǎa phrá-bì-daa",
+          "en": "He ascended into heaven and is seated at the right hand of the Father."
+        },
+        {
+          "th": "พระองค์จะเสด็จมาอีกด้วยพระสิริรุ่งโรจน์ เพื่อทรงพิพากษาผู้เป็นและผู้ตาย",
+          "rom": "phrá-ong jà sà-dèt maa ìik dûai phrá-sì-rì-rûng-rôot, phûea song phí-phâak-sǎa phûu bpen láe phûu dtaai",
+          "en": "He will come again in glory to judge the living and the dead,"
+        },
+        {
+          "th": "รัชสมัยของพระองค์จะไม่สิ้นสุด",
+          "rom": "rát-chá-sà-mǎi khǎwng phrá-ong jà mâi sîn-sùt",
+          "en": "and his kingdom will have no end.",
+          "lit": "his reign will never end"
+        },
+        {
+          "th": "ข้าพเจ้าเชื่อในพระจิต พระเจ้าผู้ทรงบันดาลชีวิต",
+          "rom": "khâa-phá-jâo chûea nai phrá-jìt, phrá-jâo phûu song ban-daan chii-wít",
+          "en": "I believe in the Holy Spirit, the Lord, the giver of life,",
+          "lit": "I believe in the Spirit, God who gives life"
+        },
+        {
+          "th": "ทรงเนื่องมาจากพระบิดาและพระบุตร",
+          "rom": "song nûeang maa jàak phrá-bì-daa láe phrá-bùt",
+          "en": "who proceeds from the Father and the Son,"
+        },
+        {
+          "th": "ทรงรับการถวายสักการะและพระสิริรุ่งโรจน์ร่วมกับพระบิดาและพระบุตร",
+          "rom": "song ráp gaan thà-wǎai sàk-gaa-rá láe phrá-sì-rì-rûng-rôot rûam gàp phrá-bì-daa láe phrá-bùt",
+          "en": "who with the Father and the Son is adored and glorified,"
+        },
+        {
+          "th": "พระองค์ดำรัสทางประกาศก",
+          "rom": "phrá-ong dam-ràt thaang bprà-gaa-sòk",
+          "en": "who has spoken through the prophets."
+        },
+        {
+          "th": "ข้าพเจ้าเชื่อว่ามีพระศาสนจักร หนึ่งเดียว ศักดิ์สิทธิ์ สากล และสืบเนื่องจากอัครสาวก",
+          "rom": "khâa-phá-jâo chûea wâa mii phrá-sàat-sà-nà-jàk nùeng-diao, sàk-sìt, sǎa-gon, láe sùep-nûeang jàak àk-khrá-sǎa-wók",
+          "en": "I believe in one, holy, catholic and apostolic Church.",
+          "lit": "I believe there is a Church that is one, holy, universal, and handed down from the Apostles"
+        },
+        {
+          "th": "ข้าพเจ้าประกาศยืนยันว่า มีศีลล้างบาปหนึ่งเดียวเพื่ออภัยบาป",
+          "rom": "khâa-phá-jâo bprà-gàat yuen-yan wâa, mii sǐin-láang-bàap nùeng-diao phûea à-phai bàap",
+          "en": "I confess one baptism for the forgiveness of sins"
+        },
+        {
+          "th": "ข้าพเจ้ารอวันที่ผู้ตายจะกลับคืนชีพ",
+          "rom": "khâa-phá-jâo raw wan thîi phûu dtaai jà glàp khuen chîip",
+          "en": "and I look forward to the resurrection of the dead",
+          "lit": "I await the day the dead return to life"
+        },
+        {
+          "th": "และคอยชีวิตในโลกหน้า",
+          "rom": "láe khoi chii-wít nai lôok nâa",
+          "en": "and the life of the world to come."
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catechetical Center, Archdiocese of Bangkok (“Amen” in the 2010 spelling อาเมน)",
+        "url": "https://www.kamsonbkk.com/interesting-catechism/year-of-faith/1381-007"
+      }
+    },
+    {
+      "id": "hail-holy-queen",
+      "title": "Hail, Holy Queen",
+      "title_th": "บทวันทาพระราชินี",
+      "about": "the Salve Regina, said at the end of the Rosary",
+      "lines": [
+        {
+          "th": "วันทาพระราชินี",
+          "rom": "wan-thaa phrá-raa-chí-nii",
+          "en": "Hail, holy Queen,",
+          "lit": "Hail, Queen"
+        },
+        {
+          "th": "พระแม่ผู้ทรงเมตตากรุณา",
+          "rom": "phrá-mâe phûu song mêet-dtaa-gà-rú-naa",
+          "en": "Mother of mercy,",
+          "lit": "Mother, full of mercy and kindness"
+        },
+        {
+          "th": "ทรงเป็นชีวิต ความอ่อนโยน และความหวังของลูกทุกคน",
+          "rom": "song bpen chii-wít, khwaam àwn-yoon, láe khwaam wǎng khǎwng lûuk thúk khon",
+          "en": "our life, our sweetness and our hope.",
+          "lit": "you are the life, the gentleness and the hope of all your children"
+        },
+        {
+          "th": "ลูกผู้เป็นลูกหลานที่ถูกเนรเทศของเอวา",
+          "rom": "lûuk phûu bpen lûuk-lǎan thîi thùuk nee-rá-thêet khǎwng ee-waa",
+          "en": "To thee do we cry, poor banished children of Eve;",
+          "lit": "we, the exiled descendants of Eve"
+        },
+        {
+          "th": "ขอวันทา ร้องหาพระแม่",
+          "rom": "khǎw wan-thaa, ráwng hǎa phrá-mâe",
+          "en": "to thee do we send up our sighs,",
+          "lit": "greet you and cry out to you, Mother"
+        },
+        {
+          "th": "ถอนใจคร่ำครวญ ร่ำไห้ในเหวน้ำตานี้",
+          "rom": "thǎwn-jai khrâm-khruan, râm-hâi nai hěeo nám-dtaa níi",
+          "en": "mourning and weeping in this valley of tears.",
+          "lit": "sighing and lamenting, weeping in this chasm of tears"
+        },
+        {
+          "th": "โปรดเถิดพระแม่ผู้ทรงช่วยเหลือเกื้อกูลลูก",
+          "rom": "bpròot thòet phrá-mâe phûu song chûai-lǔea gûea-guun lûuk",
+          "en": "Turn then, most gracious advocate,",
+          "lit": "please, Mother, you who help and care for us"
+        },
+        {
+          "th": "โปรดทอดพระเนตรเมตตามายังลูก",
+          "rom": "bpròot thâwt phrá-nêet mêet-dtaa maa yang lûuk",
+          "en": "thine eyes of mercy toward us;",
+          "lit": "please look on us with mercy"
+        },
+        {
+          "th": "และเมื่อชีวิตเนรเทศนี้ผ่านพ้นไปแล้ว",
+          "rom": "láe mûea chii-wít nee-rá-thêet níi phàan-phón bpai láeo",
+          "en": "and after this our exile,",
+          "lit": "and when this life of exile has passed"
+        },
+        {
+          "th": "โปรดแสดงให้ลูกเห็นพระเยซูพระบุตรผู้ทรงได้รับพระพร",
+          "rom": "bpròot sà-daeng hâi lûuk hěn phrá-yee-suu phrá-bùt phûu song dâi-ráp phrá-phawn",
+          "en": "show unto us the blessed fruit of thy womb, Jesus.",
+          "lit": "please show us Jesus, your blessed Son"
+        },
+        {
+          "th": "ข้าแต่พระแม่ผู้เมตตากรุณา",
+          "rom": "khâa-dtàe phrá-mâe phûu mêet-dtaa-gà-rú-naa",
+          "en": "O clement,",
+          "lit": "O merciful Mother"
+        },
+        {
+          "th": "พระแม่ผู้โอบอ้อมอารี",
+          "rom": "phrá-mâe phûu òop-âwm-aa-rii",
+          "en": "O loving,",
+          "lit": "kind-hearted Mother"
+        },
+        {
+          "th": "มารีย์พรหมจารีผู้มีพระทัยอ่อนโยน",
+          "rom": "maa-rii phrom-má-jaa-rii phûu mii phrá-thai àwn-yoon",
+          "en": "O sweet Virgin Mary.",
+          "lit": "Virgin Mary, gentle of heart"
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%A7%E0%B8%99%E0%B8%97%E0%B8%B2%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%99"
+      }
+    },
+    {
+      "id": "memorare",
+      "title": "The Memorare",
+      "title_th": "บทโปรดระลึกเถิด",
+      "about": "asking Our Lady’s help with confidence",
+      "lines": [
+        {
+          "th": "โปรดระลึกเถิด พระแม่มารีย์พรหมจารีผู้โอบอ้อมอารี",
+          "rom": "bpròot rá-lúek thòet, phrá-mâe maa-rii phrom-má-jaa-rii phûu òop-âwm-aa-rii",
+          "en": "Remember, O most gracious Virgin Mary,",
+          "lit": "please remember, kind-hearted Virgin Mother Mary"
+        },
+        {
+          "th": "แต่ไหนแต่ไรมายังไม่เคยได้ยินเลยว่า",
+          "rom": "dtàe-nǎi-dtàe-rai maa yang mâi khoei dâi-yin loei wâa",
+          "en": "that never was it known",
+          "lit": "never, from the beginning, has it been heard"
+        },
+        {
+          "th": "ผู้ที่มาพึ่งพา ขอความช่วยเหลือ และความคุ้มครองจากพระแม่",
+          "rom": "phûu thîi maa phûeng-phaa, khǎw khwaam chûai-lǔea, láe khwaam khúm-khrawng jàak phrá-mâe",
+          "en": "that anyone who fled to thy protection, implored thy help, or sought thine intercession",
+          "lit": "that anyone who came to depend on you, asking your help and protection"
+        },
+        {
+          "th": "จะถูกพระแม่ทอดทิ้ง",
+          "rom": "jà thùuk phrá-mâe thâwt-thíng",
+          "en": "was left unaided.",
+          "lit": "was abandoned by you"
+        },
+        {
+          "th": "ลูกมั่นใจดังนี้ จึงรีบมาเฝ้าพระมารดา",
+          "rom": "lûuk mân-jai dang-níi, jueng rîip maa fâo phrá-maan-daa",
+          "en": "Inspired by this confidence, I fly unto thee,",
+          "lit": "sure of this, I hurry to come before you, Mother"
+        },
+        {
+          "th": "พรหมจารีแห่งพรหมจารีทั้งหลาย",
+          "rom": "phrom-má-jaa-rii hàeng phrom-má-jaa-rii tháng-lǎai",
+          "en": "O Virgin of virgins, my Mother;"
+        },
+        {
+          "th": "ลูกเป็นคนบาป มาคร่ำครวญอยู่เฉพาะพระพักตร์ของพระแม่",
+          "rom": "lûuk bpen khon bàap, maa khrâm-khruan yùu chà-pháw phrá-phák khǎwng phrá-mâe",
+          "en": "to thee do I come, before thee I stand, sinful and sorrowful.",
+          "lit": "I am a sinner, come to lament before your face"
+        },
+        {
+          "th": "ข้าแต่พระมารดาแห่งพระวจนาตถ์",
+          "rom": "khâa-dtàe phrá-maan-daa hàeng phrá-wá-jà-nâat",
+          "en": "O Mother of the Word Incarnate,",
+          "lit": "O Mother of the Word"
+        },
+        {
+          "th": "โปรดอย่าเมินเฉยต่อวาจาของลูก",
+          "rom": "bpròot yàa moen-chǒei dtàw waa-jaa khǎwng lûuk",
+          "en": "despise not my petitions,",
+          "lit": "please do not turn away from my words"
+        },
+        {
+          "th": "แต่โปรดฟังและประทานตามที่ลูกวอนขอด้วยเทอญ",
+          "rom": "dtàe bpròot fang láe bprà-thaan dtaam thîi lûuk wawn-khǎw dûai thoen",
+          "en": "but in thy mercy hear and answer me.",
+          "lit": "but please listen and grant what I beg of you (เทอญ is a solemn “so be it”)"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B9%82%E0%B8%9B%E0%B8%A3%E0%B8%94%E0%B8%A3%E0%B8%B0%E0%B8%A5%E0%B8%81%E0%B9%80%E0%B8%96%E0%B8%94"
+      }
+    },
+    {
+      "id": "angel-of-god",
+      "title": "Angel of God",
+      "title_th": "บททูตสวรรค์ของพระเจ้า",
+      "about": "to your guardian angel, morning and night",
+      "lines": [
+        {
+          "th": "ทูตสวรรค์ของพระเจ้า",
+          "rom": "thûut-sà-wǎn khǎwng phrá-jâo",
+          "en": "Angel of God,"
+        },
+        {
+          "th": "พระองค์ทรงพระกรุณามอบข้าพเจ้าไว้ในความอารักขาของท่าน",
+          "rom": "phrá-ong song phrá-gà-rú-naa mâwp khâa-phá-jâo wái nai khwaam aa-rák-khǎa khǎwng thâan",
+          "en": "my guardian dear, to whom God’s love commits me here,",
+          "lit": "God in his kindness has placed me in your keeping"
+        },
+        {
+          "th": "โปรดส่องสว่าง พิทักษ์รักษา คุ้มครอง และนำทางชีวิตข้าพเจ้า",
+          "rom": "bpròot sàwng-sà-wàang, phí-thák-rák-sǎa, khúm-khrawng, láe nam-thaang chii-wít khâa-phá-jâo",
+          "en": "ever this day be at my side, to light and guard, to rule and guide.",
+          "lit": "please give light, watch over, protect and guide my life"
+        },
+        {
+          "th": "ในวันนี้ (คืนนี้) ด้วยเทอญ",
+          "rom": "nai wan-níi (khuen-níi) dûai thoen",
+          "en": "this day (this night).",
+          "lit": "today (tonight), so be it"
+        },
+        {
+          "th": "อาเมน",
+          "rom": "aa-meen",
+          "en": "Amen."
+        }
+      ],
+      "source": {
+        "name": "Catechetical Center, Archdiocese of Bangkok (“Amen” in the 2010 spelling อาเมน)",
+        "url": "https://www.kamsonbkk.com/prayer/2012-03-29-03-40-58/677-007221"
       }
     }
   ]
