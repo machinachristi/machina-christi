@@ -183,6 +183,32 @@ every day of 2026 and 2027.
 request, so nothing gets merged on trust alone.
 *Here:* GitHub Actions — the "Smoke Test" and "Azure Platform" checks.
 
+**Workflow.** The robot's recipe: a file listing the steps to run and when
+("on every pull request: install the test tools, run the tests; on a merge to
+main: deploy"). GitHub provides the robot, but it does only what our recipes
+say, and the recipes are code like any other, changed through pull requests.
+*Here:* the files in `.github/workflows/`, one for the website and one for the
+API and Azure.
+
+**Runner.** The computer a workflow runs on: a fresh, empty machine GitHub
+lends for the length of the run and wipes afterwards, like a kitchen hired by
+the hour. Starting clean every time means a test can't pass just because of
+something left over on someone's laptop.
+*Here:* a new Linux machine for every check you see on a pull request.
+
+**Required check.** A check GitHub must see pass before it lets a pull request
+merge, like a signature a bank needs before releasing money. Other checks still
+run and report, but don't block on their own.
+*Here:* "Smoke Test" (the browser tests) and "World Diff Guard" (Eden's update
+rules) are required for `main`; the Azure preview isn't, so it's read before
+asking to merge.
+
+**Stand-in (mock).** A pretend version of something a test can't use for real
+(a voice, a server, a sign-in), which behaves the way the test tells it to.
+It lets a test try situations that are hard to cause on purpose.
+*Here:* the Pray tests use a pretend voice, because the test computer has no
+speakers; it can even skip announcing a line, to imitate an iPhone glitch.
+
 **Blue-green deployment.** Replacing a live system by building the new one
 next to the old, switching visitors over, and only then removing the old one,
 like moving house by living in both for a day. There's never a moment without
