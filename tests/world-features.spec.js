@@ -448,6 +448,43 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).blossom.byWalker, { timeout: 20000 }).toBeGreaterThan(stood + 4);
   });
 
+  test('the fowls of the air: the great flock comes to a still walker, goes off at midday, roosts at night (v29, Matthew 6:26)', async ({ page }) => {
+    test.setTimeout(120000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Morning: the flock is up and dancing over the garden.
+    const first = (await getState(page)).murmuration;
+    expect(first.birds).toBeGreaterThan(1000);
+    expect(first.visible).toBe(true);
+    expect(['dance', 'before']).toContain(first.mode);
+
+    // Stand still out on the south-western meadow: the flock leaves its own
+    // wandering and comes to wheel close before him.
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    await expect.poll(async () => {
+      const m = (await getState(page)).murmuration;
+      return m.call > 0.6 && m.near !== null && m.near < 32;
+    }, { timeout: 60000 }).toBe(true);
+    expect((await getState(page)).murmuration.arrivals).toBeGreaterThan(0);
+
+    // Through the heat of the day it is off beyond the rim, out of sight.
+    await frame.evaluate(() => window.__world.setTime(0.38));
+    await expect.poll(async () => {
+      const m = (await getState(page)).murmuration;
+      return m.mode === 'away' && !m.visible;
+    }, { timeout: 20000 }).toBe(true);
+
+    // At night it is down in the reeds; with the morning it is aloft again.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => {
+      const m = (await getState(page)).murmuration;
+      return m.mode === 'roost' && !m.visible;
+    }, { timeout: 20000 }).toBe(true);
+    await frame.evaluate(() => window.__world.setTime('morning'));
+    await expect.poll(async () => (await getState(page)).murmuration.visible, { timeout: 20000 }).toBe(true);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

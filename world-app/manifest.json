@@ -1,5 +1,5 @@
 {
-  "version": 28,
+  "version": 29,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -339,6 +339,18 @@
         { "text": "After dark the open flowers keep a faint light of their own, so the way he has walked glows on the meadow at night.", "source": "Psalm 119:105" },
         { "text": "All of it is one draw call: each flower's whole life, from rising to sinking, is worked out on the graphics chip from the moment it was born.", "source": null }
       ]
+    },
+    {
+      "version": 29,
+      "date": "2026-10-16",
+      "focus": "behold the fowls of the air",
+      "changes": [
+        { "text": "A great flock of small birds keeps the garden's sky: more than a thousand of them wheeling together as one body, a swirling cloud that tilts and folds, stretches into a long ribbon and gathers into a ball, with dark waves rolling through it.", "source": "Genesis 1:20" },
+        { "text": "Stand still and look, and the flock leaves its own wandering and comes to wheel low over the meadow just before you, and as it comes its name is given.", "source": "Matthew 6:26" },
+        { "text": "Close by, the rush of all those wings is heard, swelling with each wave through the flock.", "source": "Psalm 104:12" },
+        { "text": "It keeps its own day: up out of the reeds at first light, off beyond the rim through the heat of the middle day, back out of the westering sun to dance against the evening sky, then down into the reeds by the river, bird by bird, as the light goes.", "source": "Psalm 104:19" },
+        { "text": "All of it is one draw call: where every bird flies, how it beats its wings and when it drops into the reeds is worked out on the graphics chip, and each bird turns to show the watcher its wings.", "source": null }
+      ]
     }
   ],
   "next": [
@@ -346,6 +358,6 @@
     "Keep the flock: walk out to a lamb that has wandered far from the others and it follows at his heels back to them, and lies down (Isaiah 40:11)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
     "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)",
-    "The trees of the field clap their hands as he passes: a sacred tree he walks under for the first time each visit lets a soft rain of blossom down on him (Isaiah 55:12)"
+    "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)"
   ]
 }
