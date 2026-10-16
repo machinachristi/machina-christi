@@ -120,6 +120,19 @@ export function createCharacter({ eve = false } = {}) {
   held.position.set(0, 0.29, 0.43);
   held.visible = false;
   torso.add(held);
+  // A fruit given into the same cupped hands (v30, Genesis 2:16) — shown
+  // while he holds it, growing smaller with each bite.
+  let holding = null;
+  const fruitHeld = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.12, 0),
+    new THREE.MeshLambertMaterial({ flatShading: true }),
+  );
+  // In his raised hand, held up before him to look at — which is also
+  // where the follow camera can see it past his shoulder.
+  fruitHeld.position.set(0.19, 0.56, 0.6);
+  let lift = 0;             // 0 → 1 the hand raised with the fruit in it
+  fruitHeld.visible = false;
+  torso.add(fruitHeld);
 
   // move: camera-space input { x: right, z: forward, |v| ≤ 1, quick? }.
   // camYaw: yaw of the camera's view line, from the rig — or null when
@@ -239,21 +252,36 @@ export function createCharacter({ eve = false } = {}) {
     // Carrying water (v27, Genesis 2:6): both hands brought together before
     // him and cupped, held there whatever his legs are doing, sitting or
     // walking, until he lets it go on the ground he came to water.
-    carry = damp(carry, carrying ? 1 : 0, 7, dt);
+    carry = damp(carry, carrying || holding ? 1 : 0, 7, dt);
     if (carry > 0.001) {
       armL.rotation.x = armL.rotation.x * (1 - carry) - 0.9 * carry;
       armR.rotation.x = armR.rotation.x * (1 - carry) - 0.9 * carry;
       armL.rotation.z = armL.rotation.z * (1 - carry) + 0.4 * carry;
       armR.rotation.z = armR.rotation.z * (1 - carry) - 0.4 * carry;
     }
-    held.visible = carry > 0.6;
+    // A fruit given him takes the hands' place until it is eaten; water he
+    // was carrying shows again after.
+    lift = damp(lift, holding ? 1 : 0, 7, dt);
+    if (lift > 0.001) {
+      armR.rotation.x = armR.rotation.x * (1 - lift) - 1.35 * lift;
+      armR.rotation.z = armR.rotation.z * (1 - lift) - 0.15 * lift;
+    }
+    held.visible = carry > 0.6 && carrying && !holding;
+    fruitHeld.visible = !!holding;
   }
 
   function setSitting(b) { sitting = !!b; }
   function setCarrying(b) { carrying = !!b; }
+  // h: { color, left } while he holds a fruit, or null.
+  function setHolding(h) {
+    holding = h || null;
+    if (!holding) return;
+    fruitHeld.material.color.setHex(holding.color);
+    fruitHeld.scale.setScalar(0.25 + 0.95 * holding.left);
+  }
 
   return {
-    group, update, setSitting, setCarrying,
+    group, update, setSitting, setCarrying, setHolding,
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },

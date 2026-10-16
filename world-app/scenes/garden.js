@@ -81,6 +81,8 @@ import { createFry } from './fry.js';
 import { createWatering } from './watering.js';
 import { createBlossom } from './blossom.js';
 import { createMurmuration } from './murmuration.js';
+import { createLiving } from './living.js';
+import { createGather } from './gather.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -350,6 +352,14 @@ export async function createGarden(scene, rng) {
   // still to look. Its own seeded stream, drawn only here; it needs nothing
   // built above it.
   const murmuration = createMurmuration(scene);
+  // v30: the river alive with light — the sun's glittering path on it by
+  // day, the moon's by night, and the water's own soft light where he wades
+  // (Revelation 22:1). Its own seeded stream, drawn only here.
+  const living = createLiving(scene);
+  // v30 (Genesis 2:16): a fig or a pomegranate gives a ripe fruit into his
+  // hands when he stands under it. It reads fruit.js's own trees; nothing
+  // placed, nothing drawn from any stream.
+  const gather = createGather(scene, fruit.spots);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -431,6 +441,8 @@ export async function createGarden(scene, rng) {
     watering.update(dt, playerPos);
     blossom.update(dt, playerPos, hour.night);
     murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz);
+    living.update(dt, playerPos, hour, hour.moonDir);
+    gather.update(dt, playerPos, facing);
     return hour;
   }
 
@@ -515,9 +527,15 @@ export async function createGarden(scene, rng) {
     flags: flags.state,
     fry: fry.state,
     watering: watering.state,
-    // A word for the work just done has the line first; then the flock's
-    // own name, the moment it comes to him (v29).
-    tending: () => watering.caption() || murmuration.caption(),
+    // A word for the work just done has the line first (the watering, then
+    // the fruit given, v30); then the living water's name (v30), then the
+    // flock's own name, the moment it comes to him (v29).
+    tending: () => watering.caption() || gather.caption() || living.caption() || murmuration.caption(),
+    living: living.state,
+    livingSong: living.song,
+    gather: gather.state,
+    gatherSong: gather.song,
+    holding: gather.holding,
     murmuration: murmuration.state,
     blossom: blossom.state,
     song: blossom.song,

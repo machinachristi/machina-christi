@@ -1,5 +1,5 @@
 {
-  "version": 29,
+  "version": 30,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -351,11 +351,25 @@
         { "text": "It keeps its own day: up out of the reeds at first light, off beyond the rim through the heat of the middle day, back out of the westering sun to dance against the evening sky, then down into the reeds by the river, bird by bird, as the light goes.", "source": "Psalm 104:19" },
         { "text": "All of it is one draw call: where every bird flies, how it beats its wings and when it drops into the reeds is worked out on the graphics chip, and each bird turns to show the watcher its wings.", "source": null }
       ]
+    },
+    {
+      "version": 30,
+      "date": "2026-10-16",
+      "focus": "a pure river of water of life",
+      "changes": [
+        { "text": "The river comes alive with light: by day the sun lays a glittering path across it, thousands of tiny glints flashing and dancing on the ripples, shifting as you move.", "source": "Revelation 22:1" },
+        { "text": "Under the moon the same path shines silver, brighter as she waxes full.", "source": "Job 31:26" },
+        { "text": "At night the water carries a soft light of its own, pale pulses drifting downstream; wade in and it brightens round your legs and lies glowing behind you where you have walked, and its name is given.", "source": "Song of Solomon 4:15" },
+        { "text": "Now and then, as the water lights round you, it answers with a soft high note.", "source": "Psalm 98:8" },
+        { "text": "Stand a moment under a fig or a pomegranate in fruit and a ripe one drops, turning, into your hands, freely given.", "source": "Genesis 2:16" },
+        { "text": "He holds it up to look at it, eats it in three bites, and his hands are free again; walk out from under the tree and come back, and it gives again.", "source": "Genesis 1:29" },
+        { "text": "All of the river's light is one draw call: whether each glint catches the sun or the moon is worked out on the graphics chip from where the watcher stands.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Gather, the next of Adam's work: stand still under a fig or a pomegranate in fruit and a ripe one comes down into his hands, freely given, to eat (Genesis 2:16)",
     "Keep the flock: walk out to a lamb that has wandered far from the others and it follows at his heels back to them, and lies down (Isaiah 40:11)",
+    "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
     "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)",
     "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)"

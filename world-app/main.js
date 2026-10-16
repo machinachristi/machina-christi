@@ -182,6 +182,8 @@ let reverent = false;
 let heardStrikes = 0;
 let heardCalls = 0;
 let heardNotes = 0;
+let heardWater = 0;
+let heardFruit = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -235,6 +237,8 @@ renderer.setAnimationLoop(() => {
   const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y);
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
+  // …and a fruit given him under the tree, until it is eaten (v30).
+  character.setHolding(garden.holding());
   updateNamingCaption();
   ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush);
   if (garden.reverence > 0.6 && !reverent) {
@@ -259,6 +263,18 @@ renderer.setAnimationLoop(() => {
   if (bloom.notes !== heardNotes) {
     heardNotes = bloom.notes;
     ambience.bloom(bloom.note);
+  }
+  // v30: a high note now and then as the water lights round him at night,
+  // and one as the fruit comes into his hands and another when it is eaten.
+  const water = garden.livingSong();
+  if (water.notes !== heardWater) {
+    heardWater = water.notes;
+    ambience.bloom(water.note);
+  }
+  const given = garden.gatherSong();
+  if (given.notes !== heardFruit) {
+    heardFruit = given.notes;
+    ambience.bloom(given.note);
   }
   renderer.render(scene, camera);
 
@@ -502,6 +518,13 @@ window.__world = {
       // `scattered` how many shoals a wading walker has presently startled).
       // The hind's fawn rides on `hind.fawn`.
       watering: garden.watering(),
+      // v30: the living water (Revelation 22:1) — `sun`/`moon` how brightly
+      // each can glitter on the river now, `glow` the water's own night
+      // light, `stir` how much a wading walker lights it, `trail` how many
+      // waded places still shine; and the gathering (Genesis 2:16) — `stage`
+      // idle|falling|holding|eating, `given`/`eaten` this visit.
+      living: garden.living(),
+      gather: garden.gather(),
       flags: garden.flags(),
       fry: garden.fry(),
       // v28: the ground blossoming wherever he walks (Isaiah 35:1-2 — `open`
