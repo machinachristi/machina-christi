@@ -21,6 +21,9 @@ and its "Smart Detection" action group to every new Application Insights.)
 | CI identities | `id-machina-github-deploy`, `id-machina-github-preview` | What GitHub Actions signs in as (OIDC). See below |
 | SQL server + database | `sql-machina-cus-<suffix>` / `machina` (Central US; free offer, serverless, auto-pause) | Ordo's saints. Entra sign-in only; visitors never query it (see below) |
 | Entra group (by hand) | `sql-machina-admins` | The SQL server's admin: people only (the owner) |
+| Cosmos DB | `cosmos-machina-<suffix>` / database `machina` / container `prayers` (Central US; lifetime free tier, capped at 1000 RU/s) | Pray's prayers, one document each, with their recordings' names and line timings. Entra only; keys off (see "Pray") |
+| Speech | `speech-machina-<suffix>` (Central US; F0, free) | Records the prayers (Thai and English, normal and slow). Entra only; keys off |
+| Storage (recordings) | `stmachinamedia<suffix>` / container `pray-audio` (Central US) | The recordings, private: visitors hear them through `/api/audio`. Keys off |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
 storage and Function app names must be unique across all of Azure.
@@ -28,8 +31,11 @@ storage and Function app names must be unique across all of Azure.
 ## Two files, two levels of trust
 
 - **`bootstrap.bicep`** (subscription scope): both resource groups, the budget,
-  CI's identities with their permissions, and the SQL server and database
-  (`modules/sql.bicep`, because a server's settings include who administers it).
+  CI's identities with their permissions, the SQL server and database
+  (`modules/sql.bicep`, because a server's settings include who administers it),
+  and Pray's Cosmos DB, Speech and recordings storage with every data role
+  (`modules/pray.bicep`, for the same reason: their settings decide who gets in
+  and what they cost).
   A person deploys it by hand, once, and again only when one of those changes.
   Its budget-alert address is passed at deploy time and never committed.
 - **`main.bicep`** (resource group scope): the platform. GitHub Actions applies it
@@ -39,7 +45,7 @@ GitHub Actions signs in with OIDC (no stored secret) as one of two identities:
 
 | Identity | Who may use it | What it may do in `rg-machina-platform` |
 |---|---|---|
-| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases), plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
+| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, read those accounts' keys, or grant Cosmos DB data roles), plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
 | `id-machina-github-preview` | Pull request runs | **Reader** plus a custom **What-If Runner** role: it can preview changes and change nothing |
 
 Why it's built this way:
@@ -70,6 +76,13 @@ Runs when `infra/`, `functions/` or the workflow itself changes:
   migration ran, it then republishes the saints snapshot and waits until
   `/api/season` serves it. A manual re-run is available from the Actions tab (on
   main), with a "Republish the saints snapshot" box.
+
+**Pray publishing (`.github/workflows/pray-publish.yml`)** runs when
+`pray/prayers.json` or the publisher changes. On a pull request it runs the
+publisher's tests and a dry run (no Azure): which recordings the change would
+make and how many free characters that uses. On main it signs in as the deploy
+identity, records what changed and publishes (see "Pray"). A manual run (on
+main) has a "Record every prayer again" box.
 
 ## API hostname and Cloudflare
 
@@ -150,6 +163,9 @@ Node.js, Azure Functions v4 programming model. Each file in
   runs it after a migration, through the host's admin endpoint and the master key
   (`POST /admin/functions/publishSaints`); that adds no permission, since the
   deploy identity already deploys the app's code.
+- `GET /api/prayers` and `GET /api/prayers/{id}`: Pray's prayers, read live from
+  Cosmos DB (see "Pray"). `GET /api/audio/{id}/{file}`: a recording, relayed
+  from private storage, with byte ranges (206).
 - `cd functions && npm test` runs the unit tests (Node's built-in test runner).
 - Run it locally with Azure Functions Core Tools: in `functions/`, copy
   `local.settings.example.json` to `local.settings.json` (git ignores it), then
@@ -231,6 +247,53 @@ the [free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer
 - The subscription needed the `Microsoft.Sql` resource provider registered (done
   by hand once; CI can't register providers).
 
+## Pray: Cosmos DB, Speech and the recordings
+
+Pray's prayers live in Cosmos DB; each is recorded by Azure AI Speech, and the
+recordings are kept in private blob storage. All three are created by people
+(`bootstrap.bicep` → `modules/pray.bicep`); CI only works inside them. The
+plain-words story is in `docs/explained/phase-4-pray-cosmos-audio.md`.
+
+- **The master copy is `pray/prayers.json`** (reviewed in pull requests). Its
+  top-level `audio` settings name the voices (`th-TH-NiwatNeural`,
+  `en-US-AndrewNeural`), the slow rate (`-30%`), the pause between lines
+  (600 ms) and the MP3 format.
+- **The publisher** (`functions/scripts/publish-prayers.js`, run by
+  `pray-publish.yml`) works out a fingerprint for each recording (words, voice,
+  settings), records only those whose fingerprint isn't published yet, uploads
+  them as `pray-audio/{id}/{lang}-{speed}-{hash}.mp3` (`Cache-Control: immutable`),
+  then writes the prayer's document. One prayer at a time, at most one Speech
+  request every 3.2 s (F0 allows about 20 a minute), retrying when the service
+  is busy. It refuses to use more than 50,000 characters in one run. Old
+  recordings are left in place (a few KB each).
+- **Documents:** `{ id, type: "prayer", order, title, title_th, about, lines,
+  source, audio: { th|en: { voice, normal|slow: { file, hash, starts[], duration } } } }`.
+  Partition key `/id`, so the API's read of one prayer is a point read (1 RU).
+- **The API reads** with its own identity: `/api/prayers` and
+  `/api/prayers/{id}` (kept in memory and by Cloudflare for 5 minutes; 503 when
+  Cosmos DB can't answer, and the pages fall back to the bundled file), and
+  `/api/audio/{id}/{file}` (byte ranges, `ETag`, kept for a year).
+- **Who may do what** (no keys: `disableLocalAuth` on Cosmos DB and Speech,
+  `allowSharedKeyAccess: false` on the storage):
+
+  | Identity | Cosmos DB `prayers` | Speech | `pray-audio` |
+  |---|---|---|---|
+  | `id-machina-github-deploy` (CI, main) | Built-in Data Contributor | Speech User | Blob Data Contributor |
+  | `id-machina-func` (API) | Built-in Data Reader | — | Blob Data Reader |
+  | people (owners) | none | none | none |
+
+  Cosmos DB data roles (`sqlRoleAssignments`) are its own system, not Azure role
+  assignments, so the ABAC condition in `ci-access.bicep` doesn't cover them;
+  Machina Deployer is denied writing them instead. To look at the prayers
+  yourself, give your identity Data Reader on the container for a moment
+  (`az cosmosdb sql role assignment create … --scope /dbs/machina/colls/prayers`)
+  and delete it afterwards.
+- **Network:** public endpoints with Entra-only sign-in, on purpose: the CI
+  publisher and Phase 5's search must reach Cosmos DB, and the prayers are
+  public. Revisit with Phase 7 (private intentions).
+- The subscription needed the `Microsoft.DocumentDB` and
+  `Microsoft.CognitiveServices` providers registered (done by hand once).
+
 ## Reading the telemetry (KQL)
 
 Portal → `log-machina` (API) or `log-machina-web` (site) → **Logs** → **Queries** →
@@ -246,6 +309,10 @@ The starter queries are defined in `main.bicep`:
   for this run), `WakeRetries`, total time, feasts and snapshot size
 - Saints snapshot: times the API couldn't read it and fell back to the bundled
   bios (empty is good; one entry right before a first-ever publish is expected)
+- Prayers: reads that reached Cosmos DB per day, and their RU (the rest were
+  answered from memory or by Cloudflare)
+- Pray API: calls that reached Azure per day, by endpoint (prayers, one prayer,
+  recordings). Few recording calls means Cloudflare is keeping them
 - Free allowance watch: GB ingested this month, by table
 - Site: page views, referrers, countries, time on page, CSP reports, script errors
 
@@ -255,7 +322,9 @@ The starter queries are defined in `main.bicep`:
 |---|---|
 | Functions Flex: 250,000 executions + 100,000 GB-s | 512 MB instances, one at a time (raise once Cloudflare rate-limits the API) |
 | Log Analytics: 5 GB ingestion (shared by both workspaces) | Hard daily caps of 0.10 + 0.05 GB (about 4.6 GB/month). Traces are sampled; requests are always kept |
-| Storage | Not free, but cents: a few MB of packages and host state, plus the ~190 KB saints snapshot |
+| Storage | Not free, but cents: a few MB of packages and host state, the ~190 KB saints snapshot, and about 4 MB of recordings (read rarely: Cloudflare keeps them) |
+| Cosmos DB free tier: 1000 RU/s and 25 GB, for the life of the account (one per subscription) | The account is capped at 1000 RU/s (`totalThroughputLimit`), so nothing billable can be created. One shared-throughput database; containers added later share it |
+| Azure AI Speech F0: 500,000 characters a month, about 20 requests a minute | Only changed prayers are recorded (fingerprints). The publisher paces itself and caps a run at 50,000 characters. F0 refuses rather than bills |
 | Azure SQL free offer: 100,000 vCore-seconds, 32 GB data, 32 GB backups | Visitors never query it; it wakes only for the weekly publish, a deploy that migrates, or an admin. Each wake costs at least 1,800 vCore-seconds (an hour at 0.5 vCore). At the allowance's end it pauses until next month rather than billing |
 
 **How much of the database's month is left:**

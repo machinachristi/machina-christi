@@ -204,6 +204,21 @@ var apiQueries = [
     displayName: 'Saints snapshot: times the API could not read it (empty is good)'
     query: 'AppTraces\n| where TimeGenerated > ago(30d) and Message startswith "saints snapshot unavailable"\n| summarize Times = count(), Last = max(TimeGenerated) by Message\n| order by Last desc'
   }
+  {
+    // Pray's prayers are read live from Cosmos DB; each read that actually
+    // reached it logs its cost in request units (the API keeps answers in
+    // memory for 5 minutes, and Cloudflare for 5 more).
+    name: 'prayers-reads'
+    displayName: 'Prayers: Cosmos DB reads and request units per day'
+    query: 'AppTraces\n| where TimeGenerated > ago(30d) and Message startswith "prayers read"\n| extend RU = todouble(extract(@"; ([0-9.]+) RU", 1, Message))\n| summarize Reads = countif(Message startswith "prayers read:"), RU = round(sum(RU), 1), FailedUsedLastCopy = countif(Message startswith "prayers read failed") by Day = bin(TimeGenerated, 1d)\n| order by Day desc'
+  }
+  {
+    // Calls Cloudflare could not answer from its cache. Recordings never
+    // change under the same name, so their count should stay near zero.
+    name: 'pray-origin-hits'
+    displayName: 'Pray API: calls that reached Azure, per day and endpoint'
+    query: 'AppRequests\n| where TimeGenerated > ago(30d) and Name in ("prayers", "prayer", "audio")\n| summarize Calls = count(), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1) by Day = bin(TimeGenerated, 1d), Name\n| order by Day desc, Name asc'
+  }
   allowanceQuery
 ]
 
