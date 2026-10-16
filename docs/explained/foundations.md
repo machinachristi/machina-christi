@@ -78,6 +78,39 @@ simpler than a database, but it can only hand back whole files, not answer
 questions.
 *Here:* the saints snapshot and the API's own packages.
 
+**Document database (NoSQL).** A database that stores each thing as one whole
+folder (a *document*, written in JSON) instead of cards spread across drawers
+that point at each other. Best when you always fetch the whole thing at once.
+*Here:* Cosmos DB holds the prayers; SQL holds the saints, whose facts point at
+each other.
+
+**Document.** One folder in a document database: everything about one thing,
+together. *Here:* one prayer: its Thai lines, pronunciation, English, source and
+recordings.
+
+**Container.** A shelf of documents of one kind inside a document database, like
+a drawer, but holding whole folders. *Here:* the `prayers` container.
+
+**Partition key.** The label that decides where each document is stored. Ask by
+that label and the database goes straight to the right place; ask any other
+way and it has to look around. Choose the label you'll search by most.
+*Here:* each prayer's own name (`/id`).
+
+**Point read.** Fetching one document by its name and partition key: straight to
+the shelf, nothing else read. The cheapest question there is.
+*Here:* one prayer costs 1 request unit.
+
+**Neural text-to-speech.** A computer voice trained on many hours of real
+speech, so it sounds natural, unlike the older robotic voices.
+*Here:* Niwat (Thai) and Andrew (English), from Azure AI Speech.
+
+**SSML.** A script for a computer voice: the words, plus instructions such as
+"pause 0.6 seconds" or "read 30% slower".
+
+**Bookmark (speech).** An invisible flag in an SSML script. The voice reports the
+exact moment it reaches each one. *Here:* one at the start of each line, which
+gives the timings the Pray highlight follows.
+
 ## Speed and cost
 
 **Snapshot (publishing).** Copying what you need from a slow or costly place
@@ -116,6 +149,31 @@ instead of serving a copy kept from before. Like reprinting a menu with a new
 date so nobody reads the old one pinned by the door.
 *Here:* when the season answer gained the day's saint, old copies kept by
 Cloudflare and browsers hid it until the question became `…&v=2`.
+
+**Request unit (RU).** Cosmos DB's measure of effort: reading one small
+document costs about 1, writing one about 5–10, a search across documents more.
+Like counting a delivery in parcels, not in hours. *Here:* writing all 10
+prayers cost 403.7 RU.
+
+**Provisioned throughput, and its cap.** Booking a fixed amount of effort per
+second in advance, like a phone plan's monthly minutes. A cap says "never book
+more than this". *Here:* 1,000 RU every second, free for life, capped at 1,000
+so nothing can cost money.
+
+**Rate limit.** A limit on how *fast* you may ask, not just how much: "no more
+than 20 questions a minute". Go faster and you're told to wait, or hung up on.
+*Here:* the free speech studio's limit tripped the recording robot once; it now
+paces itself (and Cloudflare rate-limits the API the same way, to protect it).
+
+**Byte ranges (206 Partial Content).** Asking for part of a file ("bytes 0 to
+1, please"), and getting just that piece back, marked 206. Media players use it
+to start quickly and to jump around; iPhones refuse to play audio from a server
+that can't do it. *Here:* the API's recording relay.
+
+**Content hash, and immutable caching.** A short fingerprint worked out from a
+file's contents: change anything and the fingerprint changes. Put it in the
+file's name and the file under that name can never change, so every cache may
+keep it forever ("immutable"). *Here:* `our-father/th-slow-5ea7f0c694.mp3`.
 
 ## Networks and security
 
@@ -165,6 +223,28 @@ power. The deploy robot installs the app's code, so it could make the app do
 anything anyway.
 *Here:* the deploy uses it to start the librarian right after a change.
 
+**Control plane and data plane.** Two different doors: one for managing a
+service (create it, delete it, change its settings) and one for using what's
+inside it (read or write the data). Holding a key to one doesn't open the
+other: the owner of a library building still needs a reader's card to take out a
+book. *Here:* you own the Cosmos DB account, but it refused to show you the
+prayers; only the robot and the API hold data badges.
+
+**Private container, and relaying.** Files no outsider may open directly; an
+app that holds a badge fetches them and passes them on, like a librarian
+fetching a book from the closed stacks. *Here:* the recordings, passed on by
+`/api/audio`.
+
+**SAS (shared access signature).** A ticket written into a link that lets
+whoever holds the link open one file for a while. Handy, but anyone who gets the
+link gets in, and a ticket signed with an account key works until it expires.
+*Here:* not used. Storage keys are switched off (so key-signed tickets can't
+even be made), and every machine uses its own managed identity instead.
+
+**Synthetic-voice disclosure.** Saying plainly when a voice is computer-made, so
+nobody mistakes it for a person. *Here:* a line under each prayer names the
+voices as synthetic.
+
 ## Making changes safely
 
 **Branch.** A photocopy of the whole project you can scribble on while the real
@@ -208,6 +288,11 @@ asking to merge.
 It lets a test try situations that are hard to cause on purpose.
 *Here:* the Pray tests use a pretend voice, because the test computer has no
 speakers; it can even skip announcing a line, to imitate an iPhone glitch.
+
+**Fake clock.** In a test, a stand-in for time itself that the test moves by
+hand ("now it's 4.2 seconds in"), so anything time-based can be checked at exact
+moments without waiting. *Here:* the Pray tests swap the audio player for one
+whose clock the test controls.
 
 **Blue-green deployment.** Replacing a live system by building the new one
 next to the old, switching visitors over, and only then removing the old one,
