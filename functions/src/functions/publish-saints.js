@@ -8,7 +8,10 @@ const { writeSnapshot } = require('../lib/snapshot-store');
 //
 // When it runs:
 //   - weekly, Sundays 04:00 UTC (the timer below);
-//   - on change: the deploy runs it by hand after it applies a migration.
+//   - on change: after it applies a migration, the deploy posts a message to
+//     the `saints-publish` storage queue, and the queue trigger below runs it.
+//     (A mailbox instead of the app's admin endpoint: the deploy needs no
+//     Function key, only the right to post to that one queue, AB#81.)
 // Each run wakes the database, which then stays up for an hour (the free
 // offer's fixed auto-pause delay): about 1,800 of the month's 100,000 free
 // vCore-seconds. Hence weekly, not daily.
@@ -68,6 +71,17 @@ async function publishSaints(_timer, context) {
 app.timer('publishSaints', {
   schedule: '0 0 4 * * 0', // sec min hour day month weekday: Sundays 04:00 UTC
   handler: publishSaints,
+});
+
+// The message's content doesn't matter: its arrival is the request. The queue
+// is read through the host's own storage connection (AzureWebJobsStorage, the
+// app's managed identity). If a run fails (say the database won't wake), the
+// message comes back and is tried again, up to five times, then set aside in
+// saints-publish-poison.
+app.storageQueue('publishSaintsOnRequest', {
+  queueName: 'saints-publish',
+  connection: 'AzureWebJobsStorage',
+  handler: (_message, context) => publishSaints(null, context),
 });
 
 module.exports = { publishSaints, QUERIES };

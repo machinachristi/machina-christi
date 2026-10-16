@@ -221,7 +221,16 @@ snapshot stays up.
 it out is only safe to someone who could already do all that, so it adds no
 power. The deploy robot installs the app's code, so it could make the app do
 anything anyway.
-*Here:* the deploy uses it to start the librarian right after a change.
+*Here:* the deploy used it to start the librarian right after a change, until
+October 2026: now it leaves a note in a queue instead (below), and the robot
+can't even read the key. Fewer keys in circulation is safer, even "harmless" ones.
+
+**Queue (message queue).** A mailbox between two programs: one drops a note in,
+the other picks it up when it's ready and does the job. The sender needs only
+the right to post notes, not the power to run anything; and if the job fails,
+the note goes back in the box to be tried again.
+*Here:* after a database change, the deploy posts to the `saints-publish` queue,
+and the API publishes the saints.
 
 **Control plane and data plane.** Two different doors: one for managing a
 service (create it, delete it, change its settings) and one for using what's

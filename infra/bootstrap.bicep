@@ -135,7 +135,7 @@ resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: guid(subscription().id, 'machina-deployer')
   properties: {
     roleName: 'Machina Deployer'
-    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, nor read their keys or grant Cosmos DB data roles (their admins, access and billing settings stay with people).'
+    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, nor read their keys or the Function app\'s keys, or grant Cosmos DB data roles (their admins, access and billing settings stay with people).'
     type: 'CustomRole'
     permissions: [
       {
@@ -175,6 +175,11 @@ resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
           'Microsoft.CognitiveServices/*/delete'
           'Microsoft.CognitiveServices/accounts/listKeys/action'
           'Microsoft.CognitiveServices/accounts/regenerateKey/action'
+          // Function app keys: nothing in CI needs them (the saints publish is
+          // asked for through a queue, AB#81), so CI can't read them at all
+          'Microsoft.Web/sites/host/listkeys/action'
+          'Microsoft.Web/sites/functions/listkeys/action'
+          'Microsoft.Web/sites/functions/listsecrets/action'
         ]
       }
     ]
@@ -205,6 +210,16 @@ module pray 'modules/pray.bicep' = {
     location: prayLocation
     deployPrincipalId: identities.outputs.deployPrincipalId
     tags: tags
+  }
+}
+
+// The saints publish mailbox (AB#81): the deploy posts a message, the API
+// publishes. CI's right to post is granted here, by a person.
+module publishQueue 'modules/publish-queue.bicep' = {
+  scope: platformRg
+  name: 'publish-queue'
+  params: {
+    deployPrincipalId: identities.outputs.deployPrincipalId
   }
 }
 
