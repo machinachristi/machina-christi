@@ -80,6 +80,7 @@ import { createFlags } from './flags.js';
 import { createFry } from './fry.js';
 import { createWatering } from './watering.js';
 import { createBlossom } from './blossom.js';
+import { createMurmuration } from './murmuration.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -344,6 +345,11 @@ export async function createGarden(scene, rng) {
   // v24 (Job 38:25): lightning kindled far off in the heaviest of a shower,
   // and the thunder a while after it. It reads only the sky's own rain.
   const lightning = createLightning(scene);
+  // v29 (Matthew 6:26; Genesis 1:20): the great flock keeping the garden's
+  // sky, wheeling as one body, that comes to wheel before him when he stands
+  // still to look. Its own seeded stream, drawn only here; it needs nothing
+  // built above it.
+  const murmuration = createMurmuration(scene);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -424,6 +430,7 @@ export async function createGarden(scene, rng) {
     fry.update(dt, playerPos);
     watering.update(dt, playerPos);
     blossom.update(dt, playerPos, hour.night);
+    murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz);
     return hour;
   }
 
@@ -508,7 +515,10 @@ export async function createGarden(scene, rng) {
     flags: flags.state,
     fry: fry.state,
     watering: watering.state,
-    tending: watering.caption,
+    // A word for the work just done has the line first; then the flock's
+    // own name, the moment it comes to him (v29).
+    tending: () => watering.caption() || murmuration.caption(),
+    murmuration: murmuration.state,
     blossom: blossom.state,
     song: blossom.song,
     alsoWalking: blossom.alsoWalking,
@@ -516,5 +526,6 @@ export async function createGarden(scene, rng) {
     get carrying() { return watering.carrying; },
     get reverence() { return reverence; },
     get wind() { return windNow; },
+    get rush() { return murmuration.rush; },
   };
 }

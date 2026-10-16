@@ -199,7 +199,18 @@ export function createAmbience() {
     const rustleBuf = noiseBuffer('rain');
     const rollBuf = noiseBuffer('deep');
 
-    refs = { windGain, windFilter, waterGain, rainGain, beeGain, springGain, rustleBuf, rollBuf };
+    // The rush of the great flock's wings (v29): a soft breathy band of
+    // noise, heard only as the flock wheels close.
+    const rushBP = ctx.createBiquadFilter();
+    rushBP.type = 'bandpass';
+    rushBP.frequency.value = 950;
+    rushBP.Q.value = 0.6;
+    const rushGain = ctx.createGain();
+    rushGain.gain.value = 0;
+    loopNoise(noiseBuffer('rain')).connect(rushBP);
+    rushBP.connect(rushGain).connect(master);
+
+    refs = { windGain, windFilter, waterGain, rainGain, beeGain, springGain, rushGain, rushBP, rustleBuf, rollBuf };
     master.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
 
@@ -520,7 +531,7 @@ export function createAmbience() {
     }
   }
 
-  function update(dt, skyNight, pos, rain = 0, wind = 0) {
+  function update(dt, skyNight, pos, rain = 0, wind = 0, rush = 0) {
     night = skyNight;
     if (!refs || !ctx || ctx.state !== 'running' || muted) return;
     acc += dt;
@@ -552,6 +563,8 @@ export function createAmbience() {
     // The patter follows the shower; the bees are heard near their beds of
     // blossom, by day and in dry air.
     refs.rainGain.gain.setTargetAtTime(0.034 * rain, tc, 0.6);
+    refs.rushGain.gain.setTargetAtTime(0.045 * rush * (1 - 0.6 * rain), tc, 0.35);
+    refs.rushBP.frequency.setTargetAtTime(800 + 450 * rush, tc, 0.35);
     let dBee = Infinity;
     for (const b of BEE_PATCHES) dBee = Math.min(dBee, Math.hypot(pos.x - b.x, pos.z - b.z));
     const beeNear = 1 - clamp((dBee - 1) / 8, 0, 1);

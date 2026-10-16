@@ -236,7 +236,7 @@ renderer.setAnimationLoop(() => {
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
   updateNamingCaption();
-  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind);
+  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush);
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
     ambience.chime();
@@ -509,6 +509,10 @@ window.__world = {
       // feet rather than his companion's, `ringing` while his stillness is
       // spreading them out round him, `notes` how many have been sung).
       blossom: garden.blossom(),
+      // v29: the great flock (Matthew 6:26) — `mode` dance|before|travelling|
+      // away|settling|roost|rising, `call` 0..1 how far it has come to wheel
+      // before the walker, `arrivals` each time it has, `near` its distance.
+      murmuration: garden.murmuration(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
