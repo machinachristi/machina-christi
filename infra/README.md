@@ -45,7 +45,7 @@ GitHub Actions signs in with OIDC (no stored secret) as one of two identities:
 
 | Identity | Who may use it | What it may do in `rg-machina-platform` |
 |---|---|---|
-| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, read those accounts' keys, or grant Cosmos DB data roles), plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
+| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, read those accounts' keys or the Function app's keys, or grant Cosmos DB data roles), plus Storage Queue Data Message Sender on the `saints-publish` queue only, plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
 | `id-machina-github-preview` | Pull request runs | **Reader** plus a custom **What-If Runner** role: it can preview changes and change nothing |
 
 Why it's built this way:
@@ -73,8 +73,8 @@ Runs when `infra/`, `functions/` or the workflow itself changes:
   (as the read-only identity). The preview is in the run's summary page.
 - **Merge to main:** the same tests, then apply `main.bicep`, apply any new
   database migrations, deploy the API with a build stamp, and wait until `/api/health` reports the new commit. If a
-  migration ran, it then republishes the saints snapshot and waits until
-  `/api/season` serves it. A manual re-run is available from the Actions tab (on
+  migration ran, it then asks for the saints snapshot to be republished (a message
+  on the `saints-publish` queue) and waits until `/api/season` serves it. A manual re-run is available from the Actions tab (on
   main), with a "Republish the saints snapshot" box.
 
 **Pray publishing (`.github/workflows/pray-publish.yml`)** runs when
@@ -159,10 +159,14 @@ Node.js, Azure Functions v4 programming model. Each file in
   Function app's identity (read-only) and writes the saints snapshot to
   `ordo-snapshot/saints.json` in the storage account. `/api/season` reads that
   blob, keeping it in memory for 5 minutes, never the database. If the database
-  can't be reached the run fails and the last snapshot stays. The deploy also
-  runs it after a migration, through the host's admin endpoint and the master key
-  (`POST /admin/functions/publishSaints`); that adds no permission, since the
-  deploy identity already deploys the app's code.
+  can't be reached the run fails and the last snapshot stays. After a migration, the deploy
+  asks for a run by posting a message to the `saints-publish` storage queue (in
+  `stmachina<suffix>`), and `publishSaintsOnRequest` (a queue trigger) runs it.
+  The deploy identity holds only **Storage Queue Data Message Sender** on that
+  queue (`modules/publish-queue.bicep`, by hand) and can't read the app's keys
+  (Machina Deployer denies `listkeys`), so no workflow uses a Function key. A
+  failed run is retried from the queue up to five times, then the message goes
+  to `saints-publish-poison`.
 - `GET /api/prayers` and `GET /api/prayers/{id}`: Pray's prayers, read live from
   Cosmos DB (see "Pray"). `GET /api/audio/{id}/{file}`: a recording, relayed
   from private storage, with byte ranges (206).

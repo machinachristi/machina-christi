@@ -189,12 +189,12 @@ var apiQueries = [
     query: 'AppRequests\n| where TimeGenerated > ago(30d) and Name == "season"\n| summarize OriginCalls = count(), Refused = countif(ResultCode startswith "4"), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1) by Day = bin(TimeGenerated, 1d)\n| order by Day desc'
   }
   {
-    // One row per run of the saints publish job (weekly timer, or the deploy
-    // after a migration). ConnectMs is how long the database took to answer:
+    // One row per run of the saints publish job (weekly timer, or a message on
+    // the saints-publish queue from the deploy after a migration). ConnectMs is how long the database took to answer:
     // about a minute means it was asleep and woke for this run.
     name: 'saints-publish-runs'
     displayName: 'Saints publish runs: result, database wake time, size'
-    query: 'AppRequests\n| where TimeGenerated > ago(90d) and Name == "publishSaints"\n| project TimeGenerated, OperationId, Success, TotalMs = round(DurationMs)\n| join kind=leftouter (AppTraces\n    | where Message startswith "published saints snapshot" or Message startswith "connect attempt"\n    | summarize Detail = take_anyif(Message, Message startswith "published"), WakeRetries = countif(Message startswith "connect attempt") by OperationId) on OperationId\n| extend ConnectMs = toint(extract(@"database connect (\\d+) ms", 1, Detail)), Feasts = toint(extract(@"(\\d+) feasts", 1, Detail)), Bytes = toint(extract(@"(\\d+) bytes", 1, Detail))\n| project TimeGenerated, Success, ConnectMs, WakeRetries, TotalMs, Feasts, Bytes\n| order by TimeGenerated desc'
+    query: 'AppRequests\n| where TimeGenerated > ago(90d) and Name in ("publishSaints", "publishSaintsOnRequest")\n| project TimeGenerated, OperationId, Success, TotalMs = round(DurationMs)\n| join kind=leftouter (AppTraces\n    | where Message startswith "published saints snapshot" or Message startswith "connect attempt"\n    | summarize Detail = take_anyif(Message, Message startswith "published"), WakeRetries = countif(Message startswith "connect attempt") by OperationId) on OperationId\n| extend ConnectMs = toint(extract(@"database connect (\\d+) ms", 1, Detail)), Feasts = toint(extract(@"(\\d+) feasts", 1, Detail)), Bytes = toint(extract(@"(\\d+) bytes", 1, Detail))\n| project TimeGenerated, Success, ConnectMs, WakeRetries, TotalMs, Feasts, Bytes\n| order by TimeGenerated desc'
   }
   {
     // The season API answers saints from the published snapshot; when it can't
