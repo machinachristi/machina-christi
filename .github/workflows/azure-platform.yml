@@ -141,7 +141,7 @@ jobs:
           echo "Function app: $app ($host)"
           echo "app=$app" >> "$GITHUB_OUTPUT"
           echo "host=$host" >> "$GITHUB_OUTPUT"
-          for k in sqlServerName sqlServerFqdn sqlDatabaseName storageAccountName; do
+          for k in sqlServerName sqlServerFqdn sqlDatabaseName storageAccountName searchEndpoint; do
             v=$(jq -r ".$k.value" <<<"$outputs")
             test -n "$v" && test "$v" != null
             echo "$k=$v" >> "$GITHUB_OUTPUT"

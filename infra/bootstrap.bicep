@@ -42,6 +42,9 @@ param sqlAdminGroupName string = 'sql-machina-admins'
 @description('Region for the Pray accounts (Cosmos DB, Speech, recordings storage): with the API and SQL.')
 param prayLocation string = 'centralus'
 
+@description('Region for the search service (Azure AI Search, free tier): with the API.')
+param searchLocation string = 'centralus'
+
 var tags = {
   project: 'machina-christi'
   managedBy: 'bicep'
@@ -129,13 +132,16 @@ resource whatIfRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
 // Likewise the Pray accounts (modules/pray.bicep): CI may not change or delete
 // Cosmos DB or Speech accounts, read their keys, or create Cosmos DB's own data
 // badges (sqlRoleAssignments are not Azure role assignments, so the ABAC rule
-// in ci-access.bicep wouldn't catch them). The first list is Contributor's own
-// exclusions, kept identical.
+// in ci-access.bicep wouldn't catch them). Search (modules/search.bicep) is
+// denied outright: '*' would otherwise let CI create a paid service, read or
+// regenerate its keys, switch keys back on, or add data sources and skillsets
+// that call paid models; CI gets the narrow Schema Writer role below instead.
+// The first list is Contributor's own exclusions, kept identical.
 resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: guid(subscription().id, 'machina-deployer')
   properties: {
     roleName: 'Machina Deployer'
-    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, nor read their keys or the Function app\'s keys, or grant Cosmos DB data roles (their admins, access and billing settings stay with people).'
+    description: 'Contributor for the Machina Christi platform, except that it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, nor read their keys or the Function app\'s keys, or grant Cosmos DB data roles, or do anything with Azure AI Search (their admins, access and billing settings stay with people).'
     type: 'CustomRole'
     permissions: [
       {
@@ -180,7 +186,41 @@ resource deployerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
           'Microsoft.Web/sites/host/listkeys/action'
           'Microsoft.Web/sites/functions/listkeys/action'
           'Microsoft.Web/sites/functions/listsecrets/action'
+          // Azure AI Search: everything (the service, its keys and settings,
+          // its objects); the index layout comes through searchSchemaRole
+          'Microsoft.Search/*'
         ]
+      }
+    ]
+    assignableScopes: [
+      platformRg.id
+    ]
+  }
+}
+
+// What CI may do on the search service (granted on that service only, in
+// modules/search.bicep): set up indexes and synonym maps from git. Not the
+// service itself, its keys or its settings, nor the cards in the index (the
+// API fills it). Search Service Contributor would be the built-in choice, but
+// it can also read keys and switch them back on.
+resource searchSchemaRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(subscription().id, 'machina-search-schema-writer')
+  properties: {
+    roleName: 'Machina Search Schema Writer'
+    description: 'Create, update and delete the indexes and synonym maps of the Machina Christi search service. Not the service, its keys or settings, nor the documents in it.'
+    type: 'CustomRole'
+    permissions: [
+      {
+        actions: [
+          'Microsoft.Search/searchServices/read'
+          'Microsoft.Search/searchServices/indexes/read'
+          'Microsoft.Search/searchServices/indexes/write'
+          'Microsoft.Search/searchServices/indexes/delete'
+          'Microsoft.Search/searchServices/synonymMaps/read'
+          'Microsoft.Search/searchServices/synonymMaps/write'
+          'Microsoft.Search/searchServices/synonymMaps/delete'
+        ]
+        notActions: []
       }
     ]
     assignableScopes: [
@@ -213,8 +253,22 @@ module pray 'modules/pray.bicep' = {
   }
 }
 
-// The saints publish mailbox (AB#81): the deploy posts a message, the API
-// publishes. CI's right to post is granted here, by a person.
+// Search (Phase 5): the free search service with keys off; the API fills and
+// searches it, CI only sets up its layout. Needs id-machina-func, like pray.
+module search 'modules/search.bicep' = {
+  scope: platformRg
+  name: 'search'
+  params: {
+    location: searchLocation
+    deployPrincipalId: identities.outputs.deployPrincipalId
+    schemaWriterRoleId: searchSchemaRole.name
+    tags: tags
+  }
+}
+
+// The mailboxes the deploy posts to (AB#81, Phase 5): "publish the saints"
+// and "rebuild the search index". The API does the work under its own
+// identity. CI's right to post is granted here, by a person.
 module publishQueue 'modules/publish-queue.bicep' = {
   scope: platformRg
   name: 'publish-queue'
@@ -256,3 +310,4 @@ output sqlDatabaseName string = sql.outputs.databaseName
 output cosmosAccountName string = pray.outputs.cosmosAccountName
 output speechAccountName string = pray.outputs.speechAccountName
 output mediaAccountName string = pray.outputs.mediaAccountName
+output searchServiceName string = search.outputs.searchServiceName

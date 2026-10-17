@@ -24,6 +24,7 @@ and its "Smart Detection" action group to every new Application Insights.)
 | Cosmos DB | `cosmos-machina-<suffix>` / database `machina` / container `prayers` (Central US; lifetime free tier, capped at 1000 RU/s) | Pray's prayers, one document each, with their recordings' names and line timings. Entra only; keys off (see "Pray") |
 | Speech | `speech-machina-<suffix>` (Central US; F0, free) | Records the prayers (Thai and English, normal and slow). Entra only; keys off |
 | Storage (recordings) | `stmachinamedia<suffix>` / container `pray-audio` (Central US) | The recordings, private: visitors hear them through `/api/audio`. Keys off |
+| Azure AI Search | `srch-machina-<suffix>` (Central US; free tier) | The site's search index: saints, prayers and pages. The API fills it and answers `/api/search`; visitors never reach it directly. Entra only; keys off (see "Search") |
 
 `<suffix>` is a stable 6-character hash of the resource group ID, needed because
 storage and Function app names must be unique across all of Azure.
@@ -33,9 +34,10 @@ storage and Function app names must be unique across all of Azure.
 - **`bootstrap.bicep`** (subscription scope): both resource groups, the budget,
   CI's identities with their permissions, the SQL server and database
   (`modules/sql.bicep`, because a server's settings include who administers it),
-  and Pray's Cosmos DB, Speech and recordings storage with every data role
+  Pray's Cosmos DB, Speech and recordings storage with every data role
   (`modules/pray.bicep`, for the same reason: their settings decide who gets in
-  and what they cost).
+  and what they cost), the search service with its roles (`modules/search.bicep`,
+  likewise), and the queues CI posts to (`modules/publish-queue.bicep`).
   A person deploys it by hand, once, and again only when one of those changes.
   Its budget-alert address is passed at deploy time and never committed.
 - **`main.bicep`** (resource group scope): the platform. GitHub Actions applies it
@@ -45,7 +47,7 @@ GitHub Actions signs in with OIDC (no stored secret) as one of two identities:
 
 | Identity | Who may use it | What it may do in `rg-machina-platform` |
 |---|---|---|
-| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, read those accounts' keys or the Function app's keys, or grant Cosmos DB data roles), plus Storage Queue Data Message Sender on the `saints-publish` queue only, plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
+| `id-machina-github-deploy` | Runs on `main` only | **Machina Deployer** (Contributor, except it may not create, change or delete SQL servers or databases, or Cosmos DB and Speech accounts, read those accounts' keys or the Function app's keys, grant Cosmos DB data roles, or do anything with Azure AI Search), plus **Machina Search Schema Writer** on the search service only (indexes and synonym maps: the index's layout, not its contents, keys or settings), plus Storage Queue Data Message Sender on the `saints-publish` and `search-reindex` queues only, plus **Role Based Access Control Administrator** with a condition: it may grant or remove only the roles in `platform-roles.json`, and only for service principals (managed identities included). Inside the database: tables and data only (`db/bootstrap.sql`) |
 | `id-machina-github-preview` | Pull request runs | **Reader** plus a custom **What-If Runner** role: it can preview changes and change nothing |
 
 Why it's built this way:
@@ -298,6 +300,64 @@ plain-words story is in `docs/explained/phase-4-pray-cosmos-audio.md`.
 - The subscription needed the `Microsoft.DocumentDB` and
   `Microsoft.CognitiveServices` providers registered (done by hand once).
 
+## Search (Azure AI Search)
+
+The site's search (Phase 5, AB#42) is one index of small documents ("cards"):
+one per saint's feast, prayer and site page. The service is created by people
+(`bootstrap.bicep` → `modules/search.bicep`); CI only sets up the index's
+layout. The plain-words story will be in `docs/explained/phase-5-search.md`.
+
+- **Free tier, so our own indexer.** Azure's built-in indexers fetch data with
+  the search service's own managed identity, which needs the Basic tier or
+  higher (about $75 a month). On Free they would need keys, and we allow none.
+  So the API does the indexer's job itself: it reads the saints snapshot and
+  the prayers with the badges it already has and uploads the cards (the
+  *push* model). It runs when the deploy or the prayers publisher posts to the
+  `search-reindex` queue, and weekly.
+- **Who may do what** (no keys: `disableLocalAuth: true`, so a request with an
+  API key is refused):
+
+  | Identity | Index layout (fields, analyzers, synonyms) | Cards (load, search) | The service (keys, settings) |
+  |---|---|---|---|
+  | `id-machina-github-deploy` (CI, main) | Machina Search Schema Writer | — | — (Machina Deployer denies `Microsoft.Search/*`) |
+  | `id-machina-func` (API) | — | Search Index Data Contributor | — |
+  | people (owners) | Owner (its `*` covers index layouts) | none | Owner |
+
+  Search Service Contributor, the built-in role for index layouts, wasn't used
+  because it can also read the keys and switch them back on. To look at the
+  cards yourself, give your identity Search Index Data Reader on the service
+  for a moment and delete it afterwards.
+- **Proven first** (throwaway `rg-machina-searchlab`, 2026-10-17, deleted
+  afterwards; 162 feasts and 10 prayers, cut two ways):
+  - Free can be created in Central US. With keys off, a request with the admin
+    key gets 401. Azure also switches the semantic ranker's free plan on by
+    default; `semanticSearch: 'disabled'` turns it off.
+  - Owner, with no search roles, *can* create and delete indexes and use the
+    Analyze API (the docs say otherwise: the index rights are plain actions,
+    which `*` covers), but uploading or searching cards gets 403. So the narrow
+    Schema Writer role is enough for CI, and Machina Deployer must deny
+    `Microsoft.Search/*`.
+  - Changing an existing field's analyzer is refused (400 "Existing field
+    cannot be changed"), so incompatible changes get a new index name.
+  - Thai: the standard analyzer keeps a whole line as one word. `th.microsoft`
+    beats `th.lucene`: both cut มารีย์ (Mary, a loanword) into pieces, but
+    `th.lucene` also drops small words and found พระแม่มารีย์ nowhere, while
+    `th.microsoft` found it. Quoting a Thai word (a phrase search) makes it
+    exact. A half-typed Thai word only matches within one piece ("วันท*"
+    works, "พระบ*" doesn't).
+  - English: `standardasciifolding.lucene` for names (Thérèse = Therese, and
+    "agn*" finds Agnes as you type), `en.microsoft` for prose (it keeps both
+    "lawyers" and "lawyer"; `en.lucene` cut "praying" to "prai").
+  - Queries: "every word must match" plus dropping small words; when nothing
+    matches, retry within one letter (`fransis~1` → Francis of Assisi), then
+    "any word". Multi-word synonyms only work in quotes, so alternate names
+    (Ave Maria, Pater Noster) are stored on the prayers instead.
+  - Size: 172 cards = 0.5 MB of the 50 MB.
+- **Network:** a public endpoint with Entra-only sign-in. Free has no private
+  endpoints or IP rules, and the cards are public site content.
+- The subscription needed the `Microsoft.Search` provider registered (by hand,
+  once).
+
 ## Reading the telemetry (KQL)
 
 Portal → `log-machina` (API) or `log-machina-web` (site) → **Logs** → **Queries** →
@@ -329,6 +389,7 @@ The starter queries are defined in `main.bicep`:
 | Storage | Not free, but cents: a few MB of packages and host state, the ~190 KB saints snapshot, and about 4 MB of recordings (read rarely: Cloudflare keeps them) |
 | Cosmos DB free tier: 1000 RU/s and 25 GB, for the life of the account (one per subscription) | The account is capped at 1000 RU/s (`totalThroughputLimit`), so nothing billable can be created. One shared-throughput database; containers added later share it |
 | Azure AI Speech F0: 500,000 characters a month, about 20 requests a minute | Only changed prayers are recorded (fingerprints). The publisher paces itself and caps a run at 50,000 characters. F0 refuses rather than bills |
+| Azure AI Search free tier: 50 MB, 3 indexes, shared hardware, no SLA (one per subscription) | Free has no paid options to switch on, and CI can't change the service at all. The index is a few hundred small documents (well under 1 MB). Azure may delete a free service after a long time unused: the weekly reindex keeps it in use, and the search page falls back to its own simple search if it's ever gone |
 | Azure SQL free offer: 100,000 vCore-seconds, 32 GB data, 32 GB backups | Visitors never query it; it wakes only for the weekly publish, a deploy that migrates, or an admin. Each wake costs at least 1,800 vCore-seconds (an hour at 0.5 vCore). At the allowance's end it pauses until next month rather than billing |
 
 **How much of the database's month is left:**

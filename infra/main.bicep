@@ -443,6 +443,12 @@ var apiAppSettings = [
     name: 'PRAY_AUDIO_URL'
     value: '${media.properties.primaryEndpoints.blob}${audioContainerName}'
   }
+  // Search: the API fills the site index and answers /api/search as this
+  // identity (modules/search.bicep). An address, not a secret.
+  {
+    name: 'SEARCH_ENDPOINT'
+    value: searchEndpoint
+  }
 ]
 
 var apiFunctionAppConfig = {
@@ -653,6 +659,15 @@ resource media 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: 'stmachinamedia${suffix}'
 }
 
+// ── Search: Azure AI Search (Phase 5) ───────────────────────────────────────
+//
+// Created by people (bootstrap.bicep → modules/search.bicep). Written as a
+// plain address rather than looked up: CI's role can't read Microsoft.Search
+// at all, and this deploy keeps working even if Azure ever removes the free
+// service (the search page then falls back to its own simple search).
+
+var searchEndpoint = 'https://srch-machina-${suffix}.search.windows.net'
+
 output functionAppName string = funcCus.name
 output functionAppHostName string = funcCus.properties.defaultHostName
 output apiHostname string = apiHostBindingCus.name
@@ -673,3 +688,4 @@ output prayersContainerName string = prayersContainerName
 output speechEndpoint string = speech.properties.endpoint
 output speechResourceId string = speech.id
 output audioContainerUrl string = '${media.properties.primaryEndpoints.blob}${audioContainerName}'
+output searchEndpoint string = searchEndpoint
