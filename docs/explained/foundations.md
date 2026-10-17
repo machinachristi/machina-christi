@@ -207,6 +207,20 @@ mistake or a break-in can only do small damage.
 *Here:* you own the database server; the deploy robot may change tables and
 data but not the server or its owner; the API may only read.
 
+**Custom role.** A role written to fit one job exactly, when the ready-made
+ones give too much, like a key cut for one door instead of a master key.
+*Here:* "Machina Search Schema Writer" may change the search index's layout and
+nothing else; the ready-made role could also read the keys and switch them back
+on.
+
+**Injection and XSS.** Tricking a program by slipping instructions in where it
+expects plain words. In search, typing `-mary` must not mean "NOT mary". On a web
+page, a result containing `<img onerror=…>` must not run as code (that's
+*cross-site scripting*, XSS). The cure is the same: treat everything from
+outside as plain text, never as instructions.
+*Here:* only letters and digits reach the search engine, and results are drawn
+as text.
+
 **Default deny.** Start with every door shut and open only the ones you need,
 rather than starting open and trying to remember what to shut.
 
@@ -253,6 +267,83 @@ even be made), and every machine uses its own managed identity instead.
 **Synthetic-voice disclosure.** Saying plainly when a voice is computer-made, so
 nobody mistakes it for a person. *Here:* a line under each prayer names the
 voices as synthetic.
+
+## Finding things
+
+**Search index (inverted index).** A card catalogue made ahead of time: instead
+of reading every book each time someone asks, you keep, for every word, a list
+of the books it appears in, like the index at the back of a book. Asking "which
+pages mention Agnes?" is then instant.
+*Here:* Azure AI Search keeps one index, `site-v1`, of 184 cards: one per
+saint's feast, prayer and page.
+
+**Field.** One labelled box on a search card: the title, the Thai title, the
+lines of the prayer, the saint's patronages. Each box can be searched in its own
+way and count for more or less.
+
+**Analyzer (word-cutter), token.** Before a card is filed, its text is cut into
+words, made lowercase and tidied; each piece is a *token*. The same cutter runs
+on what you type, so both sides match. Different languages need different
+cutters.
+*Here:* Thai, English, and names each get their own.
+
+**Word breaking.** Finding where words end when nothing marks it. Thai is
+written without spaces between words, so "ข้าแต่พระบิดาของข้าพเจ้า" has to be cut
+by a cutter that knows Thai (ข้า | แต่ | พระ | บิดา | ของ | ข้าพเจ้า). Without one,
+the whole line is a single "word" and nothing inside it can be found.
+
+**Stemming vs lemmatization.** Two ways to match a word's family. *Stemming*
+chops endings by rule (praying → "prai"); *lemmatization* looks the word up in a
+dictionary (praying → pray, women → woman). The second is gentler.
+*Here:* prose uses Microsoft's English lemmatizer, so "lawyers" finds "lawyer".
+
+**Accent folding (ASCII folding).** Treating é like e, so "Therese" finds
+"Thérèse" and "phra" finds "phrá" in the pronunciation guide.
+
+**Prefix search.** Matching the start of a word, so results can appear as you
+type: "agn" finds Agnes. Written `agn*`.
+
+**Stop words.** Little words such as "of", "the" and "and" that some cutters
+throw away because they're everywhere. Mixing fields that keep them with fields
+that drop them can make a search fail, so our search drops them from the
+question.
+
+**Phrase search.** Asking for words in this exact order, side by side, in
+quotes: `"พระแม่มารีย์"` (Holy Mother Mary) finds only the prayer that has that
+exact run.
+
+**Relevance (BM25).** How a search engine decides which match comes first. A word
+that is rare across all cards, appearing in a short field, counts for more than
+a common word in a long bio. BM25 is the standard recipe for that score.
+
+**Scoring profile.** Our own adjustment on top: a match in a title counts five
+times a match in a bio. *Here:* `titles-first`.
+
+**Synonym map.** A list of words to treat as the same: "st" and "saint", "ghost"
+and "spirit". Longer names for a thing ("Ave Maria" for the Hail Mary) work
+better stored on the card itself, as its other names (`aka`).
+
+**Fuzzy search.** Forgiving a typo by allowing a word to be a letter or two off
+(the *edit distance*): `fransis~1` finds Francis.
+*Here:* tried only when the strict search finds nothing.
+
+**Indexer, and push vs pull.** An *indexer* is a robot that reads your data and
+fills the index. *Pull*: the search service fetches the data itself (Azure's
+built-in indexers). *Push*: your own code reads the data and hands the cards
+over.
+*Here:* push. On the free plan Azure's indexers would need keys, and we use
+none, so our API, which already has the badges, does the indexer's job.
+
+**Highlighting.** Showing which words matched, in bold or colour. The search
+service marks them; the page draws the marks.
+
+**Versioned rebuild.** When a change can't be made to something in place, build
+the new one next to the old one under a new name (`site-v2` beside `site-v1`),
+switch over, then remove the old: blue-green, for an index.
+
+**Debounce.** Waiting for a pause before acting, like a lift that waits for the
+last person before closing its doors. The search page asks only after you stop
+typing for 0.3 seconds, rather than once for every letter.
 
 ## Making changes safely
 
@@ -346,3 +437,21 @@ finished dish from the kitchen to the table.
 how fast, anything that failed — like a shop's till roll. You read it to learn
 how things are really going rather than guessing.
 *Here:* Azure Application Insights, read with saved queries.
+
+**Spike (a throwaway experiment).** A quick, disposable trial of the risky part
+before building the real thing, like a test patch of paint before doing the
+whole wall. Whatever it teaches goes into the plan; the trial is thrown away.
+*Here:* the network test (Phase 2), the sound test (Phase 4) and the search lab
+(Phase 5), which caught that a broad role could change search indexes even
+though the documentation said it couldn't.
+
+**Verification (check the result, not the report).** "Succeeded" means the
+steps ran, not that the outcome is right. After a change, look at the thing
+itself: is the role really there, does the live search really find Agnes?
+
+**Flaky test.** A test that sometimes fails without anything being wrong, often
+because it checks something timed on a slow, busy machine. Run once more to
+tell a flake from a real fault; then fix the test, because a test that cries
+wolf stops being believed.
+*Here:* one of Eden's water checks waits on the garden's own clock, which slows
+down on GitHub's small test machines.

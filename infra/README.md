@@ -345,6 +345,29 @@ layout. The plain-words story will be in `docs/explained/phase-5-search.md`.
   builds them with `textContent`, so no HTML crosses the API.
 - **Saved queries:** `search-requests` (calls, failures, p95, empty answers per
   day; never the words) and `search-reindex-runs`.
+- **To look at the cards yourself:** give your identity Search Index Data Reader
+  on the service for a moment, query, then remove it:
+
+  ```bash
+  az role assignment create --assignee-object-id $(az ad signed-in-user show --query id -o tsv) \
+    --assignee-principal-type User --role "Search Index Data Reader" \
+    --scope $(az search service show -n srch-machina-<suffix> -g rg-machina-platform --query id -o tsv)
+  ```
+
+  (Owner alone can see the layout but not the cards.)
+- **If Azure removes the free service** (it may, after a long time unused; the
+  weekly rebuild and visitors' searches keep it in use):
+  1. re-run `bootstrap.bicep` (it recreates the service and its two roles);
+  2. run the Azure Platform workflow by hand, which applies the layout and
+     rebuilds the cards;
+  3. `az functionapp restart -g rg-machina-platform -n func-machina-cus-<suffix>`,
+     so the API asks for a fresh token.
+
+  Meanwhile `/api/search` answers 503 and the search page uses its own simple
+  search.
+- **Right after a deploy** the API restarts while CI's temporary access rules
+  change, so a request in that minute can wait (seen once: over 20 s, never
+  reaching the function). It passes by itself.
 - **Who may do what** (no keys: `disableLocalAuth: true`, so a request with an
   API key is refused):
 
