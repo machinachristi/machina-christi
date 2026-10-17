@@ -11,6 +11,7 @@ afterthought: every phase of work adds to them.
   - [Phase 1 — the website that knows what day it is in the Church](phase-1-season-api.md)
   - [Phase 2 — the saints get a home of their own](phase-2-saints-database.md)
   - [Phase 4 — the prayers get a library and a voice](phase-4-pray-cosmos-audio.md)
+  - [Phase 5 — the site learns to find things](phase-5-search.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.
