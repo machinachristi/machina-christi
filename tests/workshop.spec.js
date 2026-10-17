@@ -6,7 +6,85 @@
 // what is chosen stays clear of the card, a tier's card fits a phone without
 // scrolling) and the page (readable, one frame loop, safe fallbacks).
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 const glass = require('../workshop/glass.json');
+const swaConfig = require('../staticwebapp.config.json');
+
+// ── Does the map match what's built? ─────────────────────────────────────────
+//
+// glass.json is written by hand, and it once fell behind: Azure SQL, Cosmos
+// DB and AI Speech still said "planned" weeks after Phases 2 and 4 put them
+// to work. So each pane that stands for an Azure service is checked against
+// the Bicep files in infra/: "live" exactly when infra/ creates that kind of
+// resource. Every other pane must say here why it isn't checked, so a new
+// pane can't slip past unclassified.
+
+// Each resource block infra/ declares, comments removed. A block that only
+// refers to a resource made elsewhere (`existing`) doesn't count: that one
+// is counted where it's made.
+function declaredResources() {
+  const files = [];
+  const walk = dir => {
+    for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, f.name);
+      if (f.isDirectory()) walk(p);
+      else if (f.name.endsWith('.bicep')) files.push(p);
+    }
+  };
+  walk(path.join(__dirname, '..', 'infra'));
+  const blocks = [];
+  for (const file of files) {
+    const text = fs.readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|\s)\/\/.*$/gm, '$1'); // `//` comments, not the `//` in 'https://…'
+    for (const block of text.split(/^(?=resource\s)/m)) {
+      const m = /^resource\s+\w+\s+'([^'@]+)@[^']+'\s*(existing)?/.exec(block);
+      if (m && !m[2]) blocks.push({ type: m[1], kind: /^\s*kind:\s*'([^']+)'/m.exec(block)?.[1], file: path.relative(path.join(__dirname, '..'), file) });
+    }
+  }
+  return blocks;
+}
+
+// Panes that stand for something infra/ creates: the resource type (and, for
+// Azure AI services, which kind of account) whose presence means "live".
+const BUILT_IN_INFRA = {
+  functions: { types: ['Microsoft.Web/sites'] },
+  identity: { types: ['Microsoft.ManagedIdentity/userAssignedIdentities'] },
+  blob: { types: ['Microsoft.Storage/storageAccounts'] },
+  sql: { types: ['Microsoft.Sql/servers'] },
+  cosmos: { types: ['Microsoft.DocumentDB/databaseAccounts'] },
+  search: { types: ['Microsoft.Search/searchServices'] },
+  aispeech: { types: ['Microsoft.CognitiveServices/accounts'], kind: 'SpeechServices' },
+  safety: { types: ['Microsoft.CognitiveServices/accounts'], kind: 'ContentSafety' },
+  signalr: { types: ['Microsoft.SignalRService/signalR', 'Microsoft.SignalRService/webPubSub'] },
+  appi: { types: ['Microsoft.Insights/components'] },
+  logs: { types: ['Microsoft.OperationalInsights/workspaces'] },
+  budget: { types: ['Microsoft.Consumption/budgets'] },
+};
+
+// Azure-backed, but switched on somewhere other than infra/.
+const BUILT_ELSEWHERE = {
+  // Phase 3's admin sign-in is the site's own login, set in its config.
+  entra: { where: 'staticwebapp.config.json (auth.identityProviders.azureActiveDirectory)', built: () => Boolean(swaConfig.auth?.identityProviders?.azureActiveDirectory) },
+};
+
+// Not checked, and why.
+const NOT_CHECKED = {
+  threejs: 'a library that runs in the browser',
+  canvas: 'part of the browser',
+  webaudio: 'part of the browser',
+  speech: "the device's own voices",
+  cloudflare: "set up in Cloudflare's dashboard, not Azure",
+  headers: 'staticwebapp.config.json, guarded by security-and-telemetry.spec.js',
+  swa: 'created once by hand in Azure; the site deploys through its own workflow, not infra/',
+  github: 'not Azure',
+  actions: 'not Azure',
+  bicep: 'the language infra/ is written in',
+  playwright: 'these tests',
+  devops: 'Azure DevOps boards: planning, not something the site runs on',
+  claude: 'not Azure',
+};
 
 function watchErrors(page) {
   const errors = [];
@@ -40,6 +118,39 @@ test.describe('workshop data', () => {
       expect(p.what && p.here, `${p.id}: needs what and here`).toBeTruthy();
       for (const t of p.touches || []) expect(ids.has(t), `${p.id} touches unknown ${t}`).toBe(true);
     }
+  });
+
+  test('every pane is either checked against what is built, or says why not', () => {
+    const classified = { ...BUILT_IN_INFRA, ...BUILT_ELSEWHERE, ...NOT_CHECKED };
+    const ids = glass.panes.map(p => p.id);
+    expect(ids.filter(id => !(id in classified)), 'new pane: add it to BUILT_IN_INFRA, BUILT_ELSEWHERE or NOT_CHECKED').toEqual([]);
+    expect(Object.keys(classified).filter(id => !ids.includes(id)), 'listed here but not in glass.json').toEqual([]);
+    for (const list of [BUILT_IN_INFRA, BUILT_ELSEWHERE, NOT_CHECKED]) {
+      for (const id of Object.keys(list)) {
+        expect([BUILT_IN_INFRA, BUILT_ELSEWHERE, NOT_CHECKED].filter(l => id in l).length, `${id} is in more than one list`).toBe(1);
+      }
+    }
+  });
+
+  test('an Azure pane says "live" exactly when what it stands for is built', () => {
+    const declared = declaredResources();
+    expect(declared.length, 'no resources found in infra/: has the folder moved?').toBeGreaterThan(10);
+    const wrong = [];
+    for (const p of glass.panes) {
+      let built, what;
+      if (BUILT_IN_INFRA[p.id]) {
+        const { types, kind } = BUILT_IN_INFRA[p.id];
+        const found = declared.filter(r => types.includes(r.type) && (!kind || r.kind === kind));
+        built = found.length > 0;
+        what = `${types.join(' or ')}${kind ? ` (kind ${kind})` : ''}: ${built ? `declared in ${[...new Set(found.map(r => r.file))].join(', ')}` : 'not declared in infra/'}`;
+      } else if (BUILT_ELSEWHERE[p.id]) {
+        built = BUILT_ELSEWHERE[p.id].built();
+        what = `${BUILT_ELSEWHERE[p.id].where}: ${built ? 'set' : 'not set'}`;
+      } else continue;
+      const want = built ? 'live' : 'planned';
+      if (p.status !== want) wrong.push(`${p.id} says "${p.status}" but ${what}. Set "status": "${want}" in workshop/glass.json and rewrite its "here" text`);
+    }
+    expect(wrong).toEqual([]);
   });
 
   test('every tier has a story for its card', () => {
