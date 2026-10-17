@@ -11,7 +11,7 @@
 // legs and lies glowing behind him where he has walked, fading slowly, so he
 // can turn and see his way through the water written in light.
 //
-// One draw call. Every glint is an instance of one small square, and whether
+// One draw call. Every glint is one point sprite (a small square), and whether
 // it flashes is worked out on the graphics chip: each glint's ripple tilts a
 // little this way and that, and only when that ripple would throw the sun
 // (or the moon) straight into the watcher's eye does it shine. The frame loop
@@ -24,7 +24,7 @@ import * as THREE from 'three';
 import { heightAt, riverCourse, riverEdgeDist } from './terrain.js';
 import { clamp, damp, mulberry32, smoothstep } from '../util.js';
 
-const GLINTS = 2600;
+const GLINTS = 1500;
 const X_SPAN = [-58, 58];      // the reach of river inside the garden's sight
 const TRAIL = 14;              // places he has waded, remembered at once
 const TRAIL_EVERY = 0.3;       // seconds between them while he wades
@@ -38,8 +38,8 @@ const CAPTION = { name: 'Mayim chayyim', label: 'living water' };
 // lifted a little so the faceted water never hides them.
 const VERTEX = /* glsl */`
   #define TRAIL ${TRAIL}
-  attribute vec2 aCorner;
   attribute vec4 aGlint;          // x, z, phase, size
+  uniform float uHalfH;           // half the drawing buffer's height, in pixels
   uniform float uTime;
   uniform vec3 uSun;
   uniform float uSunK;
@@ -48,10 +48,10 @@ const VERTEX = /* glsl */`
   uniform float uGlow;
   uniform vec3 uWalker;           // x, z, how much he stirs the water
   uniform vec3 uTrail[TRAIL];     // x, z, how much light is left there
+  uniform float uStirred;         // 1 while any of that is still lit, else 0
   uniform vec3 uSunCol;
   uniform vec3 uMoonCol;
   uniform vec3 uGlowCol;
-  varying vec2 vUv;
   varying vec3 vCol;
   varying float vStar;
 
@@ -70,13 +70,27 @@ const VERTEX = /* glsl */`
     // How near he is, and the light left where he has waded.
     vec2 dw = xz - uWalker.xy;
     float nearW = exp(-dot(dw, dw) / 2.2) * uWalker.z;
+    // Only worked out while he is, or lately was, in the water: on a
+    // software renderer this loop is most of the shader's cost.
     float trail = 0.0;
-    for (int i = 0; i < TRAIL; i++) {
-      vec2 d = xz - uTrail[i].xy;
-      trail += uTrail[i].z * exp(-dot(d, d) / 1.3);
+    if (uStirred > 0.5) {
+      for (int i = 0; i < TRAIL; i++) {
+        vec2 d = xz - uTrail[i].xy;
+        trail += uTrail[i].z * exp(-dot(d, d) / 1.3);
+      }
     }
 
     vec3 P = vec3(xz.x, surf(xz, T) + 0.1, xz.y);
+    // Off screen, or past the fog: nothing to work out at all (most glints,
+    // most of the time — and on a software renderer every one costs).
+    vec4 mv = viewMatrix * vec4(P, 1.0);
+    vec4 clip = projectionMatrix * mv;
+    if (clip.w < 0.1 || abs(clip.x) > clip.w * 1.1 || abs(clip.y) > clip.w * 1.1 || -mv.z > 112.0) {
+      vCol = vec3(0.0); vStar = 0.0;
+      gl_PointSize = 0.0;
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+      return;
+    }
 
     // Each glint's own ripple, tilting this way and that; the water round
     // his legs is stirred harder, so it flashes more.
@@ -104,24 +118,23 @@ const VERTEX = /* glsl */`
     vCol = (uSunCol * sun + uMoonCol * moon) / max(sun + moon, 1e-4) * spark + uGlowCol * glow;
     vStar = spark / (spark + glow + 1e-4);
 
-    // A square turned to face the watcher, sized by how brightly it shines;
+    // A point sprite (a square that always faces the watcher, and only one
+    // vertex to work out rather than four), sized by how brightly it shines;
     // dark glints shrink to nothing and cost no fill. Far ones are kept a
     // touch larger so they never fall between the pixels.
     float size = aGlint.w * max(0.06 + 0.3 * min(spark, 1.5), 0.06 + 0.08 * min(glow, 1.0))
       * (1.0 + dist * 0.018);
     if (spark + glow < 0.015) size = 0.0;
-    vUv = aCorner;
-    vec4 mv = viewMatrix * vec4(P, 1.0);
-    mv.xy += aCorner * size;
-    gl_Position = projectionMatrix * mv;
+    gl_Position = clip;
+    gl_PointSize = 2.0 * size * projectionMatrix[1][1] * uHalfH / max(-mv.z, 0.1);
   }
 `;
 
 const FRAGMENT = /* glsl */`
-  varying vec2 vUv;
   varying vec3 vCol;
   varying float vStar;
   void main() {
+    vec2 vUv = gl_PointCoord * 2.0 - 1.0;
     float r2 = dot(vUv, vUv);
     float edge = 1.0 - smoothstep(0.6, 1.0, max(abs(vUv.x), abs(vUv.y)));
     // A four-pointed star for a glint, a soft round bead for the glow.
@@ -149,7 +162,7 @@ export function createLiving(scene) {
     const head = Math.min(3, Math.floor(rng() * 4));
     const f = (rng() * 2 - 1) * 0.92;
     const ph = rng();
-    const size = 0.75 + rng() * 0.5;
+    const size = 0.9 + rng() * 0.6;
     const c = riverCourse(x);
     const z = c.centers[head] + f * c.halfWidth;
     if (riverEdgeDist(x, z) > 0.01 || Math.hypot(x, z) > 62) continue;
@@ -157,21 +170,21 @@ export function createLiving(scene) {
   }
   const count = glints.length / 4;
 
-  const geo = new THREE.InstancedBufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(12), 3));
-  geo.setAttribute('aCorner', new THREE.Float32BufferAttribute([-1, -1, 1, -1, 1, 1, -1, 1], 2));
-  geo.setIndex([0, 1, 2, 0, 2, 3]);
-  geo.setAttribute('aGlint', new THREE.InstancedBufferAttribute(new Float32Array(glints), 4));
-  geo.instanceCount = count;
+  // One vertex per glint; where it really is comes from aGlint.
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(count * 3), 3));
+  geo.setAttribute('aGlint', new THREE.Float32BufferAttribute(new Float32Array(glints), 4));
 
   const u = {
     uTime: { value: 0 },
+    uHalfH: { value: 400 },
     uSun: { value: new THREE.Vector3(0, 1, 0) },
     uSunK: { value: 0 },
     uMoon: { value: new THREE.Vector3(0, -1, 0) },
     uMoonK: { value: 0 },
     uGlow: { value: 0 },
     uWalker: { value: new THREE.Vector3(0, 0, 0) },
+    uStirred: { value: 0 },
     uTrail: { value: Array.from({ length: TRAIL }, () => new THREE.Vector3(0, 0, 0)) },
     uSunCol: { value: new THREE.Color(1.0, 0.93, 0.76) },
     uMoonCol: { value: new THREE.Color(0.72, 0.8, 1.0) },
@@ -185,8 +198,11 @@ export function createLiving(scene) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  const mesh = new THREE.Mesh(geo, material);
+  const mesh = new THREE.Points(geo, material);
   mesh.frustumCulled = false;    // placed in the shader, far from any bounds
+  // Point sizes are in pixels, so the shader needs the drawing buffer's height.
+  const _buf = new THREE.Vector2();
+  mesh.onBeforeRender = renderer => { u.uHalfH.value = renderer.getDrawingBufferSize(_buf).y / 2; };
   mesh.renderOrder = 2;          // after the water it lies on
   scene.add(mesh);
 
@@ -252,7 +268,9 @@ export function createLiving(scene) {
         notes++;
       }
     }
-    for (const p of trail) if (p.z > 0) p.z = Math.max(0, p.z - dt / TRAIL_LIFE);
+    let shining = stir > 0.001;
+    for (const p of trail) if (p.z > 0) { p.z = Math.max(0, p.z - dt / TRAIL_LIFE); shining = shining || p.z > 0; }
+    u.uStirred.value = shining ? 1 : 0;
 
     // As he wades into it at night, its name is given.
     wadingFor = wading && glow > 0.5 ? wadingFor + dt : 0;

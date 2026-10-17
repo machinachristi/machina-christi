@@ -492,7 +492,7 @@ test.describe('the garden\'s features', () => {
 
     // Morning: the glints lie over the river, and the sun can strike them.
     const day = (await getState(page)).living;
-    expect(day.glints).toBeGreaterThan(2000);
+    expect(day.glints).toBeGreaterThan(1000);
     await expect.poll(async () => (await getState(page)).living.sun, { timeout: 15000 }).toBeGreaterThan(0.5);
 
     // Night: the water carries its own light; wade along it and the places
