@@ -485,6 +485,50 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).murmuration.visible, { timeout: 20000 }).toBe(true);
   });
 
+  test('living water: the sun glitters on the river, and at night it lights where he wades (v30, Revelation 22:1)', async ({ page }) => {
+    test.setTimeout(90000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Morning: the glints lie over the river, and the sun can strike them.
+    const day = (await getState(page)).living;
+    expect(day.glints).toBeGreaterThan(1000);
+    await expect.poll(async () => (await getState(page)).living.sun, { timeout: 15000 }).toBeGreaterThan(0.5);
+
+    // Night: the water carries its own light; wade along it and the places
+    // he has waded keep shining behind him, and its name is given.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => (await getState(page)).living.glow, { timeout: 15000 }).toBeGreaterThan(0.5);
+    await frame.evaluate(() => window.__world.teleport(-8, 14, Math.PI / 2));
+    await frame.evaluate(() => window.__world.walkTo(4, 14.3));
+    await expect.poll(async () => {
+      const l = (await getState(page)).living;
+      return l.stir > 0.5 && l.trail >= 3;
+    }, { timeout: 30000 }).toBe(true);
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Mayim chayyim');
+  });
+
+  test('gathering: stand under a fruiting tree and a fruit is given into his hands, then eaten (v30, Genesis 2:16)', async ({ page }) => {
+    test.setTimeout(90000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    const { trees, given } = (await getState(page)).gather;
+    expect(trees.length).toBeGreaterThan(0);
+    expect(given).toBe(0);
+    // The fruiting tree nearest the heart of the garden; stand under it.
+    const tree = [...trees].sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z))[0];
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z + 2.2, Math.PI), [tree.x, tree.z]);
+
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Akhol tokhel');
+    await expect.poll(async () => (await getState(page)).gather.given, { timeout: 30000 }).toBeGreaterThan(0);
+    // He eats it, and his hands are free again.
+    await expect.poll(async () => {
+      const g = (await getState(page)).gather;
+      return g.eaten > 0 && g.stage === 'idle';
+    }, { timeout: 30000 }).toBe(true);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

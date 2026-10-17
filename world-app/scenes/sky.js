@@ -456,6 +456,9 @@ export function createSky(scene) {
     t: START_T, phase: phaseOf(START_T), night: 0, sunElev: 0, sunAz: 0, rain: 0, wheel: wheel0, shade: shadeState,
     day: 1, sabbath: false, morningStars: 0, clearing: 0, moonPhase, eveningStar: 0, year: 0,
     season: { first: 0, latter: 0 },
+    // The moon's own unit direction (v30): the living water's glints need
+    // to know where she stands to mirror her.
+    moonDir: moonV,
   };
   let t = START_T;
   let elapsed = 0;
