@@ -31,7 +31,7 @@
       "touches": ["swa"] },
     { "id": "speech", "tier": "hands", "name": "Speech synthesis", "status": "live",
       "what": "The voices built into your device.",
-      "here": "Reads the prayers on Pray aloud, in Thai and in English.",
+      "here": "Reads the prayers on Pray aloud, in Thai and in English, and a Logos card's name if its recording can't play.",
       "touches": ["swa", "aispeech"] },
 
     { "id": "cloudflare", "tier": "door", "name": "Cloudflare", "status": "live",
@@ -79,7 +79,7 @@
 
     { "id": "aispeech", "tier": "messengers", "name": "AI Speech", "status": "live",
       "what": "Speech made and heard by machine.",
-      "here": "Recorded every prayer in a natural Thai and English voice, at normal speed and slowly, with each line's exact start so the highlight follows the voice. Later it may help learners practise saying them.",
+      "here": "Recorded every prayer in a natural Thai and English voice, at normal speed and slowly, with each line's exact start so the highlight follows the voice. It also says the name of every Thai letter on Logos's flash cards. Next it will listen as learners practise saying them.",
       "touches": ["speech", "blob", "functions"] },
     { "id": "safety", "tier": "messengers", "name": "Content Safety", "status": "planned", "phase": 7,
       "what": "A service that screens text for harm.",
