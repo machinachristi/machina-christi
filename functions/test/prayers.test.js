@@ -94,3 +94,21 @@ test('bad settings are refused before anything is recorded', () => {
   assert.throws(() => P.checkSettings({ ...settings, slowRate: 'slow' }), /slowRate/);
   assert.throws(() => P.checkSettings({ ...settings, breakMs: 99999 }), /breakMs/);
 });
+
+test('the published document carries the prayer\'s other names (search finds it by them), and adding them re-records nothing', () => {
+  const recs = {};
+  for (const lang of P.LANGS) for (const speed of P.SPEEDS) recs[`${lang}/${speed}`] = { file: 'f', hash: 'h', starts: [0], duration: 1 };
+  assert.deepEqual(P.buildDoc({ ...prayer, aka: ['Ave Maria'] }, 0, recs, settings).aka, ['Ave Maria']);
+  assert.deepEqual(P.buildDoc(prayer, 0, recs, settings).aka, []);
+  for (const lang of P.LANGS) for (const speed of P.SPEEDS) {
+    assert.equal(P.recordingHash({ ...prayer, aka: ['Ave Maria'] }, lang, speed, settings), P.recordingHash(prayer, lang, speed, settings));
+  }
+});
+
+test('every prayer in prayers.json has a list of other names', () => {
+  const data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'pray', 'prayers.json'), 'utf8'));
+  for (const p of data.prayers) {
+    assert.ok(Array.isArray(p.aka), `${p.id}: aka should be a list`);
+    for (const name of p.aka) assert.ok(typeof name === 'string' && name.trim() === name && name.length > 1, `${p.id}: "${name}"`);
+  }
+});

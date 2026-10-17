@@ -30,8 +30,17 @@ const RETRY_MS = 60 * 1000;
 let cached = null;
 let nextReadAt = 0;
 
-async function readSnapshot({ log = () => {} } = {}) {
+// `fresh: true` (the search rebuild) always reads the blob and lets a failure
+// throw, so the rebuild is retried rather than run on an old copy.
+async function readSnapshot({ log = () => {}, fresh = false } = {}) {
   const b = blob();
+  if (fresh) {
+    if (!b) return null;
+    const buf = await b.downloadToBuffer(0, undefined, { abortSignal: AbortSignal.timeout(10_000) });
+    cached = JSON.parse(buf.toString('utf8'));
+    nextReadAt = Date.now() + FRESH_MS;
+    return cached;
+  }
   if (!b || Date.now() < nextReadAt) return cached;
   try {
     const buf = await b.downloadToBuffer(0, undefined, { abortSignal: AbortSignal.timeout(5000) });

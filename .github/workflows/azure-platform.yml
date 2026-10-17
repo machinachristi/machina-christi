@@ -5,7 +5,10 @@ name: Azure Platform
 #   merge to main → test, apply the Bicep, migrate the database, deploy the API,
 #                   check /api/health, and, when a migration changed the
 #                   database, ask the API to republish the saints snapshot
-#                   (a message on its saints-publish queue; no Function key)
+#                   (a message on its saints-publish queue; no Function key);
+#                   apply the search index layout before the API, then ask
+#                   the API to rebuild the search cards (search-reindex queue)
+#                   and check that a search answers from them
 #
 # Sign-in is OIDC: GitHub vouches for this run and Azure returns a token that
 # lasts minutes. No password or key is stored; the AZURE_* repo variables are
@@ -173,6 +176,17 @@ jobs:
           trap 'az sql server firewall-rule delete -g "$RESOURCE_GROUP" -s "$SQL_SERVER_NAME" -n ci-migrate -o none || true' EXIT
           node scripts/migrate.js | tee -a "$GITHUB_STEP_SUMMARY"
 
+      # The search index's layout (functions/src/lib/search-schema.js) goes in
+      # before the code that relies on it, like a migration. This identity's
+      # Machina Search Schema Writer role covers indexes and synonym maps
+      # only. A change Azure can't make in place fails here, before the API
+      # changes: bump SEARCH_SCHEMA_VERSION to build a new index beside it.
+      - name: Apply the search index layout
+        working-directory: functions
+        env:
+          SEARCH_ENDPOINT: ${{ steps.infra.outputs.searchEndpoint }}
+        run: node scripts/apply-search-schema.js
+
       - name: Deploy the API
         env:
           APP: ${{ steps.infra.outputs.app }}
@@ -214,11 +228,10 @@ jobs:
           exit 1
 
       # The saints snapshot (what /api/season serves) is published weekly by a
-      # timer, and here, at once, when a migration changed the data. The
-      # deploy runs the job through the Functions host's admin endpoint, with
-      # the app's master key: no new permission, since this identity already
-      # deploys the app's code. The key is masked in the log and lives only
-      # for this step. Then it waits until /api/season serves the new copy.
+      # timer, and here, at once, when a migration changed the data: the
+      # deploy posts a message to the API's saints-publish queue and the API
+      # publishes under its own identity (no Function key, AB#81). Then it
+      # waits until /api/season serves the new copy.
       - name: Publish the saints snapshot
         if: steps.migrate.outputs.applied != '0' || inputs.publish_saints
         env:
@@ -256,3 +269,48 @@ jobs:
           done
           echo "::error::/api/season never served a snapshot newer than $since"
           exit 1
+
+      # Our own indexer: the API rebuilds the search cards from the saints
+      # snapshot, the prayers and the site's pages when a message arrives on
+      # its search-reindex queue (a few hundred cards, so every deploy). Then
+      # a real search must answer from the new cards, in English and in Thai.
+      - name: Rebuild the search index and check it
+        env:
+          APP: ${{ steps.infra.outputs.app }}
+          HOST: ${{ steps.infra.outputs.host }}
+          STORAGE: ${{ steps.infra.outputs.storageAccountName }}
+        run: |
+          ip=$(curl -fsS -m 20 https://api.ipify.org)
+          az functionapp config access-restriction add -g "$RESOURCE_GROUP" -n "$APP" \
+            --rule-name ci-search --action Allow --ip-address "$ip/32" --priority 50 -o none
+          trap 'az functionapp config access-restriction remove -g "$RESOURCE_GROUP" -n "$APP" --rule-name ci-search -o none || true' EXIT
+          since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          msg=$(printf '{"by":"deploy","commit":"%s"}' "${GITHUB_SHA::7}" | base64 -w0)
+          az storage message put --auth-mode login --account-name "$STORAGE" \
+            --queue-name search-reindex --content "$msg" -o none
+          echo "rebuild requested (queue search-reindex)"
+          ask() { curl -fsS -m 30 -G "https://$HOST/api/search" --data-urlencode "q=$1" || true; }
+          for i in $(seq 1 30); do
+            at=$(ask agnes | jq -r 'select((.results | length) > 0) | .indexedAt // empty' 2>/dev/null)
+            echo "try $i: cards indexed at ${at:-(not yet)}"
+            if [ -n "$at" ] && [[ "$at" > "$since" ]]; then
+              thai=$(ask 'พระบิดา' | jq '[.results[]? | select(.kind == "prayer")] | length' 2>/dev/null)
+              if [ "${thai:-0}" -gt 0 ]; then
+                echo "### Search rebuilt at \`$at\` (agnes ✓, พระบิดา ✓)" >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              echo "::error::the rebuilt index found no prayer for a Thai search"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "::error::/api/search never answered from cards newer than $since"
+          exit 1
+
+      # Only after the new index answers: delete older site-v* indexes left
+      # by a SEARCH_SCHEMA_VERSION bump (the free tier holds three).
+      - name: Retire old search indexes
+        working-directory: functions
+        env:
+          SEARCH_ENDPOINT: ${{ steps.infra.outputs.searchEndpoint }}
+        run: node scripts/apply-search-schema.js --retire

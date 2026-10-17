@@ -219,6 +219,21 @@ var apiQueries = [
     displayName: 'Pray API: calls that reached Azure, per day and endpoint'
     query: 'AppRequests\n| where TimeGenerated > ago(30d) and Name in ("prayers", "prayer", "audio")\n| summarize Calls = count(), Failures = countif(Success == false), AvgMs = round(avg(DurationMs), 1) by Day = bin(TimeGenerated, 1d), Name\n| order by Day desc, Name asc'
   }
+  {
+    // Searches that reached the API (Cloudflare answers repeats for 5 minutes)
+    // and how many found nothing. Never what was searched for: the request
+    // log records the path without the query string, and the API logs only
+    // "search found nothing".
+    name: 'search-requests'
+    displayName: 'Search: calls, failures, speed and empty answers per day (never the words)'
+    query: 'let empty = AppTraces\n| where TimeGenerated > ago(30d) and Message == "search found nothing"\n| summarize Empty = count() by Day = bin(TimeGenerated, 1d);\nAppRequests\n| where TimeGenerated > ago(30d) and Name == "search"\n| summarize Calls = count(), Unavailable = countif(ResultCode == "503"), Refused = countif(ResultCode == "400"), P95Ms = round(percentile(DurationMs, 95), 0) by Day = bin(TimeGenerated, 1d)\n| join kind=leftouter empty on Day\n| project Day, Calls, Empty = coalesce(Empty, 0), Unavailable, Refused, P95Ms\n| order by Day desc'
+  }
+  {
+    // Each rebuild of the search cards (deploys, prayer changes, Sundays).
+    name: 'search-reindex-runs'
+    displayName: 'Search: index rebuilds (cards, removed, time)'
+    query: 'AppTraces\n| where TimeGenerated > ago(30d) and Message startswith "search reindexed"\n| project TimeGenerated, Message\n| order by TimeGenerated desc'
+  }
   allowanceQuery
 ]
 

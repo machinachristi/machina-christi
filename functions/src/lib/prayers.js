@@ -96,8 +96,9 @@ function plan(data, published = {}, { rerecordAll = false } = {}) {
   return items;
 }
 
-// The published document: the prayer as written in prayers.json, its place in
-// the list, and its four recordings. `recordings` maps "lang/speed" →
+// The published document: the prayer as written in prayers.json (with `aka`,
+// its other names, which search finds it by), its place in the list, and its
+// four recordings. `recordings` maps "lang/speed" →
 // { file, hash, starts, duration }.
 function buildDoc(prayer, order, recordings, settings) {
   const audio = {};
@@ -109,8 +110,8 @@ function buildDoc(prayer, order, recordings, settings) {
       audio[lang][speed] = { file: r.file, hash: r.hash, starts: r.starts, duration: r.duration };
     }
   }
-  const { id, title, title_th, about, lines, source } = prayer;
-  return { id, type: 'prayer', order, title, title_th, about, lines, source, audio };
+  const { id, title, title_th, aka = [], about, lines, source } = prayer;
+  return { id, type: 'prayer', order, title, title_th, aka, about, lines, source, audio };
 }
 
 // Cosmos DB adds its own bookkeeping fields (_rid, _etag, _ts…); they never

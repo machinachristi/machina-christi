@@ -172,6 +172,18 @@ Node.js, Azure Functions v4 programming model. Each file in
 - `GET /api/prayers` and `GET /api/prayers/{id}`: Pray's prayers, read live from
   Cosmos DB (see "Pray"). `GET /api/audio/{id}/{file}`: a recording, relayed
   from private storage, with byte ranges (206).
+- `GET /api/search?q=agnes`: the site search (see "Search"). Answers `{ q, step,
+  indexedAt, results: [{ kind, id, title, title_th, summary, url, date,
+  snippet: { text, marks, lang } }] }`. A saint's `url` opens the next Ordo day
+  that celebrates them, worked out from the bundled calendars at answer time.
+  Results are kept 5 minutes; empty answers and errors aren't kept. Search terms
+  are never logged.
+- **`reindexSearch`** (timer, Sundays 05:00 UTC) and **`reindexSearchOnRequest`**
+  (queue `search-reindex`): our own indexer. It rebuilds the search cards from
+  the saints snapshot, the prayers and the site's pages
+  (`functions/src/lib/site-pages.js`), then removes cards no longer made. The
+  deploy asks for it after every deploy, and the prayers publisher after
+  publishing. A failed read stops the rebuild, so the old cards stay.
 - `cd functions && npm test` runs the unit tests (Node's built-in test runner).
 - Run it locally with Azure Functions Core Tools: in `functions/`, copy
   `local.settings.example.json` to `local.settings.json` (git ignores it), then
@@ -314,6 +326,25 @@ layout. The plain-words story will be in `docs/explained/phase-5-search.md`.
   the prayers with the badges it already has and uploads the cards (the
   *push* model). It runs when the deploy or the prayers publisher posts to the
   `search-reindex` queue, and weekly.
+- **The index's layout lives in git** (`functions/src/lib/search-schema.js`)
+  and the deploy applies it before the API (`scripts/apply-search-schema.js`),
+  like a migration. Adding a field, a synonym or a ranking weight works in
+  place. Changing an existing field's analyzer, type or key doesn't (Azure
+  refuses), so bump `SEARCH_SCHEMA_VERSION`. The deploy then builds
+  `site-v<N+1>` beside the old index, rebuilds the cards, checks a search, and
+  only then deletes the old one (the free tier holds three).
+- **The queries** (`functions/src/lib/search-query.js`):
+  1. every word must match, with small English words dropped and the last word
+     also tried as a prefix; Thai words are quoted, so they match as that exact
+     run;
+  2. if nothing is found, words of four letters or more may be one letter off;
+  3. then any word may match.
+
+  Only letters, marks and digits survive from what a visitor types, so no one
+  can type query syntax. Highlights come back as text plus ranges and the page
+  builds them with `textContent`, so no HTML crosses the API.
+- **Saved queries:** `search-requests` (calls, failures, p95, empty answers per
+  day; never the words) and `search-reindex-runs`.
 - **Who may do what** (no keys: `disableLocalAuth: true`, so a request with an
   API key is refused):
 
