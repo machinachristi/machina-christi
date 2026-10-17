@@ -345,6 +345,60 @@ switch over, then remove the old: blue-green, for an index.
 last person before closing its doors. The search page asks only after you stop
 typing for 0.3 seconds, rather than once for every letter.
 
+## Learning and remembering
+
+**Spaced repetition (the box system).** Reviewing what you're about to forget,
+not what you already know. Picture five boxes of flash cards: a card you know
+moves up a box and waits longer before it comes back (a day, three days, a
+week, two weeks); a card you miss goes back to the first box and comes back
+today. This version is the Leitner system, named after the teacher who did it
+with cardboard boxes.
+*Here:* Logos's Review mode for the Thai consonants.
+
+**Browser storage (localStorage).** A small notebook each website may keep
+inside your browser. It's private to that site, that browser and that device,
+and nothing in it is sent anywhere unless the page sends it. It isn't a safe:
+private browsing, clearing site data, or (in Safari) a week without visiting
+can wipe it.
+*Here:* which box each Logos card is in, and switches like "Slow voice".
+
+**A file, not a database.** Not everything needs a database. A database earns
+its keep when information changes often, is shared, or needs searching; a small
+list that changes only when you edit it can simply be a file delivered with the
+pages.
+*Here:* the 44 Thai cards are one file, `logos/thai.json`.
+
+**Romanization.** Writing one language's sounds in another's letters, so a
+learner can read them before learning the script. There are many systems; what
+matters is using one consistently.
+*Here:* Pray uses kh/ph/th for breathy sounds; Logos follows my teacher's
+workbook (g/k, bp/dt, and a dot over short syllables).
+
+**Tone and pitch.** Pitch is how high or low a voice is at each moment;
+drawn over time, it makes a line. In a tonal language like Thai, the shape of
+that line is part of the word: the same syllable said level, low, falling, high
+or rising means different things.
+
+**Declination.** Pitch drifts down toward the end of anything said, in every
+language, as the breath runs out. A program judging tones has to allow for it,
+or every last syllable sounds "falling".
+*Here:* the first tone check in the Logos lab forgot this and flagged nearly
+every card; comparing each syllable with the same voice's other syllables of
+each tone fixed it.
+
+**Reference check (an answer key).** Checking a machine's output against a
+trusted human example before using it. The reference doesn't have to be
+published to be useful.
+*Here:* the synthetic voice was compared, privately, with my teacher's
+recordings, which stay off the site.
+
+**Unicode normalization (NFC).** The same accented letter can be stored two
+ways in a computer: as one character, or as a letter plus a separate accent.
+They look identical but don't match when compared. NFC is the agreed "one
+character where possible" form, so stored text always compares cleanly.
+*Here:* a test checks every Logos card's Thai and romanization are stored in
+NFC.
+
 ## Making changes safely
 
 **Branch.** A photocopy of the whole project you can scribble on while the real

@@ -25,33 +25,35 @@ async function forceGameOver(page) {
 }
 
 test.describe('home page', () => {
-  test('structure: six portals, labels, hrefs, waymarks', async ({ page }) => {
+  test('structure: seven portals, labels, hrefs, waymarks', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
     expect(await page.title()).toBe('Machina Christi');
 
-    await expect(page.locator('.portal')).toHaveCount(6);
+    await expect(page.locator('.portal')).toHaveCount(7);
     await expect(page.locator('.portal--workshop')).toHaveAttribute('href', 'workshop.html');
     await expect(page.locator('.portal--camino')).toHaveAttribute('href', 'game.html');
     await expect(page.locator('.portal--eden')).toHaveAttribute('href', 'world.html');
     await expect(page.locator('.portal--about')).toHaveAttribute('href', 'about.html');
     await expect(page.locator('.portal--ordo')).toHaveAttribute('href', 'ordo.html');
     await expect(page.locator('.portal--pray')).toHaveAttribute('href', 'pray.html');
+    await expect(page.locator('.portal--logos')).toHaveAttribute('href', 'logos.html');
     await expect(page.locator('.portal--workshop .portal__title')).toContainText('Workshop');
     await expect(page.locator('.portal--camino .portal__title')).toContainText('Camino');
     await expect(page.locator('.portal--eden .portal__title')).toContainText('Eden');
     await expect(page.locator('.portal--about .portal__title')).toContainText('About');
     await expect(page.locator('.portal--ordo .portal__title')).toContainText('Ordo');
     await expect(page.locator('.portal--pray .portal__title')).toContainText('Pray');
+    await expect(page.locator('.portal--logos .portal__title')).toContainText('Logos');
 
-    // Gate order: two gates left of Eden, three to its right, so the way
-    // stays roughly balanced around the garden.
+    // Gate order: two gates left of Eden, four to its right; Logos, for
+    // learning Thai, stands beside Pray, the prayers in Thai.
     const order = await page.$$eval('.portal', ps => ps.map(p => p.className.match(/portal--(\w+)/)[1]));
-    expect(order).toEqual(['workshop', 'camino', 'eden', 'about', 'ordo', 'pray']);
+    expect(order).toEqual(['workshop', 'camino', 'eden', 'about', 'ordo', 'pray', 'logos']);
 
     // One waymark dot per portal; Eden stands centered on arrival, so its
     // (third) dot is the current one.
-    await expect(page.locator('.waymarks button')).toHaveCount(6);
+    await expect(page.locator('.waymarks button')).toHaveCount(7);
     await expect(page.locator('.waymarks button').nth(2)).toHaveAttribute('aria-current', 'true');
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
 
@@ -191,13 +193,14 @@ test.describe('home page on a desktop pointer', () => {
     await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
     await page.locator('.arrow--prev').click();
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
-    // Two steps back reach the Workshop, the first gate; one more loops to Pray.
+    // Two steps back reach the Workshop, the first gate; one more loops to
+    // Logos, the last.
     await page.locator('.arrow--prev').click();
     await expect(page.locator('.portal--camino')).toHaveClass(/is-active/);
     await page.locator('.arrow--prev').click();
     await expect(page.locator('.portal--workshop')).toHaveClass(/is-active/);
     await page.locator('.arrow--prev').click();
-    await expect(page.locator('.portal--pray')).toHaveClass(/is-active/);
+    await expect(page.locator('.portal--logos')).toHaveClass(/is-active/);
   });
 
   test('dragging the strip scrolls without walking through a gate', async ({ page }) => {

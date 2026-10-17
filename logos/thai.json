@@ -1,0 +1,95 @@
+{
+  "_about": "Logos, Thai section: the 44 consonants as flash cards. Order, classes, key words, meanings and romanization follow the learner's own workbook (chapter 1, Thai consonants); the Thai is copied letter for letter. rom keeps the book's style: g/k, bp/dt, tone marks on the vowel (none = mid), and a dot over a letter of a short syllable. say is the name as spoken, for the voice studio (an obsolete or unusual letter is said with the sound it stands for). use: common, seldom or obsolete, as the book marks them. audio is filled in by functions/scripts/record-logos.js.",
+  "credit": "Order and spelling follow my teacher's workbook.",
+  "audio": {
+    "voice": "th-TH-PremwadeeNeural",
+    "slowRate": "-30%",
+    "format": "Audio24Khz48KBitRateMonoMp3"
+  },
+  "classes": {
+    "middle": {
+      "name": "Middle class",
+      "name_th": "อักษรกลาง"
+    },
+    "high": {
+      "name": "High class",
+      "name_th": "อักษรสูง"
+    },
+    "low": {
+      "name": "Low class",
+      "name_th": "อักษรต่ำ"
+    }
+  },
+  "lessons": [
+    {
+      "id": "middle",
+      "title": "Middle class",
+      "title_th": "อักษรกลาง",
+      "class": "middle"
+    },
+    {
+      "id": "high",
+      "title": "High class",
+      "title_th": "อักษรสูง",
+      "class": "high"
+    },
+    {
+      "id": "low",
+      "title": "Low class",
+      "title_th": "อักษรต่ำ",
+      "class": "low"
+    },
+    {
+      "id": "all",
+      "title": "All 44 consonants",
+      "title_th": "พยัญชนะไทย",
+      "class": null
+    }
+  ],
+  "cards": [
+    { "id": "ko-kai", "letter": "ก", "word": "ไก่", "say": "กอ ไก่", "rom": "gaw ġài", "meaning": "chicken", "class": "middle", "use": "common", "audio": { "normal": "th/ko-kai-normal-031dbd7d29.mp3", "slow": "th/ko-kai-slow-ec6fa73688.mp3" } },
+    { "id": "kho-khai", "letter": "ข", "word": "ไข่", "say": "ขอ ไข่", "rom": "kǎw k̇ài", "meaning": "egg", "class": "high", "use": "common", "audio": { "normal": "th/kho-khai-normal-b9d44dc871.mp3", "slow": "th/kho-khai-slow-9afd3e2b99.mp3" } },
+    { "id": "kho-khuat", "letter": "ฃ", "word": "ขวด", "say": "ขอ ขวด", "rom": "kǎw kuàt", "meaning": "bottle", "class": "high", "use": "obsolete", "audio": { "normal": "th/kho-khuat-normal-7f501a61ae.mp3", "slow": "th/kho-khuat-slow-d3b7d0ab65.mp3" } },
+    { "id": "kho-khwai", "letter": "ค", "word": "ควาย", "say": "คอ ควาย", "rom": "kaw kwaai", "meaning": "water buffalo", "class": "low", "use": "common", "audio": { "normal": "th/kho-khwai-normal-4792737487.mp3", "slow": "th/kho-khwai-slow-b95ca6028a.mp3" } },
+    { "id": "kho-khon", "letter": "ฅ", "word": "คน", "say": "คอ คน", "rom": "kaw kȯn", "meaning": "people", "class": "low", "use": "obsolete", "audio": { "normal": "th/kho-khon-normal-c4fb46ff0d.mp3", "slow": "th/kho-khon-slow-8c73da7685.mp3" } },
+    { "id": "kho-rakhang", "letter": "ฆ", "word": "ระฆัง", "say": "คอ ระฆัง", "rom": "kaw ṙákȧng", "meaning": "bell", "class": "low", "use": "common", "audio": { "normal": "th/kho-rakhang-normal-d200ef6b21.mp3", "slow": "th/kho-rakhang-slow-bc509d53e8.mp3" } },
+    { "id": "ngo-ngu", "letter": "ง", "word": "งู", "say": "งอ งู", "rom": "ngaw ngoo", "meaning": "snake", "class": "low", "use": "common", "audio": { "normal": "th/ngo-ngu-normal-15b722e39b.mp3", "slow": "th/ngo-ngu-slow-1decfd4092.mp3" } },
+    { "id": "cho-chan", "letter": "จ", "word": "จาน", "say": "จอ จาน", "rom": "jaw jaan", "meaning": "plate", "class": "middle", "use": "common", "audio": { "normal": "th/cho-chan-normal-489efac31c.mp3", "slow": "th/cho-chan-slow-38db44379d.mp3" } },
+    { "id": "cho-ching", "letter": "ฉ", "word": "ฉิ่ง", "say": "ฉอ ฉิ่ง", "rom": "chǎw chìnġ", "meaning": "cymbal", "class": "high", "use": "common", "audio": { "normal": "th/cho-ching-normal-da2d3d8870.mp3", "slow": "th/cho-ching-slow-0ae888923c.mp3" } },
+    { "id": "cho-chang", "letter": "ช", "word": "ช้าง", "say": "ชอ ช้าง", "rom": "chaw chaáng", "meaning": "elephant", "class": "low", "use": "common", "audio": { "normal": "th/cho-chang-normal-13b2963025.mp3", "slow": "th/cho-chang-slow-5e870b0474.mp3" } },
+    { "id": "so-so", "letter": "ซ", "word": "โซ่", "say": "ซอ โซ่", "rom": "saw sô", "meaning": "chain", "class": "low", "use": "common", "audio": { "normal": "th/so-so-normal-1eb3baf499.mp3", "slow": "th/so-so-slow-95d7add9eb.mp3" } },
+    { "id": "cho-choe", "letter": "ฌ", "word": "กะเฌอ", "say": "ชอ กะเฌอ", "rom": "chaw ġà cheuh", "meaning": "kind of tree", "class": "low", "use": "seldom", "audio": { "normal": "th/cho-choe-normal-bb1af1cfb0.mp3", "slow": "th/cho-choe-slow-3d6bbd1114.mp3" } },
+    { "id": "yo-ying", "letter": "ญ", "word": "ผู้หญิง", "say": "ยอ ผู้หญิง", "rom": "yaw pôoyǐnġ", "meaning": "lady", "class": "low", "use": "common", "audio": { "normal": "th/yo-ying-normal-039923eb1f.mp3", "slow": "th/yo-ying-slow-6cfc00d583.mp3" } },
+    { "id": "do-chada", "letter": "ฎ", "word": "ชฎา", "say": "ดอ ชฎา", "rom": "daw cḣádaa", "meaning": "Thai crown", "class": "middle", "use": "seldom", "audio": { "normal": "th/do-chada-normal-d3b195409b.mp3", "slow": "th/do-chada-slow-27a8c863bf.mp3" } },
+    { "id": "to-patak", "letter": "ฏ", "word": "ปฏัก", "say": "ตอ ปฏัก", "rom": "dtaw bṗà-dṫàk", "meaning": "spear", "class": "middle", "use": "seldom", "audio": { "normal": "th/to-patak-normal-eef25f7495.mp3", "slow": "th/to-patak-slow-0a6091a30b.mp3" } },
+    { "id": "tho-than", "letter": "ฐ", "word": "ฐาน", "say": "ถอ ฐาน", "rom": "tǎw taǎn", "meaning": "base", "class": "high", "use": "seldom", "audio": { "normal": "th/tho-than-normal-8853d1c46d.mp3", "slow": "th/tho-than-slow-807a49725e.mp3" } },
+    { "id": "tho-montho", "letter": "ฑ", "word": "นางมณโฑ", "say": "ทอ นางมณโฑ", "rom": "taw naangmȯnto", "meaning": "a character in the Ramayana", "class": "low", "use": "seldom", "audio": { "normal": "th/tho-montho-normal-760dd67f79.mp3", "slow": "th/tho-montho-slow-5a9773393e.mp3" } },
+    { "id": "tho-phuthao", "letter": "ฒ", "word": "ผู้เฒ่า", "say": "ทอ ผู้เฒ่า", "rom": "taw pôotâȯ", "meaning": "old person", "class": "low", "use": "common", "audio": { "normal": "th/tho-phuthao-normal-8f7c5c42df.mp3", "slow": "th/tho-phuthao-slow-03cf325914.mp3" } },
+    { "id": "no-nen", "letter": "ณ", "word": "เณร", "say": "นอ เณร", "rom": "naw nen", "meaning": "novice monk", "class": "low", "use": "common", "audio": { "normal": "th/no-nen-normal-6d4fce8ba7.mp3", "slow": "th/no-nen-slow-d2634b36e2.mp3" } },
+    { "id": "do-dek", "letter": "ด", "word": "เด็ก", "say": "ดอ เด็ก", "rom": "daw dèk̇", "meaning": "child", "class": "middle", "use": "common", "audio": { "normal": "th/do-dek-normal-e81136d215.mp3", "slow": "th/do-dek-slow-c664910c0f.mp3" } },
+    { "id": "to-tao", "letter": "ต", "word": "เต่า", "say": "ตอ เต่า", "rom": "dtaw dtàȯ", "meaning": "turtle", "class": "middle", "use": "common", "audio": { "normal": "th/to-tao-normal-cbb06a1498.mp3", "slow": "th/to-tao-slow-9f7cd19daf.mp3" } },
+    { "id": "tho-thung", "letter": "ถ", "word": "ถุง", "say": "ถอ ถุง", "rom": "tǎw toǒṅg", "meaning": "bag, sack", "class": "high", "use": "common", "audio": { "normal": "th/tho-thung-normal-ece117a020.mp3", "slow": "th/tho-thung-slow-7d22776a7c.mp3" } },
+    { "id": "tho-thahan", "letter": "ท", "word": "ทหาร", "say": "ทอ ทหาร", "rom": "taw táhǎan", "meaning": "soldier", "class": "low", "use": "common", "audio": { "normal": "th/tho-thahan-normal-e4f12db4f0.mp3", "slow": "th/tho-thahan-slow-0e19dea083.mp3" } },
+    { "id": "tho-thong", "letter": "ธ", "word": "ธง", "say": "ทอ ธง", "rom": "taw tȯng", "meaning": "flag", "class": "low", "use": "common", "audio": { "normal": "th/tho-thong-normal-f0d3a43576.mp3", "slow": "th/tho-thong-slow-ad1ed09ec1.mp3" } },
+    { "id": "no-nu", "letter": "น", "word": "หนู", "say": "นอ หนู", "rom": "naw nǒo", "meaning": "mouse, rat", "class": "low", "use": "common", "audio": { "normal": "th/no-nu-normal-f5f6eec1b0.mp3", "slow": "th/no-nu-slow-d21c9a61f0.mp3" } },
+    { "id": "bo-baimai", "letter": "บ", "word": "ใบไม้", "say": "บอ ใบไม้", "rom": "baw bȧimái", "meaning": "leaf", "class": "middle", "use": "common", "audio": { "normal": "th/bo-baimai-normal-fbb789641b.mp3", "slow": "th/bo-baimai-slow-6880f04209.mp3" } },
+    { "id": "po-pla", "letter": "ป", "word": "ปลา", "say": "ปอ ปลา", "rom": "bpaw bplaa", "meaning": "fish", "class": "middle", "use": "common", "audio": { "normal": "th/po-pla-normal-c879cca410.mp3", "slow": "th/po-pla-slow-1474906204.mp3" } },
+    { "id": "pho-phueng", "letter": "ผ", "word": "ผึ้ง", "say": "ผอ ผึ้ง", "rom": "pǎw peûṅg", "meaning": "bee", "class": "high", "use": "common", "audio": { "normal": "th/pho-phueng-normal-ea52c03a1c.mp3", "slow": "th/pho-phueng-slow-4204678a29.mp3" } },
+    { "id": "fo-fa", "letter": "ฝ", "word": "ฝา", "say": "ฝอ ฝา", "rom": "fǎw fǎa", "meaning": "lid, cover", "class": "high", "use": "common", "audio": { "normal": "th/fo-fa-normal-75f74adb9f.mp3", "slow": "th/fo-fa-slow-30ade6414e.mp3" } },
+    { "id": "pho-phan", "letter": "พ", "word": "พาน", "say": "พอ พาน", "rom": "paw paan", "meaning": "flower tray", "class": "low", "use": "common", "audio": { "normal": "th/pho-phan-normal-209c1c63b0.mp3", "slow": "th/pho-phan-slow-5896fe2493.mp3" } },
+    { "id": "fo-fan", "letter": "ฟ", "word": "ฟัน", "say": "ฟอ ฟัน", "rom": "faw fȧn", "meaning": "teeth", "class": "low", "use": "common", "audio": { "normal": "th/fo-fan-normal-4b2f6a1903.mp3", "slow": "th/fo-fan-slow-3d92319d46.mp3" } },
+    { "id": "pho-samphao", "letter": "ภ", "word": "สำเภา", "say": "พอ สำเภา", "rom": "paw sǎṁpȧo", "meaning": "Chinese boat", "class": "low", "use": "common", "audio": { "normal": "th/pho-samphao-normal-8b614c044d.mp3", "slow": "th/pho-samphao-slow-8a1380caeb.mp3" } },
+    { "id": "mo-ma", "letter": "ม", "word": "ม้า", "say": "มอ ม้า", "rom": "maw máa", "meaning": "horse", "class": "low", "use": "common", "audio": { "normal": "th/mo-ma-normal-836e0ce790.mp3", "slow": "th/mo-ma-slow-bdc4ac027a.mp3" } },
+    { "id": "yo-yak", "letter": "ย", "word": "ยักษ์", "say": "ยอ ยักษ์", "rom": "yaw yák", "meaning": "giant", "class": "low", "use": "common", "audio": { "normal": "th/yo-yak-normal-c5ad63c11e.mp3", "slow": "th/yo-yak-slow-b2e948deff.mp3" } },
+    { "id": "ro-ruea", "letter": "ร", "word": "เรือ", "say": "รอ เรือ", "rom": "raw reua", "meaning": "boat", "class": "low", "use": "common", "audio": { "normal": "th/ro-ruea-normal-50fe261d3d.mp3", "slow": "th/ro-ruea-slow-36b3c5409e.mp3" } },
+    { "id": "lo-ling", "letter": "ล", "word": "ลิง", "say": "ลอ ลิง", "rom": "law ling", "meaning": "monkey", "class": "low", "use": "common", "audio": { "normal": "th/lo-ling-normal-d3f0ae3e0d.mp3", "slow": "th/lo-ling-slow-8bbc40abbd.mp3" } },
+    { "id": "wo-waen", "letter": "ว", "word": "แหวน", "say": "วอ แหวน", "rom": "waw waěn", "meaning": "ring", "class": "low", "use": "common", "audio": { "normal": "th/wo-waen-normal-b7e82137d5.mp3", "slow": "th/wo-waen-slow-517773ef1b.mp3" } },
+    { "id": "so-sala", "letter": "ศ", "word": "ศาลา", "say": "สอ ศาลา", "rom": "sǎw sǎalaa", "meaning": "pavilion", "class": "high", "use": "seldom", "audio": { "normal": "th/so-sala-normal-0c531326f5.mp3", "slow": "th/so-sala-slow-773f4a741f.mp3" } },
+    { "id": "so-ruesi", "letter": "ษ", "word": "ฤๅษี", "say": "สอ ฤๅษี", "rom": "sǎw reusěe", "meaning": "hermit", "class": "high", "use": "seldom", "audio": { "normal": "th/so-ruesi-normal-a168f72aad.mp3", "slow": "th/so-ruesi-slow-95bff66c93.mp3" } },
+    { "id": "so-suea", "letter": "ส", "word": "เสือ", "say": "สอ เสือ", "rom": "sǎw sěua", "meaning": "tiger", "class": "high", "use": "common", "audio": { "normal": "th/so-suea-normal-dfb36df486.mp3", "slow": "th/so-suea-slow-363bbc6926.mp3" } },
+    { "id": "ho-hip", "letter": "ห", "word": "หีบ", "say": "หอ หีบ", "rom": "hǎw heèp", "meaning": "chest, box", "class": "high", "use": "common", "audio": { "normal": "th/ho-hip-normal-91e5651abf.mp3", "slow": "th/ho-hip-slow-5722ba47c1.mp3" } },
+    { "id": "lo-chula", "letter": "ฬ", "word": "จุฬา", "say": "ลอ จุฬา", "rom": "law jòȯlaa", "meaning": "kind of kite", "class": "low", "use": "seldom", "audio": { "normal": "th/lo-chula-normal-ef37a4cc06.mp3", "slow": "th/lo-chula-slow-5d8fdee458.mp3" } },
+    { "id": "o-ang", "letter": "อ", "word": "อ่าง", "say": "ออ อ่าง", "rom": "aw aàng", "meaning": "basin", "class": "middle", "use": "common", "audio": { "normal": "th/o-ang-normal-a47d1accf5.mp3", "slow": "th/o-ang-slow-7c0e77e368.mp3" } },
+    { "id": "ho-nokhuk", "letter": "ฮ", "word": "นกฮูก", "say": "ฮอ นกฮูก", "rom": "haw ṅókhôok", "meaning": "owl", "class": "low", "use": "seldom", "audio": { "normal": "th/ho-nokhuk-normal-3229aace57.mp3", "slow": "th/ho-nokhuk-slow-6a35369c95.mp3" } }
+  ]
+}
