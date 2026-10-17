@@ -117,7 +117,7 @@
       "touches": ["actions", "functions", "blob", "identity", "appi", "logs", "budget"] },
     { "id": "playwright", "tier": "bench", "name": "Playwright", "status": "live",
       "what": "A robot that uses web pages the way you do.",
-      "here": "Before anything merges, about a hundred tests walk every page: Eden must grow, Camino must play, no security rule may break.",
+      "here": "Before anything merges, more than 150 tests walk every page: Eden must grow, Camino must play, search must find the saints, no security rule may break, and this map must match what is built.",
       "touches": ["actions"] },
     { "id": "devops", "tier": "bench", "name": "Azure DevOps", "status": "live",
       "what": "Boards for planning work.",
