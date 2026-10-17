@@ -13,6 +13,7 @@
       "id": "sign-of-the-cross",
       "title": "The Sign of the Cross",
       "title_th": "เครื่องหมายกางเขน",
+      "aka": ["In the name of the Father"],
       "about": "begin and end every prayer",
       "lines": [
         {
@@ -47,6 +48,7 @@
       "id": "our-father",
       "title": "The Our Father",
       "title_th": "บทข้าแต่พระบิดา",
+      "aka": ["The Lord's Prayer", "Pater Noster"],
       "about": "the prayer Jesus taught us",
       "lines": [
         {
@@ -118,6 +120,7 @@
       "id": "hail-mary",
       "title": "The Hail Mary",
       "title_th": "บทวันทามารีย์",
+      "aka": ["Ave Maria"],
       "about": "the angel’s greeting",
       "lines": [
         {
@@ -176,6 +179,7 @@
       "id": "glory-be",
       "title": "Glory Be",
       "title_th": "บทพระสิริรุ่งโรจน์",
+      "aka": ["Gloria Patri", "The Doxology"],
       "about": "praise of the Holy Trinity",
       "lines": [
         {
@@ -221,6 +225,7 @@
       "id": "o-blood-and-water",
       "title": "O Blood and Water",
       "title_th": "โอ้ พระโลหิตและน้ำ",
+      "aka": ["The Divine Mercy prayer"],
       "about": "the Divine Mercy prayer at three o’clock",
       "lines": [
         {
@@ -255,6 +260,7 @@
       "id": "apostles-creed",
       "title": "The Apostles’ Creed",
       "title_th": "บทข้าพเจ้าเชื่อ (สัญลักษณ์ของอัครสาวก)",
+      "aka": ["Credo", "Symbol of the Apostles"],
       "about": "the faith of the Apostles, said at the start of the Rosary",
       "lines": [
         {
@@ -377,6 +383,7 @@
       "id": "nicene-creed",
       "title": "The Nicene Creed",
       "title_th": "บทข้าพเจ้าเชื่อ (ในพิธีมิสซา)",
+      "aka": ["Credo", "The Niceno-Constantinopolitan Creed"],
       "about": "the Creed said at Sunday Mass",
       "lines": [
         {
@@ -544,6 +551,7 @@
       "id": "hail-holy-queen",
       "title": "Hail, Holy Queen",
       "title_th": "บทวันทาพระราชินี",
+      "aka": ["Salve Regina"],
       "about": "the Salve Regina, said at the end of the Rosary",
       "lines": [
         {
@@ -634,6 +642,7 @@
       "id": "memorare",
       "title": "The Memorare",
       "title_th": "บทโปรดระลึกเถิด",
+      "aka": ["Remember, O most gracious Virgin Mary"],
       "about": "asking Our Lady’s help with confidence",
       "lines": [
         {
@@ -710,6 +719,7 @@
       "id": "angel-of-god",
       "title": "Angel of God",
       "title_th": "บททูตสวรรค์ของพระเจ้า",
+      "aka": ["Angele Dei", "The Guardian Angel prayer"],
       "about": "to your guardian angel, morning and night",
       "lines": [
         {

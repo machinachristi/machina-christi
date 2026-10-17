@@ -66,6 +66,17 @@ function prayersStore(container = cosmosContainer(), { log = () => {} } = {}) {
       return { value, ru: res.requestCharge ?? 0 };
     }),
 
+    // Every prayer with what search indexes (lines, other names), read live:
+    // only the search rebuild asks, a few times a week (about 4 RU).
+    forSearch: async () => {
+      if (!container) throw new Error('prayers database is not configured');
+      const res = await container.items
+        .query('SELECT c.id, c.title, c.title_th, c.aka, c.about, c.lines, c["order"] FROM c WHERE c.type = "prayer"', options())
+        .fetchAll();
+      log(`prayers read for search: ${res.resources.length}; ${(res.requestCharge ?? 0).toFixed(2)} RU`);
+      return res.resources.sort((a, b) => a.order - b.order);
+    },
+
     // The whole document (null if there's no such prayer): a point read by
     // id, which is also the partition key, so about 1 RU.
     get: id => remembered(`prayer:${id}`, async () => {

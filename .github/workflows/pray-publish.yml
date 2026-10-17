@@ -97,7 +97,7 @@ jobs:
           outputs=$(az deployment group show -g "$RESOURCE_GROUP" -n machina-platform --query properties.outputs -o json)
           for pair in COSMOS_ENDPOINT:cosmosEndpoint COSMOS_DATABASE:cosmosDatabaseName \
                       PRAYERS_CONTAINER:prayersContainerName SPEECH_ENDPOINT:speechEndpoint \
-                      AUDIO_CONTAINER_URL:audioContainerUrl; do
+                      AUDIO_CONTAINER_URL:audioContainerUrl STORAGE_ACCOUNT:storageAccountName; do
             v=$(jq -r ".${pair#*:}.value" <<<"$outputs")
             test -n "$v" && test "$v" != null
             echo "${pair%%:*}=$v" >> "$GITHUB_ENV"
@@ -107,3 +107,12 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           node scripts/publish-prayers.js ${{ inputs.rerecord_all && '--rerecord-all' || '' }}
+      - name: Ask search to catch up
+        # The search cards carry each prayer's words and other names. The API
+        # rebuilds them when a message lands on its search-reindex queue; this
+        # identity may post there and nowhere else (no Function key).
+        run: |
+          msg=$(printf '{"by":"pray-publish","commit":"%s"}' "${GITHUB_SHA::7}" | base64 -w0)
+          az storage message put --auth-mode login --account-name "$STORAGE_ACCOUNT" \
+            --queue-name search-reindex --content "$msg" -o none
+          echo "### Search rebuild requested (queue search-reindex)" >> "$GITHUB_STEP_SUMMARY"
