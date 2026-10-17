@@ -44,6 +44,7 @@ const PAGES = [
   '/ordo.html',
   '/pray.html',
   '/prayer.html',
+  '/search.html',
   '/workshop.html',
 ];
 
@@ -113,6 +114,15 @@ async function asLiveSite(page) {
         celebration: null,
         color: 'green',
       }),
+    }));
+  // Stand in for the search API: nothing found, as production's CORS would
+  // answer it. (Nothing here may reach the real API.)
+  await page.route(`${API}/api/search**`, route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': LIVE },
+      body: JSON.stringify({ q: new URL(route.request().url()).searchParams.get('q'), step: null, indexedAt: null, results: [] }),
     }));
   // Anything else off-site never leaves the test machine.
   await page.route(url => url.origin !== LIVE && url.origin !== API && !INGESTION.test(url.host) && /^https?:/.test(url.protocol),
@@ -195,6 +205,20 @@ test.describe('telemetry is private', () => {
     const stored = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)]);
     expect(stored.filter(k => /^ai_|^AI_/i.test(k))).toEqual([]);
     expect(seen.offsite).toEqual([]); // e.g. no remote SDK config from js.monitor.azure.com
+  });
+
+  test('what someone searches for never reaches telemetry, the title or storage', async ({ page }) => {
+    const seen = await asLiveSite(page);
+    await page.goto(LIVE + '/search.html?q=something-private');
+    await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
+    await expect(page.locator('#status')).toHaveText(/Nothing found/); // the search did run
+    const view = seen.pageViews()[0].data.baseData;
+    expect(view.url).toBe(LIVE + '/search.html');
+    expect(view.name).not.toContain('something-private');
+    expect(JSON.stringify(seen.sent)).not.toContain('something-private');
+    expect(await page.title()).not.toContain('something-private');
+    const stored = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
+    expect(stored).not.toContain('something-private');
   });
 
   test('time on page survives leaving the page', async ({ page }) => {

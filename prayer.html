@@ -73,7 +73,7 @@
     }
     body.has-player .wrap { padding-bottom: calc(var(--bar) + 40px); }
 
-    .back {
+    .back, .find {
       display: inline-block;
       font-size: 14px;
       letter-spacing: 0.2em;
@@ -84,10 +84,12 @@
       margin-bottom: 2.6em;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
-    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    .back:hover, .back:focus-visible, .find:hover, .find:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
     /* A bigger, invisible tap area (~44px tall) for thumbs; the link looks the same. */
-    .back { position: relative; }
-    .back::before { content: ''; position: absolute; inset: -9px -12px; }
+    .back, .find { position: relative; }
+    .back::before, .find::before { content: ''; position: absolute; inset: -9px -12px; }
+    /* Search, opposite the way back. */
+    .find { float: right; }
 
     h1 {
       font-weight: normal;
@@ -334,6 +336,7 @@
 <body>
   <div class="wrap">
     <a class="back" href="pray.html">&lsaquo; prayers</a>
+    <a class="find" href="search.html">search &rsaquo;</a>
     <h1 id="title">&hellip;</h1>
     <span class="subtitle" id="title-th" lang="th"></span>
 

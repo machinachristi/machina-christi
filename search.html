@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="Search Machina Christi — saints, prayers in Thai and English, and every corner of the site." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/search.html" />
+  <meta property="og:title" content="Search · Machina Christi" />
+  <meta property="og:description" content="Saints, prayers in Thai and English, and every corner of the site." />
+  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- Never the search words: the title is what telemetry records. -->
+  <title>Search · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      /* System Thai faces, looped first, as on the Pray pages. */
+      --thai:      Thonburi, "Noto Sans Thai Looped", "Noto Serif Thai", Tahoma, "Leelawadee UI", "Noto Sans Thai", sans-serif;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(201, 162, 39, 0.10), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.75;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    :lang(th) { font-family: var(--thai); }
+    /* Romanized Thai is Latin letters: keep the serif. */
+    :lang(th-Latn) { font-family: var(--serif); }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+    }
+
+    .back {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      margin-bottom: 3em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    .back { position: relative; }
+    .back::before { content: ''; position: absolute; inset: -9px -12px; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 0.5em 0 1em;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+
+    /* The box: 17px text, so phones don't zoom in when it's tapped. */
+    .box { position: relative; margin: 1.6em 0 0.6em; }
+    .box input {
+      width: 100%;
+      font: inherit;
+      font-size: 17px;
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.05);
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 14px;
+      padding: 13px 18px 13px 46px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .box input::placeholder { color: rgba(232, 213, 163, 0.42); }
+    .box input:focus { border-color: rgba(201, 162, 39, 0.85); box-shadow: 0 0 30px -12px rgba(201, 162, 39, 0.55); }
+    .box svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+
+    .status { min-height: 1.75em; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.6); }
+
+    .results { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-top: 1.2em; }
+    .result {
+      position: relative;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      padding: 16px 48px 16px 22px;
+      border: 1px solid rgba(201, 162, 39, 0.28);
+      border-radius: 14px;
+      background: rgba(201, 162, 39, 0.04);
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .result::after {
+      content: "\203A";
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-52%);
+      font-size: 22px;
+      color: rgba(201, 162, 39, 0.5);
+    }
+    .result:hover, .result:focus-visible { border-color: rgba(201, 162, 39, 0.7); background: rgba(201, 162, 39, 0.08); outline: none; }
+    .kind {
+      display: block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(201, 162, 39, 0.85);
+    }
+    .title { display: block; font-size: 18px; line-height: 1.5; color: var(--gold-soft); margin-top: 0.15em; }
+    .title-th { display: block; font-size: 18px; line-height: 1.7; color: rgba(232, 213, 163, 0.9); }
+    .snippet, .summary { display: block; margin-top: 0.35em; font-size: 15px; line-height: 1.65; color: rgba(232, 213, 163, 0.7); overflow-wrap: anywhere; }
+    .snippet:lang(th) { font-size: 17px; line-height: 1.8; }
+    mark { background: rgba(201, 162, 39, 0.22); color: var(--gold-soft); border-radius: 3px; padding: 0 1px; }
+
+    .fallback { margin-top: 1.4em; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.6); }
+
+    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">&lsaquo; home</a>
+    <h1>Search</h1>
+    <p>Saints, prayers and every corner of the site, in English or Thai. Try a saint&rsquo;s name, what they&rsquo;re patron of, a line of a prayer, or a word like <span lang="th">พระบิดา</span>.</p>
+
+    <form class="box" role="search" action="search.html" method="get">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#c9a227" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input id="q" name="q" type="search" maxlength="64" placeholder="Agnes, lawyers, Ave Maria…" aria-label="Search the site"
+             autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
+    </form>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <ul class="results" id="results"></ul>
+    <p class="fallback" id="fallback" hidden>A simple search of names and titles, while the full search is resting.</p>
+  </div>
+
+  <script src="/assets/search.js?v=1"></script>
+</body>
+</html>
