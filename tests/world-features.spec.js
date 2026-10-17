@@ -289,6 +289,9 @@ test.describe('the garden\'s features', () => {
   });
 
   test('the water answers: reflections lie on it, and a wading step rings (v9)', async ({ page }) => {
+    // A ring lives 1.3 simulated seconds, and the world's clock is capped per
+    // frame (0.05s) — on a slow CI runner that is far more than 1.3 real seconds.
+    test.setTimeout(90000);
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
@@ -305,9 +308,22 @@ test.describe('the garden\'s features', () => {
     await frame.evaluate(() => window.__world.teleport(-20, 6));
     await expect.poll(async () => (await getState(page)).wake.rings, { timeout: 5000 }).toBeGreaterThan(0);
 
-    // Back on dry land the last rings widen away and the water settles.
-    await frame.evaluate(() => window.__world.teleport(30, -30));
-    await expect.poll(async () => (await getState(page)).wake.rings, { timeout: 5000 }).toBe(0);
+    // Back on dry land the last rings widen away and the water settles. Wait
+    // on the garden's own clock, not the wall's: the day's clock (time.t)
+    // turns once every 420 simulated seconds (scenes/sky.js), so it tells how
+    // much garden time has passed since the step out — and by 2 garden
+    // seconds every ring (1.3s each, scenes/wake.js) must be spent.
+    const leftAt = await frame.evaluate(() => {
+      window.__world.teleport(30, -30);
+      return window.__world.getState().time.t;
+    });
+    const gardenSecondsSince = t => ((((t - leftAt) % 1) + 1) % 1) * 420;
+    let water;
+    await expect.poll(async () => {
+      water = await getState(page);
+      return water.wake.rings === 0 || gardenSecondsSince(water.time.t) > 2;
+    }, { timeout: 60000, message: 'the garden clock moves 2s on, or the water settles' }).toBe(true);
+    expect(water.wake.rings, 'rings still widening 2 garden seconds after the step out').toBe(0);
 
     // The reflections, the wake, and all the rest still inside budget.
     expect(s0.render.calls).toBeLessThan(200);
