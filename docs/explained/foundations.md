@@ -452,6 +452,10 @@ itself: is the role really there, does the live search really find Agnes?
 **Flaky test.** A test that sometimes fails without anything being wrong, often
 because it checks something timed on a slow, busy machine. Run once more to
 tell a flake from a real fault; then fix the test, because a test that cries
-wolf stops being believed.
-*Here:* one of Eden's water checks waits on the garden's own clock, which slows
-down on GitHub's small test machines.
+wolf stops being believed. Automatic retries can hide one: the run shows green
+even though the first try failed, so read the log, not just the tick.
+*Here:* one of Eden's water checks gave the ripples 5 real seconds to fade, but
+they fade on the garden's own clock, which slows down on GitHub's small test
+machines; CI's second try passed often enough to hide it. The check now reads
+the garden's clock and waits until 2 garden seconds have passed, however long
+that takes in real time (AB#95).
