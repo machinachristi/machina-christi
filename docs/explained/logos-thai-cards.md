@@ -90,8 +90,33 @@ The check, in a throwaway lab:
   | Achara | 39 |
 
   These are rough, because mid vs low and high vs rising are close cousins.
-- **The ears decided.** Beside my teacher, every name sounded right, and I
-  chose Premwadee.
+- **Choosing the voice.** I listened beside my teacher's recordings and chose
+  Premwadee. But as a beginner I can't truly judge Thai pronunciation, so a
+  machine check decided whether each name is right (below).
+
+**The machine check (a second opinion).** Every one of the 88 sounds went to
+Azure's Thai speech recognition twice:
+- **No hint:** it writes down what it hears, like a stranger would.
+- **Told the expected words:** it scores each word against native speakers
+  (**pronunciation assessment**).
+
+It ran keylessly, with a role given for a few minutes and taken away, and used
+about 7 of the free 300 minutes. A third check needed no Azure: Thai tones
+follow spelling rules (the letter's class, a live or dead syllable, the tone
+mark), and those rules agree with the book's tone marks on all 103 syllables.
+
+Most names scored 99 or more. Three were wrong in ways several checks agreed
+on, so the voice now reads them from a respelling it can't misread, while the
+card still shows the real spelling:
+
+| Card | Before | Respelled as | After |
+|---|---|---|---|
+| ษ ฤๅษี | heard "สอรี ศรี" (*ri* instead of *rue*) | รือสี | heard "สอ ฤาษี"; scores 96–100 |
+| ย ยักษ์ | heard "ยักย้าย" (an extra syllable) | ยัก | heard "ยอยักษ์"; scores 96–100 |
+| ฏ ปฏัก | the word not found at all | ปะตัก | scores 96–98 (the slow version's last syllable still scores low) |
+
+A machine is a second opinion, not a teacher: the voice is a good guide, not
+the final word.
 
 The lesson for later: a picture of your pitch line beside the model's will be
 more trustworthy than a computer guessing which tone you made.
