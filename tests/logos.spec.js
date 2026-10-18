@@ -205,6 +205,41 @@ test.describe('thai cards', () => {
     await expect.poll(() => page.evaluate(() => window.__said)).toEqual(['กอ ไก่']);
   });
 
+  // Thai letters reach below the line (ฎ ฏ ฐ ญ) and words carry marks above
+  // it (ผู้หญิง), further than an ordinary line of text allows for. The ink
+  // each letter really covers, measured in the page's own font, must stay
+  // inside the card and clear of the text under it, on both faces.
+  test('no letter or word is drawn over the text beneath it', async ({ page }) => {
+    await stubSound(page);
+    await page.goto('/cards.html?set=thai-all');
+    const ink = (sel, below) => page.evaluate(([sel, below]) => {
+      const el = document.querySelector(sel), cs = getComputedStyle(el);
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const m = ctx.measureText(el.textContent);
+      const box = el.getBoundingClientRect();
+      const baseline = box.top + (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
+      return {
+        text: el.textContent,
+        top: baseline - m.actualBoundingBoxAscent,
+        bottom: baseline + m.actualBoundingBoxDescent,
+        card: document.querySelector('#flash').getBoundingClientRect().top,
+        next: document.querySelector(below).getBoundingClientRect().top,
+      };
+    }, [sel, below]);
+    const clashes = [];
+    for (let i = 0; i < DATA.cards.length; i++) {
+      const front = await ink('#flash .letter', '#flash .hint');
+      if (front.bottom > front.next || front.top < front.card) clashes.push(`front ${front.text}: ink ${front.top.toFixed(0)}–${front.bottom.toFixed(0)}, hint at ${front.next.toFixed(0)}`);
+      await page.locator('#flash').click();
+      await expect(page.locator('#flash')).toHaveAttribute('data-side', 'back');
+      const back = await ink('#flash .name', '#flash .rom');
+      if (back.bottom > back.next || back.top < back.card) clashes.push(`back ${back.text}: ink ${back.top.toFixed(0)}–${back.bottom.toFixed(0)}, romanization at ${back.next.toFixed(0)}`);
+      if (i < DATA.cards.length - 1) { await page.locator('#next').click(); await expect(page.locator('#pos')).toHaveText(`${i + 2} / 44`); }
+    }
+    expect(clashes).toEqual([]);
+  });
+
   test('an unknown lesson says so', async ({ page }) => {
     await page.goto('/cards.html?set=latin-nouns');
     await expect(page.locator('#title')).toHaveText('Lesson not found');

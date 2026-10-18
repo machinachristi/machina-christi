@@ -112,7 +112,10 @@
     }
     .flash:hover, .flash:focus-visible { border-color: rgba(201, 162, 39, 0.75); box-shadow: 0 0 40px -14px rgba(var(--lacquer), 0.5); outline: none; }
     .flash.turning { transform: rotateY(90deg); }
-    .letter { display: block; font-size: 128px; line-height: 1.25; color: var(--gold-soft); }
+    /* Thai reaches further below and above the line than English: tails
+       (ฎ ฏ ฐ ญ) and marks over words (ผู้หญิง). Tall lines keep the ink
+       inside its own space; tests/logos.spec.js measures every letter. */
+    .letter { display: block; font-size: 128px; line-height: 1.6; color: var(--gold-soft); }
     .hint { display: block; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.5); }
     .name { display: block; font-size: 40px; line-height: 1.5; color: var(--gold-soft); margin-top: 6px; }
     .name .l { color: rgba(var(--lacquer), 1); margin-right: 0.25em; }
