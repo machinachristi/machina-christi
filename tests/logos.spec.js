@@ -59,6 +59,29 @@ test.describe('logos data', () => {
     }
   });
 
+  // The whole project folder is published, so this covers the docs and the
+  // tests too. The learner's lessons stay private: the site never mentions
+  // whose workbook or voice it learned from. (This file is skipped: it has to
+  // name what it looks for.)
+  test('nothing published mentions whose lessons Logos learned from', () => {
+    const MY = new RegExp(['my', 'teacher'].join('\\s+'), 'i');
+    const THEIRS = new RegExp(`teacher(['’]s)?\\s+(workbook|recordings?|voice)`, 'i');
+    const LOGOS = /teacher|อาจารย์|คุณครู/i;
+    const logosFiles = new Set(['logos.html', 'cards.html', 'about-logos.html', 'logos/thai.json', 'assets/logos.js', 'docs/explained/logos-thai-cards.md', 'functions/scripts/record-logos.js']);
+    const found = [];
+    const walk = dir => {
+      for (const f of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+        const rel = path.join(dir, f.name);
+        if (f.isDirectory()) { if (!['.git', 'node_modules', 'test-results', '.claude'].includes(f.name)) walk(rel); continue; }
+        if (!/\.(html|js|json|md|xml|txt)$/.test(f.name) || rel === path.join('tests', 'logos.spec.js')) continue;
+        const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+        if (MY.test(text) || THEIRS.test(text) || (logosFiles.has(rel) && LOGOS.test(text))) found.push(rel);
+      }
+    };
+    walk('');
+    expect(found).toEqual([]);
+  });
+
   test('every card has its two recordings, and no recording is left over', () => {
     const used = new Set();
     for (const c of DATA.cards) {
@@ -85,7 +108,7 @@ test.describe('logos gate', () => {
     await expect(lessons.nth(1)).toContainText('11 letters');
     await expect(lessons.nth(2)).toContainText('24 letters');
     await expect(lessons.nth(3)).toHaveAttribute('href', 'cards.html?set=thai-all');
-    await expect(page.locator('.credit')).toContainText("my teacher's workbook".replace("'", '’'));
+    await expect(page.locator('.credit')).toContainText('a Thai learner’s workbook');
     expect(errors).toEqual([]);
   });
 

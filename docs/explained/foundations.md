@@ -351,8 +351,8 @@ typing for 0.3 seconds, rather than once for every letter.
 not what you already know. Picture five boxes of flash cards: a card you know
 moves up a box and waits longer before it comes back (a day, three days, a
 week, two weeks); a card you miss goes back to the first box and comes back
-today. This version is the Leitner system, named after the teacher who did it
-with cardboard boxes.
+today. This version is the Leitner system, described by the German writer
+Sebastian Leitner in the 1970s, with real cardboard boxes.
 *Here:* Logos's Review mode for the Thai consonants.
 
 **Browser storage (localStorage).** A small notebook each website may keep
@@ -371,7 +371,7 @@ pages.
 **Romanization.** Writing one language's sounds in another's letters, so a
 learner can read them before learning the script. There are many systems; what
 matters is using one consistently.
-*Here:* Pray uses kh/ph/th for breathy sounds; Logos follows my teacher's
+*Here:* Pray uses kh/ph/th for breathy sounds; Logos follows a Thai learner's
 workbook (g/k, bp/dt, and a dot over short syllables).
 
 **Tone and pitch.** Pitch is how high or low a voice is at each moment;
@@ -386,11 +386,12 @@ or every last syllable sounds "falling".
 every card; comparing each syllable with the same voice's other syllables of
 each tone fixed it.
 
-**Reference check (an answer key).** Checking a machine's output against a
-trusted human example before using it. The reference doesn't have to be
-published to be useful.
-*Here:* the synthetic voice was compared, privately, with my teacher's
-recordings, which stay off the site.
+**Second opinion (a cross-check).** Checking one machine's work with another,
+independent one before trusting it, especially where you can't judge yourself.
+Where both agree, you can be fairly confident; where they disagree, look
+closer.
+*Here:* Azure's Thai speech recognition listened to every Logos sound. The
+three names it heard wrongly now have spellings the voice can't misread.
 
 **Unicode normalization (NFC).** The same accented letter can be stored two
 ways in a computer: as one character, or as a letter plus a separate accent.

@@ -6,7 +6,7 @@ explained in [foundations.md](foundations.md).*
 ## What changed, in one sentence
 
 A seventh gate, Logos, opened on the home page: the 44 Thai consonants as flash
-cards, in the order and spelling of my teacher's workbook, each with its name
+cards, in the order and spelling of a Thai learner's workbook, each with its name
 read aloud by a synthetic Thai voice, and a box system that brings back the
 cards I keep missing.
 
@@ -29,7 +29,7 @@ in the first. Know a card, and it moves to the next box and waits longer before
 it comes back: a day, three days, a week, two weeks. Miss it, and it goes back
 to the first box and comes back today. Hard cards come often; easy ones rarely.
 It's called **spaced repetition**, and this simple version is the Leitner
-system, after the teacher who invented it with real cardboard boxes.
+system, after Sebastian Leitner, who described it with real cardboard boxes.
 
 **The cards are one small file, not a database.** All 44 cards live in
 `logos/thai.json`, delivered with the pages like the bundled prayers. A database
@@ -44,7 +44,7 @@ don't visit for about a week.
 
 ## Why it was built this way
 
-**Following the workbook, not copying it.** The cards follow my teacher's
+**Following the workbook, not copying it.** The cards follow a Thai learner's
 workbook: the same order, the same three classes, the same words and meanings,
 and the book's own way of writing Thai sounds in English letters
 (**romanization**). In that spelling, a mark over a vowel gives the tone, and a
@@ -59,19 +59,16 @@ Where the print had a slip, I was asked rather than "corrected" silently:
 | ศ | *sǎw kawsǎalaa* | *sǎw sǎalaa* | a printing slip |
 | ษ | *sǎw bawreusěe* | *sǎw reusěe* | a printing slip |
 
-**A synthetic voice, checked against a human one.** The cards' voice is
+**A synthetic voice, checked by a second machine.** The cards' voice is
 Premwadee, a **neural voice** from the same Azure AI Speech studio that records
-the prayers. My teacher's recordings are a private **reference** only: I have no
-permission to put them on the site, so they never left my Mac. They weren't
-uploaded anywhere, committed, or sent to any service.
+the prayers.
 
-The check, in a throwaway lab:
+Choosing it, in a throwaway lab:
 1. The studio read all 44 names in each of its three Thai voices (Premwadee,
    Achara and Niwat).
 2. A small script measured each syllable's **pitch line** and asked whether its
    shape matched the tone the book's spelling asks for.
-3. I listened to each voice's reading of every class beside my teacher's
-   recordings.
+3. I listened to each voice reading every class.
 
 **What the lab found.**
 - **The first check was too strict.** It flagged 41 of 44 names as having the
@@ -90,9 +87,9 @@ The check, in a throwaway lab:
   | Achara | 39 |
 
   These are rough, because mid vs low and high vs rising are close cousins.
-- **Choosing the voice.** I listened beside my teacher's recordings and chose
-  Premwadee. But as a beginner I can't truly judge Thai pronunciation, so a
-  machine check decided whether each name is right (below).
+- **Choosing the voice.** I chose Premwadee. But as a beginner I can't truly
+  judge Thai pronunciation, so a machine check decided whether each name is
+  right (below).
 
 **The machine check (a second opinion).** Every one of the 88 sounds went to
 Azure's Thai speech recognition twice:
@@ -115,8 +112,8 @@ card still shows the real spelling:
 | ย ยักษ์ | heard "ยักย้าย" (an extra syllable) | ยัก | heard "ยอยักษ์"; scores 96–100 |
 | ฏ ปฏัก | the word not found at all | ปะตัก | scores 96–98 (the slow version's last syllable still scores low) |
 
-A machine is a second opinion, not a teacher: the voice is a good guide, not
-the final word.
+A machine is a second opinion, not a native speaker: the voice is a good
+guide, not the final word.
 
 The lesson for later: a picture of your pitch line beside the model's will be
 more trustworthy than a computer guessing which tone you made.
@@ -161,17 +158,16 @@ pull request's preview copy of the site.
 
 - **Fixing a card** (a spelling, a meaning) is an edit to `logos/thai.json`. If
   you change what is *said* (`say`), re-run the recipe so its sound is
-  re-recorded: give yourself the Speech role for a moment, run the script, take
-  the role away, and listen before committing.
+  re-recorded: give yourself the Speech role for a moment, run the script and
+  the machine check, then take the role away before committing.
 - **Your progress** is per browser and per device. Clearing site data, or a week
   away in Safari, starts the boxes again.
-- **Next:** the tones, with my teacher's "5 tones" recording as the private
-  reference; then practising aloud, where the studio listens to you say a
-  letter's name and a pitch picture shows your tone beside the model's
+- **Next:** the tones; then practising aloud, where the studio listens to you
+  say a letter's name and a pitch picture shows your tone beside the model's
   (AB#43).
 
 ## New foundations met here
 
 Spaced repetition (the box system) · browser storage and its limits · a file,
-not a database · romanization · tone and pitch · declination · a reference
-check · Unicode normalization (NFC). See [foundations.md](foundations.md).
+not a database · romanization · tone and pitch · declination · a second
+opinion (cross-check) · Unicode normalization (NFC). See [foundations.md](foundations.md).
