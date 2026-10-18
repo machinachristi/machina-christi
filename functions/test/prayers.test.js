@@ -15,7 +15,7 @@ const prayer = {
 };
 
 test('the published settings are complete, and every prayer has both languages on every line', () => {
-  P.checkSettings(DATA.audio);
+  P.checkSettings(DATA.audio, DATA.prayers);
   for (const p of DATA.prayers) for (const l of p.lines) for (const lang of P.LANGS) assert.ok(l[lang], `${p.id}: ${lang}`);
 });
 
@@ -45,6 +45,42 @@ test('a recording keeps its name until its words, voice or settings change', () 
   const roman = structuredClone(prayer); roman.lines[0].rom = 'changed'; roman.lines[0].en = 'changed';
   assert.equal(P.recordingHash(roman, 'th', 'normal', settings), h);
   assert.equal(P.recordingName('our-father', 'th', 'slow', 'abcdef0123'), 'our-father/th-slow-abcdef0123.mp3');
+});
+
+test('a respelling changes what the voice reads, never the prayer as written', () => {
+  const say = { ...settings, say: { th: { 'เดชะ': 'เด ชะ' } } };
+  const th = P.buildSsml(prayer, 'th', 'normal', say);
+  assert.match(th, /<bookmark mark="s0"\/>เด ชะพระนาม/);
+  assert.doesNotMatch(th, /เดชะ/);
+  assert.equal(P.buildSsml(prayer, 'en', 'normal', say), P.buildSsml(prayer, 'en', 'normal', settings), 'English untouched');
+  const recs = {};
+  for (const lang of P.LANGS) for (const speed of P.SPEEDS) recs[`${lang}/${speed}`] = { file: 'f', hash: 'h', starts: [0], duration: 1 };
+  assert.deepEqual(P.buildDoc(prayer, 0, recs, say).lines, prayer.lines, 'the page shows the Church\'s spelling');
+  // One pass, longest word first: a longer entry wins, and a respelling is never respelled again.
+  const two = { say: { th: { 'มารีย์พรหมจารี': 'มารีย์ พรหมจารี', 'พรหมจารี': 'พรมมะจารี' } } };
+  assert.equal(P.spokenText('มารีย์พรหมจารี', 'th', two), 'มารีย์ พรหมจารี');
+  assert.equal(P.spokenText('พรหมจารีแห่งพรหมจารี', 'th', two), 'พรมมะจารีแห่งพรมมะจารี');
+  assert.equal(P.spokenText('อาเมน', 'th', settings), 'อาเมน', 'no respellings: the words as written');
+});
+
+test('a respelling re-records only the prayers that have the word', () => {
+  const say = { ...settings, say: { th: { 'เดชะ': 'เด ชะ' } } };
+  assert.notEqual(P.recordingHash(prayer, 'th', 'normal', say), P.recordingHash(prayer, 'th', 'normal', settings));
+  const other = structuredClone(prayer); other.lines[0].th = 'และพระบุตร';
+  assert.equal(P.recordingHash(other, 'th', 'normal', say), P.recordingHash(other, 'th', 'normal', settings));
+  assert.equal(P.recordingHash(prayer, 'en', 'normal', say), P.recordingHash(prayer, 'en', 'normal', settings));
+  assert.equal(P.plan({ audio: say, prayers: [prayer] })[0].chars, Array.from('เด ชะพระนามอาเมน').length, 'the free-tier count is what the voice reads');
+});
+
+test('a respelling must be for a word a prayer has, and must change something', () => {
+  const withSay = say => ({ ...settings, say });
+  P.checkSettings(withSay({ th: { 'เดชะ': 'เด ชะ' } }), [prayer]);
+  assert.throws(() => P.checkSettings(withSay({ th: { 'ปฐมกาล': 'ปะถมมะกาน' } }), [prayer]), /no prayer has "ปฐมกาล"/);
+  assert.throws(() => P.checkSettings(withSay({ th: { 'เดชะ': ' ' } }), [prayer]), /needs a respelling/);
+  assert.throws(() => P.checkSettings(withSay({ th: { 'เดชะ': 'เดชะ' } }), [prayer]), /as itself/);
+  assert.throws(() => P.checkSettings(withSay({ fr: { a: 'b' } }), [prayer]), /unknown language/);
+  assert.throws(() => P.checkSettings(withSay({ th: 'เดชะ' })), /must map words/);
+  assert.throws(() => P.checkSettings(withSay(['เดชะ'])), /must map a language/);
 });
 
 test('bookmark ticks become line start times in seconds, and a missing line is an error', () => {
