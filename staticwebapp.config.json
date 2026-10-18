@@ -50,6 +50,18 @@
       }
     },
     {
+      "route": "/logos/audio/*",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/logos/*",
+      "headers": {
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    {
       "route": "/workshop/*",
       "headers": {
         "Cache-Control": "public, max-age=3600"

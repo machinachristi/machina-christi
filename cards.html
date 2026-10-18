@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="Thai consonant flash cards: turn each card, hear its name, and review the ones you miss." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/cards.html" />
+  <meta property="og:title" content="Thai cards · Logos · Machina Christi" />
+  <meta property="og:description" content="Thai consonant flash cards: turn each card, hear its name, and review the ones you miss." />
+  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>Thai cards · Logos · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --lacquer:   222, 112, 98;   /* Logos — Thai lacquer red */
+      --good:      150, 200, 140;
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --thai:      Thonburi, "Noto Sans Thai Looped", "Noto Serif Thai", Tahoma, "Leelawadee UI", "Noto Sans Thai", sans-serif;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(var(--lacquer), 0.12), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.6;
+      -webkit-tap-highlight-color: transparent;
+    }
+    :lang(th) { font-family: var(--thai); }
+    [hidden] { display: none !important; }
+
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: max(24px, env(safe-area-inset-top)) 20px max(40px, env(safe-area-inset-bottom));
+    }
+    .back {
+      position: relative;
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      margin-bottom: 1.6em;
+    }
+    .back::before { content: ''; position: absolute; inset: -9px -12px; }
+    .back:hover, .back:focus-visible { color: var(--gold-soft); outline: none; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(20px, 5.6vw, 26px);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      line-height: 1.3;
+    }
+    .subtitle { display: block; font-size: 18px; color: rgba(var(--lacquer), 0.95); margin-bottom: 1em; }
+
+    /* ── The three ways to use the cards ──────────────────────── */
+    .modes { display: flex; gap: 8px; margin-bottom: 1.2em; }
+    .mode {
+      flex: 1;
+      min-height: 44px;
+      font-family: var(--serif);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      color: rgba(232, 213, 163, 0.7);
+      background: none;
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .mode[aria-selected="true"] {
+      color: var(--gold-soft);
+      border-color: rgba(var(--lacquer), 0.75);
+      background: rgba(var(--lacquer), 0.12);
+    }
+    .mode:focus-visible { outline: 1px solid rgba(var(--lacquer), 0.9); outline-offset: 3px; }
+
+    /* ── The card ─────────────────────────────────────────────── */
+    .flash {
+      display: block;
+      width: 100%;
+      min-height: 300px;
+      padding: 22px 20px;
+      font: inherit;
+      color: inherit;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid rgba(201, 162, 39, 0.4);
+      border-radius: 20px;
+      background:
+        radial-gradient(100% 80% at 50% 0%, rgba(var(--lacquer), 0.10), transparent 70%),
+        rgba(201, 162, 39, 0.04);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s ease;
+    }
+    .flash:hover, .flash:focus-visible { border-color: rgba(201, 162, 39, 0.75); box-shadow: 0 0 40px -14px rgba(var(--lacquer), 0.5); outline: none; }
+    .flash.turning { transform: rotateY(90deg); }
+    /* Thai reaches further below and above the line than English: tails
+       (ฎ ฏ ฐ ญ) and marks over words (ผู้หญิง). Tall lines keep the ink
+       inside its own space; tests/logos.spec.js measures every letter. */
+    .letter { display: block; font-size: 128px; line-height: 1.6; color: var(--gold-soft); }
+    .hint { display: block; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.5); }
+    .name { display: block; font-size: 40px; line-height: 1.5; color: var(--gold-soft); margin-top: 6px; }
+    .name .l { color: rgba(var(--lacquer), 1); margin-right: 0.25em; }
+    .rom { display: block; font-family: var(--serif); font-size: 22px; letter-spacing: 0.02em; color: rgba(var(--lacquer), 0.95); }
+    .meaning { display: block; font-size: 18px; font-style: italic; color: rgba(232, 213, 163, 0.8); margin-top: 4px; }
+    .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+    .tag {
+      font-size: 14px;
+      padding: 2px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(232, 213, 163, 0.25);
+      color: rgba(232, 213, 163, 0.75);
+    }
+    .tag.rare { border-color: rgba(var(--lacquer), 0.5); color: rgba(var(--lacquer), 1); }
+
+    /* ── Controls under the card ──────────────────────────────── */
+    .row { display: flex; gap: 10px; margin-top: 14px; align-items: center; }
+    .btn {
+      flex: 1;
+      min-height: 48px;
+      padding: 0 12px;
+      font-family: var(--serif);
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.06);
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .btn:hover, .btn:focus-visible { border-color: rgba(201, 162, 39, 0.85); background: rgba(201, 162, 39, 0.12); outline: none; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .btn.again { border-color: rgba(var(--lacquer), 0.6); }
+    .btn.knew { border-color: rgba(var(--good), 0.6); }
+    .btn.small { flex: 0 0 auto; padding: 0 18px; }
+    .btn[aria-pressed="true"] { border-color: rgba(var(--lacquer), 0.8); background: rgba(var(--lacquer), 0.14); }
+    .pos { flex: 0 0 auto; min-width: 4.5em; text-align: center; font-size: 14px; color: rgba(232, 213, 163, 0.6); }
+
+    /* Listen & pick: four letters to choose from. */
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .choice {
+      min-height: 96px;
+      font-family: var(--thai);
+      font-size: 56px;
+      line-height: 1;
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.05);
+      border: 1px solid rgba(201, 162, 39, 0.4);
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    .choice:hover, .choice:focus-visible { border-color: rgba(201, 162, 39, 0.85); outline: none; }
+    .choice.right { border-color: rgba(var(--good), 0.9); background: rgba(var(--good), 0.14); }
+    .choice.wrong { border-color: rgba(var(--lacquer), 0.9); background: rgba(var(--lacquer), 0.12); }
+    .choice:disabled { cursor: default; }
+
+    .status { min-height: 1.6em; margin-top: 14px; font-size: 16px; text-align: center; color: rgba(232, 213, 163, 0.8); }
+    .status .th { font-size: 19px; }
+    .note { margin-top: 1.8em; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.55); }
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.65); }
+
+    @media (prefers-reduced-motion: reduce) { .flash, .flash.turning { transition: none; transform: none; } }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="logos.html">&lsaquo; logos</a>
+    <h1 id="title">&hellip;</h1>
+    <span class="subtitle" id="title-th" lang="th"></span>
+
+    <div class="modes" role="tablist" aria-label="How to use the cards" id="modes" hidden>
+      <button type="button" class="mode" role="tab" data-mode="learn" aria-selected="false">Learn</button>
+      <button type="button" class="mode" role="tab" data-mode="review" aria-selected="false">Review</button>
+      <button type="button" class="mode" role="tab" data-mode="pick" aria-selected="false">Listen &amp; pick</button>
+    </div>
+
+    <section id="stage" aria-live="polite">
+      <p class="notice">Loading&hellip;</p>
+    </section>
+
+    <p class="note" id="note" hidden></p>
+  </div>
+
+  <script src="/assets/logos.js?v=1"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = id => document.getElementById(id);
+      const L = window.mcLogos;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const stage = $('stage');
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      // "Slow voice" is remembered between visits, like Pray's switches.
+      const store = {
+        get(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : v === '1'; } catch (e) { return fallback; } },
+        set(key, on) { try { localStorage.setItem(key, on ? '1' : '0'); } catch (e) {} },
+      };
+      let slow = store.get('logos.slow', false);
+
+      let data = null;
+      let lessonId = null;
+      let cards = [];          // every card in the lesson, in the book's order
+      let study = [];          // the ones reviewed and quizzed (not the obsolete ones)
+      let mode = null;
+
+      const CLASS_NAMES = { middle: 'middle class', high: 'high class', low: 'low class' };
+      const USE_NOTES = { seldom: 'seldom used', obsolete: 'no longer used' };
+
+      function face(card) {
+        return `<span class="letter" lang="th">${escapeHtml(card.letter)}</span><span class="hint">tap to turn over</span>`;
+      }
+      function backFace(card) {
+        const cls = data.classes[card.class];
+        return `
+          <span class="name" lang="th"><span class="l">${escapeHtml(card.letter)}</span>${escapeHtml(card.word)}</span>
+          <span class="rom" lang="th-Latn">${escapeHtml(card.rom)}</span>
+          <span class="meaning">${escapeHtml(card.meaning)}</span>
+          <span class="tags">
+            <span class="tag">${escapeHtml(CLASS_NAMES[card.class])} &middot; <span lang="th">${escapeHtml(cls.name_th)}</span></span>
+            ${USE_NOTES[card.use] ? `<span class="tag rare">${USE_NOTES[card.use]}</span>` : ''}
+          </span>`;
+      }
+
+      // Turning a card over: a quarter turn, the other face, back again. The
+      // name is said inside the same tap (iPhones only start sound from a tap).
+      function turn(btn, card, toBack) {
+        const show = () => {
+          btn.innerHTML = toBack ? backFace(card) : face(card);
+          btn.setAttribute('aria-label', toBack ? `${card.letter} ${card.word}, ${card.rom}, ${card.meaning}` : 'Turn the card over');
+          btn.dataset.side = toBack ? 'back' : 'front';
+        };
+        if (toBack) L.speak(card, slow);
+        if (reduced) { show(); return; }
+        btn.classList.add('turning');
+        setTimeout(() => { show(); btn.classList.remove('turning'); }, 170);
+      }
+
+      function cardButton(card) {
+        return `<button type="button" class="flash" id="flash" data-side="front" aria-label="Turn the card over">${face(card)}</button>`;
+      }
+
+      const slowButton = () => `<button type="button" class="btn small" id="slow" aria-pressed="${slow}">Slow</button>`;
+      function wireSlow() {
+        $('slow').addEventListener('click', () => { slow = !slow; store.set('logos.slow', slow); $('slow').setAttribute('aria-pressed', String(slow)); });
+      }
+
+      /* ── Learn: every card, in the book's order ─────────────────── */
+      let at = 0;
+      function learn() {
+        const card = cards[at];
+        stage.innerHTML = `
+          ${cardButton(card)}
+          <div class="row">
+            <button type="button" class="btn small" id="prev" aria-label="Previous card" ${at === 0 ? 'disabled' : ''}>&lsaquo;</button>
+            <button type="button" class="btn" id="listen">Listen</button>
+            ${slowButton()}
+            <button type="button" class="btn small" id="next" aria-label="Next card" ${at === cards.length - 1 ? 'disabled' : ''}>&rsaquo;</button>
+          </div>
+          <p class="status"><span class="pos" id="pos">${at + 1} / ${cards.length}</span></p>`;
+        const flash = $('flash');
+        flash.addEventListener('click', () => turn(flash, card, flash.dataset.side === 'front'));
+        $('listen').addEventListener('click', () => L.speak(card, slow));
+        $('prev').addEventListener('click', () => { if (at > 0) { at--; learn(); $('flash').focus(); } });
+        $('next').addEventListener('click', () => { if (at < cards.length - 1) { at++; learn(); $('flash').focus(); } });
+        wireSlow();
+      }
+
+      /* ── Review: the box system ─────────────────────────────────── */
+      let queue = [];
+      function startReview(all = false) {
+        const today = L.day();
+        queue = study.filter(c => all || L.progress.isDue(c.id, today));
+        review();
+      }
+      function review() {
+        if (!queue.length) {
+          const s = L.progress.summary(study);
+          stage.innerHTML = `
+            <p class="status">All done for today. ${s.learned} of ${study.length} learned well.</p>
+            <div class="row"><button type="button" class="btn" id="again-all">Review all ${study.length} anyway</button></div>`;
+          $('again-all').addEventListener('click', () => startReview(true));
+          return;
+        }
+        const card = queue[0];
+        stage.innerHTML = `
+          ${cardButton(card)}
+          <div class="row" id="answer" hidden>
+            <button type="button" class="btn again" id="again">Again</button>
+            <button type="button" class="btn knew" id="knew">Got it</button>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="listen" hidden>Listen</button>
+            ${slowButton()}
+          </div>
+          <p class="status">${queue.length} to go</p>`;
+        const flash = $('flash');
+        flash.addEventListener('click', () => {
+          const toBack = flash.dataset.side === 'front';
+          turn(flash, card, toBack);
+          $('answer').hidden = !toBack;
+          $('listen').hidden = !toBack;
+        });
+        $('listen').addEventListener('click', () => L.speak(card, slow));
+        $('again').addEventListener('click', () => { L.progress.mark(card.id, false); queue.push(queue.shift()); review(); $('flash').focus(); });
+        $('knew').addEventListener('click', () => { L.progress.mark(card.id, true); queue.shift(); review(); const f = $('flash'); if (f) f.focus(); });
+        wireSlow();
+      }
+
+      /* ── Listen & pick: hear a name, find its letter ────────────── */
+      const ROUND = 10;
+      let round = null;
+      function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+      function startPick() {
+        round = { asked: 0, right: 0, card: null };
+        stage.innerHTML = `
+          <p class="status">You&rsquo;ll hear a letter&rsquo;s name. Tap the letter it belongs to.</p>
+          <div class="row"><button type="button" class="btn" id="start">Start</button>${slowButton()}</div>`;
+        $('start').addEventListener('click', nextPick);
+        wireSlow();
+      }
+      function nextPick() {
+        if (round.asked >= Math.min(ROUND, study.length)) {
+          stage.innerHTML = `
+            <p class="status">${round.right} of ${round.asked} right.</p>
+            <div class="row"><button type="button" class="btn" id="start">Play again</button></div>`;
+          $('start').addEventListener('click', () => { startPick(); nextPick(); });
+          return;
+        }
+        const card = shuffle(study.filter(c => c !== round.card))[0];
+        // Look-alikes from the same class make it a real choice.
+        const pool = study.filter(c => c !== card && c.class === card.class);
+        const others = shuffle(pool.length >= 3 ? pool : study.filter(c => c !== card)).slice(0, 3);
+        const options = shuffle([card, ...others]);
+        round.card = card;
+        round.asked++;
+        stage.innerHTML = `
+          <div class="choices" role="group" aria-label="Which letter?">
+            ${options.map((c, i) => `<button type="button" class="choice" lang="th" data-id="${escapeHtml(c.id)}" aria-label="Choice ${i + 1}: ${escapeHtml(c.letter)}">${escapeHtml(c.letter)}</button>`).join('')}
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="listen">Hear it again</button>
+            ${slowButton()}
+            <button type="button" class="btn small" id="next" hidden>Next &rsaquo;</button>
+          </div>
+          <p class="status" id="said">Question ${round.asked} of ${Math.min(ROUND, study.length)}</p>`;
+        L.speak(card, slow); // inside the tap that brought this question
+        $('listen').addEventListener('click', () => L.speak(card, slow));
+        stage.querySelectorAll('.choice').forEach(b => b.addEventListener('click', () => {
+          const right = b.dataset.id === card.id;
+          if (right) round.right++;
+          stage.querySelectorAll('.choice').forEach(x => {
+            x.disabled = true;
+            if (x.dataset.id === card.id) x.classList.add('right');
+            else if (x === b) x.classList.add('wrong');
+          });
+          $('said').innerHTML = `${right ? 'Yes' : 'It was'}: <span class="th" lang="th">${escapeHtml(card.letter)} ${escapeHtml(card.word)}</span>, ${escapeHtml(card.rom)} (${escapeHtml(card.meaning)})`;
+          $('next').hidden = false;
+          $('next').focus();
+        }));
+        $('next').addEventListener('click', nextPick);
+        wireSlow();
+      }
+
+      /* ── Switching modes ──────────────────────────────────────── */
+      function setMode(m, push = true) {
+        mode = m;
+        L.stop();
+        document.querySelectorAll('.mode').forEach(b => b.setAttribute('aria-selected', String(b.dataset.mode === m)));
+        if (push) {
+          const u = new URL(location.href);
+          u.searchParams.set('mode', m);
+          history.replaceState(null, '', u);
+        }
+        if (m === 'learn') { at = 0; learn(); }
+        else if (m === 'review') startReview();
+        else startPick();
+      }
+      $('modes').addEventListener('click', e => { const b = e.target.closest('.mode'); if (b) setMode(b.dataset.mode); });
+
+      // Keys: arrows step through Learn; 1 / 2 answer Again / Got it; 1–4 pick.
+      document.addEventListener('keydown', e => {
+        if (e.altKey || e.ctrlKey || e.metaKey) return;
+        const click = id => { const el = $(id); if (el && !el.hidden && !el.disabled) { el.click(); e.preventDefault(); } };
+        if (mode === 'learn') { if (e.key === 'ArrowLeft') click('prev'); if (e.key === 'ArrowRight') click('next'); }
+        if (mode === 'review' && $('answer') && !$('answer').hidden) { if (e.key === '1') click('again'); if (e.key === '2') click('knew'); }
+        if (mode === 'pick' && /^[1-4]$/.test(e.key)) { const c = stage.querySelectorAll('.choice')[Number(e.key) - 1]; if (c && !c.disabled) { c.click(); e.preventDefault(); } }
+      });
+
+      /* ── Load ─────────────────────────────────────────────────── */
+      const params = new URLSearchParams(location.search);
+      const set = params.get('set') || 'thai-middle';
+      L.load()
+        .then(d => {
+          data = d;
+          lessonId = set.replace(/^thai-/, '');
+          const found = set.startsWith('thai-') ? L.lesson(data, lessonId) : null;
+          if (!found) {
+            $('title').textContent = 'Lesson not found';
+            stage.innerHTML = '<p class="notice">That lesson isn&rsquo;t here. <a href="logos.html">Back to Logos</a>.</p>';
+            return;
+          }
+          cards = found.cards;
+          study = cards.filter(c => c.use !== 'obsolete');
+          document.title = `${found.lesson.title} · Thai cards · Logos · Machina Christi`;
+          $('title').textContent = found.lesson.title;
+          $('title-th').textContent = found.lesson.title_th;
+          $('modes').hidden = false;
+          const skipped = cards.filter(c => c.use === 'obsolete');
+          if (skipped.length) {
+            $('note').textContent = `${skipped.map(c => c.letter).join(' and ')} ${skipped.length > 1 ? 'are' : 'is'} no longer used, so Review and Listen & pick leave ${skipped.length > 1 ? 'them' : 'it'} out. Learn still shows ${skipped.length > 1 ? 'them' : 'it'}.`;
+            $('note').hidden = false;
+          }
+          const asked = params.get('mode');
+          const seen = L.progress.summary(study).seen > 0;
+          setMode(['learn', 'review', 'pick'].includes(asked) ? asked : (seen ? 'review' : 'learn'), false);
+        })
+        .catch(() => {
+          stage.innerHTML = '<p class="notice">The cards couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>

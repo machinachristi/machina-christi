@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -37,6 +37,7 @@
   <link rel="prefetch" href="about.html" />
   <link rel="prefetch" href="ordo.html" />
   <link rel="prefetch" href="pray.html" />
+  <link rel="prefetch" href="logos.html" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -50,6 +51,7 @@
       --marian:    138, 170, 222;  /* Pray — Marian blue */
       --parchment: 216, 198, 170;  /* About — the written word */
       --timber:    214, 146, 92;   /* Workshop — the carpenter's bench */
+      --lacquer:   222, 112, 98;   /* Logos — Thai lacquer red */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
          beneath the hero: never wider than the phone allows a neighbor to
@@ -161,7 +163,7 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
-    /* The way loops: swiping past the Workshop or Pray doesn't scroll through
+    /* The way loops: swiping past the Workshop or Logos doesn't scroll through
        to a preview of the other end (that would spoil it, and looks like
        a stray duplicate card) — the strip fades out, jumps, and fades
        back in already standing at the far gate. */
@@ -210,6 +212,7 @@
     .portal--pray   { --glow: var(--marian); }
     .portal--about  { --glow: var(--parchment); }
     .portal--workshop { --glow: var(--timber); }
+    .portal--logos  { --glow: var(--lacquer); }
 
     /* The light waiting past each threshold. */
     .portal__halo {
@@ -536,6 +539,20 @@
         <span class="portal__title">Pray</span>
         <span class="portal__desc">prayers in Thai &amp; English</span>
       </a>
+
+      <a class="portal portal--logos" href="logos.html" aria-label="Enter Logos, learning Thai">
+        <span class="portal__halo" aria-hidden="true"></span>
+        <span class="portal__vignette" aria-hidden="true">
+          <svg viewBox="0 0 48 64">
+            <!-- ก, the first letter: "in the beginning was the Word" -->
+            <path d="M15 51 V28 C15 19.5 19.5 15 25 15 C30.5 15 34 19.5 34 28 V51" />
+            <path d="M15 27.5 L11.5 24.5" />
+            <path d="M10 56 H38" />
+          </svg>
+        </span>
+        <span class="portal__title">Logos</span>
+        <span class="portal__desc">learning Thai</span>
+      </a>
     </div>
 
     <p class="hint">Tap a gate to enter</p>
@@ -600,7 +617,7 @@
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
 
-      // The way loops: past Pray is the Workshop again, and back the other way.
+      // The way loops: past Logos is the Workshop again, and back the other way.
       // Rather than scroll through to a peek of the far gate first (which
       // would spoil it and briefly show what looks like a stray duplicate
       // card), a swipe past either end is a quick cut — fade out, jump,

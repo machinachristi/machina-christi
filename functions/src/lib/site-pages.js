@@ -6,7 +6,7 @@
 const SITE_PAGES = [
   {
     name: 'home', url: '/', title: 'Machina Christi',
-    description: 'A gathering place of experiences: the Workshop, Camino, Eden, Ordo and Pray.',
+    description: 'A gathering place of experiences: the Workshop, Camino, Eden, Ordo, Pray and Logos.',
     keywords: ['home', 'start'],
   },
   {
@@ -30,13 +30,18 @@ const SITE_PAGES = [
     keywords: ['prayers', 'thai', 'learn thai', 'pronunciation', 'listen', 'audio'],
   },
   {
+    name: 'logos', url: '/logos.html', title: 'Logos: learning Thai',
+    description: 'Learning Thai, letter by letter: the 44 consonants as flash cards, with their names read aloud.',
+    keywords: ['thai', 'learn thai', 'alphabet', 'letters', 'consonants', 'flash cards', 'language'],
+  },
+  {
     name: 'workshop', url: '/workshop.html', title: 'The Workshop',
     description: 'Every tool that builds and keeps Machina Christi, set as columns of light in a square after St Peter\'s.',
     keywords: ['how it is built', 'technology', 'tools', 'azure', 'code'],
   },
   {
     name: 'about', url: '/about.html', title: 'About Machina Christi',
-    description: 'The site, the runner, the garden, today in the Church, and prayers in Thai and English.',
+    description: 'The site, the runner, the garden, today in the Church, prayers in Thai and English, and learning Thai.',
     keywords: ['about', 'story', 'why'],
   },
   {
@@ -58,6 +63,11 @@ const SITE_PAGES = [
     name: 'about-pray', url: '/about-pray.html', title: 'About Pray',
     description: 'About Pray, classic Catholic prayers in Thai and English, because God can be honored in every language.',
     keywords: ['thai', 'translation', 'sources', 'voices'],
+  },
+  {
+    name: 'about-logos', url: '/about-logos.html', title: 'About Logos',
+    description: 'About Logos, where Machina Christi learns languages, beginning with the Thai consonants.',
+    keywords: ['thai', 'alphabet', 'workbook', 'voice'],
   },
   {
     name: 'about-workshop', url: '/about-workshop.html', title: 'About the Workshop',
