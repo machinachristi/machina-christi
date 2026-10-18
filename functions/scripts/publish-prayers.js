@@ -180,7 +180,7 @@ async function publish(data) {
 
 (async () => {
   const data = readJson(DATA_PATH);
-  P.checkSettings(data.audio);
+  P.checkSettings(data.audio, data.prayers);
   if (flag('--dry-run')) dryRun(data);
   else await publish(data);
 })()

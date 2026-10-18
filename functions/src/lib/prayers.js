@@ -8,7 +8,8 @@
 // start of every line; the speech service reports when it reaches each one,
 // which gives the line timings the page's highlight follows. (A bookmark at
 // the end of a line isn't reported reliably by every voice, so a line runs
-// from its own start to the next line's.)
+// from its own start to the next line's.) A few words the voice misreads are
+// respelled for it (see spokenText).
 const crypto = require('node:crypto');
 
 // Bump when the way recordings are made changes in a way the settings don't
@@ -22,6 +23,21 @@ const LOCALE = { th: 'th-TH', en: 'en-US' };
 
 const xml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
 
+// What the voice reads for a line. prayers.json's `audio.say` respells the
+// words a voice gets wrong, the way they should sound, per language:
+// { "th": { "ประกาศก": "ประกา สก" } }. Only the recording changes: the
+// prayer's own text, which the pages show and search finds, stays as the
+// Church wrote it. All words are replaced in one pass, longest first, so a
+// longer entry wins over a shorter one inside it and a respelling is never
+// respelled again.
+function spokenText(text, lang, settings) {
+  const say = settings?.say?.[lang];
+  const words = Object.keys(say ?? {}).sort((a, b) => b.length - a.length);
+  if (!words.length) return text;
+  const any = new RegExp(words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  return text.replace(any, w => say[w]);
+}
+
 function rateFor(speed, settings) {
   return speed === 'slow' ? settings.slowRate : null;
 }
@@ -29,7 +45,7 @@ function rateFor(speed, settings) {
 function buildSsml(prayer, lang, speed, settings) {
   const n = prayer.lines.length;
   const body = prayer.lines.map((l, i) =>
-    `<bookmark mark="s${i}"/>${xml(l[lang])}` + (i < n - 1 ? `<break time="${settings.breakMs}ms"/>` : '')).join('');
+    `<bookmark mark="s${i}"/>${xml(spokenText(l[lang], lang, settings))}` + (i < n - 1 ? `<break time="${settings.breakMs}ms"/>` : '')).join('');
   const rate = rateFor(speed, settings);
   const inner = rate ? `<prosody rate="${xml(rate)}">${body}</prosody>` : body;
   return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${LOCALE[lang]}">` +
@@ -38,7 +54,8 @@ function buildSsml(prayer, lang, speed, settings) {
 
 // A fingerprint of everything that shapes a recording. Same words, voice and
 // settings: same name, so the existing file is reused. Anything different: a
-// new name, so caches can keep every file forever.
+// new name, so caches can keep every file forever. The words are the ones the
+// voice reads, so a new respelling re-records only the prayers that have it.
 function recordingHash(prayer, lang, speed, settings) {
   const recipe = {
     v: GENERATOR_VERSION,
@@ -46,7 +63,7 @@ function recordingHash(prayer, lang, speed, settings) {
     rate: rateFor(speed, settings),
     breakMs: settings.breakMs,
     format: settings.format,
-    lines: prayer.lines.map(l => l[lang]),
+    lines: prayer.lines.map(l => spokenText(l[lang], lang, settings)),
   };
   return crypto.createHash('sha256').update(JSON.stringify(recipe)).digest('hex').slice(0, 10);
 }
@@ -55,7 +72,7 @@ const recordingName = (id, lang, speed, hash) => `${id}/${lang}-${speed}-${hash}
 
 // What a recording costs from the free 500,000 characters a month: the words
 // read (SSML tags aren't counted).
-const characters = (prayer, lang) => prayer.lines.reduce((sum, l) => sum + Array.from(l[lang]).length, 0);
+const characters = (prayer, lang, settings) => prayer.lines.reduce((sum, l) => sum + Array.from(spokenText(l[lang], lang, settings)).length, 0);
 
 // Bookmark offsets arrive in ticks (100 ns). Every line's start must be there.
 const TICKS_PER_SECOND = 1e7;
@@ -87,7 +104,7 @@ function plan(data, published = {}, { rerecordAll = false } = {}) {
         items.push({
           id: prayer.id, lang, speed, hash,
           file: recordingName(prayer.id, lang, speed, hash),
-          chars: characters(prayer, lang),
+          chars: characters(prayer, lang, settings),
           reuse,
         });
       }
@@ -118,16 +135,30 @@ function buildDoc(prayer, order, recordings, settings) {
 // leave the API.
 const stripSystemFields = doc => Object.fromEntries(Object.entries(doc).filter(([k]) => !k.startsWith('_')));
 
-function checkSettings(settings) {
+// With `prayers`, every respelling must be for a word some prayer has: one
+// that isn't is a typo, or left over from an edit to the text.
+function checkSettings(settings, prayers) {
   if (!settings) throw new Error('prayers.json has no "audio" settings');
   for (const lang of LANGS) if (!settings.voices?.[lang]) throw new Error(`no ${lang} voice in "audio" settings`);
   if (!/^-\d{1,2}%$/.test(settings.slowRate ?? '')) throw new Error('slowRate must look like "-30%"');
   if (!Number.isInteger(settings.breakMs) || settings.breakMs < 0 || settings.breakMs > 3000) throw new Error('breakMs must be 0–3000');
   if (!settings.format) throw new Error('no audio format');
+  if (settings.say === undefined) return;
+  const isMap = x => x && typeof x === 'object' && !Array.isArray(x);
+  if (!isMap(settings.say)) throw new Error('"say" must map a language to its respellings');
+  for (const [lang, words] of Object.entries(settings.say)) {
+    if (!LANGS.includes(lang)) throw new Error(`"say" has respellings for an unknown language "${lang}"`);
+    if (!isMap(words)) throw new Error(`"say" ${lang} must map words to respellings`);
+    for (const [word, as] of Object.entries(words)) {
+      if (!word.trim() || typeof as !== 'string' || !as.trim()) throw new Error(`"say" ${lang}: "${word}" needs a respelling`);
+      if (as === word) throw new Error(`"say" ${lang}: "${word}" is respelled as itself`);
+      if (prayers && !prayers.some(p => p.lines.some(l => String(l[lang] ?? '').includes(word)))) throw new Error(`"say" ${lang}: no prayer has "${word}"`);
+    }
+  }
 }
 
 module.exports = {
   GENERATOR_VERSION, LANGS, SPEEDS,
-  buildSsml, recordingHash, recordingName, characters,
+  spokenText, buildSsml, recordingHash, recordingName, characters,
   timingsFromBookmarks, plan, buildDoc, stripSystemFields, checkSettings,
 };

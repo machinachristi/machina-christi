@@ -393,6 +393,40 @@ closer.
 *Here:* Azure's Thai speech recognition listened to every Logos sound. The
 three names it heard wrongly now have spellings the voice can't misread.
 
+**Speech-to-text (speech recognition).** A computer listening and writing
+down what it hears. Think of a careful stranger: it knows common words very
+well and rare ones badly, so it may "hear" a familiar word in place of an
+unfamiliar one, the way you might hear a song lyric wrong.
+*Here:* in the Pray voice check it wrote โดยเฉพาะ ("especially") for the rare
+เดชะ, while the voice was fine.
+
+**Pronunciation assessment.** Speech-to-text that is told what *should* be
+said. It scores each word and sound against native speakers (0 to 100) and
+reports words missing ("omitted"), added, or said wrong. It needs the text cut
+into words first (see word breaking), and it trips over words it doesn't
+know. Azure's version doesn't grade Thai tones.
+*Here:* the second check on every Pray line; with spaces between the words,
+most of its alarms went away.
+
+**Homophone.** Words that sound the same but are spelled differently: "there"
+and "their" in English, กาล and การ (both *gaan*) in Thai. A listening machine
+may write either, and that is not a pronunciation mistake.
+
+**Respelling (for a computer voice).** Writing a word the way it sounds, for
+the voice only, when the voice misreads the real spelling: ประกาศก
+("prophets") becomes ประกา สก, so it isn't read as ประกาศ ("announce"). The
+page still shows the real spelling.
+*Here:* Logos's `say`, and the `say` list in `pray/prayers.json`'s audio
+settings.
+
+**A control (in a test).** The "nothing changed" version you test next to
+your change. If the control still goes wrong and your version doesn't, your
+change is what fixed it. And change one thing at a time, or you won't know
+which change did it.
+*Here:* every respelling trial also recorded the line as written. The first
+round changed the sound *and* the word-cutting at once, and gave one wrong
+answer (ปฐมกาล); spacing every syllable fixed the test.
+
 **Unicode normalization (NFC).** The same accented letter can be stored two
 ways in a computer: as one character, or as a letter plus a separate accent.
 They look identical but don't match when compared. NFC is the agreed "one

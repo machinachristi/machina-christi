@@ -13,6 +13,7 @@ afterthought: every phase of work adds to them.
   - [Phase 4 — the prayers get a library and a voice](phase-4-pray-cosmos-audio.md)
   - [Phase 5 — the site learns to find things](phase-5-search.md)
   - [Logos — learning Thai, letter by letter](logos-thai-cards.md)
+  - [Pray — the Thai voice, checked by machine and taught eight words](pray-voice-check.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.

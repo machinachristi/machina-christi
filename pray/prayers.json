@@ -6,7 +6,20 @@
     },
     "slowRate": "-30%",
     "breakMs": 600,
-    "format": "Audio24Khz48KBitRateMonoMp3"
+    "format": "Audio24Khz48KBitRateMonoMp3",
+    "_say": "Words the Thai voice misread, respelled the way they should sound. Only the recordings use them: the prayers below are shown and searched exactly as the Church wrote them. Each was checked by machine; see docs/explained/pray-voice-check.md.",
+    "say": {
+      "th": {
+        "มารีย์พรหมจารี": "มารีย์ พรหมมะจารี",
+        "พรหมจารี": "พรหมมะจารี",
+        "คริสตเจ้า": "คริดตะเจ้า",
+        "ประกาศก": "ประกา สก",
+        "พระหฤทัย": "พระหะฤทัย",
+        "พระวจนาตถ์": "พระวะจะนาด",
+        "พระหรรษทาน": "พระหันสะทาน",
+        "ศาสนจักรศักดิ์สิทธิ์สากล": "ศาสนจักร ศักดิ์สิทธิ์ สากล"
+      }
+    }
   },
   "prayers": [
     {
