@@ -11,6 +11,7 @@ import { createControls } from './controls.js';
 import { createWayfinding } from './wayfinding.js';
 import { createFooting } from './footing.js';
 import { createAmbience } from './audio.js';
+import { createRealm } from './realm.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { mulberry32, breathe } from './util.js';
 
@@ -71,6 +72,15 @@ const wayfinding = createWayfinding(scene, camera, renderer.domElement, garden.h
 // crickets by night. It follows the sky's clock and the walker's position.
 const ambience = createAmbience();
 
+// Jacob's ladder, and heaven above the garden (AB#106): two realms, one
+// walker. The realm he is in is the one drawn, and heaven is only built when
+// he first heads for the ladder — see realm.js, which also keeps a fault in
+// heaven from ever taking the garden down with it.
+const realm = createRealm({
+  camera, canvas: renderer.domElement, character, rig, params,
+  eden: { scene, heightAt: garden.heightAt, radius: garden.radius, footing, wayfinding, namedThing: garden.namedThing },
+});
+
 // The naming caption (Genesis 2:19-20): a quiet line at the foot of the
 // screen, filled from the garden's sense of which creature the walker has
 // drawn near. CSS carries the fade; the last name lingers through it.
@@ -81,10 +91,15 @@ document.body.appendChild(naming);
 const namingName = naming.querySelector('.naming__name');
 const namingLabel = naming.querySelector('.naming__label');
 let namingShown = '';
+let captionNow = null;
 function updateNamingCaption() {
-  // A word for the work just done (v27: water taken up, the ground watered)
-  // has the line for its few seconds; otherwise the nearest thing named.
-  const given = garden.tending() || garden.named();
+  // The ladder's name by its foot, and in heaven the saint drawn near to
+  // (AB#106); in the garden, a word for the work just done (v27: water taken
+  // up, the ground watered) has the line for its few seconds; otherwise the
+  // nearest thing named.
+  const given = realm.caption()
+    || (realm.now === 'eden' ? garden.tending() || garden.named() : null);
+  captionNow = given || null;
   const key = given ? given.name + '·' + given.label : '';
   if (key === namingShown) return;
   namingShown = key;
@@ -198,15 +213,22 @@ let forceSit = false;
 // What the walker is asked to do this frame: a drag or key always wins (and
 // forgets any walk a tap had begun); otherwise a tap's walk, if there is one.
 // `world` marks a step already in world space (the tap's), not the camera's.
-function readIntent(dt) {
+// `kit` is the realm he is in (realm.js): its ground, its rock, its way of
+// walking to a tapped place, and whatever is named there now. Any input also
+// cuts short an arrival's opening shot (heaven's, AB#106).
+function readIntent(dt, kit) {
   const tap = controls.takeTap();
-  if (tap) wayfinding.tapAt(tap.x, tap.y, garden.namedThing());
+  if (tap) {
+    rig.skipIntro();
+    kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing());
+  }
   const v = controls.vector();
   if (Math.hypot(v.x, v.z) > 0.001) {
-    wayfinding.cancel();
+    rig.skipIntro();
+    kit.wayfinding.cancel();
     return { move: v, world: false };
   }
-  const step = wayfinding.intent(character.group.position, garden.namedThing(), dt);
+  const step = kit.wayfinding.intent(character.group.position, kit.namedThing(), dt);
   return step ? { move: step, world: true } : { move: v, world: false };
 }
 
@@ -226,12 +248,59 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
 
   controls.update(dt);
-  const intent = readIntent(dt);
-  updateStillness(dt, intent.move);
-  character.update(dt, intent.move, intent.world ? null : rig.getYaw(), garden.heightAt, garden.radius, footing.keepOut);
-  wayfinding.update(dt);
-  updateCompanion(dt);
+  let kit = realm.kit();
+  // On the ladder, or under the veil between the realms, the realm has him
+  // (AB#106): any tap or drag meanwhile is let go.
+  const driven = realm.drive();
+  let intent;
+  if (driven) {
+    controls.takeTap();
+    kit.wayfinding.cancel();
+    intent = driven;
+  } else {
+    intent = readIntent(dt, kit);
+  }
+  if (kit.name === 'eden' && !driven) {
+    updateStillness(dt, intent.move);
+  } else if (seated || forceSit) {
+    seated = forceSit = false;
+    stillFor = 0;
+    character.setSitting(false);
+  }
+  character.update(dt, intent.move, intent.world ? null : rig.getYaw(), kit.heightAt, kit.radius, kit.footing.keepOut);
+  kit.wayfinding.update(dt);
+  // The ladder: may carry him up out of the garden, or back down into it.
+  realm.update(dt);
+  kit = realm.kit();
+  const inEden = kit.name === 'eden';
+  if (inEden) updateCompanion(dt);
   rig.update(dt);
+  // In heaven the garden waits, its clock stilled — "there shall be no
+  // night there" (Revelation 21:25) — and his companion with it.
+  if (inEden) edenFrame(dt);
+  else {
+    character.setCarrying(false);
+    character.setHolding(null);
+    ambience.update(dt, 0, character.group.position, 0, 0, 0, 'heaven');
+  }
+  updateNamingCaption();
+  try {
+    renderer.render(kit.scene, camera);
+  } catch (err) {
+    // Only heaven's drawing is guarded; the garden's is as it always was.
+    if (kit.name !== 'heaven') throw err;
+    realm.fault('drawing', err);
+  }
+
+  if (!ready) {
+    ready = true;
+    document.body.dataset.worldReady = '1';
+    post({ type: 'world:ready' });
+  }
+});
+
+// Everything the garden does in a frame while he is in it.
+function edenFrame(dt) {
   const lure = seated
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
@@ -240,8 +309,7 @@ renderer.setAnimationLoop(() => {
   character.setCarrying(garden.carrying);
   // …and a fruit given him under the tree, until it is eaten (v30).
   character.setHolding(garden.holding());
-  updateNamingCaption();
-  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush);
+  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush, 'eden');
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
     ambience.chime();
@@ -284,14 +352,7 @@ renderer.setAnimationLoop(() => {
     heardPipe = piped.notes;
     ambience.pipe(piped.note);
   }
-  renderer.render(scene, camera);
-
-  if (!ready) {
-    ready = true;
-    document.body.dataset.worldReady = '1';
-    post({ type: 'world:ready' });
-  }
-});
+}
 
 // Deliberately tiny, always-on state accessor for tests and debugging.
 window.__world = {
@@ -544,6 +605,18 @@ window.__world = {
       // away|settling|roost|rising, `call` 0..1 how far it has come to wheel
       // before the walker, `arrivals` each time it has, `near` its distance.
       murmuration: garden.murmuration(),
+      // AB#106 (Genesis 28:12): which realm he is in — `now` 'eden' or
+      // 'heaven' — and `passage`, the way between them he is on (null, or
+      // 'up' | 'veiled' | 'arriving' | 'leaving' | 'down' | 'stepping');
+      // `built` once heaven stands ready, `failed` if anything in it went
+      // wrong (the ladder then rests for the visit). `ladder`: its foot, and
+      // the angels going up and down it. `heaven`: what stands there, once
+      // built — how many saints and lights, today's saint, the one drawn
+      // near to. `caption`: what the line under the screen gives now.
+      realm: realm.state(),
+      ladder: garden.ladder(),
+      heaven: realm.heavenState(),
+      caption: captionNow,
       // v31: the flock that knows him (John 10:4; Psalm 23:2) — `following`
       // how many walk behind him, `lying` how many lie down (round him, or
       // where they graze at noon and by night), `gathered` while they stand
@@ -597,7 +670,9 @@ window.__world = {
   // tests and the curious. Returns the place he is going (clamped inside
   // the garden's rim).
   walkTo(x, z) {
-    return wayfinding.walkTo(x, z, garden.namedThing());
+    if (!realm.idle) return null;   // not on the ladder, nor under the veil
+    const kit = realm.kit();
+    return kit.wayfinding.walkTo(x, z, kit.namedThing());
   },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without
@@ -605,8 +680,10 @@ window.__world = {
   // Optional `facing` (radians, yaw) also turns the character, and with it
   // where the follow camera settles — screenshots become composable.
   teleport(x, z, facing) {
-    wayfinding.cancel();   // a walk begun from somewhere else no longer applies
-    character.group.position.set(x, garden.heightAt(x, z), z);
+    if (!realm.idle) return this.getState().pos;   // never off the ladder, nor out from under the veil
+    const kit = realm.kit();
+    kit.wayfinding.cancel();   // a walk begun from somewhere else no longer applies
+    character.group.position.set(x, kit.heightAt(x, z), z);
     if (typeof facing === 'number') {
       character.group.rotation.y = facing;
       // The camera's own slower yaw (v25) takes the new facing outright, so
@@ -618,7 +695,7 @@ window.__world = {
   // Reads back a grid of drawing-buffer pixels right after an explicit
   // render, so the smoke test can prove the canvas holds a real scene.
   samplePixels(grid = 5) {
-    renderer.render(scene, camera);
+    renderer.render(realm.kit().scene, camera);
     const gl = renderer.getContext();
     const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
     const px = new Uint8Array(4);

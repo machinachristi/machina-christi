@@ -84,6 +84,10 @@
       bottom: max(64px, calc(env(safe-area-inset-bottom) + 50px));
       transform: translateX(-50%) translateY(7px);
       z-index: 10;
+      /* Heaven's saints carry long titles (AB#106): the line wraps, evenly,
+         inside the screen's own width. */
+      width: max-content;
+      max-width: calc(100vw - 32px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -96,6 +100,16 @@
       text-shadow: 0 1px 12px rgba(11, 10, 8, 0.6), 0 0 3px rgba(11, 10, 8, 0.4);
     }
     .naming--shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* Heaven is bright everywhere (AB#106): the same words, held off it by
+       a deeper, warmer shadow so they stay easy to read. */
+    .realm-heaven .naming {
+      text-shadow: 0 1px 10px rgba(58, 40, 14, 0.9), 0 0 3px rgba(58, 40, 14, 0.75), 0 0 22px rgba(58, 40, 14, 0.45);
+    }
+    .naming__name,
+    .naming__label {
+      max-width: 100%;
+      text-wrap: balance;
+    }
     .naming__name {
       font-size: 21px;
       letter-spacing: 0.14em;
@@ -108,6 +122,20 @@
       text-indent: 0.24em;
       text-transform: uppercase;
       color: rgba(232, 213, 163, 0.78);
+    }
+
+    /* The veil of light between the realms (AB#106; created by realm.js):
+       warm light filling the view while he passes up or down the ladder.
+       Its opacity is set from the walk itself, frame by frame; it never
+       takes a touch, and it sits under the caption and the sound toggle. */
+    .passage {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      background: radial-gradient(ellipse at 50% 42%, #fffdf7 0%, #fff6e3 55%, #f6e5c2 100%);
     }
   </style>
   <script>
@@ -236,6 +264,17 @@
   <link rel="modulepreload" href="scenes/living.js" />
   <link rel="modulepreload" href="scenes/gather.js" />
   <link rel="modulepreload" href="scenes/flock.js" />
+  <link rel="modulepreload" href="scenes/ladder.js" />
+  <link rel="modulepreload" href="realm.js" />
+  <link rel="modulepreload" href="heaven/saints.js" />
+  <link rel="modulepreload" href="heaven/heaven.js" />
+  <link rel="modulepreload" href="heaven/layout.js" />
+  <link rel="modulepreload" href="heaven/sky.js" />
+  <link rel="modulepreload" href="heaven/sea.js" />
+  <link rel="modulepreload" href="heaven/head.js" />
+  <link rel="modulepreload" href="heaven/tree.js" />
+  <link rel="modulepreload" href="heaven/glory.js" />
+  <link rel="modulepreload" href="heaven/figures.js" />
   <script src="/assets/telemetry.js" async></script>
 </head>
 <body>

@@ -11,7 +11,7 @@
 // House rule for anything that moves or fades: assert with expect.poll windows,
 // never a single fixed-delay sample (CI's software renderer runs slow).
 const { test, expect } = require('@playwright/test');
-const { gotoWorldReady, appFrame, getState, dist2d } = require('./world-helpers');
+const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven } = require('./world-helpers');
 
 test.describe('the garden\'s features', () => {
   test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
@@ -596,6 +596,47 @@ test.describe('the garden\'s features', () => {
     // Through the heat of the middle day the grazing flock lies down.
     await frame.evaluate(() => window.__world.setTime('noon'));
     await expect.poll(async () => (await getState(page)).flock.lying, { timeout: 30000 }).toBeGreaterThanOrEqual(12);
+  });
+
+  test('angels go up and down Jacob\'s ladder (Genesis 28:12)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const a0 = (await getState(page)).ladder.angels;
+    expect(a0.length).toBeGreaterThanOrEqual(6);
+    expect(a0.some(a => a.up > 0) && a0.some(a => a.up < 0)).toBe(true);
+    // Some climbing and some coming down, each the way it is going.
+    await expect.poll(async () => {
+      const a1 = (await getState(page)).ladder.angels;
+      const rose = a1.filter((a, i) => a.up > 0 && a.y > a0[i].y + 0.3).length;
+      const fell = a1.filter((a, i) => a.up < 0 && a.y < a0[i].y - 0.3).length;
+      return Math.min(rose, fell);
+    }, { timeout: 20000 }).toBeGreaterThanOrEqual(2);
+  });
+
+  test('in heaven, today\'s saint greets him at the head of the ladder, and each saint is named as he draws near (AB#106)', async ({ page }) => {
+    test.setTimeout(300000);
+    // 19 October 2026 keeps the North American martyrs, in red.
+    await gotoWorldReady(page, '?day=2026-10-19');
+    await enterHeaven(page);
+    const frame = appFrame(page);
+    let s = await getState(page);
+    // Every saint in the site's records — St Joseph's two feasts are one man.
+    expect(s.heaven.saints).toBe(161);
+    expect(s.heaven.today).toEqual({
+      name: 'Saints John de Brébeuf and Isaac Jogues', title: 'Priests, and Companions, Martyrs', color: 'red',
+    });
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 }).toEqual({
+      name: 'Saints John de Brébeuf and Isaac Jogues', label: 'Priests, and Companions, Martyrs · today',
+    });
+
+    // Beside the first saint in the ranks, its name, title and feast day.
+    const saint = s.heaven.saint;
+    expect(saint.name).toBe('Saints Basil the Great and Gregory Nazianzen');
+    await frame.evaluate(p => window.__world.teleport(p.x - Math.sign(p.x), p.z - 0.5), saint);
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 }).toEqual({
+      name: 'Saints Basil the Great and Gregory Nazianzen', label: 'Bishops and Doctors of the Church · 2 January',
+    });
+    s = await getState(page);
+    expect(s.heaven.near).toBe(saint.name);
   });
 
   test('the companion wanders on its own', async ({ page }) => {

@@ -84,6 +84,7 @@ import { createMurmuration } from './murmuration.js';
 import { createLiving } from './living.js';
 import { createGather } from './gather.js';
 import { createFlock } from './flock.js';
+import { createLadder } from './ladder.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -255,13 +256,20 @@ export async function createGarden(scene, rng) {
   // named thing. Each on its own seeded stream, after everything above.
   const fry = createFry(scene);
   const watering = createWatering(scene, vegetation.treeSpots, namables);
+  // Jacob's ladder on the far bank (Genesis 28:12, AB#106): the way up to
+  // heaven, with the angels going up and down it and Jacob's stone at its
+  // foot. Built here, before the solids, because the stone is one of them;
+  // its own seeded stream, so nothing already planted shifts.
+  const ladder = createLadder(scene);
   // The garden's solid rock, as circles on the ground (v27, footing.js):
   // the eagle's crag with the hind's stair against it, the dove's stepped
-  // rock, and the conies' houses. The walker goes round these, not through.
+  // rock, the conies' houses, and Jacob's stone. The walker goes round
+  // these, not through.
   const solids = [
     { x: CRAG.x, z: CRAG.z, r: 4.6 },
     cleft.rock,
     ...rocks.state().houses.map(h => ({ x: h.x, z: h.z, r: 1.0 })),
+    ladder.solid,
   ];
   // v28 (Isaiah 35:1-2): the ground blossoms wherever he walks, and sings
   // as it does. Nothing is placed at build time — it needs only the rock to
@@ -451,6 +459,7 @@ export async function createGarden(scene, rng) {
     living.update(dt, playerPos, hour, hour.moonDir);
     gather.update(dt, playerPos, facing);
     flock.update(dt, playerPos, hour.t, hour.night);
+    ladder.update(dt);
     return hour;
   }
 
@@ -542,6 +551,7 @@ export async function createGarden(scene, rng) {
     tending: () => watering.caption() || gather.caption() || living.caption()
       || flock.caption() || murmuration.caption(),
     flock: flock.state,
+    ladder: ladder.state,
     flockSong: flock.song,
     living: living.state,
     livingSong: living.song,
