@@ -4,7 +4,7 @@
 // (Psalm 23:2).
 //
 // A flock of its own keeps a pasture on the open meadow south of the river,
-// a little way from where every visit begins — ewes and their lambs, grazing
+// a little way from where every visit begins — a ewe and a ram and their lamb, grazing
 // with their heads down, wandering a few steps to fresh grass, grazing again.
 // Walk in among them and they know him: each one near him lifts its head and
 // falls in behind, and any still grazing beside one that has joined comes
@@ -23,7 +23,7 @@
 // flock to rest at noon" (Song of Solomon 1:7).
 //
 // No score, no count, nothing to lose: a sheep that strays is only a sheep
-// grazing. Fourteen sheep in four draw calls — bodies, heads, legs and the
+// grazing. Three sheep in four draw calls — bodies, heads, legs and the
 // shadows they stand on are each one instanced mesh, written once a frame.
 
 import * as THREE from 'three';
@@ -32,10 +32,10 @@ import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
 import { createFooting } from '../footing.js';
 import { clamp, damp, shortestAngle, mulberry32, smoothstep, mergeColored } from '../util.js';
 
-const EWES = 9;
-const LAMBS = 5;
+const ADULTS = 2;   // the mother and the father
+const LAMBS = 1;
 const PASTURE_LIM = GARDEN_RADIUS - 10.5;   // no pasture further out than this
-const COUNT = EWES + LAMBS;
+const COUNT = ADULTS + LAMBS;
 // The first pasture: the open meadow between the two sacred trees and the
 // river, dead ahead of where every visit begins — the very place the opening
 // shot gazes at, so the flock is in sight from the first moment, even on a
@@ -84,7 +84,7 @@ function ewe() {
     // Rounded (detail 1), not chunky: big flat facets on a grey fleece read
     // as a heap of stones, worst of all once the sheep has lain down.
     // Six lumps along the back are enough: the capsule already rounds the
-    // flanks, and every lump is paid for fourteen times over.
+    // flanks, and every lump is paid for once per sheep.
     ...[[0.15, 0.8, 0.16], [-0.15, 0.8, 0.12], [0, 0.86, -0.08], [0.16, 0.76, -0.25],
       [-0.15, 0.77, -0.23], [0, 0.82, 0.3]]
       .map(([x, y, z]) => wool(new THREE.IcosahedronGeometry(0.18, 1).translate(x, y, z))),
@@ -170,7 +170,7 @@ export function createFlock(scene, solids = [], trees = []) {
   const sheep = [];
   const tint = new THREE.Color();
   for (let i = 0; i < COUNT; i++) {
-    const lamb = i >= EWES;
+    const lamb = i >= ADULTS;
     let x = home.x, z = home.z;
     for (let k = 0; k < 20; k++) {
       const a = rng() * Math.PI * 2, r = PASTURE * Math.sqrt(rng());
@@ -180,7 +180,7 @@ export function createFlock(scene, solids = [], trees = []) {
     }
     ({ x, z } = footing.keepOut({ x, z }));
     const s = lamb ? 0.6 + rng() * 0.08 : 0.92 + rng() * 0.14;
-    // Lambs whitest; the ewes' fleece a little cream or a little grey.
+    // The lamb whitest; the parents' fleece a little cream or a little grey.
     const shade = lamb ? 1 : 0.93 + rng() * 0.07;
     tint.setRGB(shade, shade * (0.98 + rng() * 0.02), shade * (0.94 + rng() * 0.05));
     bodyMesh.setColorAt(i, tint);

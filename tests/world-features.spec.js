@@ -550,16 +550,16 @@ test.describe('the garden\'s features', () => {
     await gotoWorldReady(page);
     const frame = appFrame(page);
 
-    // Fourteen sheep graze their own pasture, none yet following.
+    // Three sheep — a ewe, a ram and their lamb — graze their own pasture, none yet following.
     const f0 = (await getState(page)).flock;
-    expect(f0.count).toBe(14);
+    expect(f0.count).toBe(3);
     expect(f0.following).toBe(0);
     for (const s of f0.sheep) expect(Math.hypot(s.x - f0.home.x, s.z - f0.home.z)).toBeLessThan(7);
 
     // Walk in among them and they fall in behind him, and the flock's name
     // is given.
     await frame.evaluate(([x, z]) => window.__world.teleport(x, z, Math.PI / 2), [f0.home.x, f0.home.z]);
-    await expect.poll(async () => (await getState(page)).flock.following, { timeout: 30000 }).toBeGreaterThanOrEqual(10);
+    await expect.poll(async () => (await getState(page)).flock.following, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
     await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Tson');
 
     // Lead them off across the meadow: they come after him, and stay with
@@ -571,14 +571,14 @@ test.describe('the garden\'s features', () => {
       const s = await getState(page);
       if (Math.hypot(s.pos.x - f0.home.x, s.pos.z - f0.home.z) < 5) return false;
       const near = s.flock.sheep.filter(h => h.mode === 'follow' && Math.hypot(h.x - s.pos.x, h.z - s.pos.z) < 8);
-      return near.length >= 8;
+      return near.length >= 2;
     }, { timeout: 45000 }).toBe(true);
 
     // He stands: his followers come round him and lie down, and the psalm's
     // word is given.
     await expect.poll(async () => {
       const f = (await getState(page)).flock;
-      return f.gathered && f.round >= 3 && f.rests > 0;
+      return f.gathered && f.round >= 2 && f.rests > 0;
     }, { timeout: 45000 }).toBe(true);
     await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Yarbitseni');
 
@@ -595,7 +595,7 @@ test.describe('the garden\'s features', () => {
 
     // Through the heat of the middle day the grazing flock lies down.
     await frame.evaluate(() => window.__world.setTime('noon'));
-    await expect.poll(async () => (await getState(page)).flock.lying, { timeout: 30000 }).toBeGreaterThanOrEqual(12);
+    await expect.poll(async () => (await getState(page)).flock.lying, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
   });
 
   test('angels go up and down Jacob\'s ladder (Genesis 28:12)', async ({ page }) => {

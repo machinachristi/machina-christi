@@ -26,10 +26,10 @@ import { heightAt, riverEdgeDist } from './terrain.js';
 import { mergeColored, mulberry32, smoothstep } from '../util.js';
 
 // Big enough that every flower lives out its whole life before its slot is
-// taken again, even with him at his quick pace (4.6 m/s → ~28 a second) and
-// the companion walking too (~6 a second): 34 × LIFE 45 s ≈ 1530.
+// taken again, even with him at his quick pace (4.6 m/s → ~14 a second) and
+// the companion walking too (~3 a second): 17 × LIFE 45 s ≈ 765.
 const POOL = 1600;             // flowers alive at once, recycled oldest-first
-const STEP = 0.5;              // metres walked between each little burst
+const STEP = 1.0;              // metres walked between each little burst
 const PER_STEP = 3;            // flowers in each of his bursts
 const PER_STEP_OTHER = 1;      // …and in the companion's, a lighter trail
 const NEAR = [0.45, 2.2];      // how far from his feet they come up
