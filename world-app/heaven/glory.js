@@ -12,6 +12,12 @@
 // comes, each breathing in its own time. One draw for the glory (a single
 // quad turned always to the eye, its light and bow drawn in the shader) and
 // one for the multitude (a cloud of points), whatever their number.
+//
+// v33: and they answer. When the walker's prayer has risen (song.js), "I heard
+// as it were the voice of a great multitude, and as the voice of many waters,
+// … saying, Alleluia" (Revelation 19:6): a wave of light rolls out from the
+// glory through every tier of the multitude, each light lifting and swelling
+// as it passes, and the glory itself brightens and slowly settles again.
 
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
@@ -33,6 +39,7 @@ export function createGlory(scene) {
     uCore: { value: new THREE.Color(0xFFFFFF) },
     uHalo: { value: new THREE.Color(0xFFF0C8) },
     uBow: { value: new THREE.Color(0x43C08A) },
+    uFlare: { value: 0 },
   };
   const glory = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
     uniforms: gu,
@@ -51,13 +58,14 @@ export function createGlory(scene) {
       uniform vec3 uCore;
       uniform vec3 uHalo;
       uniform vec3 uBow;
+      uniform float uFlare;
       varying vec2 vUv;
       void main() {
         float r = length(vUv) * 2.0;
-        float breath = 1.0 + 0.04 * sin(uTime * 0.5);
+        float breath = 1.0 + 0.04 * sin(uTime * 0.5) + 0.45 * uFlare;
         float core = exp(-r * r * 90.0 / breath);
         float glow = exp(-r * 9.0 / breath);
-        float halo = exp(-r * 3.2) * 0.55;
+        float halo = exp(-r * 3.2) * (0.55 + 0.3 * uFlare);
         float light = clamp(core + glow + halo, 0.0, 1.0);
         vec3 col = mix(uHalo, uCore, clamp(core * 2.0 + glow, 0.0, 1.0));
         // The bow round about it, emerald, with the faintest play of colour
@@ -65,8 +73,8 @@ export function createGlory(scene) {
         float d = (r - 0.36) / 0.03;
         float bow = exp(-d * d);
         vec3 bowCol = uBow + vec3(0.18, -0.05, 0.12) * clamp(d * 0.6, -1.0, 1.0);
-        col = mix(col, bowCol, bow * 0.8);
-        float a = max(light, bow * 0.6) * (1.0 - smoothstep(0.85, 1.0, r));
+        col = mix(col, bowCol, bow * (0.8 + 0.2 * uFlare));
+        float a = max(light, bow * (0.6 + 0.4 * uFlare)) * (1.0 - smoothstep(0.85, 1.0, r));
         gl_FragColor = vec4(col, a);
         #include <colorspace_fragment>
       }`,
@@ -111,6 +119,8 @@ export function createGlory(scene) {
   const mu = {
     uTime: { value: 0 },
     uHalfH: { value: 400 },
+    uWaveAt: { value: -1e6 },
+    uGlory: { value: new THREE.Vector2(GLORY.x, GLORY.z) },
   };
   const multitude = new THREE.Points(geo, new THREE.ShaderMaterial({
     uniforms: mu,
@@ -120,14 +130,27 @@ export function createGlory(scene) {
       attribute vec3 aColor;
       uniform float uTime;
       uniform float uHalfH;
+      uniform float uWaveAt;
+      uniform vec2 uGlory;
       varying vec3 vColor;
       varying float vBreath;
       void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        // The answer: a wave rolling out from the glory through the tiers,
+        // and a gentler brightness over all of them while it sounds.
+        float since = uTime - uWaveAt;
+        float wave = 0.0, after = 0.0;
+        if (since > 0.0 && since < 9.0) {
+          float front = ${(FIRST_R - 4).toFixed(1)} + since * 12.0;
+          float d = (length(position.xz - uGlory) - front) / 3.2;
+          wave = exp(-d * d) * (1.0 - smoothstep(4.0, 5.5, since));
+          after = smoothstep(0.0, 1.2, since) * (1.0 - smoothstep(3.5, 9.0, since));
+        }
+        vec3 p = position + vec3(0.0, wave * 0.9, 0.0);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        vBreath = 0.72 + 0.28 * sin(uTime * (0.5 + aSeed * 0.9) + aSeed * 40.0);
-        vColor = aColor;
-        gl_PointSize = clamp(aSize * projectionMatrix[1][1] * uHalfH / -mv.z, 1.5, 28.0);
+        vBreath = (0.72 + 0.28 * sin(uTime * (0.5 + aSeed * 0.9) + aSeed * 40.0)) * (1.0 + 0.5 * after) + 1.6 * wave;
+        vColor = mix(aColor, vec3(1.0, 0.97, 0.88), clamp(wave, 0.0, 1.0) * 0.6);
+        gl_PointSize = clamp(aSize * (1.0 + 0.9 * wave + 0.15 * after) * projectionMatrix[1][1] * uHalfH / -mv.z, 1.5, 36.0);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 vColor;
@@ -136,7 +159,7 @@ export function createGlory(scene) {
         vec2 d = gl_PointCoord - 0.5;
         float r2 = dot(d, d) * 4.0;
         if (r2 > 1.0) discard;
-        float a = (exp(-r2 * 4.0) * 0.85 + 0.15 * (1.0 - r2)) * vBreath;
+        float a = min(1.0, (exp(-r2 * 4.0) * 0.85 + 0.15 * (1.0 - r2)) * vBreath);
         gl_FragColor = vec4(vColor, a);
         #include <colorspace_fragment>
       }`,
@@ -149,11 +172,24 @@ export function createGlory(scene) {
   multitude.onBeforeRender = renderer => { mu.uHalfH.value = renderer.getDrawingBufferSize(_buf).y / 2; };
   scene.add(multitude);
 
+  let answeredAt = -1e6;
   return {
     count: seeds.length,
     update(time) {
       gu.uTime.value = time;
       mu.uTime.value = time;
+      // The glory brightens over a second as the answer comes, and settles
+      // again over the next several.
+      const since = time - answeredAt;
+      gu.uFlare.value = since < 0 || since > 10 ? 0
+        : Math.min(1, since / 1.1) * Math.exp(-Math.max(0, since - 1.1) * 0.42);
     },
+    // Heaven answers, now (heaven's time).
+    answer(time) {
+      answeredAt = time;
+      mu.uWaveAt.value = time;
+    },
+    // How brightly the glory answers now, 0..1.
+    flare: () => gu.uFlare.value,
   };
 }

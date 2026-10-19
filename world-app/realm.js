@@ -211,7 +211,7 @@ export function createRealm({ camera, canvas, character, rig, eden, params }) {
     heavenTime += dt;
     guarded('update', () => {
       if (debug === 'heavenFault' && heavenTime > 1.5) throw new Error('forced heaven fault (debug=heavenFault)');
-      heaven.update(dt, pos);
+      heaven.update(dt, pos, character.speed, character.group.rotation.y);
     });
   }
 
@@ -337,6 +337,12 @@ export function createRealm({ camera, canvas, character, rig, eden, params }) {
     },
     heavenState() {
       return heaven ? guarded('state', () => heaven.state(), null) : null;
+    },
+    // v33: the new song, read by main.js every frame while he is in heaven —
+    // the harps' notes under his steps and the multitude's answers; null in
+    // Eden, or once anything in heaven has failed.
+    song() {
+      return heaven && now === 'heaven' ? guarded('song', () => heaven.song(), null) : null;
     },
   };
 }

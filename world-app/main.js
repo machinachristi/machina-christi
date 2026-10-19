@@ -200,6 +200,9 @@ let heardNotes = 0;
 let heardWater = 0;
 let heardFruit = 0;
 let heardPipe = 0;
+// v33: in heaven, the harps under his steps and the multitude's answer.
+let heardHarp = 0;
+let heardAnswers = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -282,6 +285,7 @@ renderer.setAnimationLoop(() => {
     character.setCarrying(false);
     character.setHolding(null);
     ambience.update(dt, 0, character.group.position, 0, 0, 0, 'heaven');
+    heavenSong();
   }
   updateNamingCaption();
   try {
@@ -299,8 +303,26 @@ renderer.setAnimationLoop(() => {
   }
 });
 
+// The new song in heaven (v33, Revelation 14:2-3; 19:6): a harp's note for
+// each step he takes on the sea of glass, and when his prayer has risen, the
+// voice of the multitude answering. While he prays, his hands are lifted.
+function heavenSong() {
+  const song = realm.song();
+  character.setPraying(!!(song && song.praying));
+  if (!song) return;
+  if (song.notes !== heardHarp) {
+    heardHarp = song.notes;
+    ambience.harp(song.note);
+  }
+  if (song.answers !== heardAnswers) {
+    heardAnswers = song.answers;
+    ambience.alleluia();
+  }
+}
+
 // Everything the garden does in a frame while he is in it.
 function edenFrame(dt) {
+  character.setPraying(false);
   const lure = seated
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;

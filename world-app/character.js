@@ -117,6 +117,8 @@ export function createCharacter({ eve = false } = {}) {
   let climb = 0;            // 0 on the ground → 1 on the rungs; eased, never a snap
   let climbRate = 1;        // how quickly he is going up or down, 0..1
   let climbPhase = 0;
+  let praying = false;
+  let orans = 0;            // 0 hands down → 1 lifted up in prayer; eased slowly
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -278,6 +280,19 @@ export function createCharacter({ eve = false } = {}) {
       armR.rotation.x = armR.rotation.x * (1 - lift) - 1.35 * lift;
       armR.rotation.z = armR.rotation.z * (1 - lift) - 0.15 * lift;
     }
+    // In prayer (v33, Psalm 141:2, "the lifting up of my hands as the
+    // evening sacrifice"): both hands lifted up and open, a little apart, and
+    // the face lifted with them — coming up slowly, going down as soon as he
+    // walks on.
+    orans = damp(orans, praying ? 1 : 0, praying ? 2.2 : 6, dt);
+    if (orans > 0.001) {
+      const o = orans, sway = Math.sin(idle * 0.9) * 0.03;
+      armL.rotation.x = armL.rotation.x * (1 - o) + (-2.3 + sway) * o;
+      armR.rotation.x = armR.rotation.x * (1 - o) + (-2.3 - sway) * o;
+      armL.rotation.z = armL.rotation.z * (1 - o) - 0.5 * o;
+      armR.rotation.z = armR.rotation.z * (1 - o) + 0.5 * o;
+      torso.rotation.x = torso.rotation.x * (1 - o) - 0.08 * o;
+    }
     // On the ladder (AB#106): both hands up on the rungs, reaching higher in
     // turn; each knee lifted as the other hand goes up, the body close in to
     // the ladder. Blended over whatever else he was doing, like the seat.
@@ -308,6 +323,7 @@ export function createCharacter({ eve = false } = {}) {
     climbRate = rate;
   }
   function setCarrying(b) { carrying = !!b; }
+  function setPraying(b) { praying = !!b; }
   // h: { color, left } while he holds a fruit, or null.
   function setHolding(h) {
     holding = h || null;
@@ -317,7 +333,7 @@ export function createCharacter({ eve = false } = {}) {
   }
 
   return {
-    group, update, setSitting, setCarrying, setHolding, setClimbing,
+    group, update, setSitting, setCarrying, setHolding, setClimbing, setPraying,
     get climbing() { return climbing; },
     get speed() { return speed; },
     get gait() { return gait; },

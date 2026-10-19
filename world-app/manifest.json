@@ -1,5 +1,5 @@
 {
-  "version": 32,
+  "version": 33,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -397,13 +397,28 @@
         { "text": "Along both banks stand the saints of the site's own calendar, robed in white, in the order of their feasts; draw near one and its name and feast day are given, and the day's saint waits at the head of the ladder.", "source": "Hebrews 12:1" },
         { "text": "Walk back to the head of the ladder and he climbs down again into the garden, whose clock stood still while he was away.", "source": null }
       ]
+    },
+    {
+      "version": 33,
+      "date": "2026-10-19",
+      "focus": "the new song",
+      "realm": "heaven",
+      "changes": [
+        { "text": "Each step on the sea of glass kindles fire in it: a ring of gold runs out round his foot through the glass, and fades.", "source": "Revelation 15:2" },
+        { "text": "And each step plucks a harp: walk toward the glory and the notes climb, come away from it and they fall, wander and they wander.", "source": "Revelation 14:2" },
+        { "text": "Stand still a while and he lifts up his hands, and his prayer rises before him as incense, a thread of golden smoke going up and away toward the glory.", "source": "Psalm 141:2" },
+        { "text": "Now and then thin threads of incense rise from among the saints as well, the prayers of saints going up before the light.", "source": "Revelation 5:8" },
+        { "text": "Keep still while it rises and heaven answers: a wave of light rolls out through the whole multitude, the glory brightens, and many voices sing Alleluia over the sound of many waters, and the word is given.", "source": "Revelation 19:6" },
+        { "text": "Leaves let go of the Tree of Life, flutter down onto the river and are carried down it past the saints toward the head of the ladder; walk along beside them and their word is given.", "source": "Revelation 22:2" },
+        { "text": "The incense is one draw call, every puff's rise worked out on the graphics chip; the leaves are one more; and the fire is painted by the glass's own shader, with no draw call of its own.", "source": null }
+      ]
     }
   ],
   "next": [
     "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
     "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)",
-    "The flock seeks the shade at noon: rather than lying down where they graze, the sheep walk into the shadow of the nearest tree to rest (Song of Solomon 1:7)",
-    "Carry a lamb: stand still beside the smallest lamb and he lifts it into his arms and carries it at his breast while the flock follows (Isaiah 40:11)"
+    "Carry a lamb: stand still beside the smallest lamb and he lifts it into his arms and carries it at his breast while the flock follows (Isaiah 40:11)",
+    "The holy city's wall on heaven's far rim: twelve foundations, each a different precious stone glowing in the light, and twelve gates, every gate of one pearl, standing open (Revelation 21:19-21, 25)"
   ]
 }
