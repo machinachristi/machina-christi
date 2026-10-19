@@ -575,12 +575,28 @@ test.describe('the garden\'s features', () => {
     }, { timeout: 45000 }).toBe(true);
 
     // He stands: his followers come round him and lie down, and the psalm's
-    // word is given.
+    // word is given. Having lain down, they follow him no further.
     await expect.poll(async () => {
       const f = (await getState(page)).flock;
-      return f.gathered && f.round >= 2 && f.rests > 0;
+      return f.rests > 0 && f.following === 0 && f.sheep.filter(h => h.rested).length >= 2;
     }, { timeout: 45000 }).toBe(true);
     await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Yarbitseni');
+
+    // While he stays beside them they stay lying down, not following.
+    await page.waitForTimeout(1500);
+    {
+      const f = (await getState(page)).flock;
+      expect(f.following).toBe(0);
+      expect(f.sheep.filter(h => h.rested && h.lie > 0.6).length).toBeGreaterThanOrEqual(2);
+    }
+    // He walks a little way off: they do not come after him.
+    const lay = (await getState(page)).pos;
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z), [lay.x + 8, lay.z]);
+    await page.waitForTimeout(1500);
+    expect((await getState(page)).flock.following).toBe(0);
+    // He comes back among them: they know him again and follow.
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z), [lay.x, lay.z]);
+    await expect.poll(async () => (await getState(page)).flock.following, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
 
     // He goes far off: they let him go, and graze where he led them — the
     // pasture is now nearer the place he left them than the one they came from.

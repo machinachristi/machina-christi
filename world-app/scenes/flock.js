@@ -16,7 +16,9 @@
 // he left them.
 //
 // Stand still and they come up round him; stand a little longer and they
-// lie down at his feet. Wherever he leads them is their pasture after that,
+// lie down at his feet, and there they stay: they follow no further until
+// he has walked off and come back to them. Wherever he leads them is their
+// pasture after that,
 // and the garden remembers it (`camino_fold`), so next visit the flock is
 // grazing where it was left. Through the heat of the middle day and through
 // the night the grazing flock lies down where it is, "where thou makest thy
@@ -49,6 +51,7 @@ const REGATHER = LEAVE - 4;       // …and a neighbour gathers it only inside t
 const STILL_SPEED = 0.3;          // m/s; slower than this he is standing
 const GATHER_AFTER = 1.2;         // seconds standing before they come round him
 const LIE_AFTER = 3.5;            // …and this much longer before they lie down
+const AWAY = JOIN + 1.5;          // a sheep laid down stays down until he is this far off
 const CRUMB = 0.4;                // spacing of the way he went, metres
 const CRUMBS = 96;                // how much of it is kept (≈38 m)
 const BRINK = 0.35;               // riverEdgeDist nearer than this is the water
@@ -189,7 +192,7 @@ export function createFlock(scene, solids = [], trees = []) {
       pos: new THREE.Vector3(x, heightAt(x, z), z),
       yaw: rng() * Math.PI * 2, s, lamb,
       mode: 'graze', until: 1 + rng() * 5, target: { x, z },
-      rank: -1, side: rng() * 2 - 1,
+      rank: -1, side: rng() * 2 - 1, rested: false,
       phase: rng() * 6, pace: 0, dip: 0.8, lie: 0, hop: 0, drinking: false,
     });
   }
@@ -422,6 +425,12 @@ export function createFlock(scene, solids = [], trees = []) {
     for (const S of sheep) {
       if (S.mode === 'follow') continue;
       const dW = Math.hypot(S.pos.x - walker.x, S.pos.z - walker.z);
+      // One that lay down at his feet stays down, and will not be gathered,
+      // until he has gone off from it; then coming near it again is enough.
+      if (S.rested) {
+        if (dW > AWAY) S.rested = false;
+        else continue;
+      }
       if (dW < JOIN) { join(S); continue; }
       // Gathered by a neighbour only while he is well inside the distance at
       // which they let him go — or a sheep just let go would be gathered
@@ -479,6 +488,11 @@ export function createFlock(scene, solids = [], trees = []) {
           const d = Math.hypot(tx - S.pos.x, tz - S.pos.z);
           walkToward(S, tx, tz, clamp((d - 0.1) * 1.6, 0, 4.6), dt);
         }
+      } else if (S.rested) {
+        // Lying where it lay down round him, while he stays near.
+        S.pace = damp(S.pace, 0, 8, dt);
+        lieTo = 1;
+        dipTo = 0.3;
       } else if (rest > 0.5) {
         // Noon, or night: lie down where it grazes.
         S.pace = damp(S.pace, 0, 8, dt);
@@ -549,6 +563,13 @@ export function createFlock(scene, solids = [], trees = []) {
       sing(0);
       noteT = NOTE_GAP;
       settleHome(roundX / round, roundZ / round);
+      // And having lain down, they follow no further: each one laid down is
+      // let go where it lies, until he goes off and comes back to it.
+      for (const S of sheep) {
+        if (S.mode === 'follow' && S.lie > 0.6) { release(S); S.rested = true; }
+      }
+      followers = 0;
+      for (const S of sheep) if (S.mode === 'follow') S.rank = followers++;
     }
 
     // The pipe: first any notes owed for sheep that have just fallen in, one
@@ -604,7 +625,7 @@ export function createFlock(scene, solids = [], trees = []) {
         gathered: followers > 0 && still > GATHER_AFTER,
         joins,
         rests,
-        sheep: sheep.map(S => ({ x: S.pos.x, z: S.pos.z, mode: S.mode, lie: S.lie, lamb: S.lamb })),
+        sheep: sheep.map(S => ({ x: S.pos.x, z: S.pos.z, mode: S.mode, lie: S.lie, lamb: S.lamb, rested: S.rested })),
       };
     },
   };
