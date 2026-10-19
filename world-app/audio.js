@@ -469,6 +469,65 @@ export function createAmbience() {
     }
   }
 
+  // "The sheep follow him: for they know his voice" (John 10:4): a
+  // shepherd's pipe, one breathy note at a time, as the flock falls in behind
+  // the walker and goes after him. flock.js picks the tune — semitones above
+  // E4 in the same pentatonic as the chime and the blossom — and the pipe
+  // plays it an octave up, with a little breath in it and a slow vibrato
+  // that only comes in once the note is held.
+  let lastPipe = 0;
+  function pipe(semis = 7) {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    if (ctx.currentTime - lastPipe < 0.25) return;   // never a clatter
+    lastPipe = ctx.currentTime;
+    const f = 659.25 * Math.pow(2, (semis | 0) / 12);
+    const t0 = ctx.currentTime + 0.02;
+    const len = 1.3;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.014, t0 + 0.09);
+    g.gain.setValueAtTime(0.014, t0 + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0003, t0 + len);
+    g.connect(master);
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    const over = ctx.createOscillator();
+    over.type = 'sine';
+    over.frequency.value = f * 2;
+    const overG = ctx.createGain();
+    overG.gain.value = 0.18;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 5.2;
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(0, t0);
+    depth.gain.linearRampToValueAtTime(f * 0.006, t0 + 0.45);
+    lfo.connect(depth);
+    depth.connect(osc.frequency);
+    depth.connect(over.frequency);
+    osc.connect(g);
+    over.connect(overG).connect(g);
+    // The breath: a wisp of noise tuned to the note, loudest at the onset.
+    const breath = ctx.createBufferSource();
+    breath.buffer = refs.rustleBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = f;
+    bp.Q.value = 6;
+    const bg = ctx.createGain();
+    bg.gain.setValueAtTime(0.0001, t0);
+    bg.gain.linearRampToValueAtTime(0.05, t0 + 0.05);
+    bg.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.6);
+    breath.connect(bp).connect(bg).connect(master);
+    for (const node of [osc, over, lfo]) { node.start(t0); node.stop(t0 + len + 0.05); }
+    breath.start(t0, Math.random() * 1.5);
+    breath.stop(t0 + 0.65);
+    osc.onended = () => {
+      for (const n of [osc, over, overG, lfo, depth, g]) n.disconnect();
+    };
+    breath.onended = () => { breath.disconnect(); bp.disconnect(); bg.disconnect(); };
+  }
+
   function ensureStarted() {
     if (!supported || muted) return;
     if (!ctx) {
@@ -617,5 +676,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, state };
+  return { update, setMuted, chime, thunder, call, bloom, pipe, state };
 }
