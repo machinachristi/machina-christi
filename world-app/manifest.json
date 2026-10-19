@@ -1,5 +1,5 @@
 {
-  "version": 31,
+  "version": 32,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -380,6 +380,22 @@
         { "text": "Through the heat of the middle day, and through the night, the grazing flock lies down where it is.", "source": "Song of Solomon 1:7" },
         { "text": "A shepherd's pipe plays as they come: a breathy note as each sheep falls in, and a slow tune while the flock walks behind him.", "source": "John 10:3" },
         { "text": "All fourteen sheep are four draw calls: bodies, heads, legs and shadows are each drawn many times over from one shape.", "source": null }
+      ]
+    },
+    {
+      "version": 32,
+      "date": "2026-10-19",
+      "focus": "the gate of heaven",
+      "changes": [
+        { "text": "A ladder now stands on the far bank of the river, straight ahead of where every visit begins, rising out of sight into light, with angels going up and down it.", "source": "Genesis 28:12" },
+        { "text": "At its foot stands the stone Jacob set up for a pillar, with oil on its top.", "source": "Genesis 28:18" },
+        { "text": "Walk into its foot and he climbs, and light fills everything: this is the gate of heaven.", "source": "Genesis 28:17" },
+        { "text": "Heaven opens above: no night and no sun, only the light of the glory, with an emerald bow round about it.", "source": "Revelation 21:23" },
+        { "text": "A sea of glass like crystal, and down the middle of a street of gold, the river of the water of life.", "source": "Revelation 22:1" },
+        { "text": "The Tree of Life stands on either side of the river, with twelve manner of fruits.", "source": "Revelation 22:2" },
+        { "text": "Round the glory, a great multitude which no man could number, as thousands of lights.", "source": "Revelation 7:9" },
+        { "text": "Along both banks stand the saints of the site's own calendar, robed in white, in the order of their feasts; draw near one and its name and feast day are given, and the day's saint waits at the head of the ladder.", "source": "Hebrews 12:1" },
+        { "text": "Walk back to the head of the ladder and he climbs down again into the garden, whose clock stood still while he was away.", "source": null }
       ]
     }
   ],

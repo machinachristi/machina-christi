@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# world-diff-guard.sh — independent CI enforcement of the two guards the Eden
+# world-diff-guard.sh — independent CI enforcement of the guards the Eden
 # weekly-update automation self-attests in its prompt (SKILL.md, Step 4.2/4.3):
 #
 #   1. Diff-scope guard    — a feat/world-* / feature/world-* PR may only change
@@ -20,6 +20,13 @@
 #                            path in the official npm package `three@<threeVersion>`
 #                            (the version world-app/manifest.json records), which
 #                            this script downloads and compares itself.
+#   4. Locked files        — world-app/heaven/saints.js, the hand-written loader
+#                            that decides which saints stand in heaven and what
+#                            is said of them (names, titles and feast days from
+#                            the site's own records, never the bios), may not be
+#                            changed, renamed or deleted by such a PR at all
+#                            (AB#106). Heaven's other modules are the routine's
+#                            to furnish; who the saints are changes only by hand.
 #
 # The point is an *independent* backstop: the same unattended agent that writes
 # the diff also writes the self-check, and this repo pre-approves the push/merge
@@ -123,6 +130,22 @@ else
 fi
 echo
 
+# --- Guard 4: locked files ------------------------------------------------------
+# Renames are reported as a delete plus an add (--no-renames), so moving a
+# locked file away is caught as a change to it, too.
+echo "== Guard 4: locked files =="
+LOCKED_FILES='world-app/heaven/saints.js'
+locked_hits="$(git diff --no-renames --name-only "$BASE_SHA" "$HEAD_REF" -- $LOCKED_FILES)"
+if [ -n "$locked_hits" ]; then
+  echo "::error::feat/world-* PR changes a locked file — heaven's saints are hand-written only."
+  echo "Locked file(s) changed:"
+  printf '%s\n' "$locked_hits" | sed 's/^/  /'
+  fail=1
+else
+  echo "OK — no locked file changed (${LOCKED_FILES})"
+fi
+echo
+
 # --- Guard 2: malicious patterns on ADDED lines only ---------------------------
 # Scan only added ('+') lines within the allowed paths. Removed / context lines
 # are ignored so we never flag code a PR is deleting. The (^|[^[:alnum:]_])
@@ -150,10 +173,11 @@ if [ "$fail" -ne 0 ]; then
   echo "----------------------------------------------------------------------"
   echo "world-diff-guard: FAIL — this PR needs manual review before merging."
   echo "A legitimate Eden weekly update only touches world-app/** (plus"
-  echo "manifest.json / about-eden.html / tests/world-features.spec.js), vendors"
-  echo "only unmodified official three.js addons, and never introduces network or"
-  echo "dynamic-code calls. Resolve the findings above, or a human should merge"
-  echo "this by hand after reviewing why it falls outside those bounds."
+  echo "manifest.json / about-eden.html / tests/world-features.spec.js), never"
+  echo "touches heaven's saints loader, vendors only unmodified official three.js"
+  echo "addons, and never introduces network or dynamic-code calls. Resolve the"
+  echo "findings above, or a human should merge this by hand after reviewing why"
+  echo "it falls outside those bounds."
   echo "----------------------------------------------------------------------"
   exit 1
 fi

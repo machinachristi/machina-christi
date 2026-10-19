@@ -69,6 +69,17 @@ export class CameraRig {
     this.camera.lookAt(this.lookPoint);
   }
 
+  // Straight into the follow pose, with no easing: on a change of realm
+  // (AB#106) there is nothing in the new place to ease from.
+  snap() {
+    this.intro = null;
+    this._desiredPosition(this.camera.position);
+    this._desiredLook(this.lookPoint);
+    const floor = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.6;
+    if (this.camera.position.y < floor) this.camera.position.y = floor;
+    this.camera.lookAt(this.lookPoint);
+  }
+
   // Ease out of the intro quickly (but smoothly) — called on first input.
   skipIntro() {
     if (this.intro) this.intro.dur = Math.min(this.intro.dur, this.intro.t + 0.45);

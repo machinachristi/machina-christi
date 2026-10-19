@@ -434,6 +434,46 @@ character where possible" form, so stored text always compares cleanly.
 *Here:* a test checks every Logos card's Thai and romanization are stored in
 NFC.
 
+## Drawing a world
+
+**Scene.** The box of everything a 3D program draws: the ground, the trees,
+the sky, the lights, the people. Each frame, the computer looks at the scene
+from the camera and paints what it sees. Two scenes are like two floors of a
+house: you can only be on one at a time, and nobody lights the other.
+*Here:* Eden is one scene and heaven another; only the one Adam is in is drawn.
+
+**Draw call.** One "paint this" instruction from the program to the graphics
+chip, and the main cost of a frame on a phone. A thousand identical things
+drawn one by one are a thousand draw calls; drawn together as one batch
+(*instancing*), they're one. *Here:* Eden's budget is under 200 draw calls,
+and all 194 saint figures in heaven are a single one.
+
+**Lazy loading.** Doing the work only when it's first needed, not up front,
+like a theatre setting up the second stage only once the audience heads for
+it. People who never go there never pay for it.
+*Here:* heaven is built in the background when Adam first comes near the
+ladder.
+
+**Same-origin request.** A page asking its own website for one of its own
+files. Browsers trust these more than requests to other sites, and the site's
+security rules (CSP) allow them.
+*Here:* heaven reads the saints from `/ordo/saints.json` and the calendar,
+the same files the Ordo page uses.
+
+**State machine.** A short list of states something can be in, and the moves
+allowed between them, like a lift: stopped at a floor, going up, or going
+down, never half of two. Writing it this way makes it hard for anything to be
+left half-done.
+*Here:* the journey between the realms: in Eden, climbing, under the veil,
+arriving, in heaven, leaving, climbing down, stepping off.
+
+**Fail-safe.** Designing something so that when it breaks, it breaks into a
+safe state, like a lift whose brakes close when the power goes. It's different
+from a fallback, which swaps in a plan B; a fail-safe makes sure the failure
+itself can't do harm.
+*Here:* if anything in heaven goes wrong, Adam stays in, or is brought back
+to, the garden, and the world carries on.
+
 ## Making changes safely
 
 **Branch.** A photocopy of the whole project you can scribble on while the real

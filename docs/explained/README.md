@@ -14,6 +14,7 @@ afterthought: every phase of work adds to them.
   - [Phase 5 — the site learns to find things](phase-5-search.md)
   - [Logos — learning Thai, letter by letter](logos-thai-cards.md)
   - [Pray — the Thai voice, checked by machine and taught eight words](pray-voice-check.md)
+  - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.

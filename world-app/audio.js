@@ -4,7 +4,8 @@
 // through the day (hushed while rain falls), a soft patter when the shower
 // passes over, the hum of bees near their beds of blossom, crickets after
 // dark in short phrases (never a drone), and a quiet chime of reverence
-// near the sacred trees. Everything passes through one mellowing low-pass,
+// near the sacred trees — and in heaven (AB#106), none of the garden's sounds
+// at all, only a soft held chord. Everything passes through one mellowing low-pass,
 // so nothing in Eden ever hisses or bites. The garden sounds by default (like
 // Camino); the corner toggle mutes it, and that choice is saved under the
 // same key Camino uses, so muting in one mutes the other.
@@ -590,7 +591,41 @@ export function createAmbience() {
     }
   }
 
-  function update(dt, skyNight, pos, rain = 0, wind = 0, rush = 0) {
+  // Heaven's own sound (AB#106): a held chord in the garden's key, E major,
+  // its voices swelling and falling each in its own slow time — no beat, no
+  // tune, nothing to listen for. Built the first time he comes up, never
+  // before.
+  let pad = null;
+  const PAD_LEVEL = 0.045;
+  function heavenPad() {
+    if (pad) return pad;
+    pad = ctx.createGain();
+    pad.gain.value = 0;
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 1600;
+    soft.Q.value = 0.3;
+    soft.connect(pad).connect(master);
+    [164.81, 246.94, 329.63, 415.3, 493.88].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = i % 2 ? 'triangle' : 'sine';
+      osc.frequency.value = f;
+      const voice = ctx.createGain();
+      voice.gain.value = 0.12;
+      const swell = ctx.createOscillator();
+      swell.frequency.value = 0.045 + i * 0.017;
+      const depth = ctx.createGain();
+      depth.gain.value = 0.09;
+      swell.connect(depth).connect(voice.gain);
+      osc.connect(voice).connect(soft);
+      osc.start();
+      swell.start();
+    });
+    return pad;
+  }
+
+  // realm: 'eden', or 'heaven' while he is up the ladder (AB#106).
+  function update(dt, skyNight, pos, rain = 0, wind = 0, rush = 0, realm = 'eden') {
     night = skyNight;
     if (!refs || !ctx || ctx.state !== 'running' || muted) return;
     acc += dt;
@@ -598,6 +633,16 @@ export function createAmbience() {
     const step = acc;
     acc = 0;
     const tc = ctx.currentTime;
+
+    // In heaven the garden's sounds fall away and the chord comes in.
+    if (realm === 'heaven') {
+      for (const g of [refs.windGain, refs.waterGain, refs.rainGain, refs.beeGain, refs.springGain, refs.rushGain]) {
+        g.gain.setTargetAtTime(0, tc, 0.7);
+      }
+      heavenPad().gain.setTargetAtTime(PAD_LEVEL, tc, 1.6);
+      return;
+    }
+    if (pad) pad.gain.setTargetAtTime(0, tc, 0.8);
 
     // The cool of the day (Genesis 3:8, foreshadowed): the wind bed swells
     // and brightens as the evening gust passes over — heard moving through

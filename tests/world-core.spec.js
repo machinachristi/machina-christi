@@ -8,7 +8,10 @@
 // (the four rivers, the gate, the dew…) live in world-features.spec.js instead,
 // which the run may update when it deliberately reshapes that feature.
 const { test, expect } = require('@playwright/test');
-const { watchErrors, gotoWorldReady, appFrame, getState, dist2d, expectInBudget } = require('./world-helpers');
+const {
+  watchErrors, watchPageErrors, gotoWorldReady, appFrame, getState, dist2d, expectInBudget,
+  enterHeaven, leaveHeaven,
+} = require('./world-helpers');
 
 test.describe('the garden loads', () => {
   test('shows an explainer before loading; entering starts the world', async ({ page }) => {
@@ -273,5 +276,121 @@ test.describe('arrival and layout', () => {
     }));
     expect(overflow.x).toBeLessThanOrEqual(1);
     expect(overflow.y).toBeLessThanOrEqual(1);
+  });
+});
+
+// Jacob's ladder and heaven (AB#106). Heaven is a second realm the weekly
+// routine furnishes week by week, so these checks hold for any heaven it
+// builds: the way up and back always works, heaven fits the same budget as
+// the garden, and nothing that goes wrong up there can take the world down —
+// he is always brought safely home to Eden instead. (Long: a climb on CI's
+// software renderer takes a while, so each allows minutes, not seconds.)
+test.describe('the ladder and heaven', () => {
+  test('walking into the ladder carries him up to heaven, within budget, and back down again', async ({ page }) => {
+    test.setTimeout(300000);
+    const errors = watchPageErrors(page);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const s0 = await getState(page);
+    expect(s0.realm.now).toBe('eden');
+    const foot = s0.ladder.foot;
+
+    // Up, and through the arrival — the widest view of heaven, as the camera
+    // first looks out to the glory — every frame sampled against the budget.
+    await enterHeaven(page, { settled: false });
+    const peak = await frame.evaluate(() => new Promise(resolve => {
+      const t0 = performance.now();
+      const most = { calls: 0, triangles: 0, frames: 0 };
+      (function sample() {
+        const r = window.__world.getState().render;
+        most.calls = Math.max(most.calls, r.calls);
+        most.triangles = Math.max(most.triangles, r.triangles);
+        most.frames++;
+        if (performance.now() - t0 < 3000) requestAnimationFrame(sample);
+        else resolve(most);
+      })();
+    }));
+    expect(peak.frames).toBeGreaterThan(3);
+    expect(peak.calls).toBeGreaterThan(0);
+    expectInBudget({ render: peak }, 'in heaven');
+
+    await expect.poll(async () => (await getState(page)).realm.passage, { timeout: 60000 }).toBe(null);
+    let s = await getState(page);
+    expect(s.realm.now).toBe('heaven');
+    expect(s.realm.failed).toBe(false);
+
+    // He can walk in heaven.
+    const p0 = s.pos;
+    await page.keyboard.down('ArrowUp');
+    try {
+      await expect.poll(async () => dist2d((await getState(page)).pos, p0), { timeout: 30000 })
+        .toBeGreaterThan(0.5);
+    } finally {
+      await page.keyboard.up('ArrowUp');
+    }
+
+    // And back down: home in the garden, beside the ladder's foot.
+    await leaveHeaven(page);
+    s = await getState(page);
+    expect(s.realm.now).toBe('eden');
+    expect(dist2d(s.pos, foot)).toBeLessThan(4);
+
+    // The garden draws again.
+    const pixels = await frame.evaluate(() => window.__world.samplePixels(5));
+    expect(new Set(pixels.map(p => p.slice(0, 3).join(','))).size).toBeGreaterThanOrEqual(6);
+    expect(pixels.filter(p => Math.max(p[0], p[1], p[2]) > 90).length).toBeGreaterThan(5);
+    expect(await page.getAttribute('body', 'data-world-state')).toBe('ready');
+    expect(errors).toEqual([]);
+  });
+
+  test('if heaven cannot be built, he stays safe in Eden and the world lives on', async ({ page }) => {
+    const errors = watchErrors(page);
+    await gotoWorldReady(page, '?debug=heavenError');
+    const frame = appFrame(page);
+    const foot = (await getState(page)).ladder.foot;
+    await frame.evaluate(f => window.__world.teleport(f.x, f.z - 8, 0), foot);
+    await frame.evaluate(f => window.__world.walkTo(f.x, f.z), foot);
+    await expect.poll(async () => (await getState(page)).realm.failed, { timeout: 60000 }).toBe(true);
+    // He walks right up to the foot, and the ladder rests.
+    await expect.poll(async () => dist2d((await getState(page)).pos, foot), { timeout: 60000 }).toBeLessThan(1.5);
+    const s = await getState(page);
+    expect(s.realm.now).toBe('eden');
+    expect(s.realm.passage).toBe(null);
+    expect(await page.getAttribute('body', 'data-world-state')).toBe('ready');
+    await expect(page.locator('.stage iframe')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('a fault inside heaven brings him home to Eden, and the world lives on', async ({ page }) => {
+    test.setTimeout(300000);
+    const errors = watchPageErrors(page);
+    await gotoWorldReady(page, '?debug=heavenFault');
+    const foot = (await getState(page)).ladder.foot;
+    await enterHeaven(page, { settled: false });
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return s.realm.failed && s.realm.now === 'eden' && s.realm.passage === null;
+    }, { timeout: 120000 }).toBe(true);
+    const s = await getState(page);
+    expect(dist2d(s.pos, foot)).toBeLessThan(4);
+    expect(await page.getAttribute('body', 'data-world-state')).toBe('ready');
+    await expect(page.locator('.stage iframe')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('with the saints\' records missing, heaven still opens, with the multitude', async ({ page }) => {
+    test.setTimeout(300000);
+    // The browser logs the blocked request as a console error itself, so only
+    // uncaught page errors count here.
+    const errors = watchPageErrors(page);
+    await page.route('**/ordo/saints.json', route => route.abort());
+    await gotoWorldReady(page);
+    await enterHeaven(page);
+    const s = await getState(page);
+    expect(s.realm.now).toBe('heaven');
+    expect(s.realm.failed).toBe(false);
+    expect(s.heaven.saints).toBe(0);
+    expect(s.heaven.multitude).toBeGreaterThan(1000);
+    expect(errors).toEqual([]);
   });
 });

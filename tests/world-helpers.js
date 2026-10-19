@@ -13,6 +13,14 @@ function watchErrors(page) {
   return errors;
 }
 
+// Uncaught page errors only — for checks where the browser itself logs a
+// console error that isn't the world's (a fetch the test deliberately blocks).
+function watchPageErrors(page) {
+  const errors = [];
+  page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+  return errors;
+}
+
 async function gotoWorldReady(page, query = '', { sound = false } = {}) {
   // Eden's sound is on by default (shared with Camino). These tests measure
   // frame-rate-sensitive things — distance walked, fades, timings — and a full
@@ -41,4 +49,37 @@ function expectInBudget(s, label = '') {
   expect(s.render.triangles, `triangles ${label}`).toBeLessThan(150000);
 }
 
-module.exports = { watchErrors, gotoWorldReady, appFrame, getState, dist2d, expectInBudget };
+// Up Jacob's ladder to heaven (AB#106) the way a visitor goes: set down a few
+// strides short of its foot on the far bank, then walked into it. If anything
+// on the way stops him short, he is sent on again. Resolves once he is in
+// heaven — and, unless `settled` is false, once the veil has lifted.
+async function enterHeaven(page, { settled = true, timeout = 120000 } = {}) {
+  const frame = appFrame(page);
+  const foot = (await getState(page)).ladder.foot;
+  await frame.evaluate(f => window.__world.teleport(f.x, f.z - 8, 0), foot);
+  await expect.poll(async () => {
+    const s = await getState(page);
+    if (s.realm.now === 'eden' && !s.realm.passage && !s.walk.target) {
+      await frame.evaluate(f => window.__world.walkTo(f.x, f.z), foot);
+    }
+    return s.realm.now === 'heaven' && (!settled || s.realm.passage === null);
+  }, { timeout, intervals: [500] }).toBe(true);
+}
+
+// Back down: walked to the head of the ladder in heaven, and on down it into
+// the garden. Resolves once he has stepped off it in Eden.
+async function leaveHeaven(page, { timeout = 120000 } = {}) {
+  const frame = appFrame(page);
+  await expect.poll(async () => {
+    const s = await getState(page);
+    if (s.realm.now === 'heaven' && !s.realm.passage && !s.walk.target) {
+      await frame.evaluate(h => window.__world.walkTo(h.x, h.z), s.heaven.ladderHead);
+    }
+    return s.realm.now === 'eden' && s.realm.passage === null;
+  }, { timeout, intervals: [500] }).toBe(true);
+}
+
+module.exports = {
+  watchErrors, watchPageErrors, gotoWorldReady, appFrame, getState, dist2d, expectInBudget,
+  enterHeaven, leaveHeaven,
+};

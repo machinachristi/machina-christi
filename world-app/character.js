@@ -31,6 +31,10 @@ const WALK_FREQ = 3.1;      // stride cycles per second at full speed
 const RISE_LAMBDA = 30;
 const SETTLE_LAMBDA = 16;
 const SNAP_Y = 2.5;          // a drop this far is a teleport, not a step: take it outright
+// Climbing Jacob's ladder (Genesis 28:12, AB#106): while he is on it, realm.js
+// sets where he is, and here the limbs only keep the rungs — hands reaching
+// up in turn, feet stepping up after them.
+const CLIMB_FREQ = 0.85;     // hand-over-hand cycles per second at the full climb
 
 export function createCharacter({ eve = false } = {}) {
   const skin = new THREE.MeshLambertMaterial({ color: 0xC69572, flatShading: true });
@@ -109,6 +113,10 @@ export function createCharacter({ eve = false } = {}) {
   let wade = 0;             // 0 on dry ground → 1 in the water; eased, for the stride
   let carrying = false;
   let carry = 0;            // 0 arms free → 1 hands cupped before him; eased
+  let climbing = false;
+  let climb = 0;            // 0 on the ground → 1 on the rungs; eased, never a snap
+  let climbRate = 1;        // how quickly he is going up or down, 0..1
+  let climbPhase = 0;
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -140,8 +148,9 @@ export function createCharacter({ eve = false } = {}) {
   // keepOut (v27): optional — pushes a position out of the garden's solid
   // rock (footing.js), so he slides round the crag rather than through it.
   function update(dt, move, camYaw, heightAt, boundsRadius, keepOut = null) {
-    // Seated, the figure neither walks nor turns — it rests where it is.
-    if (sitting) move = { x: 0, z: 0 };
+    // Seated, the figure neither walks nor turns — it rests where it is. On
+    // the ladder he goes only where realm.js sets him.
+    if (sitting || climbing) move = { x: 0, z: 0 };
     const mag = clamp(Math.hypot(move.x, move.z), 0, 1);
 
     if (mag > 0.001) {
@@ -186,6 +195,7 @@ export function createCharacter({ eve = false } = {}) {
     if (want === 0 && speed < HALTED) speed = 0;
 
     // Walk along the facing direction — turning carves smooth arcs.
+    if (climbing) speed = 0;
     if (speed > 0.01) {
       group.position.x += Math.sin(group.rotation.y) * speed * dt;
       group.position.z += Math.cos(group.rotation.y) * speed * dt;
@@ -201,11 +211,13 @@ export function createCharacter({ eve = false } = {}) {
       // the crag slides on round it instead of stopping dead.
       if (keepOut) keepOut(group.position);
     }
-    const ground = heightAt(group.position.x, group.position.z);
-    const dy = ground - group.position.y;
-    group.position.y = Math.abs(dy) > SNAP_Y
-      ? ground
-      : damp(group.position.y, ground, dy > 0 ? RISE_LAMBDA : SETTLE_LAMBDA, dt);
+    if (!climbing) {
+      const ground = heightAt(group.position.x, group.position.z);
+      const dy = ground - group.position.y;
+      group.position.y = Math.abs(dy) > SNAP_Y
+        ? ground
+        : damp(group.position.y, ground, dy > 0 ? RISE_LAMBDA : SETTLE_LAMBDA, dt);
+    }
 
     // Stride: limbs swing opposite pairs; a light bob; a slight lean forward.
     // The quickened pace lengthens and quickens the stride past the walk's.
@@ -266,11 +278,35 @@ export function createCharacter({ eve = false } = {}) {
       armR.rotation.x = armR.rotation.x * (1 - lift) - 1.35 * lift;
       armR.rotation.z = armR.rotation.z * (1 - lift) - 0.15 * lift;
     }
-    held.visible = carry > 0.6 && carrying && !holding;
-    fruitHeld.visible = !!holding;
+    // On the ladder (AB#106): both hands up on the rungs, reaching higher in
+    // turn; each knee lifted as the other hand goes up, the body close in to
+    // the ladder. Blended over whatever else he was doing, like the seat.
+    climb = damp(climb, climbing ? 1 : 0, 8, dt);
+    if (climb > 0.001) {
+      climbPhase += dt * CLIMB_FREQ * Math.PI * 2 * climbRate;
+      const s = Math.sin(climbPhase);
+      const mix = (from, to) => from * (1 - climb) + to * climb;
+      armL.rotation.x = mix(armL.rotation.x, -2.55 - 0.32 * s);
+      armR.rotation.x = mix(armR.rotation.x, -2.55 + 0.32 * s);
+      armL.rotation.z = mix(armL.rotation.z, 0.16);
+      armR.rotation.z = mix(armR.rotation.z, -0.16);
+      legL.rotation.x = mix(legL.rotation.x, -0.62 * Math.max(0, s));
+      legR.rotation.x = mix(legR.rotation.x, -0.62 * Math.max(0, -s));
+      torso.rotation.x = mix(torso.rotation.x, 0.1);
+      torso.position.y = mix(torso.position.y, 0.9 + 0.025 * Math.abs(s));
+    }
+
+    held.visible = carry > 0.6 && carrying && !holding && climb < 0.5;
+    fruitHeld.visible = !!holding && climb < 0.5;
   }
 
   function setSitting(b) { sitting = !!b; }
+  // on: whether he is on the ladder; rate: how quickly he is going, 0..1
+  // (0 holds the rungs still).
+  function setClimbing(on, rate = 1) {
+    climbing = !!on;
+    climbRate = rate;
+  }
   function setCarrying(b) { carrying = !!b; }
   // h: { color, left } while he holds a fruit, or null.
   function setHolding(h) {
@@ -281,7 +317,8 @@ export function createCharacter({ eve = false } = {}) {
   }
 
   return {
-    group, update, setSitting, setCarrying, setHolding,
+    group, update, setSitting, setCarrying, setHolding, setClimbing,
+    get climbing() { return climbing; },
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },
