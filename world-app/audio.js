@@ -5,7 +5,8 @@
 // passes over, the hum of bees near their beds of blossom, crickets after
 // dark in short phrases (never a drone), and a quiet chime of reverence
 // near the sacred trees — and in heaven (AB#106), none of the garden's sounds
-// at all, only a soft held chord. Everything passes through one mellowing low-pass,
+// at all, only a soft held chord, harps under his steps, and the multitude's
+// Alleluia when his prayer has risen (v33). Everything passes through one mellowing low-pass,
 // so nothing in Eden ever hisses or bites. The garden sounds by default (like
 // Camino); the corner toggle mutes it, and that choice is saved under the
 // same key Camino uses, so muting in one mutes the other.
@@ -529,6 +530,180 @@ export function createAmbience() {
     breath.onended = () => { breath.disconnect(); bp.disconnect(); bg.disconnect(); };
   }
 
+  // "I heard the voice of harpers harping with their harps" (Revelation
+  // 14:2): in heaven each step on the sea of glass plucks a harp string
+  // (v33). The scale is the garden's own E major pentatonic, here from E4 up
+  // two octaves, and heaven/song.js chooses the step — climbing as he walks
+  // toward the glory, falling as he comes away. A plucked string is a bright
+  // tick and a tone whose higher partials die away first, so each partial
+  // has its own decay and the brightness closes down under a low-pass.
+  const HARP_STEPS = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+  let lastHarp = 0;
+  function harp(step = 4) {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    if (ctx.currentTime - lastHarp < 0.11) return;   // never a clatter
+    lastHarp = ctx.currentTime;
+    const semis = HARP_STEPS[Math.max(0, Math.min(HARP_STEPS.length - 1, step | 0))];
+    const f = 329.63 * Math.pow(2, semis / 12);
+    const t0 = ctx.currentTime + 0.015;
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.Q.value = 0.3;
+    tone.frequency.setValueAtTime(Math.min(5200, f * 7), t0);
+    tone.frequency.exponentialRampToValueAtTime(Math.max(500, f * 1.8), t0 + 1.4);
+    tone.connect(master);
+    const nodes = [tone];
+    let longest = null;
+    for (const [mul, amp, decay] of [[1, 0.02, 3.2], [2, 0.008, 1.7], [3, 0.0035, 0.9], [4.02, 0.0015, 0.5]]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f * mul;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(amp, t0 + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.00004, t0 + decay);
+      osc.connect(g).connect(tone);
+      osc.start(t0);
+      osc.stop(t0 + decay + 0.05);
+      nodes.push(osc, g);
+      if (!longest) longest = osc;
+    }
+    // The pluck itself: a tick of noise tuned up above the note.
+    const tick = ctx.createBufferSource();
+    tick.buffer = refs.rustleBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = Math.min(6000, f * 3);
+    bp.Q.value = 1.4;
+    const tg = ctx.createGain();
+    tg.gain.setValueAtTime(0.01, t0);
+    tg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+    tick.connect(bp).connect(tg).connect(tone);
+    tick.start(t0, Math.random() * 1.5);
+    tick.stop(t0 + 0.06);
+    nodes.push(tick, bp, tg);
+    longest.onended = () => { for (const n of nodes) n.disconnect(); };
+  }
+
+  // "And I heard as it were the voice of a great multitude, and as the voice
+  // of many waters, and as the voice of mighty thunderings, saying,
+  // Alleluia" (Revelation 19:6): when his prayer has risen, heaven answers
+  // (v33). Five voices sing the word's five syllables — Al-le-lu-i-a — on
+  // the garden's own chords (E, A, E, B, and home to E), the vowels shaped by
+  // two formant filters that move from syllable to syllable, a slow vibrato
+  // in every voice, and under them the rush of many waters, swelling and
+  // falling with the song.
+  const ALLELUIA = [
+    { chord: [0, 7, 12, 16, 19], f1: 780, f2: 1150, len: 0.6 },    // Al (ah)
+    { chord: [-7, 9, 12, 17, 21], f1: 520, f2: 1700, len: 0.55 },  // le (eh)
+    { chord: [0, 7, 12, 16, 19], f1: 360, f2: 900, len: 0.6 },     // lu (oo)
+    { chord: [-5, 7, 11, 14, 19], f1: 300, f2: 2050, len: 0.7 },   // i  (ee)
+    { chord: [0, 7, 12, 16, 24], f1: 780, f2: 1150, len: 2.6 },    // a  (ah), held
+  ];
+  let lastAlleluia = -1e6;
+  function alleluia() {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    if (ctx.currentTime - lastAlleluia < 8) return;
+    lastAlleluia = ctx.currentTime;
+    const t0 = ctx.currentTime + 0.05;
+    let total = 0;
+    for (const syl of ALLELUIA) total += syl.len;
+    const end = t0 + total + 2.8;
+
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.linearRampToValueAtTime(0.5, t0 + 0.4);
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 2800;
+    soft.Q.value = 0.3;
+    out.connect(soft).connect(master);
+    const f1 = ctx.createBiquadFilter();
+    f1.type = 'bandpass';
+    f1.Q.value = 5;
+    const f2 = ctx.createBiquadFilter();
+    f2.type = 'bandpass';
+    f2.Q.value = 7;
+    const f2g = ctx.createGain();
+    f2g.gain.value = 0.55;
+    const body = ctx.createBiquadFilter();   // a little of the voices unshaped, for warmth
+    body.type = 'lowpass';
+    body.frequency.value = 520;
+    const bodyG = ctx.createGain();
+    bodyG.gain.value = 0.18;
+    const voices = ctx.createGain();
+    voices.gain.value = 0.05;
+    voices.connect(f1).connect(out);
+    voices.connect(f2).connect(f2g).connect(out);
+    voices.connect(body).connect(bodyG).connect(out);
+    const nodes = [out, soft, f1, f2, f2g, body, bodyG, voices];
+
+    // The vibrato, shared by every voice (in cents).
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 5.1;
+    const vibAmt = ctx.createGain();
+    vibAmt.gain.value = 9;
+    vib.connect(vibAmt);
+    nodes.push(vib, vibAmt);
+
+    // Each part: two slightly unlike saw voices, gliding from chord to chord.
+    const oscs = [];
+    for (let part = 0; part < 5; part++) {
+      for (const cents of [-6, 6]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.detune.value = cents;
+        vibAmt.connect(osc.detune);
+        osc.connect(voices);
+        oscs.push({ osc, part });
+        nodes.push(osc);
+      }
+    }
+    let at = t0;
+    ALLELUIA.forEach((syl, k) => {
+      for (const { osc, part } of oscs) {
+        const f = 164.81 * Math.pow(2, syl.chord[part] / 12);
+        if (k === 0) osc.frequency.setValueAtTime(f, at);
+        else osc.frequency.setTargetAtTime(f, at, 0.035);
+      }
+      if (k === 0) {
+        f1.frequency.setValueAtTime(syl.f1, at);
+        f2.frequency.setValueAtTime(syl.f2, at);
+      } else {
+        f1.frequency.setTargetAtTime(syl.f1, at, 0.05);
+        f2.frequency.setTargetAtTime(syl.f2, at, 0.05);
+        // A breath of a consonant between syllables: the voices dip and return.
+        voices.gain.setTargetAtTime(0.03, at - 0.06, 0.025);
+        voices.gain.setTargetAtTime(0.05, at + 0.02, 0.04);
+      }
+      at += syl.len;
+    });
+    // The last "a" held, then let go.
+    out.gain.setValueAtTime(0.5, at - 1.2);
+    out.gain.exponentialRampToValueAtTime(0.0004, end - 0.1);
+
+    // The many waters: deep noise swelling under the song.
+    const waters = ctx.createBufferSource();
+    waters.buffer = refs.rollBuf;
+    waters.loop = true;
+    const wLP = ctx.createBiquadFilter();
+    wLP.type = 'lowpass';
+    wLP.frequency.value = 520;
+    const wG = ctx.createGain();
+    wG.gain.setValueAtTime(0.0001, t0);
+    wG.gain.linearRampToValueAtTime(0.05, t0 + 1.2);
+    wG.gain.exponentialRampToValueAtTime(0.0003, end - 0.1);
+    waters.connect(wLP).connect(wG).connect(master);
+    nodes.push(waters, wLP, wG);
+
+    for (const { osc } of oscs) { osc.start(t0); osc.stop(end); }
+    vib.start(t0);
+    vib.stop(end);
+    waters.start(t0, Math.random() * 1.5);
+    waters.stop(end);
+    vib.onended = () => { for (const n of nodes) n.disconnect(); };
+  }
+
   function ensureStarted() {
     if (!supported || muted) return;
     if (!ctx) {
@@ -721,5 +896,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, pipe, state };
+  return { update, setMuted, chime, thunder, call, bloom, pipe, harp, alleluia, state };
 }

@@ -9,12 +9,24 @@
 // round the opening where the ladder comes up — and leaves that opening
 // open, so the way down can be seen through it. Heaven's ground is flat, so
 // the walker's height is simply 0 everywhere (heaven.js).
+//
+// v33: "a sea of glass mingled with fire" (Revelation 15:2). Each step he
+// takes kindles fire in the glass (song.js says when): a ring of it running
+// out round his foot and a glow where the foot fell, fading in a moment. The
+// last few footfalls are handed to the same shader, so the fire costs no
+// draw of its own.
 
 import * as THREE from 'three';
 import { GLORY, LADDER_HEAD, RIVER, STREET } from './layout.js';
 import { HEAVEN_HORIZON } from './sky.js';
 
+const RINGS = 8;               // footfalls burning at once, recycled oldest-first
+const FIRE_LIFE = 2.4;         // seconds each burns
+const FIRE_SPEED = 2.3;        // m/s its ring runs out through the glass
+
 export function createSea(scene) {
+  const rings = [];
+  for (let i = 0; i < RINGS; i++) rings.push(new THREE.Vector4(0, 0, -1e6, 0));
   const u = {
     uTime: { value: 0 },
     uGlass: { value: new THREE.Color(0xDCE9EC) },
@@ -29,6 +41,8 @@ export function createSea(scene) {
     uRiverW: { value: RIVER.halfWidth },
     uRiverFrom: { value: RIVER.from },
     uStreetW: { value: STREET.halfWidth },
+    uRings: { value: rings },
+    uFire: { value: 0 },
   };
   const material = new THREE.ShaderMaterial({
     uniforms: u,
@@ -56,6 +70,8 @@ export function createSea(scene) {
       uniform float uRiverW;
       uniform float uRiverFrom;
       uniform float uStreetW;
+      uniform vec4 uRings[${RINGS}];
+      uniform float uFire;
       varying vec3 vWorld;
       varying float vDepth;
       void main() {
@@ -89,6 +105,27 @@ export function createSea(scene) {
         vec3 water = mix(uRiver, vec3(1.0), 0.25 + 0.35 * flow);
         col = mix(col, water, river);
 
+        // Fire in the glass where he has stepped: a ring running out from each
+        // footfall and a glow where the foot fell, both fading. Skipped
+        // altogether while nothing burns.
+        if (uFire > 0.5) {
+          float fire = 0.0;
+          for (int i = 0; i < ${RINGS}; i++) {
+            vec4 r = uRings[i];
+            float age = uTime - r.z;
+            if (age < 0.0 || age > ${FIRE_LIFE.toFixed(2)}) continue;
+            float d = distance(p, r.xy);
+            float k = 1.0 - age / ${FIRE_LIFE.toFixed(2)};
+            float rad = 0.2 + age * ${FIRE_SPEED.toFixed(2)};
+            float band = (d - rad) / (0.1 + age * 0.16);
+            fire += exp(-band * band) * k * k * r.w;
+            fire += exp(-d * d * 5.0) * exp(-age * 2.2) * 0.7 * r.w;
+          }
+          fire = clamp(fire, 0.0, 1.0);
+          vec3 flame = mix(vec3(1.0, 0.52, 0.16), vec3(1.0, 0.9, 0.55), fire * fire);
+          col = mix(col, flame, fire * 0.78);
+        }
+
         // The soft rim of cloud round the opening.
         float rim = 1.0 - smoothstep(uHole.z, uHole.z + uHole.w, dh);
         float ang = atan(p.y - uHole.y, p.x - uHole.x);
@@ -104,7 +141,24 @@ export function createSea(scene) {
   const mesh = new THREE.Mesh(geo, material);
   scene.add(mesh);
 
+  let next = 0;
+  let lastKindled = -1e6;
   return {
-    update(time) { u.uTime.value = time; },
+    update(time) {
+      u.uTime.value = time;
+      u.uFire.value = time - lastKindled < FIRE_LIFE ? 1 : 0;
+    },
+    // A footfall at (x, z), at heaven's time `time`.
+    kindle(x, z, time, power = 1) {
+      rings[next].set(x, z, time, power);
+      next = (next + 1) % RINGS;
+      lastKindled = time;
+    },
+    // How many footfalls are burning in the glass at heaven's time `time`.
+    rings(time) {
+      let n = 0;
+      for (const r of rings) if (time - r.z >= 0 && time - r.z <= FIRE_LIFE) n++;
+      return n;
+    },
   };
 }

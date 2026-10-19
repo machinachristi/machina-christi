@@ -639,6 +639,50 @@ test.describe('the garden\'s features', () => {
     expect(s.heaven.near).toBe(saint.name);
   });
 
+  test('the new song in heaven: a still prayer rises as incense and is answered, his steps kindle the glass, leaves float down the river (v33, Revelation 8:4; 15:2; 19:6; 22:2)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    await enterHeaven(page);
+    const frame = appFrame(page);
+    let s = await getState(page);
+    // The leaves of the Tree of Life are carried down the river.
+    expect(s.heaven.song.leaves).toBeGreaterThan(20);
+
+    // Standing still where he came up, he lifts his hands and his prayer
+    // rises as incense; kept still while it rises, the multitude answers and
+    // the glory brightens with it.
+    await expect.poll(async () => (await getState(page)).heaven.song.praying, { timeout: 60000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).heaven.song.his, { timeout: 60000 }).toBeGreaterThan(10);
+    await expect.poll(async () => (await getState(page)).heaven.song.answers, { timeout: 120000 }).toBeGreaterThanOrEqual(1);
+    await expect.poll(async () => (await getState(page)).heaven.song.flare, { timeout: 30000 }).toBeGreaterThan(0.2);
+
+    // Walking, every step kindles fire in the sea of glass and plucks a harp,
+    // and the prayer ends.
+    s = await getState(page);
+    const steps0 = s.heaven.song.steps, notes0 = s.heaven.song.notes;
+    await page.keyboard.down('ArrowUp');
+    try {
+      await expect.poll(async () => {
+        const song = (await getState(page)).heaven.song;
+        return song.steps >= steps0 + 4 && song.notes >= notes0 + 4 && song.rings > 0 && !song.praying;
+      }, { timeout: 60000 }).toBe(true);
+    } finally {
+      await page.keyboard.up('ArrowUp');
+    }
+    // Standing again, the fire dies down.
+    await expect.poll(async () => (await getState(page)).heaven.song.rings, { timeout: 30000 }).toBe(0);
+
+    // Set down on the river as the leaves float by, a leaf's word is given
+    // (each set-down is a fresh arrival there, before any prayer begins).
+    let flip = 0;
+    await expect.poll(async () => {
+      flip = 1 - flip;
+      await frame.evaluate(z => window.__world.teleport(0.3, z, Math.PI), flip ? 2 : 12);
+      const c = (await getState(page)).caption;
+      return c && c.name;
+    }, { timeout: 60000 }).toBe('Aleh');
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

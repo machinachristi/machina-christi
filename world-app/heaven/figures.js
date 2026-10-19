@@ -385,6 +385,9 @@ export function createFigures(scene, data) {
       return st ? { name: st.entry.name, x: st.x, z: st.z } : null;
     },
     near: () => (named ? named.entry.name : null),
+    // Where each saint stands (v33: their prayers rise from there as incense,
+    // incense.js) — places only; who stands there is this module's to tell.
+    places: stations.map(st => ({ x: st.x, z: st.z })),
   };
 }
 
