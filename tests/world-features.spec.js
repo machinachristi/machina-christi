@@ -545,6 +545,59 @@ test.describe('the garden\'s features', () => {
     }, { timeout: 30000 }).toBe(true);
   });
 
+  test('the flock knows him: it follows where he leads, lies down round him, and rests at noon (v31, John 10:4; Psalm 23:2)', async ({ page }) => {
+    test.setTimeout(150000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    // Fourteen sheep graze their own pasture, none yet following.
+    const f0 = (await getState(page)).flock;
+    expect(f0.count).toBe(14);
+    expect(f0.following).toBe(0);
+    for (const s of f0.sheep) expect(Math.hypot(s.x - f0.home.x, s.z - f0.home.z)).toBeLessThan(7);
+
+    // Walk in among them and they fall in behind him, and the flock's name
+    // is given.
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z, Math.PI / 2), [f0.home.x, f0.home.z]);
+    await expect.poll(async () => (await getState(page)).flock.following, { timeout: 30000 }).toBeGreaterThanOrEqual(10);
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Tson');
+
+    // Lead them off across the meadow: they come after him, and stay with
+    // him. (A tap-walk may stop a little short beside something it names on
+    // the way, so this asks only that he has gone well on, not where he ends.)
+    const to = { x: f0.home.x + 12, z: f0.home.z - 5 };
+    await frame.evaluate(([x, z]) => window.__world.walkTo(x, z), [to.x, to.z]);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (Math.hypot(s.pos.x - f0.home.x, s.pos.z - f0.home.z) < 5) return false;
+      const near = s.flock.sheep.filter(h => h.mode === 'follow' && Math.hypot(h.x - s.pos.x, h.z - s.pos.z) < 8);
+      return near.length >= 8;
+    }, { timeout: 45000 }).toBe(true);
+
+    // He stands: his followers come round him and lie down, and the psalm's
+    // word is given.
+    await expect.poll(async () => {
+      const f = (await getState(page)).flock;
+      return f.gathered && f.round >= 3 && f.rests > 0;
+    }, { timeout: 45000 }).toBe(true);
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Yarbitseni');
+
+    // He goes far off: they let him go, and graze where he led them — the
+    // pasture is now nearer the place he left them than the one they came from.
+    const left = (await getState(page)).pos;
+    await frame.evaluate(() => window.__world.teleport(30, -30));
+    await expect.poll(async () => {
+      const f = (await getState(page)).flock;
+      const fromLeft = Math.hypot(f.home.x - left.x, f.home.z - left.z);
+      const fromOld = Math.hypot(f.home.x - f0.home.x, f.home.z - f0.home.z);
+      return f.following === 0 && fromLeft < fromOld;
+    }, { timeout: 30000 }).toBe(true);
+
+    // Through the heat of the middle day the grazing flock lies down.
+    await frame.evaluate(() => window.__world.setTime('noon'));
+    await expect.poll(async () => (await getState(page)).flock.lying, { timeout: 30000 }).toBeGreaterThanOrEqual(12);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

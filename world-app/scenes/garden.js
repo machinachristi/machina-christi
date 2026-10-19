@@ -83,6 +83,7 @@ import { createBlossom } from './blossom.js';
 import { createMurmuration } from './murmuration.js';
 import { createLiving } from './living.js';
 import { createGather } from './gather.js';
+import { createFlock } from './flock.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -266,6 +267,12 @@ export async function createGarden(scene, rng) {
   // as it does. Nothing is placed at build time — it needs only the rock to
   // keep its flowers out of, so it comes straight after the solids.
   const blossom = createBlossom(scene, solids);
+  // v31 (John 10:4; Psalm 23:2): a flock of its own that knows him — it
+  // follows where he goes, round the same rock he goes round, and lies down
+  // round him when he stands. It grazes round the trees rather than through
+  // them, so it takes vegetation's tree spots. Its own seeded stream, drawn
+  // only here.
+  const flock = createFlock(scene, solids, vegetation.treeSpots);
   // v25 (Deuteronomy 32:11): the crag under the eagle's nest, and her two
   // young in it. Built after the creatures because it answers to her — it
   // is told each frame whether she is stirring them up — and on its own
@@ -443,6 +450,7 @@ export async function createGarden(scene, rng) {
     murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz);
     living.update(dt, playerPos, hour, hour.moonDir);
     gather.update(dt, playerPos, facing);
+    flock.update(dt, playerPos, hour.t, hour.night);
     return hour;
   }
 
@@ -528,9 +536,13 @@ export async function createGarden(scene, rng) {
     fry: fry.state,
     watering: watering.state,
     // A word for the work just done has the line first (the watering, then
-    // the fruit given, v30); then the living water's name (v30), then the
-    // flock's own name, the moment it comes to him (v29).
-    tending: () => watering.caption() || gather.caption() || living.caption() || murmuration.caption(),
+    // the fruit given, v30); then the living water's name (v30); then the
+    // sheep's, as they fall in behind him or lie down round him (v31); then
+    // the great flock of birds' own name, the moment it comes to him (v29).
+    tending: () => watering.caption() || gather.caption() || living.caption()
+      || flock.caption() || murmuration.caption(),
+    flock: flock.state,
+    flockSong: flock.song,
     living: living.state,
     livingSong: living.song,
     gather: gather.state,

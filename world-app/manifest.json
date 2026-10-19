@@ -1,5 +1,5 @@
 {
-  "version": 30,
+  "version": 31,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -365,13 +365,29 @@
         { "text": "He holds it up to look at it, eats it in three bites, and his hands are free again; walk out from under the tree and come back, and it gives again.", "source": "Genesis 1:29" },
         { "text": "All of the river's light is one draw call: whether each glint catches the sun or the moon is worked out on the graphics chip from where the watcher stands.", "source": null }
       ]
+    },
+    {
+      "version": 31,
+      "date": "2026-10-19",
+      "focus": "they know his voice",
+      "changes": [
+        { "text": "A flock of its own now grazes the meadow between the two great trees, straight ahead of where every visit begins: ewes and their lambs, heads down in the grass, wandering a few steps to fresh grazing, round the trunks and never through them.", "source": "Psalm 65:13" },
+        { "text": "Walk in among them and they know him: each one near lifts its head and falls in behind, and any grazing beside one that has joined comes too, so a walk through the flock gathers it, and its name is given.", "source": "John 10:4" },
+        { "text": "They follow the very way he went, round the rock where he went round it, strung out behind him; the lambs frisk to keep up.", "source": "John 10:27" },
+        { "text": "Stand still and they come up round him; stand a little longer and they lie down at his feet, and the psalm's word is given.", "source": "Psalm 23:2" },
+        { "text": "They will not wade: go into the river and they wait at the brink, drinking, until he comes back, or until he has gone so far that they let him go.", "source": "Psalm 23:2" },
+        { "text": "Wherever he leads them becomes their pasture, and the garden remembers it, so next visit the flock is grazing where he left it.", "source": "Ezekiel 34:14" },
+        { "text": "Through the heat of the middle day, and through the night, the grazing flock lies down where it is.", "source": "Song of Solomon 1:7" },
+        { "text": "A shepherd's pipe plays as they come: a breathy note as each sheep falls in, and a slow tune while the flock walks behind him.", "source": "John 10:3" },
+        { "text": "All fourteen sheep are four draw calls: bodies, heads, legs and shadows are each drawn many times over from one shape.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Keep the flock: walk out to a lamb that has wandered far from the others and it follows at his heels back to them, and lies down (Isaiah 40:11)",
     "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
-    "The flock lies down to rest through the heat of the middle day, in the shade of the trees nearest them (Song of Solomon 1:7)",
-    "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)"
+    "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)",
+    "The flock seeks the shade at noon: rather than lying down where they graze, the sheep walk into the shadow of the nearest tree to rest (Song of Solomon 1:7)",
+    "Carry a lamb: stand still beside the smallest lamb and he lifts it into his arms and carries it at his breast while the flock follows (Isaiah 40:11)"
   ]
 }

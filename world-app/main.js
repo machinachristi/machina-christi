@@ -184,6 +184,7 @@ let heardCalls = 0;
 let heardNotes = 0;
 let heardWater = 0;
 let heardFruit = 0;
+let heardPipe = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -275,6 +276,13 @@ renderer.setAnimationLoop(() => {
   if (given.notes !== heardFruit) {
     heardFruit = given.notes;
     ambience.bloom(given.note);
+  }
+  // v31 (John 10:4): the shepherd's pipe, a note as each sheep falls in
+  // behind him and one every few steps while the flock walks after him.
+  const piped = garden.flockSong();
+  if (piped.notes !== heardPipe) {
+    heardPipe = piped.notes;
+    ambience.pipe(piped.note);
   }
   renderer.render(scene, camera);
 
@@ -536,6 +544,12 @@ window.__world = {
       // away|settling|roost|rising, `call` 0..1 how far it has come to wheel
       // before the walker, `arrivals` each time it has, `near` its distance.
       murmuration: garden.murmuration(),
+      // v31: the flock that knows him (John 10:4; Psalm 23:2) — `following`
+      // how many walk behind him, `lying` how many lie down (round him, or
+      // where they graze at noon and by night), `gathered` while they stand
+      // round him, `home` the pasture they keep (remembered across visits),
+      // `joins`/`rests` this visit, `sheep[]` where each stands and how.
+      flock: garden.flock(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
