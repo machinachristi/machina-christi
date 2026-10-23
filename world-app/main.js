@@ -12,6 +12,7 @@ import { createWayfinding } from './wayfinding.js';
 import { createFooting } from './footing.js';
 import { createAmbience } from './audio.js';
 import { createRealm } from './realm.js';
+import { createConsider } from './consider.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { mulberry32, breathe } from './util.js';
 
@@ -81,6 +82,10 @@ const realm = createRealm({
   eden: { scene, heightAt: garden.heightAt, radius: garden.radius, footing, wayfinding, namedThing: garden.namedThing },
 });
 
+// Tap the sky and he lies back in the grass to look up into it (v34, Psalm
+// 8:3) — see consider.js. Any tap or drag brings him up again.
+const consider = createConsider({ camera, canvas: renderer.domElement, character, rig, heightAt: garden.heightAt });
+
 // The naming caption (Genesis 2:19-20): a quiet line at the foot of the
 // screen, filled from the garden's sense of which creature the walker has
 // drawn near. CSS carries the fade; the last name lingers through it.
@@ -97,8 +102,12 @@ function updateNamingCaption() {
   // (AB#106); in the garden, a word for the work just done (v27: water taken
   // up, the ground watered) has the line for its few seconds; otherwise the
   // nearest thing named.
+  // Lying back to look up (v34), the heavens' own words come before the
+  // names of things round him, which he can no longer see.
   const given = realm.caption()
-    || (realm.now === 'eden' ? garden.tending() || garden.named() : null);
+    || (realm.now === 'eden'
+      ? garden.tending() || consider.caption(garden.signNamed()) || (consider.lying ? null : garden.named())
+      : null);
   captionNow = given || null;
   const key = given ? given.name + '·' + given.label : '';
   if (key === namingShown) return;
@@ -203,6 +212,8 @@ let heardPipe = 0;
 // v33: in heaven, the harps under his steps and the multitude's answer.
 let heardHarp = 0;
 let heardAnswers = 0;
+// v34: a star's note each time one in sight sings.
+let heardStars = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -219,23 +230,45 @@ let forceSit = false;
 // `kit` is the realm he is in (realm.js): its ground, its rock, its way of
 // walking to a tapped place, and whatever is named there now. Any input also
 // cuts short an arrival's opening shot (heaven's, AB#106).
+// v34: while he lies looking up, a tap brings him up again; in the garden,
+// a tap on the open sky (which finds no ground to walk to) lays him down.
 function readIntent(dt, kit) {
   const tap = controls.takeTap();
   if (tap) {
     rig.skipIntro();
-    kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing());
+    if (consider.lying) consider.rise();
+    else if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
+      && kit.name === 'eden' && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
+      liePutDown();
+    }
   }
   const v = controls.vector();
   if (Math.hypot(v.x, v.z) > 0.001) {
     rig.skipIntro();
     kit.wayfinding.cancel();
+    if (consider.lying) consider.rise();
     return { move: v, world: false };
   }
   const step = kit.wayfinding.intent(character.group.position, kit.namedThing(), dt);
   return step ? { move: step, world: true } : { move: v, world: false };
 }
 
+// Down onto the grass where he stands: any walk he was on is let go, and
+// he does not sit by the water as well.
+function liePutDown() {
+  if (!consider.lieDown()) return false;
+  realm.kit().wayfinding.cancel();
+  forceSit = false;
+  return true;
+}
+
 function updateStillness(dt, v) {
+  if (consider.lying) {
+    stillFor = 0;
+    seated = false;
+    character.setSitting(false);
+    return;
+  }
   const moving = Math.hypot(v.x, v.z) > 0.001;
   if (moving) forceSit = false;   // the first touch of input always rises
   const pos = character.group.position;
@@ -259,6 +292,7 @@ renderer.setAnimationLoop(() => {
   if (driven) {
     controls.takeTap();
     kit.wayfinding.cancel();
+    if (consider.lying) consider.rise();
     intent = driven;
   } else {
     intent = readIntent(dt, kit);
@@ -277,6 +311,8 @@ renderer.setAnimationLoop(() => {
   kit = realm.kit();
   const inEden = kit.name === 'eden';
   if (inEden) updateCompanion(dt);
+  if (!inEden && consider.lying) consider.rise();
+  consider.update(dt, garden.hour.night, garden.heavensGuide);
   rig.update(dt);
   // In heaven the garden waits, its clock stilled — "there shall be no
   // night there" (Revelation 21:25) — and his companion with it.
@@ -323,10 +359,12 @@ function heavenSong() {
 // Everything the garden does in a frame while he is in it.
 function edenFrame(dt) {
   character.setPraying(false);
-  const lure = seated
+  // Sitting by the water, or lying back in the grass (v34), he is still
+  // enough for the shyer creatures to come near.
+  const lure = seated || consider.lying
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
-  const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y);
+  const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze);
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
   // …and a fruit given him under the tree, until it is eaten (v30).
@@ -373,6 +411,12 @@ function edenFrame(dt) {
   if (piped.notes !== heardPipe) {
     heardPipe = piped.notes;
     ambience.pipe(piped.note);
+  }
+  // v34 (Job 38:7): a star in sight brightens and sings.
+  const sung = garden.starSong();
+  if (sung.notes !== heardStars) {
+    heardStars = sung.notes;
+    ambience.star(sung.note);
   }
 }
 
@@ -645,6 +689,15 @@ window.__world = {
       // round him, `home` the pasture they keep (remembered across visits),
       // `joins`/`rests` this visit, `sheep[]` where each stands and how.
       flock: garden.flock(),
+      // v34: considering the heavens (Psalm 8:3) — `lying` whether he lies
+      // back in the grass to look up, `lie` how far down he is (0 standing →
+      // 1 lying back), `gaze` how far the view is his own, `up`/`yaw` where
+      // his eyes are, `word` the heavens' word while it is given, `times`
+      // this visit. `host` (Genesis 15:5; Psalm 147:4): the night's own stars
+      // — `adapt` how used to the dark his eyes have grown, `band` whether
+      // the Milky Way is drawn, `going`/`named` the sign his eyes go to and
+      // the one whose name is given, `sung` how many stars have sung.
+      consider: { ...consider.state(), host: garden.host() },
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -680,8 +733,17 @@ window.__world = {
   // Sit the walker down where they stand (true) or rise again (false) — the
   // deliberate form of the stillness the water invites. For tests and rest.
   sit(on = true) {
+    if (on && consider.lying) consider.rise();
     forceSit = !!on;
     return { sitting: forceSit };
+  },
+  // Lie back in the grass to look up (true), as a tap on the sky does, or
+  // get up again (false) — for tests and the curious (v34). Returns whether
+  // he lies (he will not in the water, nor in heaven, nor on the ladder).
+  consider(on = true) {
+    if (!on) consider.rise();
+    else if (realm.idle && realm.now === 'eden') liePutDown();
+    return consider.lying;
   },
   // Call the subtle presence to stir the grass near the Tree of Knowledge
   // now, rather than waiting on its own rare clock. For a glimpse, and tests.

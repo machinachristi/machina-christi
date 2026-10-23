@@ -1,5 +1,5 @@
 {
-  "version": 33,
+  "version": 34,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -412,13 +412,29 @@
         { "text": "Leaves let go of the Tree of Life, flutter down onto the river and are carried down it past the saints toward the head of the ladder; walk along beside them and their word is given.", "source": "Revelation 22:2" },
         { "text": "The incense is one draw call, every puff's rise worked out on the graphics chip; the leaves are one more; and the fire is painted by the glass's own shader, with no draw call of its own.", "source": null }
       ]
+    },
+    {
+      "version": 34,
+      "date": "2026-10-23",
+      "focus": "consider the heavens",
+      "realm": "eden",
+      "changes": [
+        { "text": "Tap the sky and he lies down on his back in the grass to look up into it; the view comes down beside his head and lifts with his eyes. Any tap or drag and he gets up again.", "source": "Psalm 8:3" },
+        { "text": "By day the great flock leaves its wandering and comes to wheel right over him as he lies, high up and filling the sky.", "source": "Matthew 6:26" },
+        { "text": "By night his eyes grow used to the dark: thousands more stars come out, and the Milky Way, with its dark rifts and its bright heart, right across the sky.", "source": "Genesis 15:5" },
+        { "text": "His eyes go in turn to each named sign the season sets high enough, and to the moon when she rides high, and each is named: Ash the Bear, Kesil Orion, Kimah the Pleiades, Yareach the moon.", "source": "Psalm 147:4" },
+        { "text": "Now and then a star in sight brightens and sings one high, glassy note.", "source": "Job 38:7" },
+        { "text": "Lying still, he draws the shyer creatures near, as when he sits by the water.", "source": "Genesis 2:19" },
+        { "text": "The garden's stars are soft and round now rather than square, and the signs' lines show a little more while he lies looking up.", "source": null },
+        { "text": "The new stars and the Milky Way are two draw calls, drawn only by night (the Milky Way only while he lies looking up), so nothing new is drawn in the garden's opening view.", "source": null }
+      ]
     }
   ],
   "next": [
     "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
     "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
-    "Consider the heavens: one tap lets a phone visitor tip the phone back to lift the view to the sky, to watch the great flock and, at night, the stars overhead (Psalm 8:3)",
-    "Carry a lamb: stand still beside the smallest lamb and he lifts it into his arms and carries it at his breast while the flock follows (Isaiah 40:11)",
+    "Carry a lamb: stand still beside the flock's lamb and he lifts it into his arms and carries it at his breast while the ewe and the ram follow (Isaiah 40:11)",
+    "The morning stars sing together: lying back as the night ends, every star in sight sings at once in a swelling chord as the east brightens behind them (Job 38:7)",
     "The holy city's wall on heaven's far rim: twelve foundations, each a different precious stone glowing in the light, and twelve gates, every gate of one pearl, standing open (Revelation 21:19-21, 25)"
   ]
 }

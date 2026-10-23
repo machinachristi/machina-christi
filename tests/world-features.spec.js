@@ -614,6 +614,80 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).flock.lying, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
   });
 
+  test('consider the heavens: tap the sky and he lies back to look up — the flock wheels over him by day, and by night the stars come out and each sign is named (v34, Psalm 8:3; Genesis 15:5; Psalm 147:4)', async ({ page }) => {
+    test.setTimeout(180000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const vp = page.viewportSize();
+
+    // A fresh visit stands, and the night's host of stars is not drawn.
+    const s0 = await getState(page);
+    expect(s0.consider.lying).toBe(false);
+    expect(s0.consider.host.stars).toBeGreaterThan(3000);
+    expect(s0.consider.host.shown).toBe(false);
+
+    // Not in the river: he will not lie down in the water.
+    await frame.evaluate(() => window.__world.teleport(-20, 6));
+    expect(await frame.evaluate(() => window.__world.consider(true))).toBe(false);
+
+    // Out on the open south-western meadow, a tap on the sky (the top of the
+    // screen) lays him down. The very first touch only skips the opening
+    // shot, so tap again if that one was taken for it.
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    await page.mouse.click(vp.width / 2, 24);
+    await page.waitForTimeout(800);
+    if (!(await getState(page)).consider.lying) await page.mouse.click(vp.width / 2, 24);
+    await expect.poll(async () => (await getState(page)).consider.lying, { timeout: 10000 }).toBe(true);
+
+    // He lies back, and the camera comes down beside his head and looks up.
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return s.consider.lie > 0.99 && s.consider.gaze > 0.95 && s.consider.up > 0.6
+        && s.cam.y - s.pos.y < 1.2 && s.camDist < 2;
+    }, { timeout: 30000 }).toBe(true);
+
+    // By day the heavens' word is given, and the great flock comes to wheel
+    // right over him, high up.
+    await expect.poll(async () => (await getState(page)).consider.word, { timeout: 30000 }).toBe('Shamayim');
+    await expect.poll(async () => {
+      const s = await getState(page);
+      const m = s.murmuration;
+      return m.call > 0.6 && m.over > 0.9 && m.y - s.pos.y > 12 && Math.hypot(m.x - s.pos.x, m.z - s.pos.z) < 16;
+    }, { timeout: 60000 }).toBe(true);
+
+    // Any tap brings him up again, and the camera goes back behind him.
+    await page.mouse.click(vp.width / 2, vp.height / 2);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return !s.consider.lying && s.consider.lie === 0 && s.camDist > 4;
+    }, { timeout: 30000 }).toBe(true);
+
+    // By night, lying back, his eyes grow used to the dark: the host of
+    // stars and the Milky Way come out, a sign is gone to and named (the
+    // Bear always stands high enough), and the stars in sight sing.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    expect(await frame.evaluate(() => window.__world.consider(true))).toBe(true);
+    await expect.poll(async () => {
+      const h = (await getState(page)).consider.host;
+      return h.shown && h.band && h.adapt > 0.6;
+    }, { timeout: 60000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).consider.word, { timeout: 30000 }).toBe('Kokhavim');
+    let named;
+    await expect.poll(async () => {
+      named = (await getState(page)).caption;
+      return !!named && ['Ash', 'Kesil', 'Kimah', 'Yareach'].includes(named.name);
+    }, { timeout: 90000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).consider.host.sung, { timeout: 60000 }).toBeGreaterThan(0);
+
+    // Up again, the Milky Way is let go; the night sky is as it was, and
+    // the whole of it stayed inside the budget.
+    await frame.evaluate(() => window.__world.consider(false));
+    await expect.poll(async () => (await getState(page)).consider.host.band, { timeout: 30000 }).toBe(false);
+    const s1 = await getState(page);
+    expect(s1.render.calls).toBeLessThan(200);
+    expect(s1.render.triangles).toBeLessThan(150000);
+  });
+
   test('angels go up and down Jacob\'s ladder (Genesis 28:12)', async ({ page }) => {
     await gotoWorldReady(page);
     const a0 = (await getState(page)).ladder.angels;

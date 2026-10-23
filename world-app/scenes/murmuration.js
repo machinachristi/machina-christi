@@ -50,6 +50,10 @@ const STILL_SPEED = 0.25;       // m/s; slower than this he is standing
 const CALL_AFTER = 3;           // seconds of standing before the flock comes
 const BEFORE = 22;             // …to wheel this far out in front of him
 const BEFORE_Y = 4.5;           // …and this high over the ground there
+// v34 (Psalm 8:3): lying back to look up, it comes to wheel right over him
+// instead — a little way out past his feet, high enough to fill his eyes.
+const OVER = 9;
+const OVER_Y = 17;
 const CAPTION_FOR = 4;          // seconds the flock's name is shown
 
 const CAPTION = { name: 'Of ha-shamayim', label: 'the fowls of the air' };
@@ -213,6 +217,7 @@ export function createMurmuration(scene) {
   let settle = 0;
   let away = 0;
   let hourNow = 0;
+  let over = 0;           // 0 wheeling before him → 1 over him as he lies looking up (v34)
 
   const _above = new THREE.Vector3();
   function roostAbove() { return _above.copy(ROOST).setY(ROOST.y + 4); }
@@ -242,7 +247,9 @@ export function createMurmuration(scene) {
     return stage;
   }
 
-  function update(dt, cycleT, walker, facing = 0, sunAz = 0) {
+  // overhead (v34): whether he lies looking up — the flock then comes to
+  // wheel over him rather than low before him.
+  function update(dt, cycleT, walker, facing = 0, sunAz = 0, overhead = false) {
     clock += dt;
     hourNow = cycleT;
     u.uTime.value = clock;
@@ -271,13 +278,17 @@ export function createMurmuration(scene) {
     stageAt(cycleT, sunAz);
     centre.copy(stage);
     const c = smoothstep(0, 1, call);
+    // Over him or before him: eased, so a flock already come to him rises
+    // to its new place rather than leaping there.
+    over = damp(over, overhead ? 1 : 0, 0.8, dt);
+    const out = BEFORE + (OVER - BEFORE) * over;
     // Where it comes to wheel: out before him, fixed while he stands. Once he
     // walks on it stays over that spot and drifts back to its own wandering,
     // rather than swinging round with him as he turns.
-    if (want) meet.set(walker.x + Math.sin(facing) * BEFORE, 0, walker.z + Math.cos(facing) * BEFORE);
+    if (want) meet.set(walker.x + Math.sin(facing) * out, 0, walker.z + Math.cos(facing) * out);
     if (c > 0.001 && walker) {
       before.set(meet.x + 4 * Math.sin(clock * 0.3), 0, meet.z + 4 * Math.cos(clock * 0.3));
-      before.y = Math.max(heightAt(before.x, before.z), -0.5) + BEFORE_Y;
+      before.y = Math.max(heightAt(before.x, before.z), -0.5) + BEFORE_Y + (OVER_Y - BEFORE_Y) * over;
       centre.lerp(before, c);
     }
     // Down to the reeds: the whole body sinks toward them as the birds drop in.
@@ -340,13 +351,22 @@ export function createMurmuration(scene) {
       call: +call.toFixed(3),
       arrivals,
       near: Number.isFinite(near) ? +near.toFixed(2) : null,
+      over: +over.toFixed(3),
       x: centre.x, y: centre.y, z: centre.z,
       roost: { x: ROOST.x, z: ROOST.z },
     };
   }
 
+  // Where it wheels, while it has come to wheel over a watcher lying in the
+  // grass (v34) — so his eyes can follow it.
+  function aboveHim(out) {
+    if (!mesh.visible || call < 0.5 || over < 0.5) return false;
+    out.copy(centre);
+    return true;
+  }
+
   return {
-    update, state,
+    update, state, aboveHim,
     caption: () => caption,
     get rush() { return rush; },
   };

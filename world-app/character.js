@@ -6,7 +6,7 @@
 // model files — every future change to the figure stays a readable diff.
 
 import * as THREE from 'three';
-import { clamp, damp, shortestAngle } from './util.js';
+import { clamp, damp, shortestAngle, smoothstep } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 
 // Two gaits, not a continuous speed (v25, Psalm 37:23): any input is the
@@ -35,6 +35,15 @@ const SNAP_Y = 2.5;          // a drop this far is a teleport, not a step: take 
 // sets where he is, and here the limbs only keep the rungs — hands reaching
 // up in turn, feet stepping up after them.
 const CLIMB_FREQ = 0.85;     // hand-over-hand cycles per second at the full climb
+// Lying back to look up (v34, Psalm 8:3): down onto the grass, legs out,
+// then back. Getting up is quicker than lying down, and he only walks off
+// once he is most of the way up.
+const LIE_DOWN = 1.9;        // seconds from standing to lying back
+const LIE_UP = 0.65;         // seconds from lying back to standing
+const LIE_WALKS = 0.12;      // he may walk once lying back has eased below this
+const LIE_SLOPE = 0.6;       // the most (radians) he lies tilted along a slope
+const HIP = 0.9;             // the hips' height standing, which he lies back about
+const HIP_LYING = 0.21;      // …and lying, so his back rests on the grass
 
 export function createCharacter({ eve = false } = {}) {
   const skin = new THREE.MeshLambertMaterial({ color: 0xC69572, flatShading: true });
@@ -42,6 +51,10 @@ export function createCharacter({ eve = false } = {}) {
 
   const group = new THREE.Group();          // root sits at the feet
   const scale = eve ? 0.955 : 1;
+  // Everything but the shadow, so that lying back (v34) can lay the whole
+  // figure down at once; it stands as it always did when untouched.
+  const body = new THREE.Group();
+  group.add(body);
 
   // Torso — a single tapered capsule; shoulders slightly narrower for Eve.
   const torso = new THREE.Group();
@@ -50,7 +63,7 @@ export function createCharacter({ eve = false } = {}) {
   torsoMesh.scale.x = eve ? 0.9 : 1.04;
   torso.add(torsoMesh);
   torso.position.y = 0.9;
-  group.add(torso);
+  body.add(torso);
 
   // Head + hair. Adam: a close cap. Eve: the cap plus hair falling down the back.
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 8), skin);
@@ -80,8 +93,8 @@ export function createCharacter({ eve = false } = {}) {
   }
   const armL = limb(0.062, 0.5, -0.285, 0.62, torso);
   const armR = limb(0.062, 0.5, 0.285, 0.62, torso);
-  const legL = limb(0.082, 0.6, -0.115, 0.9, group);
-  const legR = limb(0.082, 0.6, 0.115, 0.9, group);
+  const legL = limb(0.082, 0.6, -0.115, 0.9, body);
+  const legR = limb(0.082, 0.6, 0.115, 0.9, body);
 
   // Simple feet grounded at the base of each leg.
   for (const leg of [legL, legR]) {
@@ -119,6 +132,9 @@ export function createCharacter({ eve = false } = {}) {
   let climbPhase = 0;
   let praying = false;
   let orans = 0;            // 0 hands down → 1 lifted up in prayer; eased slowly
+  let lying = false;
+  let lie = 0;              // 0 standing → 1 lying back looking up; eased in and out (v34)
+  let laid = false;         // whether the body is presently turned from standing at all
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -152,7 +168,9 @@ export function createCharacter({ eve = false } = {}) {
   function update(dt, move, camYaw, heightAt, boundsRadius, keepOut = null) {
     // Seated, the figure neither walks nor turns — it rests where it is. On
     // the ladder he goes only where realm.js sets him.
-    if (sitting || climbing) move = { x: 0, z: 0 };
+    // Lying back he stays where he lies until he is mostly up again.
+    lie = lying ? Math.min(1, lie + dt / LIE_DOWN) : Math.max(0, lie - dt / LIE_UP);
+    if (sitting || climbing || lying || lie > LIE_WALKS) move = { x: 0, z: 0 };
     const mag = clamp(Math.hypot(move.x, move.z), 0, 1);
 
     if (mag > 0.001) {
@@ -263,6 +281,41 @@ export function createCharacter({ eve = false } = {}) {
       torso.rotation.x = torso.rotation.x * (1 - seat) + (-0.16) * seat;
     }
 
+    // Lying back to look up (v34, Psalm 8:3): first down onto the grass with
+    // his legs out before him, then back about his hips until he lies flat,
+    // arms out on the grass and his face to the sky. The body is turned
+    // about the hips and lowered with them; the legs keep along the ground
+    // all the way.
+    if (lie > 0.001) {
+      laid = true;
+      const low = smoothstep(0, 0.5, lie);
+      const tilt = smoothstep(0.35, 1, lie) * Math.PI / 2;
+      // On a slope he lies along it, his head neither sunk into the bank
+      // behind him nor held up in the air (the water's surface counts as
+      // ground for this).
+      const f = group.rotation.y, fs = Math.sin(f), fc = Math.cos(f);
+      const gx = group.position.x, gz = group.position.z;
+      const behind = Math.max(heightAt(gx - fs * 0.88, gz - fc * 0.88), -0.5);
+      const ahead = Math.max(heightAt(gx + fs * 0.9, gz + fc * 0.9), -0.5);
+      const slope = clamp(Math.atan2(behind - ahead, 1.78), -LIE_SLOPE, LIE_SLOPE);
+      const turn = -tilt + slope * (tilt / (Math.PI / 2));
+      const hipY = HIP - (HIP - HIP_LYING) * low;
+      body.rotation.x = turn;
+      body.position.set(0, hipY - HIP * Math.cos(turn), -HIP * Math.sin(turn));
+      const legs = (tilt - Math.PI / 2) * low;
+      legL.rotation.x = legL.rotation.x * (1 - low) + legs;
+      legR.rotation.x = legR.rotation.x * (1 - low) + legs;
+      armL.rotation.x *= 1 - low;
+      armR.rotation.x *= 1 - low;
+      armL.rotation.z = armL.rotation.z * (1 - low) - 0.62 * low;
+      armR.rotation.z = armR.rotation.z * (1 - low) + 0.62 * low;
+      torso.rotation.x *= 1 - low;
+    } else if (laid) {
+      laid = false;
+      body.rotation.x = 0;
+      body.position.set(0, 0, 0);
+    }
+
     // Carrying water (v27, Genesis 2:6): both hands brought together before
     // him and cupped, held there whatever his legs are doing, sitting or
     // walking, until he lets it go on the ground he came to water.
@@ -316,6 +369,7 @@ export function createCharacter({ eve = false } = {}) {
   }
 
   function setSitting(b) { sitting = !!b; }
+  function setLying(b) { lying = !!b; }
   // on: whether he is on the ladder; rate: how quickly he is going, 0..1
   // (0 holds the rungs still).
   function setClimbing(on, rate = 1) {
@@ -333,8 +387,9 @@ export function createCharacter({ eve = false } = {}) {
   }
 
   return {
-    group, update, setSitting, setCarrying, setHolding, setClimbing, setPraying,
+    group, update, setSitting, setCarrying, setHolding, setClimbing, setPraying, setLying,
     get climbing() { return climbing; },
+    get lie() { return lie; },
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },

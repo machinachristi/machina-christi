@@ -84,6 +84,7 @@ import { createMurmuration } from './murmuration.js';
 import { createLiving } from './living.js';
 import { createGather } from './gather.js';
 import { createFlock } from './flock.js';
+import { createHost } from './host.js';
 import { createLadder } from './ladder.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
@@ -375,6 +376,11 @@ export async function createGarden(scene, rng) {
   // hands when he stands under it. It reads fruit.js's own trees; nothing
   // placed, nothing drawn from any stream.
   const gather = createGather(scene, fruit.spots);
+  // v34 (Genesis 15:5; Psalm 147:4): the host of the night sky — thousands
+  // more stars and the Milky Way, for whoever lies back in the grass at night
+  // to look up. It rides the sky's own firmament and reads its signs; its
+  // own seeded streams, drawn only here.
+  const host = createHost(sky.celestial, sky.signs);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -393,7 +399,10 @@ export async function createGarden(scene, rng) {
   // the creatures, who draw near it (see creatures.js).
   // `facing`: the walker's yaw, radians — footprints alone need it, to point
   // each print the way it was walking.
-  function update(dt, playerPos, lure = null, facing = 0) {
+  // `gaze` (v34, consider.js): whether he lies looking up, how far, and
+  // where his eyes are — or null.
+  function update(dt, playerPos, lure = null, facing = 0, gaze = null) {
+    sky.setGaze(gaze ? gaze.k : 0);
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
     // On the seventh day (v11, Genesis 2:2-3) the wind holds still and every
     // creature keeps a deeper rest — threaded through from the sky's own
@@ -455,12 +464,26 @@ export async function createGarden(scene, rng) {
     fry.update(dt, playerPos);
     watering.update(dt, playerPos);
     blossom.update(dt, playerPos, hour.night);
-    murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz);
+    murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz, !!(gaze && gaze.lying));
     living.update(dt, playerPos, hour, hour.moonDir);
     gather.update(dt, playerPos, facing);
     flock.update(dt, playerPos, hour.t, hour.night);
+    host.update(dt, hour, gaze);
     ladder.update(dt);
     return hour;
+  }
+
+  // Where a watcher lying in the grass looking up (v34) should turn his
+  // eyes, if anywhere: a sign or the moon by night, the flock come to wheel
+  // over him by day. `eye` is where he looks from; `out` gets a unit
+  // direction (world).
+  function heavensGuide(eye, out) {
+    if (host.guide(out)) return true;
+    if (!murmuration.aboveHim(out)) return false;
+    out.sub(eye);
+    if (out.lengthSq() < 1e-6) return false;
+    out.normalize();
+    return true;
   }
 
   return {
@@ -561,6 +584,13 @@ export async function createGarden(scene, rng) {
     murmuration: murmuration.state,
     blossom: blossom.state,
     song: blossom.song,
+    // v34: the host of the night sky — `host` its state, `signNamed` the
+    // sign whose name is given as a lying watcher's eyes come to it, and
+    // `starSong` the notes the stars in sight have sung.
+    host: host.state,
+    signNamed: host.caption,
+    starSong: host.song,
+    heavensGuide,
     alsoWalking: blossom.alsoWalking,
     solids,
     get carrying() { return watering.carrying; },

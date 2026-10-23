@@ -30,6 +30,25 @@ export class CameraRig {
 
     this.lookPoint = new THREE.Vector3();
     this.intro = null;
+
+    // v34 (Psalm 8:3): lying back in the grass, he looks up, and the camera
+    // goes with his eyes — blended over the follow pose by `gaze`, 0..1. The
+    // follow pose itself keeps easing along underneath, untouched, so when
+    // he gets up again the camera comes back to exactly where it would be.
+    this.gaze = 0;
+    this.gazeEye = new THREE.Vector3();
+    this.gazeLook = new THREE.Vector3();
+    this._followPos = new THREE.Vector3();
+    this._followLook = new THREE.Vector3();
+    this._blended = false;
+  }
+
+  // k: 0..1 how far the view is his own, looking up; eye/look: where the
+  // camera is then, and the point it looks at.
+  setGaze(k, eye = null, look = null) {
+    this.gaze = k;
+    if (eye) this.gazeEye.copy(eye);
+    if (look) this.gazeLook.copy(look);
   }
 
   _desiredPosition(out) {
@@ -73,6 +92,7 @@ export class CameraRig {
   // (AB#106) there is nothing in the new place to ease from.
   snap() {
     this.intro = null;
+    this._blended = false;
     this._desiredPosition(this.camera.position);
     this._desiredLook(this.lookPoint);
     const floor = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.6;
@@ -95,6 +115,13 @@ export class CameraRig {
   }
 
   update(dt) {
+    // Last frame's view was blended toward his eyes: take the follow pose
+    // back up where it was left, so the easing below carries on from it.
+    if (this._blended) {
+      this.camera.position.copy(this._followPos);
+      this.lookPoint.copy(this._followLook);
+      this._blended = false;
+    }
     // Coming back toward the camera — a drag down, or the down arrow — it
     // holds its bearing and backs away before him rather than swinging round
     // behind; otherwise he turns to face a camera that keeps fleeing round
@@ -124,6 +151,18 @@ export class CameraRig {
     // Never sink into a hillside.
     const floor = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.6;
     if (this.camera.position.y < floor) this.camera.position.y = floor;
+
+    if (this.gaze > 0.001) {
+      this._followPos.copy(this.camera.position);
+      this._followLook.copy(this.lookPoint);
+      const g = smoothstep(0, 1, this.gaze);
+      this.camera.position.lerp(this.gazeEye, g);
+      this.lookPoint.lerp(this.gazeLook, g);
+      this._blended = true;
+      // On the way down to his eyes, never through a bank.
+      const low = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.35;
+      if (this.camera.position.y < low) this.camera.position.y = low;
+    }
 
     this.camera.lookAt(this.lookPoint);
   }
