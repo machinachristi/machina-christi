@@ -471,6 +471,39 @@ export function createAmbience() {
     }
   }
 
+  // "When the morning stars sang together" (Job 38:7): lying back at night
+  // to look up (v34), now and then a star in sight brightens and sings — a
+  // single glassy bell, high and far off, in the same pentatonic as the
+  // blossom's notes and two octaves above them. host.js picks the step, a
+  // step or two from the last. The overtones are a bell's, not a string's
+  // (2.76 and 5.4 times the note), and a fainter second strike just after
+  // the first, a hair sharp, makes it shimmer.
+  let lastStar = 0;
+  function star(step = 4) {
+    if (!ctx || ctx.state !== 'running' || muted || !master) return;
+    if (ctx.currentTime - lastStar < 0.5) return;   // one at a time
+    lastStar = ctx.currentTime;
+    const semis = BLOOM_STEPS[Math.max(0, Math.min(BLOOM_STEPS.length - 1, step | 0))];
+    const f = 659.25 * Math.pow(2, semis / 12);
+    for (const [at, detune, k] of [[0, 0, 1], [0.13, 4, 0.45]]) {
+      const t0 = ctx.currentTime + 0.02 + at;
+      for (const [mul, amp, len] of [[1, 0.012, 3.6], [2.76, 0.0035, 1.6], [5.4, 0.0012, 0.7]]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = f * mul;
+        osc.detune.value = detune;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(amp * k, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.00002, t0 + len);
+        osc.connect(g).connect(master);
+        osc.start(t0);
+        osc.stop(t0 + len + 0.05);
+        osc.onended = () => { osc.disconnect(); g.disconnect(); };
+      }
+    }
+  }
+
   // "The sheep follow him: for they know his voice" (John 10:4): a
   // shepherd's pipe, one breathy note at a time, as the flock falls in behind
   // the walker and goes after him. flock.js picks the tune — semitones above
@@ -896,5 +929,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, pipe, harp, alleluia, state };
+  return { update, setMuted, chime, thunder, call, bloom, star, pipe, harp, alleluia, state };
 }

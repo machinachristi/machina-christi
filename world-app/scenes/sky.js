@@ -20,7 +20,7 @@ const WEEK_DAYS = 7;      // "on the seventh day God ended his work" (Genesis 2:
 // "Let them be for signs, and for seasons" (Genesis 1:14): the whole night
 // sky turns slowly about one pole, and its starting angle is set by the
 // visitor's real calendar date — the Bear stands where the season sets it.
-const POLE = new THREE.Vector3(
+export const POLE = new THREE.Vector3(
   Math.cos(1.05) * Math.cos(0.45), Math.sin(1.05), Math.cos(1.05) * Math.sin(0.45),
 ).normalize();
 const WHEEL_RATE = (Math.PI * 2) / (YEAR_DAYS * DAY_LENGTH);
@@ -206,8 +206,23 @@ export function createSky(scene) {
   const starGeo = new THREE.BufferGeometry();
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
+  // Each star a soft round point with a bright core (v34): lying back to
+  // look straight up at them, plain square points showed as squares.
+  const starDot = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.32, 'rgba(255, 255, 255, 0.85)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 32, 32);
+    return new THREE.CanvasTexture(c);
+  })();
   const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
-    size: 2.2,
+    size: 3.2,
+    map: starDot,
     sizeAttenuation: false,
     vertexColors: true,
     transparent: true,
@@ -253,6 +268,10 @@ export function createSky(scene) {
   ];
   const signPos = [];
   const linePos = [];
+  // Where each figure stands on the firmament (v34): the heart of its stars,
+  // as a unit direction in the firmament's own frame — host.js turns a
+  // lying watcher's eyes to each in turn, and names it.
+  const signs = [];
   const DEG = Math.PI / 180;
   for (const c of CONSTELLATIONS) {
     const world = c.stars.map(([oa, oe]) => {
@@ -262,6 +281,9 @@ export function createSky(scene) {
         Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az),
       ).multiplyScalar(398);
     });
+    const heart = new THREE.Vector3();
+    for (const w of world) heart.add(w);
+    signs.push({ name: c.name, dir: heart.normalize() });
     for (const w of world) signPos.push(w.x, w.y, w.z);
     for (const [i2, j2] of c.lines) {
       linePos.push(world[i2].x, world[i2].y, world[i2].z, world[j2].x, world[j2].y, world[j2].z);
@@ -270,7 +292,8 @@ export function createSky(scene) {
   const signGeo = new THREE.BufferGeometry();
   signGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(signPos), 3));
   const signStars = new THREE.Points(signGeo, new THREE.PointsMaterial({
-    size: 3.6,
+    size: 5.0,
+    map: starDot,
     sizeAttenuation: false,
     color: 0xDFE8F5,
     transparent: true,
@@ -463,6 +486,7 @@ export function createSky(scene) {
   let t = START_T;
   let elapsed = 0;
   let dayOverride = null;   // setDay() override; null follows the real elapsed clock
+  let gazeK = 0;            // how far a lying watcher is looking up into it (v34), 0..1
 
   function apply() {
     // Bracketing keyframes (the list wraps: past the last stop, blend
@@ -588,7 +612,8 @@ export function createSky(scene) {
     stars.visible = num.stars > 0.02;
     signStars.material.opacity = num.stars * twinkle;
     signStars.visible = stars.visible;
-    signLines.material.opacity = num.stars * 0.2;
+    // Lying back to look up (v34), the figures' lines show a little more.
+    signLines.material.opacity = num.stars * (0.2 + 0.3 * gazeK);
     signLines.visible = stars.visible;
 
     cloudMat.emissive.lerpColors(CLOUD_EMISSIVE_DAY, CLOUD_EMISSIVE_NIGHT, num.night);
@@ -749,6 +774,13 @@ export function createSky(scene) {
     return state;
   }
 
+  // How far the walker, lying back in the grass, is looking up into the sky
+  // (v34, Psalm 8:3), 0..1 — read on the next apply().
+  function setGaze(k) { gazeK = clamp(k, 0, 1); }
+
   apply();
-  return { update, setTime, setRain, setDay, state, constellations: CONSTELLATIONS.map(c => c.name) };
+  return {
+    update, setTime, setRain, setDay, setGaze, state, celestial, signs,
+    constellations: CONSTELLATIONS.map(c => c.name),
+  };
 }
