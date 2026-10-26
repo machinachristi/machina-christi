@@ -10,6 +10,14 @@ downloads them and shows them, like picking up a printed leaflet: once it's in
 your hand, everything on it is already decided.
 *Here:* the gates on machinachristi.com — Eden, Camino, Ordo, Pray.
 
+**CSS (the style sheet).** The rules that say how a page looks: colours,
+sizes, spacing, borders, glows. The page's words and links (HTML) are the
+furniture; CSS is the paint, the lighting and where everything stands. You
+can repaint a room without moving the furniture, and the browser does the
+painting itself, so it costs no extra download.
+*Here:* the homepage gates' gold edge, the glow around each emblem, and the
+light filling the gate you're on are all CSS rules in `index.html`.
+
 **Server.** A computer somewhere else that is always on, waiting for questions.
 Unlike a leaflet, it can work out a fresh answer each time it's asked.
 *Here:* the Azure Function app, which wakes up when someone asks it something.
@@ -612,6 +620,13 @@ a working system, and if the new one misbehaves you switch back.
 finished dish from the kitchen to the table.
 *Here:* merging a PR into `main` makes GitHub Actions deploy it automatically.
 
+**Preview site (staging).** A private copy of the website built from a pull
+request, at its own web address, so a change can be tried on a real phone
+before anyone else sees it: a dress rehearsal before opening night. Merging
+the pull request is what puts it on the real stage.
+*Here:* every pull request gets one from Azure Static Web Apps; a robot
+comments its address on the PR ("Your stage site is ready").
+
 **Redirect (301).** A forwarding address for a page that has moved or been
 retired. Someone who visits the old address is sent on to the new one
 automatically, the way the post office forwards letters after you move. The
@@ -631,6 +646,14 @@ whole wall. Whatever it teaches goes into the plan; the trial is thrown away.
 *Here:* the network test (Phase 2), the sound test (Phase 4) and the search lab
 (Phase 5), which caught that a broad role could change search indexes even
 though the documentation said it couldn't.
+
+**Look test.** A spike for how something *looks*: a quick, throwaway render of
+a design idea at the real size of a real screen, put next to what's there
+today, so it's judged by eye in real pixels, not from a sketch or a
+description. Like holding a fabric sample against the sofa before buying the
+roll. Measurements go with it, so "too small" or "brighter" become numbers.
+*Here:* the homepage's 3D gate rooms (AB#115). Three were tried; none was
+built, and the three touches people liked came to today's page as CSS.
 
 **Verification (check the result, not the report).** "Succeeded" means the
 steps ran, not that the outcome is right. After a change, look at the thing

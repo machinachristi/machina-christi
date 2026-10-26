@@ -187,7 +187,8 @@
       cursor: pointer;
       touch-action: manipulation;
       outline: none;
-      border: 1px solid rgba(201, 162, 39, 0.3);
+      /* A soft, bright gold: the edge catches the light like a gilded moulding. */
+      border: 1px solid rgba(222, 190, 112, 0.6);
       border-radius: 50% 50% 14px 14px / 30% 30% 14px 14px;
       background: rgba(201, 162, 39, 0.03);
       box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.45);
@@ -200,7 +201,7 @@
       content: "";
       position: absolute;
       inset: 7px;
-      border: 1px solid rgba(201, 162, 39, 0.14);
+      border: 1px solid rgba(222, 190, 112, 0.32);
       border-radius: 50% 50% 10px 10px / 30% 30% 10px 10px;
       pointer-events: none;
       transition: border-color 0.35s ease;
@@ -218,11 +219,25 @@
     .portal__halo {
       position: absolute;
       inset: 0;
-      background: radial-gradient(95% 55% at 50% 100%, rgba(var(--glow), 0.26), transparent 76%);
+      background: radial-gradient(95% 62% at 50% 100%, rgba(var(--glow), 0.34), transparent 78%);
       opacity: 0.35;
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
+    /* On the gate you are on, its light fills the whole arch, not just the
+       threshold, and stays within it. */
+    .portal__halo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(90% 72% at 50% 50%, rgba(var(--glow), 0.22), transparent 100%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .js .portal.is-active .portal__halo::after,
+    .portal:hover .portal__halo::after,
+    .portal:focus-visible .portal__halo::after,
+    .portal.opening .portal__halo::after { opacity: 1; }
 
     .portal__vignette {
       flex: 1;
@@ -240,7 +255,9 @@
       stroke-width: 1.6;
       stroke-linecap: round;
       stroke-linejoin: round;
-      filter: drop-shadow(0 0 6px rgba(var(--glow), 0.35));
+      /* Two glows: a fine gold one close to the line, and a wider one in
+         the gate's own colour, as light blooms around something bright. */
+      filter: drop-shadow(0 0 2px rgba(240, 208, 128, 0.55)) drop-shadow(0 0 12px rgba(var(--glow), 0.7));
       opacity: 0.75;
       transition: opacity 0.5s ease;
     }
@@ -285,17 +302,15 @@
        the centered one is awake. Without JS every gate stands fully lit. */
     .js .portal { opacity: 0.5; transform: scale(0.94); }
     .js .portal.is-active { opacity: 1; transform: scale(1); }
-    .js .portal.is-active .portal__halo { opacity: 0.65; }
+    .js .portal.is-active .portal__halo { opacity: 0.8; }
     .js .portal.is-active .portal__vignette svg { opacity: 1; }
 
     /* Hover / focus — the threshold kindles. */
     .portal:hover, .portal:focus-visible {
-      border-color: rgba(201, 162, 39, 0.65);
-      box-shadow:
-        inset 0 0 34px rgba(0, 0, 0, 0.3),
-        0 16px 44px -18px rgba(var(--glow), 0.35);
+      border-color: rgba(232, 204, 132, 0.85);
+      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.3);
     }
-    .portal:hover::before, .portal:focus-visible::before { border-color: rgba(201, 162, 39, 0.3); }
+    .portal:hover::before, .portal:focus-visible::before { border-color: rgba(232, 204, 132, 0.5); }
     .portal:hover .portal__halo, .portal:focus-visible .portal__halo { opacity: 0.9; }
     .portal:hover .portal__title, .portal:focus-visible .portal__title {
       color: #fff;
@@ -311,9 +326,7 @@
        while the room fades. */
     .portal.opening {
       border-color: rgba(var(--glow), 0.85);
-      box-shadow:
-        inset 0 0 54px rgba(var(--glow), 0.22),
-        0 0 60px -10px rgba(var(--glow), 0.4);
+      box-shadow: inset 0 0 54px rgba(var(--glow), 0.3);
     }
     .portal.opening .portal__halo {
       opacity: 1;
@@ -529,8 +542,10 @@
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
-            <!-- a rosary: a loop of beads falling to a small cross -->
-            <path d="M24 35 C13 34 9.5 23 13 16 C16.5 9.5 31.5 9.5 35 16 C38.5 23 35 34 24 35" stroke-width="3.4" stroke-dasharray="0 5.3" />
+            <!-- a rosary: a loop of beads falling to a small cross. The loop is
+                 76.98 long, so 15 beads 5.132 apart close it evenly: the last
+                 bead falls exactly on the first instead of half over it. -->
+            <path d="M24 35 C13 34 9.5 23 13 16 C16.5 9.5 31.5 9.5 35 16 C38.5 23 35 34 24 35" stroke-width="3.4" stroke-dasharray="0 5.132" />
             <path d="M24 38.5 V44" />
             <path d="M24 47 V58" />
             <path d="M19.5 51 H28.5" />

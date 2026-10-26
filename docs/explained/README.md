@@ -16,6 +16,7 @@ afterthought: every phase of work adds to them.
   - [Logos — the vowels, the phone guide's card page, and why the tones waited](logos-vowels-and-tones.md)
   - [Pray — the Thai voice, checked by machine and taught eight words](pray-voice-check.md)
   - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
+  - [The homepage gates — three look tests, and the light they left behind](homepage-gates-look-tests.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.
