@@ -54,6 +54,11 @@ gate's colour spill out onto the page beneath it. Seen on a real phone, that
 wasn't wanted: the light belongs *inside* the gate. And on the gate you're on,
 the light should fill the whole arch, not only its foot. So the spill was
 taken out, and the gate you're on gained a broad glow through all of it.
+The same look on the phone caught one small flaw: on the Pray gate, two of the
+rosary's beads overlapped where the loop closes. The beads are dots placed
+every 5.3 steps along the loop, but the loop is 76.98 long, not a whole number
+of steps, so the last bead landed half over the first. Fifteen beads 5.132
+apart fit it exactly.
 
 ## The three changes
 

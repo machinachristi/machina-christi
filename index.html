@@ -542,8 +542,10 @@
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
-            <!-- a rosary: a loop of beads falling to a small cross -->
-            <path d="M24 35 C13 34 9.5 23 13 16 C16.5 9.5 31.5 9.5 35 16 C38.5 23 35 34 24 35" stroke-width="3.4" stroke-dasharray="0 5.3" />
+            <!-- a rosary: a loop of beads falling to a small cross. The loop is
+                 76.98 long, so 15 beads 5.132 apart close it evenly: the last
+                 bead falls exactly on the first instead of half over it. -->
+            <path d="M24 35 C13 34 9.5 23 13 16 C16.5 9.5 31.5 9.5 35 16 C38.5 23 35 34 24 35" stroke-width="3.4" stroke-dasharray="0 5.132" />
             <path d="M24 38.5 V44" />
             <path d="M24 47 V58" />
             <path d="M19.5 51 H28.5" />
