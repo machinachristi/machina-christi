@@ -1,6 +1,7 @@
 // Logos: the Thai cards. These check the card data against the workbook's
-// shape (44 consonants in three classes, 32 vowels, five tones, every sound
-// present), the page's three pages (Cards, Alphabet, Practice) and Listen &
+// shape (44 consonants in three classes, 32 vowels, every sound present,
+// and no tones: they were left off until they can be trusted), the page's
+// three pages (Cards, Alphabet, Practice) and Listen &
 // pick. The page's audio player and device voice are swapped for stand-ins
 // that record what would have been heard, so nothing plays during a test.
 const { test, expect } = require('@playwright/test');
@@ -10,7 +11,6 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'logos', 'thai.json'), 'utf8'));
 const ALPHABET = 'กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ';
-const TONES = ['mid', 'low', 'falling', 'high', 'rising'];
 const shown = form => form.replace(/-(?=[ัำ-ฺ็-๎])/g, '');
 
 function watchErrors(page) {
@@ -39,7 +39,7 @@ async function openLogos(page, hash = '') {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await stubSound(page);
   await page.goto(`/logos.html${hash}`);
-  await expect(page.locator('#sec-tones')).toBeAttached();
+  await expect(page.locator('#sec-middle')).toBeAttached();
 }
 
 const played = page => page.evaluate(() => window.__played);
@@ -47,8 +47,6 @@ const lastPlayed = async page => (await played(page)).at(-1);
 const url = file => `/logos/audio/${file}`;
 const consonant = id => DATA.consonants.find(c => c.id === id);
 const vowel = id => DATA.vowels.find(v => v.id === id);
-// A syllable's tone from its romanization: the mark over its vowel (none = mid).
-const toneOf = s => { const n = s.normalize('NFD'); return /̀/.test(n) ? 'low' : /̂/.test(n) ? 'falling' : /́/.test(n) ? 'high' : /̌/.test(n) ? 'rising' : 'mid'; };
 
 test.describe('logos data', () => {
   test('44 consonants in alphabet order, sorted into the workbook\'s three classes', () => {
@@ -79,20 +77,6 @@ test.describe('logos data', () => {
     }
   });
 
-  test('each consonant\'s tone rows hold every syllable of its name, marked with its tone', () => {
-    for (const c of DATA.consonants) {
-      const syllables = [c.name_rom, ...c.word_rom.split(/[ -]/)];
-      const inRows = c.tones.flatMap(r => r.rom.split(', '));
-      expect(inRows.slice().sort(), c.letter).toEqual(syllables.slice().sort());
-      expect(new Set(c.tones.map(r => r.tone)).size, `${c.letter}: one row per tone`).toBe(c.tones.length);
-      for (const r of c.tones) {
-        expect(TONES).toContain(r.tone);
-        expect(r.say, `${c.letter} ${r.rom}`).toMatch(/^[฀-๿]+( [฀-๿]+)*$/);
-        for (const s of r.rom.split(', ')) expect(toneOf(s), `${c.letter} ${s}`).toBe(r.tone);
-      }
-    }
-  });
-
   test('32 vowels: short and long partners, the special four, and a Thai school chart\'s order', () => {
     const V = DATA.vowels;
     expect(V).toHaveLength(32);
@@ -114,14 +98,6 @@ test.describe('logos data', () => {
     const respelled = { 'eu-long': 'อือ', 'reu-short': 'รึ', 'reu-long': 'รือ', 'leu-short': 'ลึ', 'leu-long': 'ลือ' };
     for (const v of V) expect(v.say, v.id).toBe(respelled[v.id] || v.form.replace('-', 'อ'));
     expect(V.filter(v => v.use === 'obsolete').map(v => v.form)).toEqual(['ฦ', 'ฦๅ']);
-  });
-
-  test('the five tones, in order, and all five said in a row', () => {
-    expect(DATA.tones.map(t => t.id)).toEqual(TONES);
-    expect(DATA.tones.map(t => t.mark).join(' ')).toBe('a à â á ǎ');
-    for (const t of DATA.tones) expect(toneOf(t.rom), t.id).toBe(t.id);
-    expect(DATA.tone_series.say).toBe(DATA.tones.map(t => t.say).join(' '));
-    expect(DATA.tone_series.rom).toBe(DATA.tones.map(t => t.rom).join(' '));
   });
 
   // The whole project folder is published, so this covers the docs and the
@@ -149,9 +125,7 @@ test.describe('logos data', () => {
 
   test('every sound is there, and no recording is left over', () => {
     const files = [
-      DATA.tone_series.audio,
-      ...DATA.tones.map(t => t.audio),
-      ...DATA.consonants.flatMap(c => [c.audio, ...c.tones.map(r => r.audio)]),
+      ...DATA.consonants.map(c => c.audio),
       ...DATA.vowels.flatMap(v => [v.audio, ...(v.word ? [v.word_audio] : [])]),
     ];
     for (const f of files) {
@@ -171,14 +145,14 @@ test.describe('logos data', () => {
 });
 
 test.describe('logos cards', () => {
-  test('the five tones, each class and the vowels, closed until opened', async ({ page }) => {
+  test('each class and the vowels, closed until opened (and no tones)', async ({ page }) => {
     const errors = watchErrors(page);
     await openLogos(page);
     await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveText('Cards');
     const folds = page.locator('#p-cards .fold');
-    await expect(folds).toHaveCount(5);
+    await expect(folds).toHaveCount(4);
     await expect(page.locator('#p-cards .fold[open]')).toHaveCount(0);
-    await expect(folds.locator('.ftitle')).toHaveText(['The five tones', 'Middle class9 letters', 'High class11 letters', 'Low class24 letters', 'Vowels32 vowels']);
+    await expect(folds.locator('.ftitle')).toHaveText(['Middle class9 letters', 'High class11 letters', 'Low class24 letters', 'Vowels32 vowels']);
     await expect(page.locator('#sec-middle .letters')).toHaveText('ก จ ฎ ฏ ด ต บ ป อ');
 
     // Open, the section's title bar is pinned to the top while its cards scroll.
@@ -189,7 +163,7 @@ test.describe('logos cards', () => {
     expect(errors).toEqual([]);
   });
 
-  test('a consonant turns over to its word, and its name and tones play', async ({ page }) => {
+  test('a consonant turns over to its word, and its name plays', async ({ page }) => {
     const errors = watchErrors(page);
     await openLogos(page);
     const ko = consonant('ko-kai');
@@ -210,33 +184,14 @@ test.describe('logos cards', () => {
     await expect(extras.locator('.sayrow')).toContainText('ก ไก่');
     await extras.locator('.sayrow .play').click();
     await expect.poll(() => lastPlayed(page)).toBe(url(ko.audio));
-    await expect(extras.locator('.tone')).toHaveCount(2);
-    await expect(extras.locator('.tone').nth(0)).toContainText('Mid');
-    await expect(extras.locator('.tone').nth(1)).toContainText('Low');
-    await expect(extras.locator('.tone').nth(1)).toContainText('gài');
-    await extras.locator('.tone').nth(1).locator('.play').click();
-    await expect.poll(() => lastPlayed(page)).toBe(url(ko.tones[1].audio));
+    // Tones are left off until they can be trusted: one sound, the name.
+    await expect(extras.locator('.play')).toHaveCount(1);
+    await expect(extras).not.toContainText('Tones');
 
     await extras.locator('.back-link').click();
     await expect(item.locator('.front')).toBeVisible();
     await expect(extras).toBeHidden();
     expect(errors).toEqual([]);
-  });
-
-  test('the five tones: all in a row, then one by one', async ({ page }) => {
-    await openLogos(page);
-    await page.locator('#sec-tones > summary').click();
-    const rows = page.locator('#sec-tones .tone');
-    await expect(rows).toHaveCount(5);
-    await expect(rows.nth(0)).toContainText('Mid');
-    await expect(rows.nth(0)).toContainText('สามัญ');
-    await expect(rows.nth(4)).toContainText('Rising');
-    await page.locator('#sec-tones .series .play').click();
-    await expect.poll(() => lastPlayed(page)).toBe(url(DATA.tone_series.audio));
-    for (let i = 0; i < 5; i++) {
-      await rows.nth(i).locator('.play').click();
-      await expect.poll(() => lastPlayed(page)).toBe(url(DATA.tones[i].audio));
-    }
   });
 
   test('a vowel turns over to its sound, length, partner and word', async ({ page }) => {
@@ -457,7 +412,7 @@ test.describe('logos layout', () => {
     for (const width of [320, 375, 390, 440]) {
       await page.setViewportSize({ width, height: 780 });
       await page.getByRole('tab', { name: 'Cards' }).click();
-      for (const id of ['tones', 'middle', 'vowels']) {
+      for (const id of ['middle', 'vowels']) {
         const fold = page.locator(`#sec-${id}`);
         if (!(await fold.evaluate(d => d.open))) await fold.locator('> summary').click();
       }

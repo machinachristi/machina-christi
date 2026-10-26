@@ -15,13 +15,11 @@ test('every Logos sound plays the file its words and voice call for (re-run reco
   assert.equal(items.filter(i => !i.exists).length, 0, 'every sound is recorded');
 });
 
-test('every card is heard: names and tones of the consonants, vowels and their words, the five tones', () => {
+test('every card is heard: the consonants\' names, the vowels and their words (tones are left off)', () => {
   const ids = new Set(soundsFor(DATA).map(s => s.id));
-  for (const t of DATA.tones) assert.ok(ids.has(`tone-${t.id}`));
-  for (const c of DATA.consonants) {
-    assert.ok(ids.has(c.id));
-    for (const row of c.tones) assert.ok(ids.has(`${c.id}-${row.tone}`));
-  }
+  for (const c of DATA.consonants) assert.ok(ids.has(c.id));
+  assert.equal(DATA.tones, undefined);
+  assert.ok(DATA.consonants.every(c => c.tones === undefined));
   for (const v of DATA.vowels) {
     assert.ok(ids.has(`vowel-${v.id}`));
     assert.equal(ids.has(`vowel-${v.id}-word`), Boolean(v.word));
@@ -36,7 +34,10 @@ test('the same words are recorded once, however many cards say them', () => {
     if (files.has(key)) assert.equal(i.file, files.get(key), `"${i.say}" is one file`);
     else files.set(key, i.file);
   }
-  assert.ok(items.some(i => i.shared), 'some words are shared (ขอ is said by ข and ฃ)');
+  const twins = copy(); twins.consonants[1].say = twins.consonants[0].say;
+  const both = planFor(twins, settingsFor(twins));
+  assert.equal(both[1].file, both[0].file, 'two cards saying the same words share one file');
+  assert.ok(both[1].shared);
 });
 
 test('a changed word, voice or pace changes the sound\'s name, so caches never serve the old one', () => {

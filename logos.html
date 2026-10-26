@@ -5,13 +5,13 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="Logos — learning Thai: the 44 consonants, 32 vowels and five tones as flash cards, read aloud." />
+  <meta name="description" content="Logos — learning Thai: the 44 consonants and 32 vowels as flash cards, read aloud." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/logos.html" />
   <meta property="og:title" content="Logos · Machina Christi" />
-  <meta property="og:description" content="Learning Thai: the 44 consonants, 32 vowels and five tones as flash cards, read aloud." />
+  <meta property="og:description" content="Learning Thai: the 44 consonants and 32 vowels as flash cards, read aloud." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -162,7 +162,7 @@
     .swl[aria-pressed="true"] { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); border-color: var(--line-strong); }
     .swl:focus-visible { outline: 2px solid rgba(201, 162, 39, 0.8); outline-offset: 1px; }
 
-    /* ── Fold-out sections: the five tones, each class, the vowels ── */
+    /* ── Fold-out sections: each class, the vowels ── */
     .fold { margin: 0 0 12px; }
     .fold > summary {
       list-style: none;
@@ -280,28 +280,8 @@
     .extras::before { content: ""; display: block; border-top: 1px solid var(--line); margin: 0 4px 10px; }
     .sayrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 4px 8px; }
     .sayrow + .sayrow { margin-top: 4px; }
-    .sayrow.series { margin: 0 0 10px; padding: 8px 6px 8px 12px; background: var(--wash); border-radius: 12px; }
-    .sayrow.series .lbl { font-size: 15px; color: var(--muted); line-height: 1.6; }
-    .sayrow.series .lbl [lang="th"] { color: var(--gold-soft); }
     .lbl { min-width: 0; font-size: 17px; text-align: left; overflow-wrap: anywhere; }
     .lbl [lang="th"] { font-size: 20px; }
-    .tlabel { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 12px 8px 8px; }
-    .tones { list-style: none; display: grid; gap: 8px; }
-    .tone {
-      display: grid;
-      grid-template-columns: 56px minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 6px 6px 10px;
-      background: var(--wash);
-      border-radius: 12px;
-    }
-    .shape { display: block; width: 56px; height: 28px; overflow: visible; color: rgb(var(--accent)); }
-    .tinfo { min-width: 0; display: flex; flex-direction: column; text-align: left; }
-    .tinfo b { font-weight: normal; font-size: 16px; color: var(--gold-soft); }
-    .tinfo .sy { font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
-    .tinfo .sy [lang="th"] { font-size: 17px; color: var(--gold-soft); }
-    .mark { display: inline-block; min-width: 1.8em; text-align: center; font-size: 14px; color: var(--gold-soft); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; margin-left: 6px; }
     .back-link { display: block; width: 100%; margin-top: 8px; padding: 12px 0 4px; font-size: 14px; color: var(--muted); background: none; border: 0; cursor: pointer; }
     .back-link:hover, .back-link:focus-visible { color: var(--gold-soft); outline: none; }
 
@@ -414,12 +394,10 @@
     .foot a { color: rgba(232, 213, 163, 0.62); text-decoration: none; letter-spacing: 0.06em; }
     .foot a:hover, .foot a:focus-visible { color: var(--gold-soft); outline: none; }
 
-    /* Very narrow phones (the first iPhone SE): smaller forms and tone lines. */
+    /* Very narrow phones (the first iPhone SE): smaller forms. */
     @media (max-width: 360px) {
       .symbol { font-size: 108px; }
       .symbol.vform { font-size: 78px; }
-      .tone { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; padding-left: 8px; }
-      .shape { width: 40px; height: 20px; }
       .face { padding-left: 14px; padding-right: 14px; }
       .choices.vowels .choice { font-size: 38px; }
       .pround { flex-basis: 100%; text-align: center; margin-right: 0; }
@@ -434,15 +412,6 @@
   <script src="/assets/season.js?v=2" defer></script>
 </head>
 <body>
-  <!-- The five tone shapes: the textbook pitch lines (mid 33, low 21,
-       falling 41, high 45, rising 24), drawn by hand. -->
-  <svg width="0" height="0" class="defs" aria-hidden="true" style="position:absolute">
-    <symbol id="t-mid" viewBox="0 0 64 32"><line x1="2" y1="16" x2="62" y2="16" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 3"/><path d="M4 14.5 C20 14.5 40 15.5 57 16.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="57" cy="16.5" r="2.6" fill="currentColor"/></symbol>
-    <symbol id="t-low" viewBox="0 0 64 32"><line x1="2" y1="16" x2="62" y2="16" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 3"/><path d="M4 19 C20 20.5 40 23.5 57 26" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="57" cy="26" r="2.6" fill="currentColor"/></symbol>
-    <symbol id="t-falling" viewBox="0 0 64 32"><line x1="2" y1="16" x2="62" y2="16" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 3"/><path d="M4 9 C14 6 26 5.5 35 9 C44 12.5 51 20 57 26" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="57" cy="26" r="2.6" fill="currentColor"/></symbol>
-    <symbol id="t-high" viewBox="0 0 64 32"><line x1="2" y1="16" x2="62" y2="16" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 3"/><path d="M4 12 C20 12 38 10.5 57 5.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="57" cy="5.5" r="2.6" fill="currentColor"/></symbol>
-    <symbol id="t-rising" viewBox="0 0 64 32"><line x1="2" y1="16" x2="62" y2="16" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 3"/><path d="M4 19 C14 25 27 26.5 37 22 C46 18 52 11 57 5.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="57" cy="5.5" r="2.6" fill="currentColor"/></symbol>
-  </svg>
 
   <div class="wrap">
     <a class="home" href="index.html">&lsaquo; home</a>
@@ -492,19 +461,10 @@
       const symbolOf = item => (isVowel(item) ? L.vowelShown(item.form) : item.letter);
       // A vowel is said with อ (อะ, อา …); the old vowel letters are shown as they are.
       const vowelSaid = v => (/^[ฤฦ]/.test(v.form) ? v.form : v.say);
-      const toneById = id => data.tones.find(t => t.id === id);
 
       const playButton = (file, say, label) =>
         `<button type="button" class="play" data-file="${escapeHtml(file || '')}" data-say="${escapeHtml(say)}" aria-label="${escapeHtml(label)}">${PLAY}</button>`;
-      const shape = tone => `<svg class="shape" viewBox="0 0 64 32" aria-hidden="true"><use href="#t-${tone}"/></svg>`;
 
-      function toneRow(row) {
-        const t = toneById(row.tone);
-        return `<li class="tone">${shape(row.tone)}<span class="tinfo"><b>${t.name}</b><span class="sy">${escapeHtml(row.rom)}</span></span>${playButton(row.audio, row.say, `Play ${row.rom}, ${t.name.toLowerCase()} tone`)}</li>`;
-      }
-      function referenceRow(t) {
-        return `<li class="tone">${shape(t.id)}<span class="tinfo"><b>${t.name}<span class="mark" title="how it is written in romanization">${escapeHtml(t.mark)}</span></b><span class="sy"><span lang="th">${escapeHtml(t.th)}</span> ${escapeHtml(t.th_rom)} &middot; <span lang="th">${escapeHtml(t.say)}</span> ${escapeHtml(t.rom)}</span></span>${playButton(t.audio, t.say, `Play ${t.rom}, ${t.name.toLowerCase()} tone`)}</li>`;
-      }
 
       // What a turned card shows (without its top line).
       function consonantFace(c) {
@@ -533,7 +493,7 @@
       const face = item => (isVowel(item) ? vowelFace(item) : consonantFace(item));
       const kindName = item => (isVowel(item) ? VOWEL_KINDS[item.length] : data.classes[item.class].name);
 
-      // The sounds under a turned card: its name (or the vowel), then its tones (or its word).
+      // The sounds under a turned card: its name, or the vowel and its word.
       function sounds(item) {
         if (isVowel(item)) {
           return `<div class="sayrow"><span class="lbl"><span lang="th">${escapeHtml(vowelSaid(item))}</span> &middot; ${escapeHtml(item.sound)}</span>${playButton(item.audio, item.say, `Play ${item.sound}, ${item.length}`)}</div>
@@ -550,7 +510,7 @@
         const id = `${prefix}-${item.id}`;
         const note = USE_NOTES[item.use];
         const extras = withSounds
-          ? `<div class="extras" id="x-${id}" hidden>${sounds(item)}${isVowel(item) ? '' : `<p class="tlabel">Tones</p><ul class="tones">${item.tones.map(toneRow).join('')}</ul>`}<button type="button" class="back-link">Flip back</button></div>`
+          ? `<div class="extras" id="x-${id}" hidden>${sounds(item)}<button type="button" class="back-link">Flip back</button></div>`
           : '';
         return `<li class="item ${classOf(item)}" data-id="${escapeHtml(item.id)}">
           <button type="button" class="card${withSounds ? ' extras-on' : ''}" aria-pressed="false"${withSounds ? ` aria-controls="x-${id}"` : ''}>
@@ -577,16 +537,8 @@
         setTimeout(() => { show(); btn.classList.remove('turning'); }, 170);
       }
 
-      // ── Cards: the five tones, each class, the vowels ────────────
+      // ── Cards: each class, the vowels ────────────────────────────
       function cardsPage() {
-        const series = data.tone_series;
-        const tones = `<details class="fold" id="sec-tones">
-          <summary><span class="ftitle">The five tones</span><span class="fsub" lang="th">${data.tones.map(t => escapeHtml(t.th)).join(' &middot; ')}</span></summary>
-          <div class="fbody">
-            <div class="sayrow series"><span class="lbl"><span lang="th">${escapeHtml(series.say)}</span><br>${escapeHtml(series.rom)}</span>${playButton(series.audio, series.say, `Play all five: ${series.rom}`)}</div>
-            <ul class="tones">${data.tones.map(referenceRow).join('')}</ul>
-          </div>
-        </details>`;
         const classes = CLASSES.map(k => {
           const cls = data.classes[k];
           const list = data.consonants.filter(c => c.class === k);
@@ -599,7 +551,7 @@
           <summary><span class="ftitle">Vowels<span class="fcount">${data.vowels.length} vowels</span></span><span class="fsub"><span lang="th">สระ</span> &middot; short, long and special</span></summary>
           <div class="fbody"><ol class="list">${data.vowels.map((v, i) => card(v, i + 1, data.vowels.length, 'v', true)).join('')}</ol></div>
         </details>`;
-        return tones + classes + vowels;
+        return classes + vowels;
       }
 
       // ── Alphabet: every letter in order, every vowel in chart order ──

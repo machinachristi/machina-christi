@@ -8,7 +8,7 @@
 //   window.mcLogos.shuffle(list)     → a shuffled copy
 //
 // The cards are one small file in the site, not a database: 44 consonants,
-// 32 vowels and five tones that never change while someone studies them.
+// 32 vowels, which never change while someone studies them.
 // Practice marks stay in this browser only (localStorage); nothing is sent
 // anywhere.
 (() => {

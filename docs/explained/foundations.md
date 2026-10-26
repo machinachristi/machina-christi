@@ -371,26 +371,28 @@ moves up a box and waits longer before it comes back (a day, three days, a
 week, two weeks); a card you miss goes back to the first box and comes back
 today. This version is the Leitner system, described by the German writer
 Sebastian Leitner in the 1970s, with real cardboard boxes.
-*Here:* Logos's Review mode for the Thai consonants.
+*Here:* Logos's first card trainer used it; its Practice tab now goes through
+the deck in up to four rounds instead.
 
 **Browser storage (localStorage).** A small notebook each website may keep
 inside your browser. It's private to that site, that browser and that device,
 and nothing in it is sent anywhere unless the page sends it. It isn't a safe:
 private browsing, clearing site data, or (in Safari) a week without visiting
 can wipe it.
-*Here:* which box each Logos card is in, and switches like "Slow voice".
+*Here:* your Know it / Revisit marks on Logos's Practice tab.
 
 **A file, not a database.** Not everything needs a database. A database earns
 its keep when information changes often, is shared, or needs searching; a small
 list that changes only when you edit it can simply be a file delivered with the
 pages.
-*Here:* the 44 Thai cards are one file, `logos/thai.json`.
+*Here:* Logos's 44 consonants and 32 vowels are one file, `logos/thai.json`.
 
 **Romanization.** Writing one language's sounds in another's letters, so a
 learner can read them before learning the script. There are many systems; what
 matters is using one consistently.
 *Here:* Pray uses kh/ph/th for breathy sounds; Logos follows a Thai learner's
-workbook (g/k, bp/dt, and a dot over short syllables).
+workbook and my phone guide (g/k, bp/dt, a tone mark over the vowel, hyphens
+between syllables).
 
 **Tone and pitch.** Pitch is how high or low a voice is at each moment;
 drawn over time, it makes a line. In a tonal language like Thai, the shape of
@@ -401,8 +403,9 @@ or rising means different things.
 language, as the breath runs out. A program judging tones has to allow for it,
 or every last syllable sounds "falling".
 *Here:* the first tone check in the Logos lab forgot this and flagged nearly
-every card; comparing each syllable with the same voice's other syllables of
-each tone fixed it.
+every card. Comparing each syllable with the same voice's own five tones
+quietened it, but hid a bigger problem: those five were themselves off. The
+later tone check compared with the published shapes instead.
 
 **Second opinion (a cross-check).** Checking one machine's work with another,
 independent one before trusting it, especially where you can't judge yourself.
@@ -435,6 +438,24 @@ listening service is needed, and it judges things a scorer can't, such as
 whether a short vowel is really short.
 *Here:* every Logos vowel was measured on this Mac: each short one is shorter
 than its long twin, and sounds closest to it.
+
+**Calibration (testing the tester).** Before you trust a measuring tool, try it
+on something whose answer you already know, the way you'd check a kitchen scale
+with a bag of sugar that says 1 kg. If the tool gets the known thing wrong, the
+tool is what needs fixing.
+*Here:* the Logos tone checker first measured a native speaker saying the five
+tones. It got two wrong, both its own fault; fixed, it passed all ten, and only
+then judged the computer voice (which failed, so the tones were left off).
+
+**Normalizing (comparing voices fairly).** A child's voice sits higher than a
+man's, so comparing them in raw numbers (hertz, vibrations a second) says
+nothing about the *shape* of what they said. Instead, each voice is measured
+against its own middle and its own range: pitch in semitones (the steps of a
+piano keyboard, which sound the same size at any height), then split into five
+levels from the voice's lowest to its highest, the scale the linguist Chao
+Yuen Ren drew up in 1930 for writing tones as numbers (Thai mid is 33).
+*Here:* the Logos tone check put a native speaker, the published shapes and
+the computer voice on the same five-level scale.
 
 **Homophone.** Words that sound the same but are spelled differently: "there"
 and "their" in English, กาล and การ (both *gaan*) in Thai. A listening machine

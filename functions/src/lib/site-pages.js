@@ -31,8 +31,8 @@ const SITE_PAGES = [
   },
   {
     name: 'logos', url: '/logos.html', title: 'Logos: learning Thai',
-    description: 'Learning Thai: the 44 consonants, 32 vowels and five tones as flash cards, read aloud.',
-    keywords: ['thai', 'learn thai', 'alphabet', 'letters', 'consonants', 'vowels', 'tones', 'flash cards', 'language'],
+    description: 'Learning Thai: the 44 consonants and 32 vowels as flash cards, read aloud.',
+    keywords: ['thai', 'learn thai', 'alphabet', 'letters', 'consonants', 'vowels', 'flash cards', 'language'],
   },
   {
     name: 'workshop', url: '/workshop.html', title: 'The Workshop',
@@ -66,7 +66,7 @@ const SITE_PAGES = [
   },
   {
     name: 'about-logos', url: '/about-logos.html', title: 'About Logos',
-    description: 'About Logos, where Machina Christi learns languages, beginning with the Thai consonants, vowels and tones.',
+    description: 'About Logos, where Machina Christi learns languages, beginning with the Thai consonants and vowels.',
     keywords: ['thai', 'alphabet', 'workbook', 'voice'],
   },
   {

@@ -1,5 +1,5 @@
-// Records the Logos sounds: every Thai consonant's name and each of its tones,
-// every vowel and its example word, and the five tones, read by the synthetic
+// Records the Logos sounds: every Thai consonant's name, and every vowel and
+// its example word, read by the synthetic
 // voice named in logos/thai.json. The MP3s live with the site
 // (logos/audio/th/), and each file's name is written back into logos/thai.json.
 //
@@ -29,8 +29,8 @@ const GAP_MS = 3200; // the free tier allows about 20 requests a minute
 const dryRun = process.argv.includes('--dry-run');
 
 // thai.json is edited by hand too, so it's written back the way it's laid out:
-// one tone, letter or vowel per line.
-const LISTS = ['tones', 'consonants', 'vowels'];
+// one letter or vowel per line.
+const LISTS = ['consonants', 'vowels'];
 function writeData(data) {
   const line = item => '    ' + JSON.stringify(item, null, 1).replace(/\n\s*/g, ' ');
   const head = JSON.stringify(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, LISTS.includes(k) ? `__${k}__` : v])), null, 2);
@@ -54,10 +54,7 @@ function settingsFor(data) {
 function soundsFor(data) {
   const sounds = [];
   const add = (id, say, owner, key, rate) => sounds.push({ id, say, rate, owner, key, set: file => { owner[key] = file; } });
-  add('tones', data.tone_series.say, data.tone_series, 'audio');
-  for (const t of data.tones) add(`tone-${t.id}`, t.say, t, 'audio');
   for (const c of data.consonants) add(c.id, c.say, c, 'audio');
-  for (const c of data.consonants) for (const row of c.tones) add(`${c.id}-${row.tone}`, row.say, row, 'audio');
   for (const v of data.vowels) add(`vowel-${v.id}`, v.say, v, 'audio', v.say_rate);
   for (const v of data.vowels) if (v.word) add(`vowel-${v.id}-word`, v.word_say || v.word, v, 'word_audio');
   return sounds;
