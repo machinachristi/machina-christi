@@ -791,9 +791,18 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => dist2d((await getState(page)).heaven.city.lead, lead0), { timeout: 30000 })
       .toBeGreaterThan(0.5);
 
-    // Set down behind the head of the ladder, by the south middle gate: he
-    // stands at it, its word is given, and it brightens.
-    await frame.evaluate(() => window.__world.teleport(0, -41, Math.PI));
+    // Walked there from where he came up, the way runs clear of the head of
+    // the ladder: he comes to the gate and is still in heaven.
+    await frame.evaluate(() => window.__world.walkTo(12, -51));
+    await expect.poll(async () => {
+      const st = await getState(page);
+      return st.realm.now !== 'heaven' || st.realm.passage ? 'left heaven' : st.heaven.city.atGate;
+    }, { timeout: 120000 }).toBe(true);
+
+    // Set down by the south middle gate, behind the head of the ladder and a
+    // little east of the street: he stands at it, its word is given, and it
+    // brightens.
+    await frame.evaluate(() => window.__world.teleport(11, -43, Math.PI));
     await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 }).toEqual({
       name: "Sha'ar", label: 'the gates of it shall not be shut at all by day',
     });

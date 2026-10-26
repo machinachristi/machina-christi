@@ -17,12 +17,12 @@
 // And through every gate, the nations walk in the light of it (21:24, 26):
 // a slow procession of small golden lights comes in at each gate and walks
 // on into the city, toward the glory — and from the south side's middle
-// gate, up the street to the Tree of Life ("that they may have right to the
-// tree of life, and may enter in through the gates into the city", 22:14).
-// Where the walker stands in their way, they part round him and close again
-// behind. The middle gate on the south side is the one within his reach,
-// behind the head of the ladder: stand on its threshold and the pearl
-// brightens, the light over it swells, and the gate's word is given.
+// gate, on beside the saints toward the Tree of Life ("that they may have
+// right to the tree of life, and may enter in through the gates into the
+// city", 22:14). Where the walker stands in their way, they part round him
+// and close again behind. That gate, a little east of the street behind the
+// head of the ladder, is the one within his reach: stand on its threshold
+// and the pearl and the light in its way brighten, and its word is given.
 //
 // Four draws: the wall and its foundations (one merged mesh), the twelve
 // pearls (one merged mesh), the light in the gates and on the glass (one
@@ -32,11 +32,12 @@
 
 import * as THREE from 'three';
 import { mulberry32, damp } from '../util.js';
-import { GLORY, TREE, RIVER, GREETING } from './layout.js';
+import { GLORY, TREE } from './layout.js';
 
 // The wall's four sides, round the glory and the multitude: the south side
-// just past the rim of the walk, behind the head of the ladder.
-const SOUTH = -48.5;
+// behind the head of the ladder, far enough past the rim of the walk that
+// the follow camera never comes into it.
+const SOUTH = -54;
 const NORTH = 118;
 const HALF = (NORTH - SOUTH) / 2;          // half a side: foursquare
 const MIDZ = (NORTH + SOUTH) / 2;
@@ -52,6 +53,9 @@ const COPING_H = 1.2;
 const PEARL_W = 5.5, PEARL_SPRING = 11, PEARL_DEPTH = 4;
 const WAY_W = 3, WAY_SPRING = 8.5;
 const GATE_OFFSETS = [-HALF / 2, 0, HALF / 2];
+// On the south side the middle gate stands a little east of the street, so
+// the way to it from where he comes up runs clear of the head of the ladder.
+const REACH_X = 12;
 
 // The foundations, first to twelfth, from the ground up (21:19-20).
 const GEMS = [
@@ -74,7 +78,7 @@ const GOLD = new THREE.Color(0xF0CF78);
 // Each side: where its middle stands and which way it turns, so that a part
 // built along +x with its inner face toward +z lands on that side facing in.
 const SIDES = [
-  { name: 'south', x: 0, z: SOUTH, rot: 0, half: HALF + THICK / 2 },
+  { name: 'south', x: 0, z: SOUTH, rot: 0, half: HALF + THICK / 2, offsets: [-HALF / 2, REACH_X, HALF / 2] },
   { name: 'north', x: 0, z: NORTH, rot: Math.PI, half: HALF + THICK / 2 },
   { name: 'west', x: -HALF, z: MIDZ, rot: Math.PI / 2, half: HALF - THICK / 2 },
   { name: 'east', x: HALF, z: MIDZ, rot: -Math.PI / 2, half: HALF - THICK / 2 },
@@ -85,7 +89,7 @@ const SIDES = [
 const PER_GATE = 36;
 const PACE = 1.05;
 const PART = 1.9;
-const AT_GATE = 7;          // this near a gate's threshold, he stands at it
+const AT_GATE = 9;          // this near a gate's threshold, he stands at it
 
 const GATE_WORD = { name: "Sha'ar", label: 'the gates of it shall not be shut at all by day' };
 
@@ -161,7 +165,7 @@ export function createCity(scene) {
   for (const side of SIDES) {
     // Below the arches, the wall stands in four lengths between the gates.
     const cuts = [-side.half];
-    for (const g of GATE_OFFSETS) cuts.push(g - PEARL_W, g + PEARL_W);
+    for (const g of side.offsets || GATE_OFFSETS) cuts.push(g - PEARL_W, g + PEARL_W);
     cuts.push(side.half);
     for (let i = 0; i < cuts.length; i += 2) {
       const a = cuts[i], b = cuts[i + 1], len = b - a, mid = (a + b) / 2;
@@ -267,7 +271,7 @@ export function createCity(scene) {
   const pearlGeos = [];
   const gates = [];     // each gate's threshold, inside, on the glass
   for (const side of SIDES) {
-    for (const g of GATE_OFFSETS) {
+    for (const g of side.offsets || GATE_OFFSETS) {
       pearlGeos.push(onSide(pearlBase.clone(), side, g));
       gates.push({ side, along: g, at: sidePoint(side, g, 0, THICK / 2 + 1.2) });
     }
@@ -420,6 +424,7 @@ export function createCity(scene) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
+    forceSinglePass: true,   // additive and unsorted: one pass for both faces
   }));
   light.renderOrder = 1;
   scene.add(light);
@@ -432,20 +437,19 @@ export function createCity(scene) {
   const c = new THREE.Color();
   const lanes = [];     // per gate: its line in, for state() to follow its first traveller
   gates.forEach(gate => {
-    // The south side's middle gate opens on the street, behind the head of
-    // the ladder: its travellers go up the street to the Tree of Life, half
-    // on either bank of the river, wide enough of the ladder's opening.
-    const street = gate.side.name === 'south' && gate.along === 0;
+    // The south side's middle gate, the one within his reach: its
+    // travellers walk straight on north beside the saints' ranks, outside
+    // the last row, toward the Tree of Life.
+    const toTree = gate.side.name === 'south' && gate.along === REACH_X;
     for (let i = 0; i < PER_GATE; i++) {
-      let from, to;
-      if (street) {
-        const bank = i % 2 ? 1 : -1;
-        from = sidePoint(gate.side, bank * (1.9 + rng() * 0.9), 0, -0.5);
-        to = new THREE.Vector3(bank * (RIVER.halfWidth + 0.75 + rng() * 0.6), 0, TREE.z - 4.5 - rng() * 2);
+      // In through the gate, a little either side of its middle (setting out
+      // from just outside the wall, so they come out of the pearl's way).
+      const from = sidePoint(gate.side, gate.along + (rng() - 0.5) * WAY_W * 1.2, 0, -2.6);
+      let to;
+      if (toTree) {
+        to = new THREE.Vector3(REACH_X + (rng() - 0.5) * 1.4, 0, TREE.z - 4.5 - rng() * 2);
       } else {
-        // In through the gate, a little either side of its middle, and on
-        // to the light: to the front of the multitude round the glory.
-        from = sidePoint(gate.side, gate.along + (rng() - 0.5) * WAY_W * 1.2, 0, -0.5);
+        // On to the light: to the front of the multitude round the glory.
         const dx = gate.at.x - GLORY.x, dz = gate.at.z - GLORY.z;
         const r = Math.hypot(dx, dz) || 1;
         const reach = 15.5 + rng() * 2.5;
@@ -487,7 +491,6 @@ export function createCity(scene) {
     uTime: { value: 0 },
     uHalfH: { value: 400 },
     uWalker: { value: new THREE.Vector2(0, -1e4) },
-    uGreeter: { value: new THREE.Vector2(GREETING.x, GREETING.z) },
     uNear: pu.uNear,
   };
   const procession = new THREE.Points(tgeo, new THREE.ShaderMaterial({
@@ -502,7 +505,6 @@ export function createCity(scene) {
       uniform float uTime;
       uniform float uHalfH;
       uniform vec2 uWalker;
-      uniform vec2 uGreeter;
       uniform vec4 uNear;
       varying vec3 vColor;
       varying float vAlpha;
@@ -525,18 +527,15 @@ export function createCity(scene) {
           vec2 dir = normalize(aEnd - position.xz);
           vec2 side = vec2(-dir.y, dir.x);
           xz += side * sin(uTime * 0.5 + aSway) * 0.22;
-          // Parting round the walker where he stands in the way, and round
-          // the saint who greets him by the ladder.
+          // Parting round the walker where he stands in the way.
           xz = part(xz, uWalker, ${PART.toFixed(2)}, side);
-          xz = part(xz, uGreeter, 0.9, side);
           p = vec3(xz.x, position.y + sin(uTime * 1.6 + aSway * 3.0) * 0.06, xz.y);
           alpha = smoothstep(0.0, 0.035, t) * (1.0 - smoothstep(0.9, 1.0, t));
         } else {
-          // A light over a gate, breathing; the one over his gate swells.
+          // A light over a gate, breathing; the one over his gate brightens.
           p = position;
           float near = uNear.w * (1.0 - smoothstep(8.0, 20.0, distance(position.xz, uNear.xz)));
-          alpha = 0.8 + 0.2 * sin(uTime * 0.45 + aSway);
-          size *= 1.0 + 0.1 * sin(uTime * 0.45 + aSway) + 0.5 * near;
+          alpha = (0.8 + 0.2 * sin(uTime * 0.45 + aSway)) * (1.0 + 0.6 * near);
         }
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
@@ -551,7 +550,7 @@ export function createCity(scene) {
         vec2 d = gl_PointCoord - 0.5;
         float r2 = dot(d, d) * 4.0;
         if (r2 > 1.0) discard;
-        float a = (exp(-r2 * 4.0) * 0.9 + 0.1 * (1.0 - r2)) * vAlpha;
+        float a = min(1.0, (exp(-r2 * 4.0) * 0.9 + 0.1 * (1.0 - r2)) * vAlpha);
         gl_FragColor = vec4(vColor, a);
         #include <colorspace_fragment>
       }`,
