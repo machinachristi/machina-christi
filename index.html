@@ -149,12 +149,9 @@
       gap: var(--card-gap);
       overflow-x: auto;
       scroll-snap-type: x mandatory;
-      /* Room at either end so the first and last gate can stand centered,
-         and room below for each gate's light to fall on the page (the
-         strip clips what is drawn outside it; the hint is pulled up over
-         this room, so everything stands where it did). */
+      /* Room at either end so the first and last gate can stand centered. */
       padding-inline: calc(50% - var(--card-w) / 2);
-      padding-block: 24px 76px;
+      padding-block: 24px 18px;
       scrollbar-width: none;
       touch-action: pan-x;
       overscroll-behavior-x: contain;
@@ -194,11 +191,7 @@
       border: 1px solid rgba(222, 190, 112, 0.6);
       border-radius: 50% 50% 14px 14px / 30% 30% 14px 14px;
       background: rgba(201, 162, 39, 0.03);
-      /* Inside, the arch's own shade; outside, its light falling on the page
-         around and below the threshold, in the gate's own colour. */
-      box-shadow:
-        inset 0 0 34px rgba(0, 0, 0, 0.45),
-        0 34px 46px -16px rgba(var(--glow), 0.36);
+      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.45);
       overflow: hidden;
       transition: opacity 0.5s ease, transform 0.5s ease,
                   border-color 0.35s ease, box-shadow 0.35s ease;
@@ -231,6 +224,20 @@
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
+    /* On the gate you are on, its light fills the whole arch, not just the
+       threshold, and stays within it. */
+    .portal__halo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(90% 72% at 50% 50%, rgba(var(--glow), 0.22), transparent 100%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .js .portal.is-active .portal__halo::after,
+    .portal:hover .portal__halo::after,
+    .portal:focus-visible .portal__halo::after,
+    .portal.opening .portal__halo::after { opacity: 1; }
 
     .portal__vignette {
       flex: 1;
@@ -288,7 +295,7 @@
       text-indent: 0.16em;
       color: rgba(232, 213, 163, 0.62);
       padding: 0 20px;
-      margin-top: -52px; /* 6px below the strip's own 18px, as before (see .strip) */
+      margin-top: 6px;
     }
 
     /* With JS, gates away from the center rest dimmer and a step back;
@@ -301,9 +308,7 @@
     /* Hover / focus — the threshold kindles. */
     .portal:hover, .portal:focus-visible {
       border-color: rgba(232, 204, 132, 0.85);
-      box-shadow:
-        inset 0 0 34px rgba(0, 0, 0, 0.3),
-        0 34px 46px -14px rgba(var(--glow), 0.42);
+      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.3);
     }
     .portal:hover::before, .portal:focus-visible::before { border-color: rgba(232, 204, 132, 0.5); }
     .portal:hover .portal__halo, .portal:focus-visible .portal__halo { opacity: 0.9; }
@@ -321,9 +326,7 @@
        while the room fades. */
     .portal.opening {
       border-color: rgba(var(--glow), 0.85);
-      box-shadow:
-        inset 0 0 54px rgba(var(--glow), 0.22),
-        0 0 60px -10px rgba(var(--glow), 0.4);
+      box-shadow: inset 0 0 54px rgba(var(--glow), 0.3);
     }
     .portal.opening .portal__halo {
       opacity: 1;

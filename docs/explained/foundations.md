@@ -15,8 +15,8 @@ sizes, spacing, borders, glows. The page's words and links (HTML) are the
 furniture; CSS is the paint, the lighting and where everything stands. You
 can repaint a room without moving the furniture, and the browser does the
 painting itself, so it costs no extra download.
-*Here:* the homepage gates' gold edge, the glow around each emblem, and each
-gate's light falling on the page are all CSS rules in `index.html`.
+*Here:* the homepage gates' gold edge, the glow around each emblem, and the
+light filling the gate you're on are all CSS rules in `index.html`.
 
 **Server.** A computer somewhere else that is always on, waiting for questions.
 Unlike a leaflet, it can work out a fresh answer each time it's asked.

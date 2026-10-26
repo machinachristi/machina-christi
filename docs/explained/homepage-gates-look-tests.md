@@ -7,8 +7,8 @@
 After trying the homepage's gates as a 3D room in three different ways, the
 page stayed as it was, one large gate at a time, and took from the 3D
 versions only the three things that looked best, made with a few lines of
-CSS: a stronger glow of each gate's colour at its base, a brighter gold edge,
-and a glow around each emblem.
+CSS: more of each gate's own colour glowing inside it (filling the whole arch
+of the gate you're on), a brighter gold edge, and a glow around each emblem.
 
 ## The story, like you're five
 
@@ -45,30 +45,37 @@ neighbouring gates leaning back in perspective and the gate's light pooled on
 the page beneath it, with no 3D engine at all.
 
 **The choice.** Looking at all three side by side, the leaning was not
-wanted. What was wanted was the light: the colour glowing at the gate's base,
-the gold edge catching the light, and the emblem glowing. All three are
-plain styling, so they came to today's page and nothing else did.
+wanted. What was wanted was the light: the gate's colour glowing, the gold
+edge catching the light, and the emblem glowing. All three are plain styling,
+so they came to today's page and nothing else did.
+
+**One more round, on the preview site.** The first version also let each
+gate's colour spill out onto the page beneath it. Seen on a real phone, that
+wasn't wanted: the light belongs *inside* the gate. And on the gate you're on,
+the light should fill the whole arch, not only its foot. So the spill was
+taken out, and the gate you're on gained a broad glow through all of it.
 
 ## The three changes
 
 All in `index.html`'s style rules (CSS). No new JavaScript and no new
 download; every gate, name, hint and dot stands exactly where it did.
 
-1. **The colour glow at the base.** The soft light inside each gate rises a
-   little higher and brighter from its threshold, and the gate now casts its
-   own colour onto the page around and below its base (a `box-shadow` in the
-   gate's colour). It belongs to each gate, so it moves with it as you swipe,
-   and a gate added later gets one automatically.
+1. **The colour glow, inside the gate.** The soft light rising from each
+   gate's threshold is a little taller and brighter. On the gate you're on
+   (the one in the middle, or under the mouse or keyboard), a second, broad
+   glow of its colour fills the whole arch, fading in as you arrive and out
+   as you move on. All of it stays within the gate's gold edge: nothing
+   spills onto the page, and the brief flash as you step through now stays
+   inside too. Each gate draws it in its own colour, so a gate added later
+   gets one automatically.
 2. **The gold edge.** The border and the inner moulding are a softer,
    brighter gold, measured to match the 3D room's. The brightest edge
    pixel went from (76, 61, 19) to (143, 122, 72).
 3. **The emblem's glow.** Two glows instead of one: a fine gold one close to
    the line, and a wider one in the gate's own colour.
 
-One practical detail: the row of gates clips whatever is drawn outside it, so
-it now has more room underneath for the glow, and the "Tap a gate to enter"
-line is pulled up by exactly that much. Measured before and after, no gate
-moved by even half a pixel at any of the three sizes.
+Measured before and after, no gate moved by even half a pixel at any of the
+three sizes, and the page just below the gates is exactly its old dark.
 
 ## How it was checked
 
@@ -78,7 +85,8 @@ moved by even half a pixel at any of the three sizes.
 - The homepage tests (seven gates, swiping, tapping, keyboard, the back
   button), the season line, the security rules, and the walks from the
   homepage into Eden, the Workshop and Pray all pass.
-- On the pull request's preview site, on a real phone.
+- On the pull request's preview site, on a real phone, which is where the
+  spill beneath the gates was seen and taken out.
 
 ## What this shows about software
 
