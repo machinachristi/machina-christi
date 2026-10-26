@@ -111,6 +111,17 @@ speech, so it sounds natural, unlike the older robotic voices.
 exact moment it reaches each one. *Here:* one at the start of each line, which
 gives the timings the Pray highlight follows.
 
+**Accessible controls.** Buttons and tabs labelled so that everyone can use
+them, including people who listen to a page with a screen reader instead of
+looking at it. A play button that only shows a triangle is silent to a screen
+reader; one labelled "Play gaw gài" says what it does. Labels can also say a
+control's state ("pressed", "selected"), like the click of a light switch you
+can hear in the dark. Using a real button, not a box made to look like one,
+also means it works with a keyboard for free.
+*Here:* Logos's tabs are marked as tabs, a turned card reports that it's
+pressed, every play button says what it plays, and the practice counts are read
+aloud when they change.
+
 ## Speed and cost
 
 **Snapshot (publishing).** Copying what you need from a slow or costly place
@@ -174,6 +185,13 @@ that can't do it. *Here:* the API's recording relay.
 file's contents: change anything and the fingerprint changes. Put it in the
 file's name and the file under that name can never change, so every cache may
 keep it forever ("immutable"). *Here:* `our-father/th-slow-5ea7f0c694.mp3`.
+
+**Deduplication (one copy of each thing).** Keeping a single copy of anything
+that would otherwise be stored twice, and pointing every user of it at that
+one copy, like a family sharing one dictionary instead of buying one each.
+It saves space, and a fix made to the copy reaches everyone at once.
+*Here:* when two Logos buttons say exactly the same words (จ จาน's name and its
+Mid row), the recipe records them once: 184 sounds come from 158 files.
 
 ## Networks and security
 
@@ -353,26 +371,28 @@ moves up a box and waits longer before it comes back (a day, three days, a
 week, two weeks); a card you miss goes back to the first box and comes back
 today. This version is the Leitner system, described by the German writer
 Sebastian Leitner in the 1970s, with real cardboard boxes.
-*Here:* Logos's Review mode for the Thai consonants.
+*Here:* Logos's first card trainer used it; its Practice tab now goes through
+the deck in up to four rounds instead.
 
 **Browser storage (localStorage).** A small notebook each website may keep
 inside your browser. It's private to that site, that browser and that device,
 and nothing in it is sent anywhere unless the page sends it. It isn't a safe:
 private browsing, clearing site data, or (in Safari) a week without visiting
 can wipe it.
-*Here:* which box each Logos card is in, and switches like "Slow voice".
+*Here:* your Know it / Revisit marks on Logos's Practice tab.
 
 **A file, not a database.** Not everything needs a database. A database earns
 its keep when information changes often, is shared, or needs searching; a small
 list that changes only when you edit it can simply be a file delivered with the
 pages.
-*Here:* the 44 Thai cards are one file, `logos/thai.json`.
+*Here:* Logos's 44 consonants and 32 vowels are one file, `logos/thai.json`.
 
 **Romanization.** Writing one language's sounds in another's letters, so a
 learner can read them before learning the script. There are many systems; what
 matters is using one consistently.
 *Here:* Pray uses kh/ph/th for breathy sounds; Logos follows a Thai learner's
-workbook (g/k, bp/dt, and a dot over short syllables).
+workbook and my phone guide (g/k, bp/dt, a tone mark over the vowel, hyphens
+between syllables).
 
 **Tone and pitch.** Pitch is how high or low a voice is at each moment;
 drawn over time, it makes a line. In a tonal language like Thai, the shape of
@@ -383,8 +403,9 @@ or rising means different things.
 language, as the breath runs out. A program judging tones has to allow for it,
 or every last syllable sounds "falling".
 *Here:* the first tone check in the Logos lab forgot this and flagged nearly
-every card; comparing each syllable with the same voice's other syllables of
-each tone fixed it.
+every card. Comparing each syllable with the same voice's own five tones
+quietened it, but hid a bigger problem: those five were themselves off. The
+later tone check compared with the published shapes instead.
 
 **Second opinion (a cross-check).** Checking one machine's work with another,
 independent one before trusting it, especially where you can't judge yourself.
@@ -407,6 +428,34 @@ into words first (see word breaking), and it trips over words it doesn't
 know. Azure's version doesn't grade Thai tones.
 *Here:* the second check on every Pray line; with spaces between the words,
 most of its alarms went away.
+
+**Measuring a voice (length, pitch, vowel sound).** A recording is just a long
+list of numbers, and a small program can read three things from it: how long
+a sound lasts (where it gets loud and where it goes quiet), its pitch at each
+moment (how often the sound wave repeats), and which vowel it is (the shape of
+its loud and quiet frequencies, like a fingerprint of the mouth's shape). No
+listening service is needed, and it judges things a scorer can't, such as
+whether a short vowel is really short.
+*Here:* every Logos vowel was measured on this Mac: each short one is shorter
+than its long twin, and sounds closest to it.
+
+**Calibration (testing the tester).** Before you trust a measuring tool, try it
+on something whose answer you already know, the way you'd check a kitchen scale
+with a bag of sugar that says 1 kg. If the tool gets the known thing wrong, the
+tool is what needs fixing.
+*Here:* the Logos tone checker first measured a native speaker saying the five
+tones. It got two wrong, both its own fault; fixed, it passed all ten, and only
+then judged the computer voice (which failed, so the tones were left off).
+
+**Normalizing (comparing voices fairly).** A child's voice sits higher than a
+man's, so comparing them in raw numbers (hertz, vibrations a second) says
+nothing about the *shape* of what they said. Instead, each voice is measured
+against its own middle and its own range: pitch in semitones (the steps of a
+piano keyboard, which sound the same size at any height), then split into five
+levels from the voice's lowest to its highest, the scale the linguist Chao
+Yuen Ren drew up in 1930 for writing tones as numbers (Thai mid is 33).
+*Here:* the Logos tone check put a native speaker, the published shapes and
+the computer voice on the same five-level scale.
 
 **Homophone.** Words that sound the same but are spelled differently: "there"
 and "their" in English, กาล and การ (both *gaan*) in Thai. A listening machine
@@ -465,7 +514,8 @@ allowed between them, like a lift: stopped at a floor, going up, or going
 down, never half of two. Writing it this way makes it hard for anything to be
 left half-done.
 *Here:* the journey between the realms: in Eden, climbing, under the veil,
-arriving, in heaven, leaving, climbing down, stepping off.
+arriving, in heaven, leaving, climbing down, stepping off. And each Logos
+practice card: new, revisit in round 1 to 4, or known.
 
 **Fail-safe.** Designing something so that when it breaks, it breaks into a
 safe state, like a lift whose brakes close when the power goes. It's different
@@ -562,6 +612,14 @@ a working system, and if the new one misbehaves you switch back.
 finished dish from the kitchen to the table.
 *Here:* merging a PR into `main` makes GitHub Actions deploy it automatically.
 
+**Redirect (301).** A forwarding address for a page that has moved or been
+retired. Someone who visits the old address is sent on to the new one
+automatically, the way the post office forwards letters after you move. The
+number 301 means "moved for good", so browsers and search engines update their
+records instead of asking again.
+*Here:* the old Logos card trainer, `cards.html`, now forwards to `logos.html`
+(a rule in `staticwebapp.config.json`).
+
 **Telemetry.** The server keeping a log of what happened — how many questions,
 how fast, anything that failed — like a shop's till roll. You read it to learn
 how things are really going rather than guessing.
@@ -588,3 +646,12 @@ they fade on the garden's own clock, which slows down on GitHub's small test
 machines; CI's second try passed often enough to hide it. The check now reads
 the garden's clock and waits until 2 garden seconds have passed, however long
 that takes in real time (AB#95).
+
+**Name collision.** Two different things given the same name, so an
+instruction meant for one also lands on the other, like two people called Sam
+in one office: shout "Sam, your coffee!" and both look up. On a web page, the
+style rules are shared by the whole page, so a rule written for one name
+reaches everything with that name. Unique, specific names prevent it.
+*Here:* Logos's "‹ home" link and the back of every card were both called
+`back`, so turned cards borrowed the link's spacing and left a dark strip
+under them. The link is now called `home`.

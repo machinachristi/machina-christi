@@ -1,7 +1,7 @@
-// Records the Logos cards' sounds: each Thai consonant's name, read by the
-// synthetic voice named in logos/thai.json, at normal speed and slowly. The
-// MP3s live with the site (logos/audio/th/), and each card's file names are
-// written back into logos/thai.json.
+// Records the Logos sounds: every Thai consonant's name, and every vowel and
+// its example word, read by the synthetic
+// voice named in logos/thai.json. The MP3s live with the site
+// (logos/audio/th/), and each file's name is written back into logos/thai.json.
 //
 // Run by a person, not by CI: the cards rarely change, and a person listens
 // to the new sounds before they're committed. It signs in as you (az login),
@@ -13,8 +13,9 @@
 //
 // Same recipe as the prayers (src/lib/prayers.js): a file's name holds a
 // fingerprint of its words, voice and settings, so unchanged sounds are kept
-// and a changed one gets a new name (and can be cached forever). Files no card
-// uses any more are deleted.
+// and a changed one gets a new name (and can be cached forever). The same
+// words are recorded once, however many cards say them. Files nothing uses
+// any more are deleted.
 const fs = require('node:fs');
 const path = require('node:path');
 const P = require('../src/lib/prayers');
@@ -22,46 +23,75 @@ const P = require('../src/lib/prayers');
 const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'logos', 'thai.json');
 const AUDIO = path.join(ROOT, 'logos', 'audio');
-const SPEEDS = ['normal', 'slow'];
+const SPEED = 'normal'; // Logos has one speed
 const GAP_MS = 3200; // the free tier allows about 20 requests a minute
 
 const dryRun = process.argv.includes('--dry-run');
 
 // thai.json is edited by hand too, so it's written back the way it's laid out:
-// one card per line.
+// one letter or vowel per line.
+const LISTS = ['consonants', 'vowels'];
 function writeData(data) {
-  const { cards, ...rest } = data;
-  const head = JSON.stringify({ ...rest, cards: '__CARDS__' }, null, 2);
-  const line = c => '    ' + JSON.stringify(c).replace(/":/g, '": ').replace(/,"/g, ', "').replace(/\{"/g, '{ "').replace(/"\}/g, '" }').replace(/\}$/, ' }');
-  fs.writeFileSync(DATA, head.replace('"__CARDS__"', `[\n${cards.map(line).join(',\n')}\n  ]`) + '\n');
+  const line = item => '    ' + JSON.stringify(item, null, 1).replace(/\n\s*/g, ' ');
+  const head = JSON.stringify(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, LISTS.includes(k) ? `__${k}__` : v])), null, 2);
+  const text = LISTS.reduce((t, k) => t.replace(`"__${k}__"`, () => `[\n${data[k].map(line).join(',\n')}\n  ]`), head);
+  fs.writeFileSync(DATA, text + '\n');
 }
 
 function settingsFor(data) {
   const a = data.audio || {};
   if (!a.voice) throw new Error('logos/thai.json has no audio.voice');
-  // A card is recorded the way a one-line prayer is (no pauses to add).
-  const settings = { voices: { th: a.voice, en: a.voice }, slowRate: a.slowRate, breakMs: 0, format: a.format };
+  // A sound is recorded the way a one-line prayer is (no pauses to add). The
+  // prayers' settings check wants a slow rate; Logos never uses it.
+  const settings = { voices: { th: a.voice, en: a.voice }, slowRate: '-30%', breakMs: 0, format: a.format };
   P.checkSettings(settings);
   return settings;
 }
 
+// Every sound the cards play, in a fixed order: { id, say, rate, set }. id
+// names the file, say is what the voice reads, rate (rarely) is its own pace,
+// and set(file) stores the file's name.
+function soundsFor(data) {
+  const sounds = [];
+  const add = (id, say, owner, key, rate) => sounds.push({ id, say, rate, owner, key, set: file => { owner[key] = file; } });
+  for (const c of data.consonants) add(c.id, c.say, c, 'audio');
+  for (const v of data.vowels) add(`vowel-${v.id}`, v.say, v, 'audio', v.say_rate);
+  for (const v of data.vowels) if (v.word) add(`vowel-${v.id}-word`, v.word_say || v.word, v, 'word_audio');
+  return sounds;
+}
+
+// How to record one sound. One with its own pace is recorded the way a slow
+// prayer is, at that pace (the voice stretches the three short gliding vowels
+// to full length, so they are said faster), and the pace is in the fingerprint.
+function recipeFor(sound, settings) {
+  return sound.rate ? { speed: 'slow', settings: { ...settings, slowRate: sound.rate } } : { speed: SPEED, settings };
+}
+
+// Which file each sound plays. The first sound with given words names the
+// file; later sounds with the same words share it.
 function planFor(data, settings) {
-  return data.cards.flatMap(card => SPEEDS.map(speed => {
-    const asPrayer = { lines: [{ th: card.say }] };
-    const hash = P.recordingHash(asPrayer, 'th', speed, settings);
-    const file = `th/${card.id}-${speed}-${hash}.mp3`;
-    return { card, speed, file, asPrayer, exists: fs.existsSync(path.join(AUDIO, file)) };
-  }));
+  const first = new Map();
+  return soundsFor(data).map(sound => {
+    const asPrayer = { lines: [{ th: sound.say }] };
+    const recipe = recipeFor(sound, settings);
+    const hash = P.recordingHash(asPrayer, 'th', recipe.speed, recipe.settings);
+    const owner = first.get(hash);
+    const file = owner ? owner.file : `th/${sound.id}-${hash}.mp3`;
+    const item = { ...sound, asPrayer, recipe, file, shared: Boolean(owner), exists: fs.existsSync(path.join(AUDIO, file)) };
+    if (!owner) first.set(hash, item);
+    return item;
+  });
 }
 
 async function main() {
   const data = JSON.parse(fs.readFileSync(DATA, 'utf8'));
   const settings = settingsFor(data);
   const items = planFor(data, settings);
-  const todo = items.filter(i => !i.exists);
-  const chars = todo.reduce((s, i) => s + Array.from(i.card.say).length, 0);
-  console.log(`${data.cards.length} cards, ${items.length} sounds; ${todo.length} to record (${chars} characters of the free 500,000 a month), voice ${settings.voices.th}.`);
-  if (dryRun) { todo.forEach(i => console.log(`  would record ${i.file}  (${i.card.say})`)); return; }
+  const todo = items.filter(i => !i.shared && !i.exists);
+  const files = new Set(items.map(i => i.file));
+  const chars = todo.reduce((s, i) => s + Array.from(i.say).length, 0);
+  console.log(`${items.length} sounds in ${files.size} files; ${todo.length} to record (${chars} characters of the free 500,000 a month), voice ${settings.voices.th}.`);
+  if (dryRun) { todo.forEach(i => console.log(`  would record ${i.file}  (${i.say})`)); return; }
 
   if (todo.length) {
     const sdk = require('microsoft-cognitiveservices-speech-sdk');
@@ -78,7 +108,8 @@ async function main() {
         if (wait > 0) await new Promise(r => setTimeout(r, wait));
         last = Date.now();
         const synth = new sdk.SpeechSynthesizer(config, null);
-        const result = await new Promise((ok, no) => synth.speakSsmlAsync(P.buildSsml(item.asPrayer, 'th', item.speed, settings), ok, no)).finally(() => synth.close());
+        const ssml = P.buildSsml(item.asPrayer, 'th', item.recipe.speed, item.recipe.settings);
+        const result = await new Promise((ok, no) => synth.speakSsmlAsync(ssml, ok, no)).finally(() => synth.close());
         if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
           fs.writeFileSync(path.join(AUDIO, item.file), Buffer.from(result.audioData));
           console.log(`  recorded ${item.file} (${result.audioData.byteLength} bytes)`);
@@ -93,18 +124,15 @@ async function main() {
     }
   }
 
-  // Each card's file names, and nothing left over.
-  for (const card of data.cards) {
-    card.audio = Object.fromEntries(SPEEDS.map(speed => [speed, items.find(i => i.card === card && i.speed === speed).file]));
-  }
+  // Every sound's file name, and nothing left over.
+  for (const item of items) item.set(item.file);
   writeData(data);
-  const used = new Set(items.map(i => i.file));
   const dir = path.join(AUDIO, 'th');
   for (const f of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
-    if (!used.has(`th/${f}`)) { fs.rmSync(path.join(dir, f)); console.log(`  removed ${f} (no card uses it)`); }
+    if (!files.has(`th/${f}`)) { fs.rmSync(path.join(dir, f)); console.log(`  removed ${f} (no card uses it)`); }
   }
   console.log('logos/thai.json updated. Listen to the new sounds before committing them.');
 }
 
-module.exports = { planFor, settingsFor, writeData };
+module.exports = { soundsFor, planFor, settingsFor, writeData };
 if (require.main === module) main().catch(err => { console.error(err.message); process.exit(1); });

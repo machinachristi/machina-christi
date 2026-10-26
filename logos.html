@@ -5,21 +5,19 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="Logos — learning Thai, letter by letter: the 44 consonants as flash cards, with their names read aloud." />
+  <meta name="description" content="Logos — learning Thai: the 44 consonants and 32 vowels as flash cards, read aloud." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/logos.html" />
   <meta property="og:title" content="Logos · Machina Christi" />
-  <meta property="og:description" content="Learning Thai, letter by letter: the 44 consonants as flash cards, with their names read aloud." />
+  <meta property="og:description" content="Learning Thai: the 44 consonants and 32 vowels as flash cards, read aloud." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
   <meta name="twitter:card" content="summary_large_image" />
   <title>Logos · Machina Christi</title>
-  <!-- The card page every lesson leads to — fetch it while this one is read. -->
-  <link rel="prefetch" href="cards.html" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -27,13 +25,28 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --lacquer:   222, 112, 98;   /* Logos — Thai lacquer red */
+      --panel:     #13100c;        /* cards and bars: opaque, so pinned bars hide what scrolls under */
+      --line:      rgba(201, 162, 39, 0.28);
+      --line-strong: rgba(201, 162, 39, 0.45);
+      --muted:     rgba(232, 213, 163, 0.64);
+      --wash:      rgba(201, 162, 39, 0.07);
+      /* Each set of cards keeps a colour from the home page's gates. */
+      --lacquer:   222, 112, 98;   /* Logos — Thai lacquer red: middle class */
+      --amber:     255, 196, 92;   /* Camino's lamplight: high class */
+      --leaf:      168, 205, 140;  /* Eden's green: low class */
+      --marian:    138, 170, 222;  /* Pray's blue: vowels */
+      --good:      150, 200, 140;
+      --accent:    232, 213, 163;
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Looped Thai faces first, as on Pray: the small loops on letters like
          บ ข ภ are how Thai is taught, and the loopless style makes look-alikes
          harder to tell apart for a learner. System fonts; nothing to download. */
       --thai:      Thonburi, "Noto Sans Thai Looped", "Noto Serif Thai", Tahoma, "Leelawadee UI", "Noto Sans Thai", sans-serif;
     }
+    .cls-middle { --accent: var(--lacquer); }
+    .cls-high   { --accent: var(--amber); }
+    .cls-low    { --accent: var(--leaf); }
+    .cls-vowel  { --accent: var(--marian); }
 
     html, body { min-height: 100dvh; }
     body {
@@ -43,8 +56,10 @@
       background-attachment: fixed;
       color: var(--gold-soft);
       font-family: var(--serif);
-      line-height: 1.75;
+      line-height: 1.5;
       -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     body::before {
       content: "";
@@ -63,14 +78,20 @@
     @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
 
     :lang(th) { font-family: var(--thai); }
+    [hidden] { display: none !important; }
+    button { font: inherit; color: inherit; }
 
     .wrap {
-      max-width: 620px;
+      max-width: 480px;
       margin: 0 auto;
-      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+      padding-top: max(28px, env(safe-area-inset-top));
+      padding-bottom: max(48px, env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
     }
 
-    .back, .find {
+    .home, .find {
+      position: relative;
       display: inline-block;
       font-size: 14px;
       letter-spacing: 0.2em;
@@ -78,12 +99,11 @@
       text-decoration: none;
       border-bottom: 1px solid transparent;
       padding-bottom: 2px;
-      margin-bottom: 3em;
+      margin-bottom: 1.8em;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
-    .back:hover, .back:focus-visible, .find:hover, .find:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
-    .back, .find { position: relative; }
-    .back::before, .find::before { content: ''; position: absolute; inset: -9px -12px; }
+    .home:hover, .home:focus-visible, .find:hover, .find:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    .home::before, .find::before { content: ''; position: absolute; inset: -9px -12px; }
     .find { float: right; }
 
     h1 {
@@ -92,10 +112,11 @@
       letter-spacing: 0.26em;
       text-transform: uppercase;
       color: var(--gold);
+      line-height: 1.3;
     }
     .subtitle {
       display: block;
-      font-size: clamp(18px, 5vw, 22px);
+      font-size: clamp(18px, 5vw, 21px);
       color: rgba(var(--lacquer), 0.92);
       line-height: 1.6;
     }
@@ -104,177 +125,691 @@
       display: block;
       width: 72px;
       height: 1px;
-      margin: 0.8em 0 1.2em;
+      margin: 0.7em 0 1.2em;
       background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
     }
-    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
-    a { color: inherit; }
 
-    h2.section {
-      font-weight: normal;
-      font-size: 14px;
-      letter-spacing: 0.26em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin: 2.4em 0 0.2em;
-    }
-    h2.section .th { letter-spacing: 0.02em; text-transform: none; font-size: 18px; margin-left: 0.4em; color: rgba(var(--lacquer), 0.95); }
-
-    .lessons { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-top: 1.2em; }
-    .lesson {
-      position: relative;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: center;
-      gap: 4px 18px;
-      text-decoration: none;
-      color: inherit;
-      padding: 16px 52px 16px 20px;
-      border: 1px solid rgba(201, 162, 39, 0.28);
-      border-radius: 14px;
-      background: rgba(201, 162, 39, 0.04);
-      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-    }
-    .lesson::after {
-      content: "\203A";
-      position: absolute;
-      right: 22px;
-      top: 50%;
-      transform: translateY(-52%);
-      font-size: 22px;
-      color: rgba(201, 162, 39, 0.5);
-    }
-    .lesson:hover, .lesson:focus-visible {
-      border-color: rgba(201, 162, 39, 0.7);
-      background: rgba(201, 162, 39, 0.08);
-      box-shadow: 0 0 34px -12px rgba(var(--lacquer), 0.45);
-      outline: none;
-    }
-    /* A few of the lesson's letters, large, as its emblem. */
-    .lesson .glyphs {
-      grid-row: span 3;
-      font-size: 30px;
-      line-height: 1.2;
-      color: rgba(var(--lacquer), 0.95);
-      min-width: 2.2em;
-      text-align: center;
-    }
-    .lesson h3 {
-      font-weight: normal;
-      font-size: 14px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--gold-soft);
-    }
-    .lesson .th { font-size: 17px; line-height: 1.5; color: rgba(232, 213, 163, 0.85); }
-    .lesson .count { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
-
-    details.how { margin-top: 2em; }
-    details.how summary {
-      display: inline-block;
+    /* ── Pages: Cards · Alphabet · Practice ───────────────────────── */
+    .tabs { display: flex; gap: 4px; padding: 4px; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(201, 162, 39, 0.04); }
+    .tab {
+      flex: 1;
+      min-height: 44px;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 12px;
       cursor: pointer;
-      list-style: none;
-      font-size: 14px;
-      letter-spacing: 0.06em;
-      color: rgba(232, 213, 163, 0.62);
-      border-bottom: 1px solid rgba(232, 213, 163, 0.25);
     }
-    details.how summary::-webkit-details-marker { display: none; }
-    details.how summary::after { content: "\203A"; display: inline-block; margin-left: 0.4em; transition: transform 0.2s ease; }
-    details.how[open] summary::after { transform: rotate(90deg); }
-    details.how summary:focus-visible { outline: 1px solid rgba(var(--lacquer), 0.8); outline-offset: 3px; }
-    .how__body {
-      margin-top: 0.9em;
-      padding: 14px 18px;
-      border-left: 2px solid rgba(var(--lacquer), 0.4);
+    .tab[aria-selected="true"] { color: var(--gold-soft); background: rgba(var(--lacquer), 0.14); border-color: rgba(var(--lacquer), 0.6); }
+    .tab:focus-visible { outline: 2px solid rgba(var(--lacquer), 0.9); outline-offset: 2px; }
+
+    /* Two-way switches (Consonants | Vowels …) */
+    .switch { display: flex; gap: 3px; padding: 3px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 14px; }
+    .swl {
+      flex: 1;
+      min-width: 0;
+      min-height: 42px;
       font-size: 15px;
-      line-height: 1.65;
+      color: var(--muted);
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      cursor: pointer;
     }
-    .how__body p { color: rgba(232, 213, 163, 0.74); margin-bottom: 0.8em; }
-    .how__body p:last-child { margin-bottom: 0; }
+    .swl span { font-size: 14px; margin-left: 6px; font-variant-numeric: tabular-nums; opacity: 0.8; }
+    .swl[aria-pressed="true"] { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); border-color: var(--line-strong); }
+    .swl:focus-visible { outline: 2px solid rgba(201, 162, 39, 0.8); outline-offset: 1px; }
 
-    .credit {
-      margin-top: 2.6em;
-      padding-top: 1.2em;
-      border-top: 1px solid rgba(201, 162, 39, 0.2);
-      font-size: 14px;
-      color: rgba(232, 213, 163, 0.55);
+    /* ── Fold-out sections: each class, the vowels ── */
+    .fold { margin: 0 0 12px; }
+    .fold > summary {
+      list-style: none;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 18px;
+      align-items: center;
+      gap: 2px 12px;
+      padding: 13px 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
     }
-    .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    .fold > summary::-webkit-details-marker { display: none; }
+    .fold > summary::after {
+      content: "";
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      justify-self: center;
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: translateY(-2px) rotate(45deg);
+    }
+    .fold[open] > summary::after { grid-row: 1; transform: translateY(2px) rotate(-135deg); }
+    .fold > summary:focus-visible { outline: 2px solid rgba(var(--accent), 0.9); outline-offset: 2px; }
+    /* An open section's title bar stays at the top while its cards scroll
+       under it, so it can be closed from anywhere (only the title shows). The
+       page-coloured shadow fills in round its top corners. */
+    .fold[open] > summary {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px);
+      z-index: 3;
+      box-shadow: 0 -12px 0 var(--bg), 0 10px 16px -10px rgba(0, 0, 0, 0.9);
+    }
+    .fold[open] > summary .fsub { display: none; }
+    .ftitle { grid-column: 1; font-size: 17px; letter-spacing: 0.04em; color: rgb(var(--accent)); }
+    .fcount { font-size: 14px; letter-spacing: 0; color: var(--muted); margin-left: 10px; }
+    .fsub { grid-column: 1; font-size: 14px; line-height: 1.6; color: var(--muted); }
+    .fsub [lang="th"] { font-size: 16px; }
+    .letters { color: rgb(var(--accent)); word-spacing: 0.12em; }
+    .fbody { padding: 12px 0 4px; }
 
-    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+    /* ── Cards ─────────────────────────────────────────────────── */
+    .list { list-style: none; }
+    .item { margin: 0 0 16px; }
+    .card {
+      display: block;
+      width: 100%;
+      padding: 0;
+      text-align: center;
+      cursor: pointer;
+      background: none;
+      border: 0;
+      transition: transform 0.35s ease;
+    }
+    .card.turning { transform: rotateY(90deg); }
+    .face {
+      display: block;
+      min-height: 290px;
+      padding: 14px 18px 18px;
+      background:
+        radial-gradient(100% 80% at 50% 0%, rgba(var(--accent), 0.1), transparent 70%),
+        var(--panel);
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .face > span { display: block; }
+    .card:hover .face { border-color: rgba(201, 162, 39, 0.7); box-shadow: 0 0 40px -16px rgba(var(--accent), 0.5); }
+    .card:focus-visible { outline: none; }
+    .card:focus-visible .face { outline: 2px solid rgba(var(--accent), 0.9); outline-offset: 3px; }
+    /* A turned card on the Cards page opens onto its sounds below. */
+    .item.is-flipped .extras-on .back { border-radius: 22px 22px 0 0; border-bottom: 0; min-height: 0; padding-bottom: 10px; }
+    /* Card and panel read as one piece, so the hover glow (which a phone keeps after a tap) stays off. */
+    .item.is-flipped .extras-on:hover .back { border-color: var(--line-strong); box-shadow: none; }
+
+    .face > .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 24px; font-size: 14px; color: var(--muted); }
+    .clsname { color: rgb(var(--accent)); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .note { display: inline-block; font-size: 14px; line-height: 1.5; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 10px; }
+
+    /* Thai reaches further below and above the line than English: tails
+       (ฎ ฏ ฐ ญ) and marks over words (ผู้หญิง). Tall lines keep the ink
+       inside its own space; tests/logos.spec.js measures every letter. */
+    .symbol { font-size: 120px; line-height: 1.6; color: rgb(var(--accent)); }
+    .symbol.vform { font-size: 92px; line-height: 1.75; }
+    .hint { font-size: 14px; font-style: italic; color: var(--muted); }
+
+    .pic { font-size: 54px; line-height: 1.25; margin: 6px 0 2px; }
+    .pic img { display: inline-block; width: 66px; height: 66px; vertical-align: middle; }
+    .roman { font-size: 32px; line-height: 1.3; color: rgb(var(--accent)); letter-spacing: 0.02em; }
+    .th { font-size: 30px; line-height: 1.75; margin-top: 2px; }
+    .wr { font-size: 20px; line-height: 1.35; }
+    .en { font-size: 17px; line-height: 1.4; font-style: italic; color: var(--muted); margin-top: 2px; }
+    .ex { font-size: 14px; line-height: 1.5; color: var(--muted); margin-top: 10px; }
+
+    /* Vowel backs: the form, its sound, how long it lasts, its partner */
+    .vsym { font-size: 46px; line-height: 1.7; color: rgb(var(--accent)); }
+    .face > .vlen { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; color: var(--muted); margin-top: 6px; }
+    .vlen i { display: block; flex: none; width: 20px; height: 8px; border-radius: 4px; background: rgb(var(--accent)); }
+    .vl-long i { width: 64px; }
+    .vl-special i { width: 64px; border: 1.5px dashed rgb(var(--accent)); background: linear-gradient(90deg, rgb(var(--accent)) 30%, transparent 30%); }
+    .vpair { font-size: 15px; color: var(--muted); margin-top: 4px; }
+    .vpair [lang="th"] { font-size: 21px; color: rgb(var(--accent)); margin-left: 4px; }
+
+    /* ── Sounds under a turned card ───────────────────────────── */
+    .extras {
+      padding: 4px 12px 10px;
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      border-top: 0;
+      border-radius: 0 0 22px 22px;
+    }
+    .extras::before { content: ""; display: block; border-top: 1px solid var(--line); margin: 0 4px 10px; }
+    .sayrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 4px 8px; }
+    .sayrow + .sayrow { margin-top: 4px; }
+    .lbl { min-width: 0; font-size: 17px; text-align: left; overflow-wrap: anywhere; }
+    .lbl [lang="th"] { font-size: 20px; }
+    .back-link { display: block; width: 100%; margin-top: 8px; padding: 12px 0 4px; font-size: 14px; color: var(--muted); background: none; border: 0; cursor: pointer; }
+    .back-link:hover, .back-link:focus-visible { color: var(--gold-soft); outline: none; }
+
+    .play {
+      flex: none;
+      display: inline-grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      color: rgb(var(--accent));
+      background: rgba(var(--accent), 0.1);
+      border: 1px solid rgba(var(--accent), 0.6);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .play svg { width: 16px; height: 16px; margin-left: 2px; fill: currentColor; }
+    .play:hover, .play:focus-visible { background: rgba(var(--accent), 0.2); outline: none; box-shadow: 0 0 0 2px rgba(var(--accent), 0.45); }
+    .play.is-playing { background: rgba(var(--accent), 0.28); animation: ring 1.2s ease-out infinite; }
+    @keyframes ring { from { box-shadow: 0 0 0 0 rgba(var(--accent), 0.55); } to { box-shadow: 0 0 0 10px rgba(var(--accent), 0); } }
+
+    /* ── Practice ──────────────────────────────────────────────── */
+    .pfilters { display: flex; gap: 6px; margin: 0 0 12px; }
+    .pfl {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 2px;
+      font-size: 15px;
+      color: var(--gold-soft);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .pfl span { display: block; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .pfl[aria-pressed="true"] { color: var(--bg); background: var(--gold-soft); border-color: var(--gold-soft); }
+    .pfl[aria-pressed="true"] span { color: var(--bg); opacity: 0.75; }
+    .pfl:focus-visible { outline: 2px solid rgba(201, 162, 39, 0.8); outline-offset: 2px; }
+
+    .pstats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin: 0 0 12px; }
+    .pround { font-size: 15px; margin-right: 4px; }
+    .pst { font-size: 14px; padding: 2px 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; }
+    .pst b { font-weight: normal; color: var(--gold-soft); margin-left: 3px; font-variant-numeric: tabular-nums; }
+    .pin .face { min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .ptag { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--accent)); }
+    .pextra { margin-top: 10px; padding: 4px 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+    .pbtns { display: flex; gap: 10px; margin-top: 12px; }
+    .pbtn {
+      flex: 1;
+      min-height: 50px;
+      padding: 0 14px;
+      font-size: 16px;
+      color: var(--gold-soft);
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .pbtn.known { color: var(--bg); background: rgb(var(--accent)); border-color: rgb(var(--accent)); }
+    .pbtn.danger { color: var(--bg); background: rgb(var(--lacquer)); border-color: rgb(var(--lacquer)); }
+    .pbtn:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+    .pdone { text-align: center; padding: 22px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; }
+    .pdone-t { font-size: 19px; margin-bottom: 8px; }
+    .pdone-s { font-size: 15px; color: var(--muted); }
+    .lc { display: inline-block; font-size: 26px; line-height: 1.6; margin: 0 5px; color: rgb(var(--accent)); }
+    .none-left { color: var(--gold-soft); }
+    .preset { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; font-size: 15px; color: var(--muted); }
+    .resetq { min-height: 42px; padding: 0 22px; font-size: 15px; color: var(--gold-soft); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+    .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+    .confirm .pbtn { flex: 0 0 auto; min-height: 42px; font-size: 15px; }
+
+    /* Listen & pick */
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .choice {
+      min-height: 108px;
+      font-size: 56px;
+      line-height: 1.6;
+      color: var(--gold-soft);
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    .choices.vowels .choice { font-size: 44px; line-height: 1.8; }
+    .choice:hover, .choice:focus-visible { border-color: rgba(201, 162, 39, 0.85); outline: none; }
+    .choice.right { border-color: rgba(var(--good), 0.9); background: rgba(var(--good), 0.14); }
+    .choice.wrong { border-color: rgba(var(--lacquer), 0.9); background: rgba(var(--lacquer), 0.12); }
+    .choice:disabled { cursor: default; }
+    .row { display: flex; gap: 10px; margin-top: 14px; }
+    .btn {
+      flex: 1;
+      min-height: 48px;
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.06);
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .btn:hover, .btn:focus-visible { border-color: rgba(201, 162, 39, 0.85); background: rgba(201, 162, 39, 0.12); outline: none; }
+    .btn.small { flex: 0 0 auto; padding: 0 20px; }
+    .status { min-height: 1.6em; margin-top: 14px; font-size: 16px; text-align: center; color: rgba(232, 213, 163, 0.82); }
+    .status [lang="th"] { font-size: 19px; }
+    .pscore { font-size: 20px; color: var(--gold-soft); }
+
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.65); }
+    .foot { margin-top: 2.2em; text-align: center; font-size: 14px; }
+    .foot a { color: rgba(232, 213, 163, 0.62); text-decoration: none; letter-spacing: 0.06em; }
+    .foot a:hover, .foot a:focus-visible { color: var(--gold-soft); outline: none; }
+
+    /* Very narrow phones (the first iPhone SE): smaller forms. */
+    @media (max-width: 360px) {
+      .symbol { font-size: 108px; }
+      .symbol.vform { font-size: 78px; }
+      .face { padding-left: 14px; padding-right: 14px; }
+      .choices.vowels .choice { font-size: 38px; }
+      .pround { flex-basis: 100%; text-align: center; margin-right: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body::before { animation: none; }
+      .card, .card.turning { transition: none; transform: none; }
+      .play.is-playing { animation: none; }
+    }
   </style>
   <script src="/assets/telemetry.js" async></script>
   <script src="/assets/season.js?v=2" defer></script>
 </head>
 <body>
+
   <div class="wrap">
-    <a class="back" href="index.html">&lsaquo; home</a>
+    <a class="home" href="index.html">&lsaquo; home</a>
     <a class="find" href="search.html">search &rsaquo;</a>
     <h1>Logos</h1>
-    <span class="subtitle">learning the word, in other tongues</span>
-    <p>A place to learn languages, one small step at a time. It begins with Thai: its 44 consonants, each a card to turn over, with its name read aloud.</p>
+    <span class="subtitle">Thai consonants &amp; vowels</span>
 
-    <h2 class="section">Thai <span class="th" lang="th">ภาษาไทย</span></h2>
-    <p>Thai sorts its consonants into three classes, and a letter&rsquo;s class helps decide the tone of every word it starts. Learn them class by class, as the workbook does, or all together.</p>
+    <div class="tabs" role="tablist" aria-label="Pages">
+      <button type="button" class="tab" role="tab" id="tab-cards" data-tab="cards" aria-controls="p-cards" aria-selected="true">Cards</button>
+      <button type="button" class="tab" role="tab" id="tab-abc" data-tab="abc" aria-controls="p-abc" aria-selected="false" tabindex="-1">Alphabet</button>
+      <button type="button" class="tab" role="tab" id="tab-prac" data-tab="prac" aria-controls="p-prac" aria-selected="false" tabindex="-1">Practice</button>
+    </div>
 
-    <ul class="lessons" id="lessons">
-      <li><p class="notice">Loading&hellip;</p></li>
-    </ul>
+    <section class="page" id="p-cards" role="tabpanel" aria-labelledby="tab-cards"><p class="notice">Loading&hellip;</p></section>
+    <section class="page" id="p-abc" role="tabpanel" aria-labelledby="tab-abc" hidden></section>
+    <section class="page" id="p-prac" role="tabpanel" aria-labelledby="tab-prac" hidden></section>
 
-    <details class="how">
-      <summary>How the cards work</summary>
-      <div class="how__body">
-        <p><b>Learn</b> shows every card in the book&rsquo;s order: tap a card to turn it over and hear its name. <b>Review</b> brings back the cards that are due: say whether you knew it, and the box system decides when you&rsquo;ll see it again. <b>Listen &amp; pick</b> says a name and asks which letter it was.</p>
-        <p>The box system: every card starts in the first box. Each time you know it, it moves up a box and waits longer before coming back: a day, three days, a week, two weeks. Miss it, and it goes back to the first box and comes back today. Hard cards come often; easy ones rarely.</p>
-        <p>Your progress stays in this browser on this device, and is never sent anywhere. Safari may clear it if you don&rsquo;t visit for about a week.</p>
-      </div>
-    </details>
-
-    <p class="credit" id="credit">The order and spelling follow a Thai learner&rsquo;s workbook. The voice is synthetic, checked by machine. <a href="about-logos.html">About Logos</a></p>
+    <p class="foot"><a href="about-logos.html">About Logos &rsaquo;</a></p>
   </div>
 
-  <script src="/assets/logos.js?v=1"></script>
+  <script src="/assets/logos.js?v=2"></script>
   <script>
     (() => {
       'use strict';
 
+      const $ = id => document.getElementById(id);
+      const L = window.mcLogos;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
       function escapeHtml(s) {
         return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       }
+      // English with a few Thai words in it: the Thai gets the Thai font.
+      const mixed = s => escapeHtml(s).replace(/[฀-๿]+/g, m => `<span lang="th">${m}</span>`);
 
-      const list = document.getElementById('lessons');
-      const L = window.mcLogos;
+      const CLASSES = ['middle', 'high', 'low'];
+      const USE_NOTES = { seldom: 'seldom used', obsolete: 'no longer used', rare: 'rare' };
+      const VOWEL_KINDS = { short: 'Short vowel', long: 'Long vowel', special: 'Special vowel' };
+      const PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L13 8z"/></svg>';
 
-      // Every card lives in one data file (logos/thai.json); each lesson is
-      // a class of letters, or all of them.
+      let data = null;
+      const vowelById = {};
+
+      // ── Small pieces ─────────────────────────────────────────────
+      const isVowel = item => 'form' in item;
+      const classOf = item => (isVowel(item) ? 'cls-vowel' : `cls-${item.class}`);
+      const symbolOf = item => (isVowel(item) ? L.vowelShown(item.form) : item.letter);
+      // A vowel is said with อ (อะ, อา …); the old vowel letters are shown as they are.
+      const vowelSaid = v => (/^[ฤฦ]/.test(v.form) ? v.form : v.say);
+
+      const playButton = (file, say, label) =>
+        `<button type="button" class="play" data-file="${escapeHtml(file || '')}" data-say="${escapeHtml(say)}" aria-label="${escapeHtml(label)}">${PLAY}</button>`;
+
+
+      // What a turned card shows (without its top line).
+      function consonantFace(c) {
+        const pic = c.draw
+          ? `<span class="pic" aria-hidden="true"><img src="/logos/pics/${escapeHtml(c.draw)}.svg" alt="" width="66" height="66" loading="lazy"></span>`
+          : `<span class="pic" aria-hidden="true">${escapeHtml(c.pic)}</span>`;
+        return `${pic}
+          <span class="roman">${escapeHtml(c.name_rom)}</span>
+          <span class="th" lang="th">${escapeHtml(c.word)}</span>
+          <span class="wr">${escapeHtml(c.word_rom)}</span>
+          <span class="en">${escapeHtml(c.meaning)}</span>
+          ${c.ex ? `<span class="ex">${mixed(c.ex)}</span>` : ''}`;
+      }
+      function vowelFace(v) {
+        const partner = v.partner ? vowelById[v.partner] : null;
+        const length = v.length === 'special'
+          ? '<span class="vlen vl-special"><i aria-hidden="true"></i>sounds short &middot; counts as long</span>'
+          : `<span class="vlen vl-${v.length}"><i aria-hidden="true"></i>${v.length}</span>`;
+        return `<span class="vsym" lang="th">${escapeHtml(L.vowelShown(v.form))}</span>
+          <span class="roman">${escapeHtml(v.sound)}</span>
+          ${length}
+          ${partner ? `<span class="vpair">${partner.length}<span lang="th">${escapeHtml(L.vowelShown(partner.form))}</span></span>` : ''}
+          ${v.word ? `<span class="th" lang="th">${escapeHtml(v.word)}</span><span class="wr">${escapeHtml(v.word_rom)}</span><span class="en">${escapeHtml(v.meaning)}</span>` : ''}
+          ${v.ex ? `<span class="ex">${mixed(v.ex)}</span>` : ''}`;
+      }
+      const face = item => (isVowel(item) ? vowelFace(item) : consonantFace(item));
+      const kindName = item => (isVowel(item) ? VOWEL_KINDS[item.length] : data.classes[item.class].name);
+
+      // The sounds under a turned card: its name, or the vowel and its word.
+      function sounds(item) {
+        if (isVowel(item)) {
+          return `<div class="sayrow"><span class="lbl"><span lang="th">${escapeHtml(vowelSaid(item))}</span> &middot; ${escapeHtml(item.sound)}</span>${playButton(item.audio, item.say, `Play ${item.sound}, ${item.length}`)}</div>
+            ${item.word ? `<div class="sayrow"><span class="lbl"><span lang="th">${escapeHtml(item.word)}</span> &middot; ${escapeHtml(item.word_rom)}</span>${playButton(item.word_audio, item.word_say || item.word, `Play ${item.word_rom}, ${item.meaning}`)}</div>` : ''}`;
+        }
+        return `<div class="sayrow"><span class="lbl"><span lang="th">${escapeHtml(item.letter)} ${escapeHtml(item.word)}</span> &middot; ${escapeHtml(item.name_rom)} ${escapeHtml(item.word_rom)}</span>${playButton(item.audio, item.say, `Play ${item.name_rom} ${item.word_rom}`)}</div>`;
+      }
+      const nameSound = item => `<div class="sayrow"><span class="lbl">${isVowel(item)
+        ? `<span lang="th">${escapeHtml(vowelSaid(item))}</span> &middot; ${escapeHtml(item.sound)}`
+        : `<span lang="th">${escapeHtml(item.letter)} ${escapeHtml(item.word)}</span> &middot; ${escapeHtml(item.name_rom)} ${escapeHtml(item.word_rom)}`}</span>${playButton(item.audio, item.say, `Play ${isVowel(item) ? item.sound : `${item.name_rom} ${item.word_rom}`}`)}</div>`;
+
+      // One card: the face you tap; on the Cards page, its sounds below once turned.
+      function card(item, pos, total, prefix, withSounds) {
+        const id = `${prefix}-${item.id}`;
+        const note = USE_NOTES[item.use];
+        const extras = withSounds
+          ? `<div class="extras" id="x-${id}" hidden>${sounds(item)}<button type="button" class="back-link">Flip back</button></div>`
+          : '';
+        return `<li class="item ${classOf(item)}" data-id="${escapeHtml(item.id)}">
+          <button type="button" class="card${withSounds ? ' extras-on' : ''}" aria-pressed="false"${withSounds ? ` aria-controls="x-${id}"` : ''}>
+            <span class="face front"><span class="meta"><span>${pos} / ${total}</span>${note ? `<span class="note">${note}</span>` : ''}</span><span class="symbol${isVowel(item) ? ' vform' : ''}" lang="th">${escapeHtml(symbolOf(item))}</span><span class="hint">tap to flip</span></span>
+            <span class="face back" hidden><span class="meta"><span>${pos} / ${total}</span><span class="clsname">${kindName(item)}</span></span>${face(item)}</span>
+          </button>${extras}
+        </li>`;
+      }
+
+      // Turning a card over: a quarter turn, the other face, back again.
+      function flip(btn, toBack = btn.getAttribute('aria-pressed') !== 'true') {
+        const holder = btn.closest('.item, .pc');
+        const show = () => {
+          btn.querySelector('.front').hidden = toBack;
+          btn.querySelector('.back').hidden = !toBack;
+          btn.setAttribute('aria-pressed', String(toBack));
+          holder.classList.toggle('is-flipped', toBack);
+          const more = holder.querySelector('.extras, .pextra');
+          if (more) more.hidden = !toBack;
+        };
+        if (!toBack) L.stop();
+        if (reduced) { show(); return; }
+        btn.classList.add('turning');
+        setTimeout(() => { show(); btn.classList.remove('turning'); }, 170);
+      }
+
+      // ── Cards: each class, the vowels ────────────────────────────
+      function cardsPage() {
+        const classes = CLASSES.map(k => {
+          const cls = data.classes[k];
+          const list = data.consonants.filter(c => c.class === k);
+          return `<details class="fold cls-${k}" id="sec-${k}">
+            <summary><span class="ftitle">${escapeHtml(cls.name)}<span class="fcount">${list.length} letters</span></span><span class="fsub"><span lang="th">${escapeHtml(cls.name_th)}</span> &middot; <span class="letters" lang="th">${list.map(c => escapeHtml(c.letter)).join(' ')}</span></span></summary>
+            <div class="fbody"><ol class="list">${list.map((c, i) => card(c, i + 1, list.length, 'c', true)).join('')}</ol></div>
+          </details>`;
+        }).join('');
+        const vowels = `<details class="fold cls-vowel" id="sec-vowels">
+          <summary><span class="ftitle">Vowels<span class="fcount">${data.vowels.length} vowels</span></span><span class="fsub"><span lang="th">สระ</span> &middot; short, long and special</span></summary>
+          <div class="fbody"><ol class="list">${data.vowels.map((v, i) => card(v, i + 1, data.vowels.length, 'v', true)).join('')}</ol></div>
+        </details>`;
+        return classes + vowels;
+      }
+
+      // ── Alphabet: every letter in order, every vowel in chart order ──
+      let abcBuilt = false;
+      function buildAlphabet() {
+        abcBuilt = true;
+        const vowels = data.vowels.slice().sort((a, b) => a.chart - b.chart);
+        $('p-abc').innerHTML = `
+          <div class="switch" role="group" aria-label="Alphabet">
+            <button type="button" class="swl" data-abc="c" aria-pressed="true">Consonants<span>${data.consonants.length}</span></button>
+            <button type="button" class="swl" data-abc="v" aria-pressed="false">Vowels<span>${data.vowels.length}</span></button>
+          </div>
+          <ol class="list abc-list" id="abc-c">${data.consonants.map((c, i) => card(c, i + 1, data.consonants.length, 'ac', false)).join('')}</ol>
+          <ol class="list abc-list" id="abc-v" hidden>${vowels.map((v, i) => card(v, i + 1, vowels.length, 'av', false)).join('')}</ol>`;
+      }
+
+      // ── Practice ────────────────────────────────────────────────
+      // Flip cards: every card starts new. Know it marks it known; Revisit
+      // sends it to the next round. After four rounds, a card still being
+      // revisited is "still learning". Marks: 0–4 (round) or 'k' (known).
+      const KEY = 'logos.practice.v1';
+      const ROUNDS = 4;
+      const PICK_ROUND = 10;
+      const saved = L.store.get(KEY, {}) || {};
+      const validMarks = m => Object.fromEntries(Object.entries(m && typeof m === 'object' ? m : {}).filter(([, v]) => v === 'k' || [1, 2, 3, 4].includes(v)));
+      const prac = {
+        mode: saved.mode === 'pick' ? 'pick' : 'flip',
+        deck: saved.deck === 'v' ? 'v' : 'c',
+        filter: ['all', ...CLASSES].includes(saved.filter) ? saved.filter : 'all',
+        marks: { c: validMarks(saved.marks?.c), v: validMarks(saved.marks?.v) },
+      };
+      const savePractice = () => L.store.set(KEY, prac);
+      const order = { c: [], v: [] }; // this visit's shuffled order
+      let pracBuilt = false;
+      let pick = null;
+
+      const markOf = id => prac.marks[prac.deck][id] ?? 0;
+      function deck() {
+        const items = prac.deck === 'c' ? data.consonants : data.vowels;
+        const byId = new Map(items.map(i => [i.id, i]));
+        return order[prac.deck].map(id => byId.get(id)).filter(i => prac.deck === 'v' || prac.filter === 'all' || i.class === prac.filter);
+      }
+      const roundOf = items => [0, 1, 2, 3].find(r => items.some(i => markOf(i.id) === r));
+
+      function buildPractice() {
+        pracBuilt = true;
+        order.c = L.shuffle(data.consonants.map(c => c.id));
+        order.v = L.shuffle(data.vowels.map(v => v.id));
+        const count = f => data.consonants.filter(c => f === 'all' || c.class === f).length;
+        $('p-prac').innerHTML = `
+          <div class="switch" role="group" aria-label="How to practise">
+            <button type="button" class="swl" data-mode="flip">Flip cards</button>
+            <button type="button" class="swl" data-mode="pick">Listen &amp; pick</button>
+          </div>
+          <div class="switch" role="group" aria-label="Which cards">
+            <button type="button" class="swl" data-deck="c">Consonants<span>${data.consonants.length}</span></button>
+            <button type="button" class="swl" data-deck="v">Vowels<span>${data.vowels.length}</span></button>
+          </div>
+          <div class="pfilters" id="pfilters" role="group" aria-label="Which letters">
+            ${['all', ...CLASSES].map(f => `<button type="button" class="pfl" data-filter="${f}">${f === 'all' ? 'All' : escapeHtml(data.classes[f].name.split(' ')[0])}<span>${count(f)}</span></button>`).join('')}
+          </div>
+          <div id="pstage"></div>`;
+        practice();
+      }
+
+      function practice() {
+        for (const b of $('p-prac').querySelectorAll('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === prac.mode));
+        for (const b of $('p-prac').querySelectorAll('[data-deck]')) b.setAttribute('aria-pressed', String(b.dataset.deck === prac.deck));
+        for (const b of $('p-prac').querySelectorAll('[data-filter]')) b.setAttribute('aria-pressed', String(b.dataset.filter === prac.filter));
+        $('pfilters').hidden = prac.deck !== 'c';
+        L.stop();
+        pick = null;
+        if (prac.mode === 'flip') flipCards(); else listenStart();
+      }
+
+      function flipCards() {
+        const items = deck();
+        const round = roundOf(items);
+        const count = test => items.filter(i => test(markOf(i.id))).length;
+        const stats = `<div class="pstats" aria-live="polite">
+            <span class="pround">${round === undefined ? 'Finished' : `Round ${round + 1} of ${ROUNDS}`}</span>
+            <span class="pst">Known<b>${count(m => m === 'k')}</b></span>
+            <span class="pst">Revisit<b>${count(m => m >= 1 && m <= 4)}</b></span>
+            <span class="pst">New<b>${count(m => m === 0)}</b></span>
+          </div>`;
+        let body;
+        if (round === undefined) {
+          const left = items.filter(i => markOf(i.id) === 4);
+          body = `<div class="pdone"><p class="pdone-t">You&rsquo;ve been through every card.</p>
+            <p class="pdone-s">Still learning: ${left.length ? left.map(i => `<span class="lc ${classOf(i)}" lang="th">${escapeHtml(symbolOf(i))}</span>`).join('') : '<span class="none-left">none</span>'}</p></div>`;
+        } else {
+          const item = items.find(i => markOf(i.id) === round);
+          body = `<div class="pc ${classOf(item)}" data-id="${escapeHtml(item.id)}">
+            <button type="button" class="card pin" aria-pressed="false">
+              <span class="face front"><span class="ptag">${isVowel(item) ? 'Vowel' : kindName(item)}</span><span class="symbol${isVowel(item) ? ' vform' : ''}" lang="th">${escapeHtml(symbolOf(item))}</span><span class="hint">tap to flip</span></span>
+              <span class="face back" hidden><span class="ptag">${kindName(item)}</span>${face(item)}</span>
+            </button>
+            <div class="pextra" hidden>${nameSound(item)}</div>
+            <div class="pbtns"><button type="button" class="pbtn again" data-mark="again">Revisit</button><button type="button" class="pbtn known" data-mark="known">Know it</button></div>
+          </div>`;
+        }
+        $('pstage').innerHTML = `${stats}${body}
+          <div class="preset">
+            <button type="button" class="resetq" id="resetq">Reset</button>
+            <span class="confirm" id="confirm" hidden>Erase your marks?
+              <button type="button" class="pbtn danger" id="reset-yes">Yes, erase</button>
+              <button type="button" class="pbtn" id="reset-no">Cancel</button>
+            </span>
+          </div>`;
+      }
+
+      function markCard(btn) {
+        const id = btn.closest('.pc').dataset.id;
+        const now = markOf(id);
+        prac.marks[prac.deck][id] = btn.dataset.mark === 'known' ? 'k' : Math.min(ROUNDS, (now === 'k' ? 0 : now) + 1);
+        savePractice();
+        L.stop();
+        flipCards();
+        const next = $('pstage').querySelector('.pin');
+        if (next) next.focus({ preventScroll: true });
+      }
+
+      // Listen & pick: hear a sound, find what says it. The letters no
+      // longer used are left out.
+      const pool = () => deck().filter(i => i.use !== 'obsolete');
+      const soundOf = item => ({ audio: item.audio, say: item.say });
+      function listenStart() {
+        const n = Math.min(PICK_ROUND, pool().length);
+        $('pstage').innerHTML = `<p class="status">${n} questions</p><div class="row"><button type="button" class="btn" id="pick-start">Start</button></div>`;
+      }
+      function nextQuestion() {
+        const all = pool();
+        const n = Math.min(PICK_ROUND, all.length);
+        pick ??= { asked: 0, right: 0, item: null };
+        if (pick.asked >= n) {
+          $('pstage').innerHTML = `<p class="status pscore">${pick.right} of ${pick.asked} right</p><div class="row"><button type="button" class="btn" id="pick-start">Play again</button></div>`;
+          pick = null;
+          return;
+        }
+        const item = L.shuffle(all.filter(i => i !== pick.item))[0];
+        let others;
+        if (isVowel(item)) {
+          // Its short or long partner is always there: hearing length is the point.
+          const partner = all.find(i => i.id === item.partner);
+          others = [...(partner ? [partner] : []), ...L.shuffle(all.filter(i => i !== item && i !== partner))].slice(0, 3);
+        } else {
+          // Letters from the same class make it a real choice.
+          const same = all.filter(i => i !== item && i.class === item.class);
+          others = L.shuffle(same.length >= 3 ? same : all.filter(i => i !== item)).slice(0, 3);
+        }
+        const options = L.shuffle([item, ...others]);
+        pick.item = item;
+        pick.asked++;
+        $('pstage').innerHTML = `
+          <div class="choices${isVowel(item) ? ' vowels' : ''}" role="group" aria-label="Which one did you hear?">
+            ${options.map((o, i) => `<button type="button" class="choice" lang="th" data-id="${escapeHtml(o.id)}" aria-label="Choice ${i + 1}: ${escapeHtml(symbolOf(o))}">${escapeHtml(symbolOf(o))}</button>`).join('')}
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="pick-hear">Hear it again</button>
+            <button type="button" class="btn small" id="pick-next" hidden>Next &rsaquo;</button>
+          </div>
+          <p class="status" id="pick-said">Question ${pick.asked} of ${n}</p>`;
+        L.play(soundOf(item)); // inside the tap that brought this question
+      }
+      function answer(choice) {
+        const item = pick.item;
+        const right = choice.dataset.id === item.id;
+        if (right) pick.right++;
+        for (const b of $('pstage').querySelectorAll('.choice')) {
+          b.disabled = true;
+          if (b.dataset.id === item.id) b.classList.add('right');
+          else if (b === choice) b.classList.add('wrong');
+        }
+        const said = isVowel(item)
+          ? `<span lang="th">${escapeHtml(symbolOf(item))}</span>, ${escapeHtml(item.sound)} (${item.length === 'special' ? 'special' : item.length})${item.word ? ` &middot; <span lang="th">${escapeHtml(item.word)}</span> ${escapeHtml(item.word_rom)}` : ''}`
+          : `<span lang="th">${escapeHtml(item.letter)} ${escapeHtml(item.word)}</span>, ${escapeHtml(item.name_rom)} ${escapeHtml(item.word_rom)} (${escapeHtml(item.meaning)})`;
+        $('pick-said').innerHTML = `${right ? 'Yes' : 'It was'}: ${said}`;
+        $('pick-next').hidden = false;
+        $('pick-next').focus();
+      }
+
+      // ── Pages ───────────────────────────────────────────────────
+      const HASH = { cards: '', abc: '#alphabet', prac: '#practice' };
+      function selectTab(name, focus = false) {
+        for (const t of document.querySelectorAll('[role="tab"]')) {
+          const on = t.dataset.tab === name;
+          t.setAttribute('aria-selected', String(on));
+          t.tabIndex = on ? 0 : -1;
+          $(t.getAttribute('aria-controls')).hidden = !on;
+          if (on && focus) t.focus();
+        }
+        if (name === 'abc' && !abcBuilt) buildAlphabet();
+        if (name === 'prac' && !pracBuilt) buildPractice();
+        L.stop();
+        history.replaceState(null, '', location.pathname + location.search + HASH[name]);
+      }
+
+      document.addEventListener('click', e => {
+        const t = e.target.closest('button');
+        if (!t || !data) return;
+        if (t.matches('.play')) { L.play({ audio: t.dataset.file, say: t.dataset.say }, t); return; }
+        if (t.matches('.card')) { flip(t); return; }
+        if (t.matches('.back-link')) { const c = t.closest('.item').querySelector('.card'); flip(c, false); c.focus({ preventScroll: true }); return; }
+        if (t.matches('[role="tab"]')) { selectTab(t.dataset.tab); return; }
+        if (t.dataset.abc) {
+          for (const b of $('p-abc').querySelectorAll('[data-abc]')) b.setAttribute('aria-pressed', String(b === t));
+          $('abc-c').hidden = t.dataset.abc !== 'c';
+          $('abc-v').hidden = t.dataset.abc !== 'v';
+          return;
+        }
+        if (t.dataset.mode) { prac.mode = t.dataset.mode; savePractice(); practice(); return; }
+        if (t.dataset.deck) { prac.deck = t.dataset.deck; savePractice(); practice(); return; }
+        if (t.dataset.filter) { prac.filter = t.dataset.filter; savePractice(); practice(); return; }
+        if (t.dataset.mark) { markCard(t); return; }
+        if (t.id === 'resetq') { t.hidden = true; $('confirm').hidden = false; $('reset-no').focus(); return; }
+        if (t.id === 'reset-no') { $('confirm').hidden = true; $('resetq').hidden = false; $('resetq').focus(); return; }
+        if (t.id === 'reset-yes') { prac.marks[prac.deck] = {}; savePractice(); flipCards(); return; }
+        if (t.id === 'pick-start' || t.id === 'pick-next') { nextQuestion(); return; }
+        if (t.id === 'pick-hear' && pick) { L.play(soundOf(pick.item)); return; }
+        if (t.matches('.choice') && pick) answer(t);
+      });
+
+      // Closing a section from its pinned title bar, deep in its cards:
+      // come back to the section's top instead of landing in the next one.
+      document.addEventListener('toggle', e => {
+        const d = e.target;
+        if (d.matches?.('.fold') && !d.open && d.getBoundingClientRect().top < 0) d.scrollIntoView({ block: 'start' });
+      }, true);
+
+      // Keys: arrows move between the pages; 1–4 answer Listen & pick.
+      document.addEventListener('keydown', e => {
+        if (e.altKey || e.ctrlKey || e.metaKey) return;
+        if (e.target.matches?.('[role="tab"]') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+          const tabs = [...document.querySelectorAll('[role="tab"]')];
+          const i = tabs.indexOf(e.target) + (e.key === 'ArrowRight' ? 1 : -1);
+          selectTab(tabs[(i + tabs.length) % tabs.length].dataset.tab, true);
+          e.preventDefault();
+        }
+        if (pick && /^[1-4]$/.test(e.key) && !$('p-prac').hidden) {
+          const c = $('pstage').querySelectorAll('.choice')[Number(e.key) - 1];
+          if (c && !c.disabled) { c.click(); e.preventDefault(); }
+        }
+      });
+
+      // The card trainer that came before kept its own notes; they're not used now.
+      L.store.remove('logos.thai.v1');
+      L.store.remove('logos.slow');
+
       L.load()
-        .then(data => {
-          list.innerHTML = data.lessons.map(l => {
-            const { cards } = L.lesson(data, l.id);
-            const study = cards.filter(c => c.use !== 'obsolete');
-            const s = L.progress.summary(study);
-            const glyphs = cards.slice(0, l.class ? 3 : 4).map(c => c.letter).join('');
-            const status = s.seen === 0
-              ? `${cards.length} letters`
-              : `${cards.length} letters &middot; ${s.due} to review today &middot; ${s.learned} learned`;
-            return `
-              <li>
-                <a class="lesson" href="cards.html?set=thai-${encodeURIComponent(l.id)}" data-lesson="${escapeHtml(l.id)}">
-                  <span class="glyphs" lang="th" aria-hidden="true">${escapeHtml(glyphs)}</span>
-                  <h3>${escapeHtml(l.title)}</h3>
-                  <span class="th" lang="th">${escapeHtml(l.title_th)}</span>
-                  <span class="count">${status}</span>
-                </a>
-              </li>`;
-          }).join('');
+        .then(d => {
+          data = d;
+          for (const v of data.vowels) vowelById[v.id] = v;
+          $('p-cards').innerHTML = cardsPage();
+          selectTab({ '#alphabet': 'abc', '#practice': 'prac' }[location.hash] || 'cards');
         })
         .catch(() => {
-          list.innerHTML = '<li><p class="notice">The cards couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
+          $('p-cards').innerHTML = '<p class="notice">The cards couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p>';
         });
-
-      // Coming back from a lesson (back button): show the new counts.
-      window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
     })();
   </script>
 </body>

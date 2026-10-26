@@ -1,8 +1,9 @@
-// Logos: the Thai consonant cards. These check the card data against the
-// workbook's shape (44 letters, three classes, every sound present), the gate
-// page's lessons, and the card trainer's three ways of studying. The page's
-// audio player and device voice are swapped for stand-ins that record what
-// would have been heard, so nothing plays during a test.
+// Logos: the Thai cards. These check the card data against the workbook's
+// shape (44 consonants in three classes, 32 vowels, every sound present,
+// and no tones: they were left off until they can be trusted), the page's
+// three pages (Cards, Alphabet, Practice) and Listen &
+// pick. The page's audio player and device voice are swapped for stand-ins
+// that record what would have been heard, so nothing plays during a test.
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
@@ -10,6 +11,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'logos', 'thai.json'), 'utf8'));
 const ALPHABET = 'กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ';
+const shown = form => form.replace(/-(?=[ัำ-ฺ็-๎])/g, '');
 
 function watchErrors(page) {
   const errors = [];
@@ -32,31 +34,70 @@ function stubSound(page) {
   });
 }
 
+// Cards turn at once (no quarter turn) so a test needn't wait for it.
+async function openLogos(page, hash = '') {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await stubSound(page);
+  await page.goto(`/logos.html${hash}`);
+  await expect(page.locator('#sec-middle')).toBeAttached();
+}
+
 const played = page => page.evaluate(() => window.__played);
-const card = id => DATA.cards.find(c => c.id === id);
+const lastPlayed = async page => (await played(page)).at(-1);
+const url = file => `/logos/audio/${file}`;
+const consonant = id => DATA.consonants.find(c => c.id === id);
+const vowel = id => DATA.vowels.find(v => v.id === id);
 
 test.describe('logos data', () => {
   test('44 consonants in alphabet order, sorted into the workbook\'s three classes', () => {
-    expect(DATA.cards.map(c => c.letter).join('')).toBe(ALPHABET);
-    const count = cls => DATA.cards.filter(c => c.class === cls).map(c => c.letter).join('');
-    expect(count('middle')).toBe('กจฎฏดตบปอ');
-    expect(count('high')).toBe('ขฃฉฐถผฝศษสห');
-    expect(count('low')).toHaveLength(24);
-    expect(new Set(DATA.cards.map(c => c.id)).size).toBe(44);
-    expect(DATA.cards.filter(c => c.use === 'obsolete').map(c => c.letter).join('')).toBe('ฃฅ');
-    expect(DATA.cards.filter(c => c.use === 'seldom').map(c => c.letter).sort().join('')).toBe([...'ฎฏฐศษฌฑฬฮ'].sort().join(''));
+    const C = DATA.consonants;
+    expect(C.map(c => c.letter).join('')).toBe(ALPHABET);
+    const letters = cls => C.filter(c => c.class === cls).map(c => c.letter).join('');
+    expect(letters('middle')).toBe('กจฎฏดตบปอ');
+    expect(letters('high')).toBe('ขฃฉฐถผฝศษสห');
+    expect(letters('low')).toHaveLength(24);
+    expect(new Set(C.map(c => c.id)).size).toBe(44);
+    expect(C.filter(c => c.use === 'obsolete').map(c => c.letter).join('')).toBe('ฃฅ');
+    expect(C.filter(c => c.use === 'seldom').map(c => c.letter).sort().join('')).toBe([...'ฎฏฐศษฌฑฬฮ'].sort().join(''));
   });
 
-  test('every card is complete, and its Thai is stored one consistent way (NFC)', () => {
-    for (const c of DATA.cards) {
-      for (const k of ['id', 'letter', 'word', 'say', 'rom', 'meaning', 'class', 'use']) expect(c[k], `${c.id}.${k}`).toBeTruthy();
+  test('every consonant is complete, spelled one consistent way (NFC), with a picture', () => {
+    for (const c of DATA.consonants) {
+      for (const k of ['id', 'letter', 'word', 'say', 'name_rom', 'word_rom', 'meaning', 'class', 'use']) expect(c[k], `${c.id}.${k}`).toBeTruthy();
       expect(['middle', 'high', 'low']).toContain(c.class);
       expect(['common', 'seldom', 'obsolete']).toContain(c.use);
       expect(c.id).toMatch(/^[a-z]+(-[a-z]+)+$/);
       // The name as spoken: the letter's own syllable (…อ), then the word.
       expect(c.say, c.id).toMatch(/^[ก-ฮ]อ [฀-๿]+$/);
-      for (const s of [c.letter, c.word, c.say, c.rom]) expect(s, c.id).toBe(s.normalize('NFC'));
+      for (const s of [c.letter, c.word, c.say, c.name_rom, c.word_rom]) expect(s, c.id).toBe(s.normalize('NFC'));
+      // The guide's spelling: tone marks and hyphens, no dots over short syllables.
+      expect(c.name_rom + c.word_rom, c.id).not.toMatch(/̇/u);
+      expect(Boolean(c.pic) !== Boolean(c.draw), `${c.id}: an emoji or a drawing`).toBe(true);
+      if (c.draw) expect(fs.existsSync(path.join(ROOT, 'logos', 'pics', `${c.draw}.svg`)), c.draw).toBe(true);
     }
+  });
+
+  test('32 vowels: short and long partners, the special four, and a Thai school chart\'s order', () => {
+    const V = DATA.vowels;
+    expect(V).toHaveLength(32);
+    expect(new Set(V.map(v => v.form)).size).toBe(32);
+    expect(V.map(v => v.chart).sort((a, b) => a - b)).toEqual(Array.from({ length: 32 }, (_, i) => i + 1));
+    expect(V.filter(v => v.length === 'special').map(v => v.form)).toEqual(['-ำ', 'ใ-', 'ไ-', 'เ-า']);
+    for (const v of V) {
+      expect(v.id).toMatch(/^[a-z]+(-[a-z]+)*$/);
+      expect(['short', 'long', 'special']).toContain(v.length);
+      expect(['common', 'rare', 'obsolete']).toContain(v.use);
+      for (const s of [v.form, v.say, v.word, v.word_rom].filter(Boolean)) expect(s, v.id).toBe(s.normalize('NFC'));
+      if (v.length === 'special') { expect(v.partner).toBeUndefined(); continue; }
+      const p = vowel(v.partner);
+      expect(p.partner, v.id).toBe(v.id);
+      expect(p.sound, v.id).toBe(v.sound);
+      expect(p.length, v.id).not.toBe(v.length);
+    }
+    // Each vowel is said with อ where the consonant goes; the old vowel letters are respelled for the voice.
+    const respelled = { 'eu-long': 'อือ', 'reu-short': 'รึ', 'reu-long': 'รือ', 'leu-short': 'ลึ', 'leu-long': 'ลือ' };
+    for (const v of V) expect(v.say, v.id).toBe(respelled[v.id] || v.form.replace('-', 'อ'));
+    expect(V.filter(v => v.use === 'obsolete').map(v => v.form)).toEqual(['ฦ', 'ฦๅ']);
   });
 
   // The whole project folder is published, so this covers the docs and the
@@ -67,13 +108,13 @@ test.describe('logos data', () => {
     const MY = new RegExp(['my', 'teacher'].join('\\s+'), 'i');
     const THEIRS = new RegExp(`teacher(['’]s)?\\s+(workbook|recordings?|voice)`, 'i');
     const LOGOS = /teacher|อาจารย์|คุณครู/i;
-    const logosFiles = new Set(['logos.html', 'cards.html', 'about-logos.html', 'logos/thai.json', 'assets/logos.js', 'docs/explained/logos-thai-cards.md', 'functions/scripts/record-logos.js']);
+    const logosFiles = new Set(['logos.html', 'about-logos.html', 'logos/thai.json', 'assets/logos.js', 'docs/explained/logos-thai-cards.md', 'docs/explained/logos-vowels-and-tones.md', 'functions/scripts/record-logos.js']);
     const found = [];
     const walk = dir => {
       for (const f of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
         const rel = path.join(dir, f.name);
         if (f.isDirectory()) { if (!['.git', 'node_modules', 'test-results', '.claude'].includes(f.name)) walk(rel); continue; }
-        if (!/\.(html|js|json|md|xml|txt)$/.test(f.name) || rel === path.join('tests', 'logos.spec.js')) continue;
+        if (!/\.(html|js|json|md|xml|txt|svg)$/.test(f.name) || rel === path.join('tests', 'logos.spec.js')) continue;
         const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
         if (MY.test(text) || THEIRS.test(text) || (logosFiles.has(rel) && LOGOS.test(text))) found.push(rel);
       }
@@ -82,205 +123,313 @@ test.describe('logos data', () => {
     expect(found).toEqual([]);
   });
 
-  test('every card has its two recordings, and no recording is left over', () => {
-    const used = new Set();
-    for (const c of DATA.cards) {
-      for (const speed of ['normal', 'slow']) {
-        const file = c.audio && c.audio[speed];
-        expect(file, `${c.id} ${speed}`).toMatch(new RegExp(`^th/${c.id}-${speed}-[0-9a-f]{10}\\.mp3$`));
-        expect(fs.existsSync(path.join(ROOT, 'logos', 'audio', file)), file).toBe(true);
-        used.add(file);
-      }
+  test('every sound is there, and no recording is left over', () => {
+    const files = [
+      ...DATA.consonants.map(c => c.audio),
+      ...DATA.vowels.flatMap(v => [v.audio, ...(v.word ? [v.word_audio] : [])]),
+    ];
+    for (const f of files) {
+      expect(f).toMatch(/^th\/[a-z0-9-]+-[0-9a-f]{10}\.mp3$/);
+      expect(fs.existsSync(path.join(ROOT, 'logos', 'audio', f)), f).toBe(true);
     }
+    const used = new Set(files);
     const onDisk = fs.readdirSync(path.join(ROOT, 'logos', 'audio', 'th')).map(f => `th/${f}`);
     expect(onDisk.filter(f => !used.has(f))).toEqual([]);
   });
-});
 
-test.describe('logos gate', () => {
-  test('lists the four lessons, each opening its cards', async ({ page }) => {
-    const errors = watchErrors(page);
-    await page.goto('/logos.html');
-    const lessons = page.locator('.lesson');
-    await expect(lessons).toHaveCount(4);
-    await expect(lessons.nth(0)).toHaveAttribute('href', 'cards.html?set=thai-middle');
-    await expect(lessons.nth(0)).toContainText('9 letters');
-    await expect(lessons.nth(1)).toContainText('11 letters');
-    await expect(lessons.nth(2)).toContainText('24 letters');
-    await expect(lessons.nth(3)).toHaveAttribute('href', 'cards.html?set=thai-all');
-    await expect(page.locator('.credit')).toContainText('a Thai learner’s workbook');
-    expect(errors).toEqual([]);
-  });
-
-  test('shows what is due once some cards have been studied', async ({ page }) => {
-    await page.addInitScript(() => {
-      const d = new Date(); d.setDate(d.getDate() + 1);
-      const tomorrow = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      localStorage.setItem('logos.thai.v1', JSON.stringify({ 'ko-kai': { box: 3, due: tomorrow }, 'cho-chan': { box: 2, due: tomorrow } }));
-    });
-    await page.goto('/logos.html');
-    await expect(page.locator('.lesson').nth(0)).toContainText('7 to review today');
-    await expect(page.locator('.lesson').nth(0)).toContainText('1 learned');
+  test('the old card trainer forwards to the Logos page', () => {
+    const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'staticwebapp.config.json'), 'utf8'));
+    expect(config.routes).toContainEqual({ route: '/cards.html', redirect: '/logos.html', statusCode: 301 });
+    expect(fs.existsSync(path.join(ROOT, 'cards.html'))).toBe(false);
   });
 });
 
-test.describe('thai cards', () => {
-  test('Learn: turn a card over, hear its name, step through the lesson', async ({ page }) => {
+test.describe('logos cards', () => {
+  test('each class and the vowels, closed until opened (and no tones)', async ({ page }) => {
     const errors = watchErrors(page);
-    await stubSound(page);
-    await page.goto('/cards.html?set=thai-middle');
-    await expect(page.locator('#title')).toHaveText('Middle class');
-    await expect(page.locator('.mode[data-mode="learn"]')).toHaveAttribute('aria-selected', 'true');
-    const flash = page.locator('#flash');
-    await expect(flash.locator('.letter')).toHaveText('ก');
-    await expect(page.locator('#pos')).toHaveText('1 / 9');
+    await openLogos(page);
+    await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveText('Cards');
+    const folds = page.locator('#p-cards .fold');
+    await expect(folds).toHaveCount(4);
+    await expect(page.locator('#p-cards .fold[open]')).toHaveCount(0);
+    await expect(folds.locator('.ftitle')).toHaveText(['Middle class9 letters', 'High class11 letters', 'Low class24 letters', 'Vowels32 vowels']);
+    await expect(page.locator('#sec-middle .letters')).toHaveText('ก จ ฎ ฏ ด ต บ ป อ');
 
-    await flash.click();
-    await expect(flash).toContainText('ไก่');
-    await expect(flash).toContainText(card('ko-kai').rom);
-    await expect(flash).toContainText('chicken');
-    await expect(flash).toContainText('middle class');
-    await expect.poll(() => played(page)).toEqual([`/logos/audio/${card('ko-kai').audio.normal}`]);
-
-    // Slow is remembered, and the slow recording plays.
-    await page.locator('#slow').click();
-    await page.locator('#listen').click();
-    await expect.poll(async () => (await played(page)).at(-1)).toBe(`/logos/audio/${card('ko-kai').audio.slow}`);
-
-    await page.locator('#next').click();
-    await expect(page.locator('#flash .letter')).toHaveText('จ');
-    await page.keyboard.press('ArrowRight');
-    await expect(page.locator('#flash .letter')).toHaveText('ฎ');
-    await page.keyboard.press('ArrowLeft');
-    await expect(page.locator('#pos')).toHaveText('2 / 9');
-
-    await page.reload();
-    await expect(page.locator('#slow')).toHaveAttribute('aria-pressed', 'true');
+    // Open, the section's title bar is pinned to the top while its cards scroll.
+    await page.locator('#sec-middle > summary').click();
+    await expect(page.locator('#sec-middle')).toHaveAttribute('open', '');
+    await expect(page.locator('#sec-middle .item')).toHaveCount(9);
+    expect(await page.locator('#sec-middle > summary').evaluate(e => getComputedStyle(e).position)).toBe('sticky');
     expect(errors).toEqual([]);
   });
 
-  test('Review: "Got it" moves a card up a box; "Again" brings it back today', async ({ page }) => {
-    await stubSound(page);
-    await page.goto('/cards.html?set=thai-middle&mode=review');
-    await expect(page.locator('.status')).toHaveText('9 to go');
-    await expect(page.locator('#answer')).toBeHidden();
-
-    await page.locator('#flash').click();          // ก
-    await page.locator('#knew').click();
-    await expect(page.locator('.status')).toHaveText('8 to go');
-    // Known at first sight: box 2, back tomorrow (the learner's own day).
-    const { stored, tomorrow } = await page.evaluate(() => {
-      const d = new Date(); d.setDate(d.getDate() + 1);
-      return {
-        stored: JSON.parse(localStorage.getItem('logos.thai.v1')),
-        tomorrow: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
-      };
-    });
-    expect(stored['ko-kai']).toEqual({ box: 2, due: tomorrow });
-
-    await page.locator('#flash').click();          // จ
-    await page.keyboard.press('1');                // Again: to the back of the queue
-    await expect(page.locator('.status')).toHaveText('8 to go');
-    await expect(page.locator('#flash .letter')).toHaveText('ฎ');
-
-    for (let i = 0; i < 8; i++) { await page.locator('#flash').click(); await page.locator('#knew').click(); }
-    await expect(page.locator('.status')).toContainText('All done for today');
-
-    // Back on the gate, the middle class has nothing due today.
-    await page.goto('/logos.html');
-    await expect(page.locator('.lesson').nth(0)).toContainText('0 to review today');
-  });
-
-  test('Review and Listen & pick leave out the letters no longer used', async ({ page }) => {
-    await stubSound(page);
-    await page.goto('/cards.html?set=thai-high&mode=review');
-    await expect(page.locator('.status')).toHaveText('10 to go');
-    await expect(page.locator('#note')).toContainText('ฃ is no longer used');
-  });
-
-  test('Listen & pick: hear a name, choose its letter', async ({ page }) => {
+  test('a consonant turns over to its word, and its name plays', async ({ page }) => {
     const errors = watchErrors(page);
-    await stubSound(page);
-    await page.goto('/cards.html?set=thai-middle&mode=pick');
-    await page.locator('#start').click();
-    await expect(page.locator('.choice')).toHaveCount(4);
-    await expect.poll(async () => (await played(page)).length).toBe(1);
-    const heard = (await played(page))[0];
-    const answer = DATA.cards.find(c => `/logos/audio/${c.audio.normal}` === heard);
-    expect(answer, `played ${heard}`).toBeTruthy();
-    await page.locator(`.choice[data-id="${answer.id}"]`).click();
-    await expect(page.locator(`.choice[data-id="${answer.id}"]`)).toHaveClass(/right/);
-    await expect(page.locator('#said')).toContainText(answer.word);
-    await page.locator('#next').click();
-    await expect.poll(async () => (await played(page)).length).toBe(2);
+    await openLogos(page);
+    const ko = consonant('ko-kai');
+    await page.locator('#sec-middle > summary').click();
+    const item = page.locator('#sec-middle .item').first();
+    await expect(item.locator('.front .symbol')).toHaveText('ก');
+    await expect(item.locator('.front .meta')).toContainText('1 / 9');
+    await expect(item.locator('.extras')).toBeHidden();
+
+    await item.locator('.card').click();
+    const back = item.locator('.back');
+    await expect(back).toBeVisible();
+    for (const text of ['Middle class', 'gaw', 'ไก่', 'gài', 'chicken']) await expect(back).toContainText(text);
+    await expect(item.locator('.card')).toHaveAttribute('aria-pressed', 'true');
+
+    const extras = item.locator('.extras');
+    await expect(extras).toBeVisible();
+    await expect(extras.locator('.sayrow')).toContainText('ก ไก่');
+    await extras.locator('.sayrow .play').click();
+    await expect.poll(() => lastPlayed(page)).toBe(url(ko.audio));
+    // Tones are left off until they can be trusted: one sound, the name.
+    await expect(extras.locator('.play')).toHaveCount(1);
+    await expect(extras).not.toContainText('Tones');
+
+    await extras.locator('.back-link').click();
+    await expect(item.locator('.front')).toBeVisible();
+    await expect(extras).toBeHidden();
     expect(errors).toEqual([]);
   });
 
-  test('without a recording, the device voice says the name', async ({ page }) => {
-    await stubSound(page);
+  test('a vowel turns over to its sound, length, partner and word', async ({ page }) => {
+    await openLogos(page);
+    await page.locator('#sec-vowels > summary').click();
+    const items = page.locator('#sec-vowels .item');
+    await expect(items).toHaveCount(32);
+    await expect(items.nth(0).locator('.front .symbol')).toHaveText('-ะ');
+    // A mark that sits on the consonant is shown without the dash.
+    await expect(items.nth(2).locator('.front .symbol')).toHaveText('ิ');
+
+    const a = vowel('ah-short');
+    await items.nth(0).locator('.card').click();
+    const back = items.nth(0).locator('.back');
+    for (const text of ['Short vowel', 'ah', 'short', '-า', 'จะ', 'jà', 'will']) await expect(back).toContainText(text);
+    const rows = items.nth(0).locator('.extras .sayrow');
+    await expect(rows).toHaveCount(2);
+    await rows.nth(0).locator('.play').click();
+    await expect.poll(() => lastPlayed(page)).toBe(url(a.audio));
+    await rows.nth(1).locator('.play').click();
+    await expect.poll(() => lastPlayed(page)).toBe(url(a.word_audio));
+
+    const am = DATA.vowels.findIndex(v => v.id === 'am');
+    await items.nth(am).locator('.card').click();
+    await expect(items.nth(am).locator('.back')).toContainText('sounds short · counts as long');
+  });
+
+  test('without a recording, the device voice says the words', async ({ page }) => {
     await page.route('**/logos/thai.json', async route => {
       const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'logos', 'thai.json'), 'utf8'));
-      for (const c of data.cards) delete c.audio;
+      for (const c of data.consonants) delete c.audio;
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
     });
-    await page.goto('/cards.html?set=thai-middle');
-    await page.locator('#flash').click();
+    await openLogos(page);
+    await page.locator('#sec-middle > summary').click();
+    await page.locator('#sec-middle .card').first().click();
+    await page.locator('#sec-middle .extras .sayrow .play').first().click();
     await expect.poll(() => page.evaluate(() => window.__said)).toEqual(['กอ ไก่']);
   });
+});
 
+test.describe('logos alphabet', () => {
+  test('consonants in ก–ฮ order, vowels in chart order, no sounds', async ({ page }) => {
+    await openLogos(page);
+    await page.getByRole('tab', { name: 'Alphabet' }).click();
+    await expect(page).toHaveURL(/#alphabet$/);
+    const consonants = page.locator('#abc-c .front .symbol');
+    await expect(consonants).toHaveCount(44);
+    expect((await consonants.allTextContents()).join('')).toBe(ALPHABET);
+    await expect(page.locator('#p-abc .play')).toHaveCount(0);
+
+    await page.locator('[data-abc="v"]').click();
+    await expect(page.locator('#abc-c')).toBeHidden();
+    const vowels = page.locator('#abc-v .front .symbol');
+    await expect(vowels).toHaveCount(32);
+    const byChart = DATA.vowels.slice().sort((a, b) => a.chart - b.chart).map(v => shown(v.form));
+    expect(await vowels.allTextContents()).toEqual(byChart);
+    await page.locator('#abc-v .card').first().click();
+    await expect(page.locator('#abc-v .back').first()).toContainText('ah');
+  });
+});
+
+test.describe('logos practice', () => {
+  test('Know it and Revisit, round by round, to the finish; marks are kept', async ({ page }) => {
+    const errors = watchErrors(page);
+    await openLogos(page, '#practice');
+    await expect(page.locator('[data-mode="flip"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-deck="c"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('[data-filter="middle"]').click();
+    const stats = page.locator('.pstats');
+    await expect(stats.locator('.pround')).toHaveText('Round 1 of 4');
+    await expect(stats).toContainText('New9');
+
+    // The first card is revisited; the other eight are known.
+    const first = await page.locator('.pc').getAttribute('data-id');
+    await page.locator('[data-mark="again"]').click();
+    for (let i = 0; i < 8; i++) {
+      await expect(page.locator('.pc')).not.toHaveAttribute('data-id', first);
+      await page.locator('[data-mark="known"]').click();
+    }
+    await expect(stats.locator('.pround')).toHaveText('Round 2 of 4');
+    await expect(page.locator('.pc')).toHaveAttribute('data-id', first);
+    for (const round of [3, 4]) {
+      await page.locator('[data-mark="again"]').click();
+      await expect(stats.locator('.pround')).toHaveText(`Round ${round} of 4`);
+    }
+    await page.locator('[data-mark="again"]').click();
+    await expect(stats.locator('.pround')).toHaveText('Finished');
+    await expect(stats).toContainText('Known8');
+    await expect(stats).toContainText('Revisit1');
+    await expect(page.locator('.pdone')).toContainText('You’ve been through every card.');
+    await expect(page.locator('.pdone .lc')).toHaveText(consonant(first).letter);
+
+    // Kept on this device: still finished after a reload.
+    await page.reload();
+    await expect(page.locator('[data-filter="middle"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.pstats .pround')).toHaveText('Finished');
+    await page.locator('[data-filter="all"]').click();
+    await expect(page.locator('.pstats')).toContainText('New35');
+
+    // The vowels keep their own marks.
+    await page.locator('[data-deck="v"]').click();
+    await expect(page.locator('#pfilters')).toBeHidden();
+    await expect(page.locator('.pstats')).toContainText('New32');
+    await page.locator('[data-mark="known"]').click();
+    await page.locator('[data-deck="c"]').click();
+
+    // Reset asks first, then clears this deck only.
+    await page.locator('#resetq').click();
+    await expect(page.locator('#confirm')).toContainText('Erase your marks?');
+    await page.locator('#reset-no').click();
+    await expect(page.locator('.pstats')).toContainText('New35');
+    await page.locator('#resetq').click();
+    await page.locator('#reset-yes').click();
+    await expect(page.locator('.pstats')).toContainText('New44');
+    await page.locator('[data-deck="v"]').click();
+    await expect(page.locator('.pstats')).toContainText('New31');
+    expect(errors).toEqual([]);
+  });
+
+  test('a turned practice card plays its sound', async ({ page }) => {
+    await openLogos(page, '#practice');
+    const id = await page.locator('.pc').getAttribute('data-id');
+    await expect(page.locator('.pextra')).toBeHidden();
+    await page.locator('.pin').click();
+    await expect(page.locator('.pextra')).toBeVisible();
+    await page.locator('.pextra .play').click();
+    await expect.poll(() => lastPlayed(page)).toBe(url(consonant(id).audio));
+  });
+
+  test('Listen & pick: hear a sound, pick what says it; ten questions, then a score', async ({ page }) => {
+    const errors = watchErrors(page);
+    await openLogos(page, '#practice');
+    await page.locator('[data-mode="pick"]').click();
+    await expect(page.locator('#pstage .status')).toHaveText('10 questions');
+    await page.locator('#pick-start').click();
+    for (let q = 1; q <= 10; q++) {
+      await expect(page.locator('#pick-said')).toHaveText(`Question ${q} of 10`);
+      await expect(page.locator('.choice')).toHaveCount(4);
+      await expect.poll(async () => (await played(page)).length).toBe(q);
+      const heard = await lastPlayed(page);
+      const answer = DATA.consonants.find(c => url(c.audio) === heard);
+      expect(answer, `played ${heard}`).toBeTruthy();
+      expect(answer.use).not.toBe('obsolete');
+      await page.locator(`.choice[data-id="${answer.id}"]`).click();
+      await expect(page.locator(`.choice[data-id="${answer.id}"]`)).toHaveClass(/right/);
+      await expect(page.locator('#pick-said')).toContainText(answer.word);
+      await page.locator('#pick-next').click();
+    }
+    await expect(page.locator('.pscore')).toHaveText('10 of 10 right');
+    expect(errors).toEqual([]);
+  });
+
+  test('Listen & pick with vowels always offers the short or long partner', async ({ page }) => {
+    await openLogos(page, '#practice');
+    await page.locator('[data-mode="pick"]').click();
+    await page.locator('[data-deck="v"]').click();
+    await page.locator('#pick-start').click();
+    for (let q = 1; q <= 3; q++) {
+      await expect.poll(async () => (await played(page)).length).toBe(q);
+      const heard = await lastPlayed(page);
+      const answer = DATA.vowels.find(v => url(v.audio) === heard);
+      expect(answer, `played ${heard}`).toBeTruthy();
+      const ids = await page.locator('.choice').evaluateAll(els => els.map(e => e.dataset.id));
+      if (answer.partner && vowel(answer.partner).use !== 'obsolete') expect(ids).toContain(answer.partner);
+      await page.locator(`.choice[data-id="${answer.id}"]`).click();
+      await page.locator('#pick-next').click();
+    }
+  });
+});
+
+test.describe('logos layout', () => {
   // Thai letters reach below the line (ฎ ฏ ฐ ญ) and words carry marks above
   // it (ผู้หญิง), further than an ordinary line of text allows for. The ink
   // each letter really covers, measured in the page's own font, must stay
-  // inside the card and clear of the text under it, on both faces.
-  test('no letter or word is drawn over the text beneath it', async ({ page }) => {
-    await stubSound(page);
-    await page.goto('/cards.html?set=thai-all');
-    const ink = (sel, below) => page.evaluate(([sel, below]) => {
-      const el = document.querySelector(sel), cs = getComputedStyle(el);
-      const ctx = document.createElement('canvas').getContext('2d');
-      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      const m = ctx.measureText(el.textContent);
-      const box = el.getBoundingClientRect();
-      const baseline = box.top + (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
-      return {
-        text: el.textContent,
-        top: baseline - m.actualBoundingBoxAscent,
-        bottom: baseline + m.actualBoundingBoxDescent,
-        card: document.querySelector('#flash').getBoundingClientRect().top,
-        next: document.querySelector(below).getBoundingClientRect().top,
+  // inside its card and clear of the text under it, on both faces.
+  test('no letter, vowel or word is drawn over the text beneath it', async ({ page }) => {
+    await openLogos(page, '#alphabet');
+    const clashes = await page.evaluate(() => {
+      const ink = (el, below, card) => {
+        const cs = getComputedStyle(el);
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const m = ctx.measureText(el.textContent);
+        const box = el.getBoundingClientRect();
+        const baseline = box.top + (parseFloat(cs.lineHeight) - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
+        const top = baseline - m.actualBoundingBoxAscent, bottom = baseline + m.actualBoundingBoxDescent;
+        const next = below.getBoundingClientRect().top, edge = card.getBoundingClientRect().top;
+        return bottom > next || top < edge ? `${el.textContent}: ink ${top.toFixed(0)}–${bottom.toFixed(0)}, next at ${next.toFixed(0)}` : null;
       };
-    }, [sel, below]);
-    const clashes = [];
-    for (let i = 0; i < DATA.cards.length; i++) {
-      const front = await ink('#flash .letter', '#flash .hint');
-      if (front.bottom > front.next || front.top < front.card) clashes.push(`front ${front.text}: ink ${front.top.toFixed(0)}–${front.bottom.toFixed(0)}, hint at ${front.next.toFixed(0)}`);
-      await page.locator('#flash').click();
-      await expect(page.locator('#flash')).toHaveAttribute('data-side', 'back');
-      const back = await ink('#flash .name', '#flash .rom');
-      if (back.bottom > back.next || back.top < back.card) clashes.push(`back ${back.text}: ink ${back.top.toFixed(0)}–${back.bottom.toFixed(0)}, romanization at ${back.next.toFixed(0)}`);
-      if (i < DATA.cards.length - 1) { await page.locator('#next').click(); await expect(page.locator('#pos')).toHaveText(`${i + 2} / 44`); }
-    }
+      const out = [];
+      for (const item of document.querySelectorAll('#p-abc .item')) {
+        const card = item.querySelector('.card');
+        const front = item.querySelector('.front'), back = item.querySelector('.back');
+        item.closest('ol').hidden = false;
+        front.hidden = false; back.hidden = true;
+        out.push(ink(front.querySelector('.symbol'), front.querySelector('.hint'), front));
+        front.hidden = true; back.hidden = false;
+        const word = back.querySelector('.th');
+        if (word) out.push(ink(word, back.querySelector('.wr'), back));
+        const form = back.querySelector('.vsym');
+        if (form) out.push(ink(form, back.querySelector('.roman'), back));
+        front.hidden = false; back.hidden = true;
+        void card.offsetHeight;
+      }
+      return out.filter(Boolean);
+    });
     expect(clashes).toEqual([]);
   });
 
-  test('an unknown lesson says so', async ({ page }) => {
-    await page.goto('/cards.html?set=latin-nouns');
-    await expect(page.locator('#title')).toHaveText('Lesson not found');
-  });
-
-  test('text stays readable on a phone (14px and up)', async ({ page }) => {
-    await stubSound(page);
-    for (const url of ['/logos.html', '/cards.html?set=thai-middle', '/about-logos.html']) {
-      await page.goto(url);
-      await page.waitForLoadState('networkidle');
-      if (url.startsWith('/cards')) await page.locator('#flash').click();
-      const small = await page.evaluate(() => [...document.querySelectorAll('body *')]
-        .filter(e => e.getClientRects().length && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
-        .filter(e => parseFloat(getComputedStyle(e).fontSize) < 14)
-        .map(e => `${e.tagName}.${e.className}: ${getComputedStyle(e).fontSize}`));
-      expect(small, url).toEqual([]);
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-      expect(overflow, url).toBeLessThanOrEqual(1);
+  test('text stays readable on a phone (14px and up), and nothing spills sideways', async ({ page }) => {
+    await openLogos(page);
+    const small = () => page.evaluate(() => [...document.querySelectorAll('body *')]
+      .filter(e => e.getClientRects().length && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
+      .filter(e => parseFloat(getComputedStyle(e).fontSize) < 14)
+      .map(e => `${e.tagName}.${e.className}: ${getComputedStyle(e).fontSize}`));
+    const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    for (const width of [320, 375, 390, 440]) {
+      await page.setViewportSize({ width, height: 780 });
+      await page.getByRole('tab', { name: 'Cards' }).click();
+      for (const id of ['middle', 'vowels']) {
+        const fold = page.locator(`#sec-${id}`);
+        if (!(await fold.evaluate(d => d.open))) await fold.locator('> summary').click();
+      }
+      await page.locator('#sec-middle .card').first().click();
+      await page.locator('#sec-vowels .card').nth(20).click();
+      expect(await small(), `cards at ${width}`).toEqual([]);
+      expect(await overflow(), `cards at ${width}`).toBeLessThanOrEqual(1);
+      await page.getByRole('tab', { name: 'Practice' }).click();
+      await page.locator('.pin').click();
+      expect(await small(), `practice at ${width}`).toEqual([]);
+      expect(await overflow(), `practice at ${width}`).toBeLessThanOrEqual(1);
+      await page.locator('[data-mode="pick"]').click();
+      await page.locator('#pick-start').click();
+      expect(await overflow(), `listen & pick at ${width}`).toBeLessThanOrEqual(1);
+      await page.locator('[data-mode="flip"]').click();
     }
+    await page.goto('/about-logos.html');
+    expect(await small(), 'about').toEqual([]);
   });
 });

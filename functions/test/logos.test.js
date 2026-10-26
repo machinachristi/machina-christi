@@ -2,28 +2,55 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { planFor, settingsFor } = require('../scripts/record-logos');
+const { planFor, settingsFor, soundsFor } = require('../scripts/record-logos');
 
 const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'logos', 'thai.json'), 'utf8'));
+const copy = () => JSON.parse(JSON.stringify(DATA));
 
-test('every Logos card plays the sound its words and voice call for (re-run record-logos.js after changing them)', () => {
+test('every Logos sound plays the file its words and voice call for (re-run record-logos.js after changing them)', () => {
   const items = planFor(DATA, settingsFor(DATA));
-  for (const card of DATA.cards) {
-    for (const speed of ['normal', 'slow']) {
-      const want = items.find(i => i.card === card && i.speed === speed).file;
-      assert.equal(card.audio?.[speed], want, `${card.id} ${speed}: "${card.say}" in ${DATA.audio.voice} should be ${want}`);
-    }
+  for (const item of items) {
+    assert.equal(item.owner[item.key], item.file, `${item.id}: "${item.say}" in ${DATA.audio.voice} should play ${item.file}`);
   }
   assert.equal(items.filter(i => !i.exists).length, 0, 'every sound is recorded');
 });
 
-test('a changed word or voice changes the sound\'s name, so caches never serve the old one', () => {
+test('every card is heard: the consonants\' names, the vowels and their words (tones are left off)', () => {
+  const ids = new Set(soundsFor(DATA).map(s => s.id));
+  for (const c of DATA.consonants) assert.ok(ids.has(c.id));
+  assert.equal(DATA.tones, undefined);
+  assert.ok(DATA.consonants.every(c => c.tones === undefined));
+  for (const v of DATA.vowels) {
+    assert.ok(ids.has(`vowel-${v.id}`));
+    assert.equal(ids.has(`vowel-${v.id}-word`), Boolean(v.word));
+  }
+});
+
+test('the same words are recorded once, however many cards say them', () => {
+  const items = planFor(DATA, settingsFor(DATA));
+  const files = new Map();
+  for (const i of items) {
+    const key = `${i.say}|${i.rate || ''}`;
+    if (files.has(key)) assert.equal(i.file, files.get(key), `"${i.say}" is one file`);
+    else files.set(key, i.file);
+  }
+  const twins = copy(); twins.consonants[1].say = twins.consonants[0].say;
+  const both = planFor(twins, settingsFor(twins));
+  assert.equal(both[1].file, both[0].file, 'two cards saying the same words share one file');
+  assert.ok(both[1].shared);
+});
+
+test('a changed word, voice or pace changes the sound\'s name, so caches never serve the old one', () => {
   const settings = settingsFor(DATA);
-  const card = DATA.cards[0];
-  const [before] = planFor({ ...DATA, cards: [card] }, settings);
-  const [newWords] = planFor({ ...DATA, cards: [{ ...card, say: `${card.say} ${card.say}` }] }, settings);
-  const [newVoice] = planFor({ ...DATA, cards: [card] }, { ...settings, voices: { th: 'th-TH-NiwatNeural', en: 'th-TH-NiwatNeural' } });
-  assert.notEqual(before.file, newWords.file);
-  assert.notEqual(before.file, newVoice.file);
-  assert.equal(before.file, planFor({ ...DATA, cards: [card] }, settings)[0].file, 'the same recipe gives the same name');
+  const before = planFor(DATA, settings).find(i => i.id === 'ko-kai');
+  const newWords = copy(); newWords.consonants[0].say = 'กอ ไก่ ไก่';
+  const newVoice = { ...settings, voices: { th: 'th-TH-NiwatNeural', en: 'th-TH-NiwatNeural' } };
+  assert.notEqual(planFor(newWords, settings).find(i => i.id === 'ko-kai').file, before.file);
+  assert.notEqual(planFor(DATA, newVoice).find(i => i.id === 'ko-kai').file, before.file);
+  assert.equal(planFor(DATA, settings).find(i => i.id === 'ko-kai').file, before.file, 'the same recipe gives the same name');
+
+  const vowel = DATA.vowels.find(v => v.say_rate);
+  const paced = planFor(DATA, settings).find(i => i.id === `vowel-${vowel.id}`);
+  const unpaced = copy(); delete unpaced.vowels.find(v => v.id === vowel.id).say_rate;
+  assert.notEqual(planFor(unpaced, settings).find(i => i.id === `vowel-${vowel.id}`).file, paced.file);
 });
