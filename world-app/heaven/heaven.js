@@ -19,6 +19,8 @@
 // v33, the new song: song.js (his steps, his stillness, and heaven's answer
 // to them), incense.js (the prayers rising) and leaves.js (the Tree of Life's
 // leaves carried down the river).
+// v35, the holy city: city.js (the wall foursquare round it all, its twelve
+// foundations and twelve gates of pearl, and the nations walking in).
 
 import * as THREE from 'three';
 import { breathe } from '../util.js';
@@ -32,6 +34,7 @@ import { createFigures } from './figures.js';
 import { createIncense } from './incense.js';
 import { createLeaves } from './leaves.js';
 import { createSong } from './song.js';
+import { createCity } from './city.js';
 
 // Near the head of the ladder the line under the screen names the way down
 // (realm.js), so the new song keeps its words for the rest of heaven.
@@ -54,6 +57,8 @@ export async function createHeaven(scene, saintsData) {
   const incense = createIncense(scene, saints.places);
   const song = createSong({ sea, incense, glory });
   await breathe();
+  const city = createCity(scene);
+  await breathe();
 
   let time = 0;
   let lastWalker = null;
@@ -70,13 +75,14 @@ export async function createHeaven(scene, saintsData) {
     tree.update(time);
     leaves.update(time);
     saints.update(dt, walker);
+    city.update(dt, time, walker);
   }
 
   // The line under the screen. Away from the ladder's head (whose own name
   // realm.js gives there): the multitude's answer for the few seconds it
   // sounds — it is rare, and the one moment heaven speaks — then the saint
-  // drawn near to, then his prayer while it rises, then a leaf of the tree
-  // floating by him on the river.
+  // drawn near to, then — standing in a gate of the city — its word, then his
+  // prayer while it rises, then a leaf of the tree floating by him on the river.
   const LEAF_WORD = { name: 'Aleh', label: 'the leaves of the tree, for the healing of the nations' };
   function caption() {
     const w = lastWalker;
@@ -85,7 +91,7 @@ export async function createHeaven(scene, saintsData) {
     if (answer) return answer;
     const named = saints.caption();
     if (named || byHead) return named;
-    return song.prayerWord() || (leaves.near(w) ? LEAF_WORD : null);
+    return city.caption() || song.prayerWord() || (leaves.near(w) ? LEAF_WORD : null);
   }
 
   return {
@@ -128,6 +134,12 @@ export async function createHeaven(scene, saintsData) {
             ...st, incense: inc.rising, his: inc.his, flare: glory.flare(), leaves: leaves.floating(),
           };
         })(),
+        // v35, the holy city (Revelation 21:12-26): its `gates` of pearl and
+        // `foundations` of precious stones, the `travellers` walking in at its
+        // gates and the `lights` over them, whether he stands `atGate`, how
+        // the gate brightens (`gateGlow`), and where the south middle gate's
+        // first traveller (`lead`) has walked to.
+        city: city.state(),
       };
     },
   };

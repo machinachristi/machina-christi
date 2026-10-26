@@ -1,5 +1,5 @@
 {
-  "version": 34,
+  "version": 35,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -428,13 +428,29 @@
         { "text": "The garden's stars are soft and round now rather than square, and the signs' lines show a little more while he lies looking up.", "source": null },
         { "text": "The new stars and the Milky Way are two draw calls, drawn only by night (the Milky Way only while he lies looking up), so nothing new is drawn in the garden's opening view.", "source": null }
       ]
+    },
+    {
+      "version": 35,
+      "date": "2026-10-26",
+      "focus": "the holy city",
+      "realm": "heaven",
+      "changes": [
+        { "text": "The holy city's wall now stands foursquare round all of heaven, great and high, out past where the walk can reach, its far sides fading into the gold air.", "source": "Revelation 21:12" },
+        { "text": "Its foundations are twelve courses of precious stones, jasper at the foot up through sapphire, emerald and topaz to amethyst at the top, each stone catching the light in its own time, with small glints coming and going on them up close; above them the wall is clear jasper, coped with gold.", "source": "Revelation 21:19-20" },
+        { "text": "Three gates on every side, twelve in all, each one a single pearl whose nacre plays rose, gold and sea-green as you move, and every one standing open, with light pouring in through it and across the glass.", "source": "Revelation 21:21" },
+        { "text": "Over each gate an angel stands as a light, breathing slowly.", "source": "Revelation 21:12" },
+        { "text": "Through every gate the nations walk in: a slow procession of small golden lights comes in at each gate and walks on toward the glory, parting round Adam where he stands in their way and closing again behind him.", "source": "Revelation 21:24" },
+        { "text": "From the south side's middle gate, just east of the street behind the head of the ladder, they walk on north beside the saints toward the Tree of Life.", "source": "Revelation 22:14" },
+        { "text": "That gate is within his reach: stand on its threshold and the pearl and the light in its way brighten, and its word is given: Sha'ar, the gates of it shall not be shut at all by day.", "source": "Revelation 21:25" },
+        { "text": "The whole city is four draw calls (the wall with its foundations, the twelve pearls, the light in the gates, and the travellers with the lights over the gates), and the travellers are moved wholly in their shader; the stones' joints and glints are only worked out near enough to be seen.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
-    "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
     "Carry a lamb: stand still beside the flock's lamb and he lifts it into his arms and carries it at his breast while the ewe and the ram follow (Isaiah 40:11)",
     "The morning stars sing together: lying back as the night ends, every star in sight sings at once in a swelling chord as the east brightens behind them (Job 38:7)",
-    "The holy city's wall on heaven's far rim: twelve foundations, each a different precious stone glowing in the light, and twelve gates, every gate of one pearl, standing open (Revelation 21:19-21, 25)"
+    "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
+    "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
+    "The healing of the nations: the travellers who come up the street to the Tree of Life each take a leaf from it and carry it back out through the gates, glowing green, to the nations beyond (Revelation 22:2)"
   ]
 }
