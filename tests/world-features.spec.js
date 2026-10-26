@@ -773,6 +773,39 @@ test.describe('the garden\'s features', () => {
     }, { timeout: 60000 }).toBe('Aleh');
   });
 
+  test('the holy city in heaven: a wall foursquare with twelve foundations and twelve open gates of pearl, the nations walking in, and the south gate\'s word at its threshold (v35, Revelation 21:12-25; 22:14)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    await enterHeaven(page);
+    const frame = appFrame(page);
+    let s = await getState(page);
+    // Twelve foundations, twelve gates, a light over every gate, and the
+    // travellers coming in at all of them.
+    expect(s.heaven.city.gates).toBe(12);
+    expect(s.heaven.city.foundations).toBe(12);
+    expect(s.heaven.city.lights).toBe(12);
+    expect(s.heaven.city.travellers).toBeGreaterThanOrEqual(12 * 30);
+    expect(s.heaven.city.atGate).toBe(false);
+    // They walk: the south middle gate's first traveller moves on.
+    const lead0 = s.heaven.city.lead;
+    await expect.poll(async () => dist2d((await getState(page)).heaven.city.lead, lead0), { timeout: 30000 })
+      .toBeGreaterThan(0.5);
+
+    // Set down behind the head of the ladder, by the south middle gate: he
+    // stands at it, its word is given, and it brightens.
+    await frame.evaluate(() => window.__world.teleport(0, -41, Math.PI));
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 }).toEqual({
+      name: "Sha'ar", label: 'the gates of it shall not be shut at all by day',
+    });
+    expect((await getState(page)).heaven.city.atGate).toBe(true);
+    await expect.poll(async () => (await getState(page)).heaven.city.gateGlow, { timeout: 30000 }).toBeGreaterThan(0.5);
+
+    // Away from the gate again, it is his no longer, and it settles.
+    await frame.evaluate(() => window.__world.teleport(-6, -20, 0));
+    await expect.poll(async () => (await getState(page)).heaven.city.atGate, { timeout: 20000 }).toBe(false);
+    await expect.poll(async () => (await getState(page)).heaven.city.gateGlow, { timeout: 30000 }).toBeLessThan(0.2);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);
