@@ -111,6 +111,17 @@ speech, so it sounds natural, unlike the older robotic voices.
 exact moment it reaches each one. *Here:* one at the start of each line, which
 gives the timings the Pray highlight follows.
 
+**Accessible controls.** Buttons and tabs labelled so that everyone can use
+them, including people who listen to a page with a screen reader instead of
+looking at it. A play button that only shows a triangle is silent to a screen
+reader; one labelled "Play gaw gài" says what it does. Labels can also say a
+control's state ("pressed", "selected"), like the click of a light switch you
+can hear in the dark. Using a real button, not a box made to look like one,
+also means it works with a keyboard for free.
+*Here:* Logos's tabs are marked as tabs, a turned card reports that it's
+pressed, every play button says what it plays, and the practice counts are read
+aloud when they change.
+
 ## Speed and cost
 
 **Snapshot (publishing).** Copying what you need from a slow or costly place
@@ -174,6 +185,13 @@ that can't do it. *Here:* the API's recording relay.
 file's contents: change anything and the fingerprint changes. Put it in the
 file's name and the file under that name can never change, so every cache may
 keep it forever ("immutable"). *Here:* `our-father/th-slow-5ea7f0c694.mp3`.
+
+**Deduplication (one copy of each thing).** Keeping a single copy of anything
+that would otherwise be stored twice, and pointing every user of it at that
+one copy, like a family sharing one dictionary instead of buying one each.
+It saves space, and a fix made to the copy reaches everyone at once.
+*Here:* when two Logos buttons say exactly the same words (จ จาน's name and its
+Mid row), the recipe records them once: 184 sounds come from 158 files.
 
 ## Networks and security
 
@@ -408,6 +426,16 @@ know. Azure's version doesn't grade Thai tones.
 *Here:* the second check on every Pray line; with spaces between the words,
 most of its alarms went away.
 
+**Measuring a voice (length, pitch, vowel sound).** A recording is just a long
+list of numbers, and a small program can read three things from it: how long
+a sound lasts (where it gets loud and where it goes quiet), its pitch at each
+moment (how often the sound wave repeats), and which vowel it is (the shape of
+its loud and quiet frequencies, like a fingerprint of the mouth's shape). No
+listening service is needed, and it judges things a scorer can't, such as
+whether a short vowel is really short.
+*Here:* every Logos vowel was measured on this Mac: each short one is shorter
+than its long twin, and sounds closest to it.
+
 **Homophone.** Words that sound the same but are spelled differently: "there"
 and "their" in English, กาล and การ (both *gaan*) in Thai. A listening machine
 may write either, and that is not a pronunciation mistake.
@@ -465,7 +493,8 @@ allowed between them, like a lift: stopped at a floor, going up, or going
 down, never half of two. Writing it this way makes it hard for anything to be
 left half-done.
 *Here:* the journey between the realms: in Eden, climbing, under the veil,
-arriving, in heaven, leaving, climbing down, stepping off.
+arriving, in heaven, leaving, climbing down, stepping off. And each Logos
+practice card: new, revisit in round 1 to 4, or known.
 
 **Fail-safe.** Designing something so that when it breaks, it breaks into a
 safe state, like a lift whose brakes close when the power goes. It's different
@@ -562,6 +591,14 @@ a working system, and if the new one misbehaves you switch back.
 finished dish from the kitchen to the table.
 *Here:* merging a PR into `main` makes GitHub Actions deploy it automatically.
 
+**Redirect (301).** A forwarding address for a page that has moved or been
+retired. Someone who visits the old address is sent on to the new one
+automatically, the way the post office forwards letters after you move. The
+number 301 means "moved for good", so browsers and search engines update their
+records instead of asking again.
+*Here:* the old Logos card trainer, `cards.html`, now forwards to `logos.html`
+(a rule in `staticwebapp.config.json`).
+
 **Telemetry.** The server keeping a log of what happened — how many questions,
 how fast, anything that failed — like a shop's till roll. You read it to learn
 how things are really going rather than guessing.
@@ -588,3 +625,12 @@ they fade on the garden's own clock, which slows down on GitHub's small test
 machines; CI's second try passed often enough to hide it. The check now reads
 the garden's clock and waits until 2 garden seconds have passed, however long
 that takes in real time (AB#95).
+
+**Name collision.** Two different things given the same name, so an
+instruction meant for one also lands on the other, like two people called Sam
+in one office: shout "Sam, your coffee!" and both look up. On a web page, the
+style rules are shared by the whole page, so a rule written for one name
+reaches everything with that name. Unique, specific names prevent it.
+*Here:* Logos's "‹ home" link and the back of every card were both called
+`back`, so turned cards borrowed the link's spacing and left a dark strip
+under them. The link is now called `home`.

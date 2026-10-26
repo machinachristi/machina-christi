@@ -13,6 +13,7 @@ afterthought: every phase of work adds to them.
   - [Phase 4 — the prayers get a library and a voice](phase-4-pray-cosmos-audio.md)
   - [Phase 5 — the site learns to find things](phase-5-search.md)
   - [Logos — learning Thai, letter by letter](logos-thai-cards.md)
+  - [Logos — the vowels, the tones, and the phone guide's card page](logos-vowels-and-tones.md)
   - [Pray — the Thai voice, checked by machine and taught eight words](pray-voice-check.md)
   - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
 

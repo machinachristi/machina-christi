@@ -41,7 +41,6 @@ const PAGES = [
   '/about-pray.html',
   '/about-logos.html',
   '/about-workshop.html',
-  '/cards.html?set=thai-middle',
   '/game.html',
   '/logos.html',
   '/ordo.html',

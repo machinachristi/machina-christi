@@ -8,6 +8,11 @@
   },
   "routes": [
     {
+      "route": "/cards.html",
+      "redirect": "/logos.html",
+      "statusCode": 301
+    },
+    {
       "route": "/world-app/vendor/*",
       "headers": {
         "Cache-Control": "public, max-age=2592000"
