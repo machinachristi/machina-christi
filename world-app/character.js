@@ -135,6 +135,11 @@ export function createCharacter({ eve = false } = {}) {
   let lying = false;
   let lie = 0;              // 0 standing → 1 lying back looking up; eased in and out (v34)
   let laid = false;         // whether the body is presently turned from standing at all
+  let cradling = false;
+  let cradle = 0;           // 0 arms free → 1 a lamb held in them at his breast (v36); eased
+  let stoopTo = 0;          // how far down he is bent to the grass for it, 0..1
+  let stoop = 0;
+  let shoulder = 0;         // 0 at his breast → 1 up across his shoulders (flock.js eases it)
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -159,6 +164,19 @@ export function createCharacter({ eve = false } = {}) {
   let lift = 0;             // 0 → 1 the hand raised with the fruit in it
   fruitHeld.visible = false;
   torso.add(fruitHeld);
+
+  // Where a lamb lies in his arms (v36, Isaiah 40:11): high at his breast,
+  // a little to his right (−x: his right is the screen's right seen from
+  // behind), out before him on his forearms. The point rides the torso, so it
+  // goes wherever he does — walking, wading, sitting or bent to the grass.
+  const cradlePoint = new THREE.Object3D();
+  cradlePoint.position.set(-0.08, 0.3, 0.38);
+  torso.add(cradlePoint);
+  // …and where it lies when he walks on with it: up across his shoulders
+  // behind his head, "he layeth it on his shoulders, rejoicing" (Luke 15:5).
+  const shoulderPoint = new THREE.Object3D();
+  shoulderPoint.position.set(0, 0.66, -0.22);
+  torso.add(shoulderPoint);
 
   // move: camera-space input { x: right, z: forward, |v| ≤ 1, quick? }.
   // camYaw: yaw of the camera's view line, from the rig — or null when
@@ -326,6 +344,30 @@ export function createCharacter({ eve = false } = {}) {
       armL.rotation.z = armL.rotation.z * (1 - carry) + 0.4 * carry;
       armR.rotation.z = armR.rotation.z * (1 - carry) - 0.4 * carry;
     }
+    // A lamb in his arms (v36, Isaiah 40:11): both arms brought round
+    // under it at his breast, the body leaning back a little to bear it —
+    // and before that, bent down to the grass to take it up.
+    cradle = damp(cradle, cradling ? 1 : 0, 6, dt);
+    stoop = damp(stoop, cradling ? stoopTo : 0, 9, dt);
+    if (cradle > 0.001) {
+      // At his breast both arms come round under it; on his shoulders both
+      // hands go up to hold it there by its legs.
+      const c = cradle, u = shoulder;
+      armL.rotation.x = armL.rotation.x * (1 - c) + (-0.95 * (1 - u) - 2.75 * u) * c;
+      armR.rotation.x = armR.rotation.x * (1 - c) + (-0.8 * (1 - u) - 2.75 * u) * c;
+      armL.rotation.z = armL.rotation.z * (1 - c) + (0.42 * (1 - u) + 0.3 * u) * c;
+      armR.rotation.z = armR.rotation.z * (1 - c) + (-0.36 * (1 - u) - 0.3 * u) * c;
+      torso.rotation.x = torso.rotation.x * (1 - c) + (-0.06 * (1 - u) + 0.05 * u) * c;
+    }
+    if (stoop > 0.001) {
+      // Bent at the hips, knees a little given, arms down toward the grass.
+      torso.rotation.x += 0.95 * stoop;
+      torso.position.y -= 0.12 * stoop;
+      armL.rotation.x += 0.75 * stoop;
+      armR.rotation.x += 0.75 * stoop;
+      legL.rotation.x -= 0.25 * stoop;
+      legR.rotation.x -= 0.25 * stoop;
+    }
     // A fruit given him takes the hands' place until it is eaten; water he
     // was carrying shows again after.
     lift = damp(lift, holding ? 1 : 0, 7, dt);
@@ -378,6 +420,20 @@ export function createCharacter({ eve = false } = {}) {
   }
   function setCarrying(b) { carrying = !!b; }
   function setPraying(b) { praying = !!b; }
+  // v36: a lamb held in his arms, and how far he is bent down to it (0..1).
+  // up: 0 at his breast → 1 across his shoulders.
+  function setCradling(b, bend = 0, up = 0) {
+    cradling = !!b;
+    stoopTo = clamp(bend, 0, 1);
+    shoulder = cradling ? clamp(up, 0, 1) : 0;
+  }
+  // Where the lamb lies in his arms and on his shoulders, written into
+  // `out.bosom` and `out.shoulders` (world).
+  function cradleAt(out) {
+    cradlePoint.getWorldPosition(out.bosom);
+    shoulderPoint.getWorldPosition(out.shoulders);
+    return out;
+  }
   // h: { color, left } while he holds a fruit, or null.
   function setHolding(h) {
     holding = h || null;
@@ -388,6 +444,7 @@ export function createCharacter({ eve = false } = {}) {
 
   return {
     group, update, setSitting, setCarrying, setHolding, setClimbing, setPraying, setLying,
+    setCradling, cradleAt,
     get climbing() { return climbing; },
     get lie() { return lie; },
     get speed() { return speed; },

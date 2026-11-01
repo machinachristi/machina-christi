@@ -815,6 +815,93 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).heaven.city.gateGlow, { timeout: 30000 }).toBeLessThan(0.2);
   });
 
+  test('the lamb carried: stand among the flock and he takes its lamb up in his arms, carries it on his shoulders as he walks, and sets it down beside its mother when he stands (v36, Isaiah 40:11; Luke 15:5)', async ({ page }) => {
+    test.setTimeout(180000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const f0 = (await getState(page)).flock;
+    expect(f0.carry.stage).toBe('none');
+
+    // Walk in among them and stand: they come round him, the lamb comes in
+    // to his feet, and he stoops and takes it up into his arms.
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z, Math.PI / 2), [f0.home.x, f0.home.z]);
+    await expect.poll(async () => (await getState(page)).flock.carry.stage, { timeout: 45000 }).toBe('held');
+    {
+      const s = await getState(page);
+      const lamb = s.flock.sheep.find(h => h.lamb);
+      expect(lamb.mode).toBe('carried');
+      expect(lamb.up).toBeGreaterThan(0.9);
+      expect(dist2d(lamb, s.pos)).toBeLessThan(0.9);   // in his arms, not on the grass
+      expect(s.flock.carry.lifts).toBe(1);
+    }
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Uvecheiko yissa');
+
+    // He walks on with it: it rides up across his shoulders, and the rest
+    // of the flock still come after him.
+    const start = (await getState(page)).pos;
+    await frame.evaluate(([x, z]) => window.__world.walkTo(x, z), [start.x + 12, start.z - 5]);
+    await expect.poll(async () => (await getState(page)).flock.carry.shoulders, { timeout: 30000 }).toBe(true);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (dist2d(s.pos, start) < 5) return false;
+      const lamb = s.flock.sheep.find(h => h.lamb);
+      const near = s.flock.sheep.filter(h => h.mode === 'follow' && dist2d(h, s.pos) < 8);
+      return lamb.mode === 'carried' && near.length >= 1;
+    }, { timeout: 45000 }).toBe(true);
+
+    // He stands: it comes down into his arms again and onto the grass
+    // beside him, and the word for it is given; it follows on foot again.
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 45000 }).toBe('Alot yenahel');
+    {
+      const s = await getState(page);
+      const lamb = s.flock.sheep.find(h => h.lamb);
+      expect(s.flock.carry.setDowns).toBe(1);
+      expect(lamb.mode === 'follow' || lamb.rested).toBe(true);
+      expect(lamb.up).toBe(0);
+      expect(s.flock.carry.bleats).toBeGreaterThanOrEqual(2);
+    }
+    // And then they all lie down round him, as before.
+    await expect.poll(async () => (await getState(page)).flock.rests, { timeout: 45000 }).toBeGreaterThan(0);
+  });
+
+  test('doves by the rivers of waters: white doves wash in a shallow of the slow reach, dip and shake off the water, all wash at once when he comes among them, and are gone by night (v36, Song of Solomon 5:12)', async ({ page }) => {
+    test.setTimeout(150000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const d0 = (await getState(page)).doves;
+    expect(d0.count).toBe(5);
+    expect(d0.shown).toBe(true);
+    // Every one stands in the water itself, at its edge.
+    for (const d of d0.doves) expect(d.wet).toBe(true);
+
+    // On their own they wash, now one and now another, and shake.
+    await expect.poll(async () => (await getState(page)).doves.shakes, { timeout: 45000 }).toBeGreaterThan(0);
+
+    // He comes in among them: they all wash and shake at once.
+    const before = await getState(page);
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z - 2.5, 0), [d0.at.x, d0.at.z]);
+    await expect.poll(async () => (await getState(page)).doves.joys, { timeout: 20000 }).toBeGreaterThan(before.doves.joys);
+    await expect.poll(async () => (await getState(page)).doves.shakes, { timeout: 30000 })
+      .toBeGreaterThanOrEqual(before.doves.shakes + 3);
+
+    // Drawn near one, it is named (tried at each in turn, since a flag in
+    // the same shallow may stand nearer to where he is set down).
+    let named = false;
+    for (const d of d0.doves) {
+      await frame.evaluate(([x, z]) => window.__world.teleport(x, z - 0.9, 0), [d.x, d.z]);
+      try {
+        await expect.poll(async () => { const n = (await getState(page)).naming; return n && n.name; }, { timeout: 8000 }).toBe('Yonim');
+        named = true;
+        break;
+      } catch (e) { /* the next one */ }
+    }
+    expect(named).toBe(true);
+
+    // By night they are gone to roost.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => (await getState(page)).doves.shown, { timeout: 30000 }).toBe(false);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

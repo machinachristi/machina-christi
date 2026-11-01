@@ -24,6 +24,19 @@
 // the night the grazing flock lies down where it is, "where thou makest thy
 // flock to rest at noon" (Song of Solomon 1:7).
 //
+// v36, "he shall gather the lambs with his arm, and carry them in his
+// bosom, and shall gently lead those that are with young" (Isaiah 40:11):
+// when the lamb has come up to him and he stands, he stoops and lifts it into
+// his arms, and carries it at his breast wherever he goes — through the
+// river, too, where the others will not follow. Once he walks on with it he
+// swings it up across his shoulders, "he layeth it on his shoulders,
+// rejoicing" (Luke 15:5), and down into his arms again when he stops; its
+// head turns to look about, its mother close at his heel looking up at it and calling, and the
+// lamb answering her. Stand a while, or lie back in the grass, and he sets
+// it down beside him — never across the water from its mother, where it
+// could not go to her — and it skips about, and then they all lie down
+// round him.
+//
 // No score, no count, nothing to lose: a sheep that strays is only a sheep
 // grazing. Three sheep in four draw calls — bodies, heads, legs and the
 // shadows they stand on are each one instanced mesh, written once a frame.
@@ -59,6 +72,22 @@ const KEY = 'camino_fold';
 const CAPTION_FOR = 4;
 const FOLLOW_CAPTION = { name: 'Tson', label: 'the flock' };
 const REST_CAPTION = { name: 'Yarbitseni', label: 'he maketh me to lie down' };
+// v36 (Isaiah 40:11): the lamb carried in his bosom, and set down again.
+const LIFT_AFTER = GATHER_AFTER + 0.9;   // seconds standing before he stoops for the lamb
+const LIFT_REACH = 1.3;           // the lamb is this near him
+const LIFT_TIME = 0.8;            // seconds from the grass up into his arms, or back down
+const PUT_AFTER = 3.2;            // seconds standing with it held before he sets it down
+const REARM = 2.5;                // metres he walks after setting it down before he lifts it again
+const FRISK_FOR = 2.6;            // seconds the lamb skips about once it is down
+const CALL_EVERY = 4.5;           // the ewe calls up to her lamb about this often
+// Where he sets the lamb down, in order of choice: a step before him on his
+// right, then on his left, then straight before him, at either side, and
+// behind — the first good one (setDownSpot). (Metres ahead, metres to his
+// right.)
+const SET_DOWN_AT = [[0.8, 0.45], [0.8, -0.45], [1.0, 0], [0.2, 0.8], [0.2, -0.8], [-0.6, 0.5], [-0.6, -0.5]];
+const TRY_EVERY = 0.25;           // seconds between looks for a place to set it down
+const CARRY_CAPTION = { name: 'Uvecheiko yissa', label: 'he carrieth them in his bosom' };
+const SET_DOWN_CAPTION = { name: 'Alot yenahel', label: 'he gently leadeth those with young' };
 
 // The shepherd's tune: semitones above E4, in the E major pentatonic the
 // garden's chime and blossom notes already keep. One note as each sheep
@@ -194,6 +223,9 @@ export function createFlock(scene, solids = [], trees = []) {
       mode: 'graze', until: 1 + rng() * 5, target: { x, z },
       rank: -1, side: rng() * 2 - 1, rested: false,
       phase: rng() * 6, pace: 0, dip: 0.8, lie: 0, hop: 0, drinking: false,
+      // v36: how far up into his arms (0..1), the height it is held at, the
+      // head's turn to the side, and how long it has left to frisk.
+      up: 0, heldY: 0, turn: 0, frisk: 0,
     });
   }
 
@@ -248,8 +280,34 @@ export function createFlock(scene, solids = [], trees = []) {
   const last = new THREE.Vector3();
   let hasLast = false;
 
-  const sung = { notes: 0, note: MELODY[0] };
+  const sung = { notes: 0, note: MELODY[0], bleats: 0, calls: 0 };
   const back = { x: 0, z: 0 };
+
+  // v36 (Isaiah 40:11): the lamb in his arms. `stage` is none | lifting |
+  // held | lowering; the mother is the first of the two grown sheep.
+  const lamb = sheep[ADULTS];
+  const mother = sheep[0];
+  let stage = 'none';
+  let stageT = 0;
+  let holdStill = 0;      // seconds he has stood with it held
+  let armed = true;       // whether he will stoop for it again
+  let walked = 0;         // metres walked since he last set it down
+  let lifts = 0;
+  let setDowns = 0;
+  let bleats = 0;         // the lamb's voice
+  let calls = 0;          // its mother's
+  let callT = CALL_EVERY * 0.6;
+  let answerT = -1;       // the lamb answers her a moment after she calls
+  let stoop = 0;          // 0..1: how far he is bent down to it
+  let walkFor = 0;        // seconds he has walked on with it held
+  let shoulder = 0;       // 0 at his breast → 1 up on his shoulders
+  let onShoulders = false;
+  let liftable = false;   // whether he would take the lamb up now, were it at his feet
+  let tryT = 0;           // until the next look for a place to set it down
+  const spot = { x: 0, z: 0 };
+  const liftFrom = new THREE.Vector3();
+  const putTo = new THREE.Vector3();
+  const holdAt = new THREE.Vector3();
 
   function sing(n) {
     notes++;
@@ -357,6 +415,7 @@ export function createFlock(scene, solids = [], trees = []) {
   const v = new THREE.Vector3();
   const sc = new THREE.Vector3();
   const flatQ = new THREE.Quaternion();
+  const turnQ = new THREE.Quaternion();
 
   function sync() {
     for (let i = 0; i < COUNT; i++) {
@@ -364,15 +423,20 @@ export function createFlock(scene, solids = [], trees = []) {
       const p = S.pos;
       const s = S.s;
       const ground = heightAt(p.x, p.z);
-      const y = ground + S.hop - S.lie * 0.24 * s;
+      // Held, it rides at the height it is held at (S.up, eased from the
+      // grass into his arms), its legs folded under it.
+      const y = S.up > 0
+        ? (ground + S.hop - S.lie * 0.24 * s) * (1 - S.up) + S.heldY * S.up
+        : ground + S.hop - S.lie * 0.24 * s;
       yawQ.setFromAxisAngle(Y_AXIS, S.yaw);
 
       v.set(p.x, y, p.z);
       sc.set(s, s, s);
       bodyMesh.setMatrixAt(i, m.compose(v, yawQ, sc));
 
+      turnQ.setFromAxisAngle(Y_AXIS, S.turn);
       tipQ.setFromAxisAngle(X_AXIS, S.dip);
-      q.multiplyQuaternions(yawQ, tipQ);
+      q.multiplyQuaternions(yawQ, turnQ).multiply(tipQ);
       v.copy(HEAD_AT).multiplyScalar(s).applyQuaternion(yawQ);
       v.x += p.x; v.y += y; v.z += p.z;
       headMesh.setMatrixAt(i, m.compose(v, q, sc));
@@ -391,8 +455,9 @@ export function createFlock(scene, solids = [], trees = []) {
       }
 
       v.set(p.x, ground + 0.03, p.z);
-      const r = 0.5 * s * (1 + 0.25 * S.lie);
-      sc.set(r, 1, r);
+      // Up in his arms its shadow is his.
+      const r = 0.5 * s * (1 + 0.25 * S.lie) * (1 - S.up);
+      sc.set(Math.max(r, 1e-4), 1, Math.max(r, 1e-4));
       shadowMesh.setMatrixAt(i, m.compose(v, flatQ, sc));
     }
     bodyMesh.instanceMatrix.needsUpdate = true;
@@ -402,14 +467,207 @@ export function createFlock(scene, solids = [], trees = []) {
   }
   sync();
 
-  function update(dt, walker, cycleT = 0.075, night = 0) {
+  function rerank() {
+    followers = 0;
+    for (const S of sheep) if (S.mode === 'follow') S.rank = followers++;
+  }
+
+  // A place to set the lamb down near (x, z), written into `out`: dry
+  // grass (nudged out of a trunk, or in from the rim, if need be) from which
+  // it can walk to its mother without wading — sheep never wade, so a lamb
+  // set down across the river from her could never come back. Null if
+  // there is none there.
+  function setDownSpot(x, z, out) {
+    out.x = x;
+    out.z = z;
+    footing.keepOut(out);
+    if (Math.hypot(out.x - x, out.z - z) > 1.6) return null;
+    if (riverEdgeDist(out.x, out.z) < BRINK + 0.25) return null;
+    if (!dryWay(out.x, out.z, mother.pos.x, mother.pos.z)) return null;
+    return out;
+  }
+
+  // …and the nearest such place round its mother herself; failing that,
+  // the pasture.
+  function besideMother(out) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      if (setDownSpot(mother.pos.x + Math.cos(a) * 0.9, mother.pos.z + Math.sin(a) * 0.9, out)) return out;
+    }
+    out.x = home.x;
+    out.z = home.z;
+    return out;
+  }
+
+  // Let the lamb go at once, with no setting down: he has been taken
+  // somewhere in a moment (a jump, or the way up the ladder from where it
+  // could not reach its mother). It stays on the grass where it was if it
+  // can go to her from there, and is otherwise back beside her.
+  function letGo() {
+    if (!setDownSpot(lamb.pos.x, lamb.pos.z, spot)) besideMother(spot);
+    lamb.pos.x = spot.x;
+    lamb.pos.z = spot.z;
+    lamb.pos.y = heightAt(spot.x, spot.z);
+    lamb.up = 0;
+    lamb.lie = Math.min(lamb.lie, 0.2);
+    if (mother.mode === 'follow') {
+      lamb.mode = 'follow';
+      rerank();
+    } else {
+      release(lamb);
+    }
+    stage = 'none';
+    stageT = 0;
+    armed = false;
+    walked = 0;
+  }
+
+  // The lamb in his arms (v36), one frame: stooping for it, holding it, and
+  // setting it down. `o.arms` holds where his arms hold it at his breast and
+  // on his shoulders (`bosom`, `shoulders`, world), or is null.
+  function carry(dt, walker, step, jumped, o) {
+    const { arms, facing = 0, resting = false, handsFull = false } = o;
+    // Up on his shoulders once he has walked on with it a moment; down into
+    // his arms again as soon as he stands.
+    walkFor = stage === 'held' && speed > 0.9 ? walkFor + dt : 0;
+    if (stage !== 'held' || still > 0.35) onShoulders = false;
+    else if (walkFor > 0.4) onShoulders = true;
+    shoulder = damp(shoulder, onShoulders ? 1 : 0, 5, dt);
+    if (shoulder < 0.002 && !onShoulders) shoulder = 0;
+    let cradle = null;
+    if (arms) {
+      cradle = holdAt.lerpVectors(arms.bosom, arms.shoulders, shoulder);
+      cradle.y += Math.sin(Math.PI * shoulder) * 0.12;   // swung up, not slid
+    }
+    stageT += dt;
+    if (stage === 'none' && !armed) {
+      walked += step;
+      if (walked > REARM || Math.hypot(lamb.pos.x - walker.x, lamb.pos.z - walker.z) > AWAY) armed = true;
+    }
+    liftable = stage === 'none' && armed && !!cradle && !handsFull && !resting
+      && riverEdgeDist(walker.x, walker.z) > BRINK;
+    if (stage === 'none') {
+      if (liftable && still > LIFT_AFTER && lamb.mode === 'follow' && lamb.lie < 0.3
+        && Math.hypot(lamb.pos.x - walker.x, lamb.pos.z - walker.z) < LIFT_REACH) {
+        stage = 'lifting';
+        stageT = 0;
+        holdStill = 0;
+        lifts++;
+        lamb.mode = 'carried';
+        lamb.rank = -1;
+        lamb.drinking = false;
+        liftFrom.copy(lamb.pos);
+        rerank();
+        caption = CARRY_CAPTION;
+        captionLeft = CAPTION_FOR;
+        bleats++;
+        callT = 1.6;
+      }
+    } else if (jumped) {
+      letGo();
+    } else if (!cradle && stage !== 'lowering') {
+      // His arms are wanted for the ladder: he sets it down at once where
+      // it is — if it can go to its mother from there; if not, it is let go
+      // back beside her.
+      if (setDownSpot(lamb.pos.x, lamb.pos.z, spot)) {
+        stage = 'lowering';
+        stageT = 0;
+        liftFrom.set(lamb.pos.x, 0, lamb.pos.z);
+        putTo.set(spot.x, 0, spot.z);
+      } else {
+        letGo();
+      }
+    } else if (stage === 'lifting' || stage === 'held') {
+      const k = stage === 'lifting' ? smoothstep(0, 1, stageT / LIFT_TIME) : 1;
+      lamb.heldY = cradle.y - 0.36 * lamb.s;
+      lamb.up = k;
+      lamb.pos.x = liftFrom.x + (cradle.x - liftFrom.x) * k;
+      lamb.pos.z = liftFrom.z + (cradle.z - liftFrom.z) * k;
+      // Across his arms, its head up by his left shoulder, turned back
+      // over it — toward whoever is following behind him; on his shoulders,
+      // lying straight across them.
+      lamb.yaw += shortestAngle(lamb.yaw, facing + Math.PI / 2 + 0.7 * (1 - shoulder)) * clamp(dt * (stage === 'held' ? 12 : 5), 0, 1);
+      if (stage === 'lifting' && stageT >= LIFT_TIME) { stage = 'held'; stageT = 0; }
+      if (stage === 'held') {
+        holdStill = speed < STILL_SPEED ? holdStill + dt : 0;
+        tryT = Math.max(0, tryT - dt);
+        if ((holdStill > PUT_AFTER || resting) && tryT === 0) {
+          // Set down beside him, at the first good place of SET_DOWN_AT.
+          // Standing in the river, or across it from its mother, there is
+          // none, and he keeps holding it until he has brought it back.
+          tryT = TRY_EVERY;
+          const fs = Math.sin(facing), fc = Math.cos(facing);
+          for (const [ahead, right] of SET_DOWN_AT) {
+            // His right is (−cos, sin) of his facing (character.js).
+            if (!setDownSpot(walker.x + fs * ahead - fc * right, walker.z + fc * ahead + fs * right, spot)) continue;
+            stage = 'lowering';
+            stageT = 0;
+            liftFrom.set(lamb.pos.x, 0, lamb.pos.z);
+            putTo.set(spot.x, 0, spot.z);
+            break;
+          }
+        }
+      }
+    } else if (stage === 'lowering') {
+      const k = smoothstep(0, 1, stageT / LIFT_TIME);
+      // (From where his arms last held it, if they are not to be had now.)
+      lamb.heldY = (cradle || holdAt).y - 0.36 * lamb.s;
+      lamb.up = 1 - k;
+      lamb.pos.x = liftFrom.x + (putTo.x - liftFrom.x) * k;
+      lamb.pos.z = liftFrom.z + (putTo.z - liftFrom.z) * k;
+      if (stageT >= LIFT_TIME) {
+        // Down beside her: it follows again, and skips about her a while,
+        // and the flock, still standing round him, lies down a little after.
+        lamb.up = 0;
+        lamb.lie = Math.min(lamb.lie, 0.2);   // standing, not lying round him yet
+        lamb.mode = 'follow';
+        rerank();
+        lamb.frisk = FRISK_FOR;
+        stage = 'none';
+        stageT = 0;
+        armed = false;
+        walked = 0;
+        setDowns++;
+        caption = SET_DOWN_CAPTION;
+        captionLeft = CAPTION_FOR;
+        bleats++;
+        still = GATHER_AFTER + 0.001;
+        restAnnounced = false;
+      }
+    }
+    // How far he is bent down to it: all the way as he takes it up from the
+    // grass, rising as it comes; and down again as he sets it on the grass.
+    const want = stage === 'lifting' ? 1 - smoothstep(0.15, 1, stageT / LIFT_TIME)
+      : stage === 'lowering' ? smoothstep(0, 0.7, stageT / LIFT_TIME) : 0;
+    stoop = damp(stoop, want, 10, dt);
+
+    // While he holds it its mother calls up to it now and then, and it answers.
+    if (stage === 'held') {
+      callT -= dt;
+      if (callT <= 0 && mother.mode === 'follow'
+        && Math.hypot(mother.pos.x - walker.x, mother.pos.z - walker.z) < 6) {
+        calls++;
+        answerT = 0.7;
+        callT = CALL_EVERY * (0.8 + 0.4 * ((calls * 0.618) % 1));
+      }
+    }
+    if (answerT >= 0) {
+      answerT -= dt;
+      if (answerT < 0) bleats++;
+    }
+  }
+
+  function update(dt, walker, cycleT = 0.075, night = 0, o = {}) {
     if (!walker || dt <= 0) return;
+    let step = 0, jumped = false;
     // How he goes: a jump (a teleport) starts the way afresh.
     if (!hasLast || Math.hypot(walker.x - last.x, walker.z - last.z) > 3) {
+      jumped = hasLast;
       crumbCount = 0;
       layCrumb(walker.x, walker.z);
       speed = 0;
     } else {
+      step = Math.hypot(walker.x - last.x, walker.z - last.z);
       speed = damp(speed, Math.hypot(walker.x - last.x, walker.z - last.z) / dt, 8, dt);
       const j = crumbAt(0);
       if (Math.hypot(walker.x - crumbs[j * 2], walker.z - crumbs[j * 2 + 1]) >= CRUMB) {
@@ -419,11 +677,13 @@ export function createFlock(scene, solids = [], trees = []) {
     last.copy(walker);
     hasLast = true;
     still = speed < STILL_SPEED ? still + dt : 0;
+    carry(dt, walker, step, jumped, o);
     if (still === 0) restAnnounced = false;
+    const holding = stage !== 'none';
 
     // Who knows him: near enough to him, or to one already following.
     for (const S of sheep) {
-      if (S.mode === 'follow') continue;
+      if (S.mode === 'follow' || S.mode === 'carried') continue;
       const dW = Math.hypot(S.pos.x - walker.x, S.pos.z - walker.z);
       // One that lay down at his feet stays down, and will not be gathered,
       // until he has gone off from it; then coming near it again is enough.
@@ -453,9 +713,8 @@ export function createFlock(scene, solids = [], trees = []) {
       }
     }
     if (lost) {
-      followers = 0;
-      for (const S of sheep) if (S.mode === 'follow') S.rank = followers++;
-      if (!followers) settleHome(lostX / lost, lostZ / lost);
+      rerank();
+      if (!followers && !holding) settleHome(lostX / lost, lostZ / lost);
     }
 
     const rest = restOf(cycleT, night);
@@ -467,20 +726,42 @@ export function createFlock(scene, solids = [], trees = []) {
     for (const S of sheep) {
       let lieTo = 0;
       let dipTo = 0.05;
+      let turnTo = 0;
       S.drinking = false;   // set afresh by a step at the water's edge below
-      if (S.mode === 'follow') {
+      if (S.mode === 'carried') {
+        // In his arms: legs folded under it, head up, looking about — and
+        // unfolding them as it is set down, so it lands on its feet.
+        S.pace = 0;
+        lieTo = stage === 'lowering' ? 0 : 1;
+        dipTo = -0.35 + Math.sin(S.phase * 0.7) * 0.12;
+        turnTo = 0.3 + 0.45 * shoulder + Math.sin(S.phase * 0.43) * 0.4;
+        S.phase += dt;
+      } else if (S.mode === 'follow') {
         if (gathered) {
           // Come up round him, each along its own bearing, to its own ring.
           const dx = S.pos.x - walker.x, dz = S.pos.z - walker.z;
           const d = Math.hypot(dx, dz) || 1;
-          const ring = (1.35 + (S.rank % 3) * 0.55) * (S.lamb ? 0.85 : 1);
+          // The lamb, while he would take it up, comes right in to his feet
+          // (and does not lie down first, even if it joined them late).
+          const waiting = S === lamb && liftable;
+          const ring = waiting
+            ? 0.85
+            : (1.35 + (S.rank % 3) * 0.55) * (S.lamb ? 0.85 : 1);
           const left = walkToward(S, walker.x + (dx / d) * ring, walker.z + (dz / d) * ring,
             clamp((Math.abs(d - ring) - 0.1) * 1.4, 0, 2.2), dt);
-          if (still > GATHER_AFTER + LIE_AFTER && left < 0.7) lieTo = 1;
-          dipTo = 0.15;
+          // While he holds the lamb they stand round him and look up at
+          // it (any already lying stay down); the rest lie down once it is
+          // down among them again.
+          if (holding) lieTo = S.lie > 0.6 ? 1 : 0;
+          else if (!waiting && still > GATHER_AFTER + LIE_AFTER && left < 0.7) lieTo = 1;
+          dipTo = holding && S.lie < 0.6 ? -0.2 : 0.15;
         } else {
-          // Strung out along the way he went, a little to one side or the other.
-          pointBack(walker, 1.7 + S.rank * 0.6, back);
+          // Strung out along the way he went, a little to one side or the
+          // other — and while he carries her lamb its mother close at his
+          // heel, her head up toward it.
+          const heel = holding && S === mother;
+          if (heel) dipTo = -0.15;
+          pointBack(walker, heel ? 1.15 : 1.7 + S.rank * 0.6, back);
           let ox = walker.x - back.x, oz = walker.z - back.z;
           const ol = Math.hypot(ox, oz) || 1;
           ox /= ol; oz /= ol;
@@ -517,7 +798,13 @@ export function createFlock(scene, solids = [], trees = []) {
         }
       }
       if (S.drinking) dipTo = 1.05;
-      S.lie = damp(S.lie, lieTo, 1.6, dt);
+      if (S.frisk > 0) {
+        // Set down, it skips about: little hops, and its head tossed side to side.
+        S.frisk = Math.max(0, S.frisk - dt);
+        turnTo = Math.sin(S.frisk * 7) * 0.5;
+      }
+      S.turn = damp(S.turn, turnTo, 5, dt);
+      S.lie = damp(S.lie, S.frisk > 0 ? 0 : lieTo, S.mode === 'carried' ? 5 : 1.6, dt);
       if (S.lie > 0.6) {
         lying++;
         if (S.mode === 'follow') { round++; roundX += S.pos.x; roundZ += S.pos.z; }
@@ -525,17 +812,21 @@ export function createFlock(scene, solids = [], trees = []) {
       S.dip = damp(S.dip, dipTo, 4, dt);
       S.phase += dt * S.pace * (S.lamb ? 9 : 6.5);
       // Lambs frisk when the flock trots to keep up with him.
-      S.hop = S.lamb && S.pace > 1.4
-        ? Math.abs(Math.sin(S.phase * 0.5)) * 0.16 * S.s * (1 - S.lie)
-        : damp(S.hop, 0, 10, dt);
+      S.hop = S.frisk > 0
+        ? Math.abs(Math.sin(S.frisk * 9)) * 0.2 * S.s * Math.min(1, S.frisk)
+        : S.lamb && S.pace > 1.4
+          ? Math.abs(Math.sin(S.phase * 0.5)) * 0.16 * S.s * (1 - S.lie)
+          : damp(S.hop, 0, 10, dt);
     }
 
     // Shoulder room: no two sheep in one place, and none underfoot. A push
     // that would put a sheep into the river is not given.
     for (let i = 0; i < COUNT; i++) {
       const A = sheep[i];
+      if (A.mode === 'carried') continue;   // up in his arms, it takes no room on the grass
       for (let j = i + 1; j < COUNT; j++) {
         const B = sheep[j];
+        if (B.mode === 'carried') continue;
         const dx = B.pos.x - A.pos.x, dz = B.pos.z - A.pos.z;
         const d = Math.hypot(dx, dz), want = 0.42 * (A.s + B.s);
         if (d >= want || d < 1e-5) continue;
@@ -553,7 +844,7 @@ export function createFlock(scene, solids = [], trees = []) {
     // They have lain down round him — his own followers, not the rest of the
     // flock keeping noon or night where it grazes: the psalm's word for it,
     // and where they lie is where they graze from now on.
-    if (gathered && !restAnnounced && round >= Math.min(3, followers)) {
+    if (gathered && !holding && !restAnnounced && round >= Math.min(3, followers)) {
       restAnnounced = true;
       rests++;
       caption = REST_CAPTION;
@@ -568,8 +859,7 @@ export function createFlock(scene, solids = [], trees = []) {
       for (const S of sheep) {
         if (S.mode === 'follow' && S.lie > 0.6) { release(S); S.rested = true; }
       }
-      followers = 0;
-      for (const S of sheep) if (S.mode === 'follow') S.rank = followers++;
+      rerank();
     }
 
     // The pipe: first any notes owed for sheep that have just fallen in, one
@@ -612,8 +902,16 @@ export function createFlock(scene, solids = [], trees = []) {
     song() {
       sung.notes = notes;
       sung.note = note;
+      sung.bleats = bleats;
+      sung.calls = calls;
       return sung;
     },
+    // v36: whether his arms are full with the lamb (they are from the
+    // moment he stoops for it until it stands on the grass again), and how
+    // far he is bent down to it.
+    get cradling() { return stage !== 'none'; },
+    get stoop() { return stoop; },
+    get shoulder() { return shoulder; },
     state() {
       return {
         count: COUNT,
@@ -625,7 +923,9 @@ export function createFlock(scene, solids = [], trees = []) {
         gathered: followers > 0 && still > GATHER_AFTER,
         joins,
         rests,
-        sheep: sheep.map(S => ({ x: S.pos.x, z: S.pos.z, mode: S.mode, lie: S.lie, lamb: S.lamb, rested: S.rested })),
+        // v36 (Isaiah 40:11): the lamb carried — none|lifting|held|lowering.
+        carry: { stage, lifts, setDowns, calls, bleats, shoulders: onShoulders },
+        sheep: sheep.map(S => ({ x: S.pos.x, z: S.pos.z, mode: S.mode, lie: S.lie, lamb: S.lamb, rested: S.rested, up: S.up })),
       };
     },
   };

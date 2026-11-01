@@ -258,7 +258,8 @@ export function createWatering(scene, treeSpots, avoid) {
     say(GROUND);
   }
 
-  function update(dt, walker) {
+  // busy: his hands are already full (a lamb in his arms, v36).
+  function update(dt, walker, busy = false) {
     clock += dt;
     if (walker) {
       if (last) speed = damp(speed, Math.hypot(walker.x - last.x, walker.z - last.z) / Math.max(dt, 1e-4), 10, dt);
@@ -271,7 +272,7 @@ export function createWatering(scene, treeSpots, avoid) {
       if (wading || (edge < BRINK && still >= DIP_AFTER)) {
         // Only while some ground is still dry: with every patch green there
         // is nothing to carry water to, and his hands stay free.
-        if (!carrying && patches.some(P => P.want < 0.5)) { carrying = true; dips++; say(WATER); }
+        if (!carrying && !busy && patches.some(P => P.want < 0.5)) { carrying = true; dips++; say(WATER); }
       } else if (carrying && still >= POUR_AFTER) {
         for (let i = 0; i < patches.length; i++) {
           const P = patches[i];
