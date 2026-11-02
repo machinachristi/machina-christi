@@ -1,0 +1,82 @@
+name: Weekly Jobs
+
+# The API's weekly chores, asked for the way the deploy asks: a message in
+# one of the API's storage-queue mailboxes, which the API then answers under
+# its own identity (functions/src/functions/publish-saints.js and
+# reindex-search.js).
+#   Sundays 04:07 UTC → saints-publish: refresh the saints snapshot from the
+#                       database (one wake-up a week, inside its free offer)
+#   Sundays 05:07 UTC → search-reindex: rebuild the search cards, an hour
+#                       later so they include that snapshot; this also keeps
+#                       the free search service in use
+# These used to be timers inside the API. Azure checks every timer and queue
+# trigger for work every 10 seconds, day and night, and bills each check to
+# the API's storage account: about $0.10 a month per trigger (AB#126). A
+# schedule here costs nothing, and posting needs only the right the deploy
+# identity already has: Storage Queue Data Message Sender on these two queues
+# (infra/modules/publish-queue.bicep). No key or password is stored.
+# Minute 07, not 00: GitHub may delay or drop scheduled runs at the busy top
+# of the hour.
+
+on:
+  schedule:
+    - cron: '7 4 * * 0'
+    - cron: '7 5 * * 0'
+  workflow_dispatch: # ask by hand (works from main only)
+    inputs:
+      job:
+        description: Which job to ask the API for
+        type: choice
+        options: [saints-publish, search-reindex]
+        default: saints-publish
+
+concurrency:
+  group: weekly-jobs
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-machina-platform
+
+jobs:
+  ask:
+    name: Ask the API
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # lets the run ask GitHub for its OIDC token
+    steps:
+      - name: Which job
+        id: job
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          CHOSEN: ${{ inputs.job }}
+        run: |
+          case "$SCHEDULE" in
+            '7 4 * * 0') queue=saints-publish ;;
+            '7 5 * * 0') queue=search-reindex ;;
+            '') queue="$CHOSEN" ;;
+            *) echo "::error::no job for schedule '$SCHEDULE'"; exit 1 ;;
+          esac
+          case "$queue" in saints-publish|search-reindex) ;; *) echo "::error::unknown job '$queue'"; exit 1 ;; esac
+          echo "queue=$queue" >> "$GITHUB_OUTPUT"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Post to the API's mailbox
+        env:
+          QUEUE: ${{ steps.job.outputs.queue }}
+        run: |
+          # The account's name from the platform's last deploy (infra/main.bicep outputs).
+          storage=$(az deployment group show -g "$RESOURCE_GROUP" -n machina-platform --query properties.outputs.storageAccountName.value -o tsv)
+          test -n "$storage"
+          # The content doesn't matter (its arrival is the request); it says who asked.
+          msg=$(printf '{"by":"weekly","run":"%s"}' "$GITHUB_RUN_ID" | base64 -w0)
+          az storage message put --auth-mode login --account-name "$storage" \
+            --queue-name "$QUEUE" --content "$msg" -o none
+          echo "### Asked the API for \`$QUEUE\`" >> "$GITHUB_STEP_SUMMARY"

@@ -109,7 +109,7 @@
       "touches": ["actions", "devops", "claude"] },
     { "id": "actions", "tier": "bench", "name": "GitHub Actions", "status": "live",
       "what": "Automation that runs on every change.",
-      "here": "Tests each change, previews its effect on Azure, and on merge deploys the site and the API. The API signs in to Azure without any stored password.",
+      "here": "Tests each change, previews its effect on Azure, on merge deploys the site and the API, and each Sunday asks the API to refresh the saints and the search. It signs in to Azure without any stored password.",
       "touches": ["github", "playwright", "bicep", "swa", "functions"] },
     { "id": "bicep", "tier": "bench", "name": "Bicep", "status": "live",
       "what": "Azure's language for writing infrastructure down as code.",

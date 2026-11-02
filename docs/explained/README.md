@@ -19,6 +19,7 @@ afterthought: every phase of work adds to them.
   - [The homepage gates — three look tests, and the light they left behind](homepage-gates-look-tests.md)
   - [The morning walk — a robot checks the live site every day](live-site-check.md)
   - [The waiting room at Azure's door — why the API sometimes took a minute](api-waiting-room.md)
+  - [The letterbox that cost money — trimming the API's storage bill](storage-bill.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.
