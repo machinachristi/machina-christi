@@ -35,9 +35,20 @@ param logDailyCapGb string = '0.10'
 @description('Daily ingestion cap in GB for the browser\'s workspace (log-machina-web). About 50 MB: hundreds of times today\'s real traffic.')
 param webLogDailyCapGb string = '0.05'
 
-@description('Most Function instances that may run at once. One is plenty for today\'s traffic and caps how fast a flood could use up the free grant; raise it once Cloudflare rate-limits the API.')
+@description('Most Function instances that may run at once. One is plenty for today\'s traffic and caps how fast a flood could use up the free grant (Cloudflare also rate-limits the API).')
 @minValue(1)
 param maxInstances int = 1
+
+// AB#125: Flex Consumption lets a 512 MB instance take only 4 HTTP requests at
+// once unless told otherwise. With one instance allowed, Azure's front end held
+// every request beyond that, retrying every 5 s for up to 60 s and then
+// answering 503, even while the function itself answered in milliseconds.
+// The functions mostly wait on other services (Cosmos, Blob, Search), which
+// Node does many of at once on one core. Free: Flex bills an instance's busy
+// seconds, not each request, and the one-instance ceiling stays.
+@description('Most HTTP requests one Function instance takes at once (Flex\'s default for 512 MB is 4).')
+@minValue(1)
+param httpConcurrency int = 32
 
 var tags = {
   project: 'machina-christi'
@@ -480,6 +491,11 @@ var apiFunctionAppConfig = {
   scaleAndConcurrency: {
     maximumInstanceCount: maxInstances
     instanceMemoryMB: 512
+    triggers: {
+      http: {
+        perInstanceConcurrency: httpConcurrency
+      }
+    }
   }
   runtime: {
     name: 'node'

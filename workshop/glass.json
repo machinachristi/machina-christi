@@ -49,7 +49,7 @@
       "touches": ["cloudflare", "actions"] },
     { "id": "functions", "tier": "house", "name": "Functions", "status": "live",
       "what": "Code that runs only when it is called.",
-      "here": "The API at api.machinachristi.com: the Church's day and its saint, the prayers and their recordings, and search, which it also fills with cards. It sleeps when no one calls, and only Cloudflare may reach it.",
+      "here": "The API at api.machinachristi.com: the Church's day and its saint, the prayers and their recordings, and search, which it also fills with cards. It sleeps when no one calls, runs as one copy that takes up to 32 requests at once, and only Cloudflare may reach it.",
       "touches": ["cloudflare", "identity", "blob", "appi", "search"] },
     { "id": "identity", "tier": "house", "name": "Managed identity", "status": "live",
       "what": "An identity Azure gives a service, so it can prove who it is without a password.",
