@@ -168,7 +168,18 @@ starts again, like a car on a frosty morning. Later answers come quickly.
 *Here:* the daily live-site check gives every check a second try, in case the
 API was parked overnight. Not every slow answer is a cold start: the waits of
 10 to 55 seconds found while building it (AB#125) came even while the API was
-busy answering, so they are something else.
+busy answering. They were a concurrency limit (next entry).
+
+**Concurrency (and its limit).** How many things a program handles at the
+same moment, like the number of seats in a café. A program that mostly waits
+on others (a database, a file store) can serve many people at once, the way a
+waiter takes many orders while the kitchen cooks. Cloud platforms set a limit
+per copy of a program and add copies when it is full; if no more copies are
+allowed, newcomers wait at the door.
+*Here:* Azure let the API's single copy seat only 4 requests at once, and
+checked the queue only every 5 seconds, so visitors waited 5, 10 … 60 seconds
+and sometimes were turned away. Raising the limit to 32 fixed it at no cost
+(AB#125, [the waiting room at Azure's door](api-waiting-room.md)).
 
 **Cache-busting (versioning).** Changing the question slightly (adding
 "version 2") so every cache treats it as new and fetches a fresh answer,

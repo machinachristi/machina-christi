@@ -139,9 +139,10 @@ for harmless noise, and each was told apart. The usual pre-merge tests list
   project, in `~/.claude/scheduled-tasks/live-site-check/SKILL.md`.
 - If every check fails at once, suspect the Mac (asleep, offline, lid closed
   on battery) or Cloudflare's bot protection before the site.
-- Until AB#125 (the waits at Azure's door) is fixed, some mornings the
-  recordings check will fail; the routine adds that morning to AB#125
-  instead of opening a new Issue.
+- The waits at Azure's door (AB#125) came from the API seating only 4
+  requests at once; it now seats 32 ([the waiting room at Azure's
+  door](api-waiting-room.md)). If the recordings check slows down again,
+  look there first.
 - The pages' prefetch hints (homepage gates, Eden's warm-up) never help on
   the live site, because Cloudflare refuses them. That's speed, not breakage,
   so the check ignores it; Cloudflare's Speed Brain setting decides it.
