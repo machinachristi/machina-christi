@@ -117,15 +117,15 @@
       "touches": ["actions", "functions", "blob", "identity", "appi", "logs", "budget"] },
     { "id": "playwright", "tier": "bench", "name": "Playwright", "status": "live",
       "what": "A robot that uses web pages the way you do.",
-      "here": "Before anything merges, more than 150 tests walk every page: Eden must grow, Camino must play, search must find the saints, no security rule may break, and this map must match what is built.",
-      "touches": ["actions"] },
+      "here": "Before anything merges, more than 150 tests walk every page: Eden must grow, Camino must play, search must find the saints, no security rule may break, and this map must match what is built. Each morning it walks the live site too, to catch anything that broke on its own.",
+      "touches": ["actions", "claude"] },
     { "id": "devops", "tier": "bench", "name": "Azure DevOps", "status": "live",
       "what": "Boards for planning work.",
-      "here": "Each release of the site, including this roadmap's eight phases, is planned there as work items.",
+      "here": "Each release of the site, including this roadmap's eight phases, is planned there as work items, and anything the morning check finds broken is written up there.",
       "touches": ["github", "claude"] },
     { "id": "claude", "tier": "bench", "name": "Claude", "status": "live",
       "what": "An AI assistant made by Anthropic.",
-      "here": "Writes much of the code beside the builder, one conversation at a time, and each week tends Eden with a new detail drawn from Scripture.",
-      "touches": ["github", "devops"] }
+      "here": "Writes much of the code beside the builder, one conversation at a time, and each week tends Eden with a new detail drawn from Scripture. Each morning it sends Playwright round the live site and reports anything broken.",
+      "touches": ["github", "devops", "playwright"] }
   ]
 }
