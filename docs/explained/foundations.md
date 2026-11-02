@@ -162,6 +162,14 @@ sensor. Cheap, but the first knock waits while it wakes.
 *Here:* Azure SQL's free offer sleeps after an hour alone and takes about a
 minute to wake, which is why visitors read a published snapshot instead.
 
+**Cold start.** A slow first answer after a quiet spell: to save money, the
+cloud parks a program nobody is using, and the next visitor waits while it
+starts again, like a car on a frosty morning. Later answers come quickly.
+*Here:* the daily live-site check gives every check a second try, in case the
+API was parked overnight. Not every slow answer is a cold start: the waits of
+10 to 55 seconds found while building it (AB#125) came even while the API was
+busy answering, so they are something else.
+
 **Cache-busting (versioning).** Changing the question slightly (adding
 "version 2") so every cache treats it as new and fetches a fresh answer,
 instead of serving a copy kept from before. Like reprinting a menu with a new
@@ -225,6 +233,23 @@ open the door to that hallway".
 failure (a stolen badge, a mistaken rule) isn't enough to get in.
 *Here:* to reach the saints, you must be inside our network *and* hold a badge
 with a database account; the API's badge can only read.
+
+**Certificate (the padlock).** A website's ID card, signed by an authority
+browsers trust. The browser checks it before showing the padlock: it proves
+you reached the real site, and it lets the two sides scramble everything sent
+between them (HTTPS), so no one on the way can read or change it. Certificates
+run out on purpose, so a stolen one is soon useless, and an expired one makes
+browsers show a full-page warning instead of the site.
+*Here:* Cloudflare renews the site's certificates by itself; the daily
+live-site check makes sure it has, with two weeks to spare.
+
+**Bot protection.** A doorman who turns away visitors that look like
+machines rather than people: too fast, too regular, or coming from a computer
+centre instead of a home. It stops scrapers and floods, but it can't tell a
+friendly robot from a hostile one.
+*Here:* Cloudflare's Bot Fight Mode turns GitHub's test machines away, so the
+deploy lets its own machine in by the back door for a minute, and the daily
+live-site check runs from the builder's Mac instead of from GitHub.
 
 **Role and least privilege.** A role is a named set of permissions, like a job
 description: "may file cards, may not change the locks". Least privilege means
@@ -537,6 +562,13 @@ to, the garden, and the world carries on.
 **Branch.** A photocopy of the whole project you can scribble on while the real
 one stays untouched. Nothing you do there reaches the live site until it's merged.
 
+**Worktree (a second desk).** A second folder holding the same project on
+another branch, so two pieces of work can lie open at once without disturbing
+each other, like a second desk with its own papers. Both desks share one
+history, so finished work from either is merged the usual way.
+*Here:* each morning the live-site check sets up a fresh desk holding main
+(what is live) and runs from there, whatever branch the usual folder is on.
+
 **Pull request (PR).** Asking to fold the scribbled copy back into the real one.
 It's where the changes are reviewed and the automatic checks run first.
 
@@ -658,6 +690,16 @@ built, and the three touches people liked came to today's page as CSS.
 **Verification (check the result, not the report).** "Succeeded" means the
 steps ran, not that the outcome is right. After a change, look at the thing
 itself: is the role really there, does the live search really find Agnes?
+
+**Monitoring (checking the live thing).** A test asks "did my change break
+anything?" and runs when something changes. Monitoring asks "is it working
+right now?" and runs on a clock, whether or not anything changed, like a
+caretaker's morning walk round a building nobody has touched. Things do break
+on their own: a service the site relies on goes down, a certificate runs out,
+a cache keeps a bad copy. A healthy project needs both.
+*Here:* the daily live-site check (`tests/live/`), run each morning by a
+scheduled task on the Mac, which adds an Issue to the board when something is
+really broken.
 
 **Flaky test.** A test that sometimes fails without anything being wrong, often
 because it checks something timed on a slow, busy machine. Run once more to
