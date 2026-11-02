@@ -209,6 +209,10 @@ let heardNotes = 0;
 let heardWater = 0;
 let heardFruit = 0;
 let heardPipe = 0;
+// v36: the carried lamb's voice, and its mother's calling up to it.
+let heardBleats = 0;
+let heardEwe = 0;
+const cradleSpot = { bosom: new THREE.Vector3(), shoulders: new THREE.Vector3() };
 // v33: in heaven, the harps under his steps and the multitude's answer.
 let heardHarp = 0;
 let heardAnswers = 0;
@@ -273,7 +277,9 @@ function updateStillness(dt, v) {
   if (moving) forceSit = false;   // the first touch of input always rises
   const pos = character.group.position;
   const edge = riverEdgeDist(pos.x, pos.z);
-  const byWater = edge > 0.2 && edge < 3.2;   // on the bank, not out in the water
+  // On the bank, not out in the water — and not while he holds the lamb
+  // (v36): he stands with it, and sits once it is down.
+  const byWater = edge > 0.2 && edge < 3.2 && !garden.cradling;
   if (moving || (!byWater && !forceSit)) stillFor = 0;
   else stillFor += dt;
   seated = forceSit || (byWater && stillFor >= SIT_AFTER);
@@ -320,6 +326,7 @@ renderer.setAnimationLoop(() => {
   else {
     character.setCarrying(false);
     character.setHolding(null);
+    character.setCradling(false);
     ambience.update(dt, 0, character.group.position, 0, 0, 0, 'heaven');
     heavenSong();
   }
@@ -364,11 +371,15 @@ function edenFrame(dt) {
   const lure = seated || consider.lying
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
-  const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze);
+  // While the realm has him (the ladder) his arms are not his own.
+  const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze,
+    realm.drive() ? null : character.cradleAt(cradleSpot));
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
   // …and a fruit given him under the tree, until it is eaten (v30).
   character.setHolding(garden.holding());
+  // …and the flock's lamb, in his arms at his breast (v36, Isaiah 40:11).
+  character.setCradling(garden.cradling, garden.stoop, garden.shoulder);
   ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush, 'eden');
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
@@ -411,6 +422,15 @@ function edenFrame(dt) {
   if (piped.notes !== heardPipe) {
     heardPipe = piped.notes;
     ambience.pipe(piped.note);
+  }
+  // v36 (Isaiah 40:11): the lamb in his arms bleats, and its mother calls.
+  if (piped.bleats !== heardBleats) {
+    heardBleats = piped.bleats;
+    ambience.bleat(true);
+  }
+  if (piped.calls !== heardEwe) {
+    heardEwe = piped.calls;
+    ambience.bleat(false);
   }
   // v34 (Job 38:7): a star in sight brightens and sings.
   const sung = garden.starSong();
@@ -662,6 +682,10 @@ window.__world = {
       gather: garden.gather(),
       flags: garden.flags(),
       fry: garden.fry(),
+      // v36: the doves washing in their shallow (Song of Solomon 5:12) —
+      // `shown` by day, `washes`/`shakes` so far, `joys` each time he has
+      // come in among them, `drops` in the air now.
+      doves: garden.doves(),
       // v28: the ground blossoming wherever he walks (Isaiah 35:1-2 — `open`
       // flowers standing open now, `byWalker` how many came up under his own
       // feet rather than his companion's, `ringing` while his stillness is
@@ -688,6 +712,9 @@ window.__world = {
       // where they graze at noon and by night), `gathered` while they stand
       // round him, `home` the pasture they keep (remembered across visits),
       // `joins`/`rests` this visit, `sheep[]` where each stands and how.
+      // v36 (Isaiah 40:11): `carry` — the lamb in his arms, `stage`
+      // none|lifting|held|lowering, `shoulders` while it rides up across
+      // them (Luke 15:5), `lifts`/`setDowns`, its mother's `calls`.
       flock: garden.flock(),
       // v34: considering the heavens (Psalm 8:3) — `lying` whether he lies
       // back in the grass to look up, `lie` how far down he is (0 standing →

@@ -1,5 +1,5 @@
 {
-  "version": 35,
+  "version": 36,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -444,13 +444,30 @@
         { "text": "That gate is within his reach: stand on its threshold and the pearl and the light in its way brighten, and its word is given: Sha'ar, the gates of it shall not be shut at all by day.", "source": "Revelation 21:25" },
         { "text": "The whole city is four draw calls (the wall with its foundations, the twelve pearls, the light in the gates, and the travellers with the lights over the gates), and the travellers are moved wholly in their shader; the stones' joints and glints are only worked out near enough to be seen.", "source": null }
       ]
+    },
+    {
+      "version": 36,
+      "date": "2026-11-01",
+      "focus": "he shall carry them in his bosom",
+      "realm": "eden",
+      "changes": [
+        { "text": "Walk in among the flock and stand, and its lamb comes right in to his feet; he stoops and takes it up into his arms and carries it at his breast, its head up by his shoulder, looking about, and its word is given: Uvecheiko yissa, he carrieth them in his bosom.", "source": "Isaiah 40:11" },
+        { "text": "Walk on with it and he swings it up across his shoulders, where it rides looking back over them, through the river too, where the rest of the flock will not follow; stop, and it comes down into his arms again.", "source": "Luke 15:5" },
+        { "text": "While the flock walks with him its mother keeps close at his heel with her head up toward it, and calls up to it now and then, and the lamb answers her: a soft new voice in the garden, high and short for the lamb, lower for the ewe.", "source": "Isaiah 40:11" },
+        { "text": "Stand a while with it, or lie back in the grass, and he sets it down on the grass beside him, never across the water from its mother: Alot yenahel, he gently leadeth those that are with young.", "source": "Isaiah 40:11" },
+        { "text": "Set down while the flock stands round him, it skips about a while, and then they all lie down round him; if they have already lain down round him as he held it, it lies down beside its mother.", "source": "Psalm 114:4" },
+        { "text": "While he holds the lamb his hands are full: no water is taken up at the river and no fruit given under a tree until it is down, and he stands with it by the water rather than sitting.", "source": null },
+        { "text": "In a shallow of the slow western reach a few white doves stand in the water at its edge, each in its own time ducking head and breast under, once and again, and coming up to shake itself, wings flung half open and shivering, so that the drops fly off it sparkling.", "source": "Song of Solomon 5:12" },
+        { "text": "Come in among them and they are not afraid: they turn to look at him and every one washes at once; draw near one and its name is given, Yonim. By night they are gone to roost.", "source": "Genesis 2:19" },
+        { "text": "The lamb in his arms is still one of the flock's own instances, so carrying it costs no draw call; the doves are at most three (their bodies, their wings only while one shakes, and the drops only while some are in the air), none of them in the garden's opening view.", "source": null }
+      ]
     }
   ],
   "next": [
-    "Carry a lamb: stand still beside the flock's lamb and he lifts it into his arms and carries it at his breast while the ewe and the ram follow (Isaiah 40:11)",
+    "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
+    "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
     "The morning stars sing together: lying back as the night ends, every star in sight sings at once in a swelling chord as the east brightens behind them (Job 38:7)",
     "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
-    "Doves washing at the river's edge, dipping and shaking out their wings in the shallows by the bank (Song of Solomon 5:12)",
     "The healing of the nations: the travellers who come up the street to the Tree of Life each take a leaf from it and carry it back out through the gates, glowing green, to the nations beyond (Revelation 22:2)"
   ]
 }
