@@ -836,32 +836,31 @@ test.describe('the garden\'s features', () => {
     }
     await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Uvecheiko yissa');
 
-    // He walks on with it: it rides up across his shoulders, and the rest
-    // of the flock still come after him.
+    // He walks on with it: it rides up across his shoulders, and goes with
+    // him. (Whether the ewe and the ram come too depends on whether they had
+    // already lain down round him while he stood — v31's rule, unchanged.)
     const start = (await getState(page)).pos;
     await frame.evaluate(([x, z]) => window.__world.walkTo(x, z), [start.x + 12, start.z - 5]);
     await expect.poll(async () => (await getState(page)).flock.carry.shoulders, { timeout: 30000 }).toBe(true);
     await expect.poll(async () => {
       const s = await getState(page);
-      if (dist2d(s.pos, start) < 5) return false;
       const lamb = s.flock.sheep.find(h => h.lamb);
-      const near = s.flock.sheep.filter(h => h.mode === 'follow' && dist2d(h, s.pos) < 8);
-      return lamb.mode === 'carried' && near.length >= 1;
+      return dist2d(s.pos, start) >= 5 && lamb.mode === 'carried' && dist2d(lamb, s.pos) < 0.9;
     }, { timeout: 45000 }).toBe(true);
 
     // He stands: it comes down into his arms again and onto the grass
-    // beside him, and the word for it is given; it follows on foot again.
+    // beside him, and the word for it is given; it is on its own feet again.
     await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 45000 }).toBe('Alot yenahel');
+    const down = await getState(page);
     {
-      const s = await getState(page);
-      const lamb = s.flock.sheep.find(h => h.lamb);
-      expect(s.flock.carry.setDowns).toBe(1);
+      const lamb = down.flock.sheep.find(h => h.lamb);
+      expect(down.flock.carry.setDowns).toBe(1);
       expect(lamb.mode === 'follow' || lamb.rested).toBe(true);
       expect(lamb.up).toBe(0);
-      expect(s.flock.carry.bleats).toBeGreaterThanOrEqual(2);
+      expect(down.flock.carry.bleats).toBeGreaterThanOrEqual(2);
     }
-    // And then they all lie down round him, as before.
-    await expect.poll(async () => (await getState(page)).flock.rests, { timeout: 45000 }).toBeGreaterThan(0);
+    // It skips about, and then lies down round him: the psalm's word again.
+    await expect.poll(async () => (await getState(page)).flock.rests, { timeout: 45000 }).toBeGreaterThan(down.flock.rests);
   });
 
   test('doves by the rivers of waters: white doves wash in a shallow of the slow reach, dip and shake off the water, all wash at once when he comes among them, and are gone by night (v36, Song of Solomon 5:12)', async ({ page }) => {

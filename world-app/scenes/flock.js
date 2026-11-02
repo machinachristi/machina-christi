@@ -34,8 +34,10 @@
 // head turns to look about, its mother close at his heel looking up at it and calling, and the
 // lamb answering her. Stand a while, or lie back in the grass, and he sets
 // it down beside him — never across the water from its mother, where it
-// could not go to her — and it skips about, and then they all lie down
-// round him.
+// could not go to her. Set down while the flock stands round him, it skips
+// about, and then they all lie down round him; standing among them, they
+// lie down round him as they always did, and the lamb lies down by its
+// mother once he sets it down.
 //
 // No score, no count, nothing to lose: a sheep that strays is only a sheep
 // grazing. Three sheep in four draw calls — bodies, heads, legs and the
@@ -616,23 +618,31 @@ export function createFlock(scene, solids = [], trees = []) {
       lamb.pos.x = liftFrom.x + (putTo.x - liftFrom.x) * k;
       lamb.pos.z = liftFrom.z + (putTo.z - liftFrom.z) * k;
       if (stageT >= LIFT_TIME) {
-        // Down beside her: it follows again, and skips about her a while,
-        // and the flock, still standing round him, lies down a little after.
         lamb.up = 0;
-        lamb.lie = Math.min(lamb.lie, 0.2);   // standing, not lying round him yet
-        lamb.mode = 'follow';
-        rerank();
-        lamb.frisk = FRISK_FOR;
+        lamb.lie = Math.min(lamb.lie, 0.2);   // on its feet
+        if (mother.rested) {
+          // The flock has already lain down round him while he held it: set
+          // down beside its mother, it lies down by her.
+          release(lamb);
+          lamb.rested = true;
+        } else {
+          // Down among them while they stand: it follows again, and skips
+          // about a while before they all lie down round him.
+          lamb.mode = 'follow';
+          rerank();
+          lamb.frisk = FRISK_FOR;
+        }
         stage = 'none';
         stageT = 0;
         armed = false;
         walked = 0;
         setDowns++;
-        caption = SET_DOWN_CAPTION;
-        captionLeft = CAPTION_FOR;
+        // (The psalm's word for their lying down keeps the line while it lasts.)
+        if (caption !== REST_CAPTION || captionLeft <= 0) {
+          caption = SET_DOWN_CAPTION;
+          captionLeft = CAPTION_FOR;
+        }
         bleats++;
-        still = GATHER_AFTER + 0.001;
-        restAnnounced = false;
       }
     }
     // How far he is bent down to it: all the way as he takes it up from the
@@ -749,11 +759,9 @@ export function createFlock(scene, solids = [], trees = []) {
             : (1.35 + (S.rank % 3) * 0.55) * (S.lamb ? 0.85 : 1);
           const left = walkToward(S, walker.x + (dx / d) * ring, walker.z + (dz / d) * ring,
             clamp((Math.abs(d - ring) - 0.1) * 1.4, 0, 2.2), dt);
-          // While he holds the lamb they stand round him and look up at
-          // it (any already lying stay down); the rest lie down once it is
-          // down among them again.
-          if (holding) lieTo = S.lie > 0.6 ? 1 : 0;
-          else if (!waiting && still > GATHER_AFTER + LIE_AFTER && left < 0.7) lieTo = 1;
+          // They lie down round him when they always did, lamb in his arms
+          // or not — looking up at it while they still stand.
+          if (!waiting && still > GATHER_AFTER + LIE_AFTER && left < 0.7) lieTo = 1;
           dipTo = holding && S.lie < 0.6 ? -0.2 : 0.15;
         } else {
           // Strung out along the way he went, a little to one side or the
@@ -843,8 +851,9 @@ export function createFlock(scene, solids = [], trees = []) {
 
     // They have lain down round him — his own followers, not the rest of the
     // flock keeping noon or night where it grazes: the psalm's word for it,
-    // and where they lie is where they graze from now on.
-    if (gathered && !holding && !restAnnounced && round >= Math.min(3, followers)) {
+    // and where they lie is where they graze from now on. (A lamb in his arms
+    // is no follower on the grass; it lies down by them when he sets it down.)
+    if (gathered && !restAnnounced && round >= Math.min(3, followers)) {
       restAnnounced = true;
       rests++;
       caption = REST_CAPTION;
