@@ -1,5 +1,5 @@
 {
-  "version": 37,
+  "version": 38,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -476,13 +476,28 @@
         { "text": "The tree yields her fruit every month: its twelve fruits are the twelve months, and the month it is now hangs ripe, twice the size of the rest and swelling softly.", "source": "Revelation 22:2" },
         { "text": "All of it is one draw call: the bearers walk wholly in their shader, and his own leaf, falling, held and given, is two more points in the same cloud; the leaf in his hand is drawn only while he holds it.", "source": null }
       ]
+    },
+    {
+      "version": 38,
+      "date": "2026-11-07",
+      "realm": "eden",
+      "focus": "praise him in the dance",
+      "changes": [
+        { "text": "Tap him and he dances for joy where he stands: arms flung up and wide, light skipping steps, two whole turns, one leap, and a bow at the end — Betof umachol, with the timbrel and dance.", "source": "Psalm 150:4" },
+        { "text": "A timbrel sounds under every skipping step, and a harp plays a little tune over it that climbs to its top note for the leap and comes home for the bow; where the phone can, it gives a small leap too.", "source": "Psalm 149:3" },
+        { "text": "Petals are flung up out of the meadow round him in a turning spiral, going the way he turns, and drift down again after him — almond white, blush, gold, lilac and pomegranate red, glowing faintly by night.", "source": "Psalm 96:12" },
+        { "text": "If his companion is near, she stops, turns to him, and a moment after dances too, the other way round.", "source": "Jeremiah 31:13" },
+        { "text": "The lambs near him leap and toss their heads all the while he dances, and a moment after.", "source": "Psalm 114:4" },
+        { "text": "Tap him again once he has bowed and he dances the other way round; a drag, or a tap anywhere else, and he simply stops. He does not dance in the water, lying back, or with water, fruit or a lamb in his hands.", "source": null },
+        { "text": "The two figures are drawn in fewer pieces — each head is one with its body and each foot with its leg — so the garden's opening shot costs 186 draws instead of 192, and the petals cost one more only while they are in the air.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
-    "The morning stars sing together: lying back as the night ends, every star in sight sings at once in a swelling chord as the east brightens behind them (Job 38:7)",
-    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)",
-    "The water of life freely: stand at the river's brink in heaven and he stoops and drinks from his cupped hands, and the river's light runs up through the glass round him (Revelation 22:17)"
+    "Water flung for joy: tap him while he carries water from the river and he dances with it, flinging it out round him in a ring of bright drops that waters the ground all about (Genesis 2:6)",
+    "Dancing before the glory: in heaven, tap him on the sea of glass and he dances before the light with all his might, and the multitude's lights sway with him (2 Samuel 6:14)",
+    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)"
   ]
 }

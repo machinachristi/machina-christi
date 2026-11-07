@@ -6,7 +6,7 @@
 // model files — every future change to the figure stays a readable diff.
 
 import * as THREE from 'three';
-import { clamp, damp, shortestAngle, smoothstep } from './util.js';
+import { clamp, damp, shortestAngle, smoothstep, mergeGeos } from './util.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 
 // Two gaits, not a continuous speed (v25, Psalm 37:23): any input is the
@@ -44,6 +44,15 @@ const LIE_WALKS = 0.12;      // he may walk once lying back has eased below this
 const LIE_SLOPE = 0.6;       // the most (radians) he lies tilted along a slope
 const HIP = 0.9;             // the hips' height standing, which he lies back about
 const HIP_LYING = 0.21;      // …and lying, so his back rests on the grass
+// Dancing for joy (v38, Psalm 150:4, "praise him with the timbrel and
+// dance"): dance.js keeps the time; here the body keeps the steps — arms
+// flung up and wide, light skipping steps, two whole turns, one leap, and a
+// bow at the end. The turn is the inner body's alone, so the camera holds
+// still while he whirls.
+export const DANCE_LEN = 5.6;        // seconds, from the first step to the bow
+const DANCE_BEAT = 2.6;              // skipping steps a second
+const DANCE_TURNS = 2;               // whole turns in the dance
+const LEAP = [4.15, 4.8];            // the leap, from leaving the ground to landing
 
 export function createCharacter({ eve = false } = {}) {
   const skin = new THREE.MeshLambertMaterial({ color: 0xC69572, flatShading: true });
@@ -56,19 +65,19 @@ export function createCharacter({ eve = false } = {}) {
   const body = new THREE.Group();
   group.add(body);
 
-  // Torso — a single tapered capsule; shoulders slightly narrower for Eve.
+  // Torso — a single tapered capsule; shoulders slightly narrower for Eve —
+  // and the head on it. Both are the one skin, so they are one mesh (v38:
+  // a draw call fewer for each of the pair, the same figure).
   const torso = new THREE.Group();
-  const torsoMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.205, 0.42, 3, 8), skin);
-  torsoMesh.position.y = 0.32;
-  torsoMesh.scale.x = eve ? 0.9 : 1.04;
+  const torsoMesh = new THREE.Mesh(mergeGeos([
+    new THREE.CapsuleGeometry(0.205, 0.42, 3, 8).toNonIndexed().scale(eve ? 0.9 : 1.04, 1, 1).translate(0, 0.32, 0),
+    new THREE.SphereGeometry(0.155, 10, 8).toNonIndexed().translate(0, 0.88, 0),
+  ]), skin);
   torso.add(torsoMesh);
   torso.position.y = 0.9;
   body.add(torso);
 
-  // Head + hair. Adam: a close cap. Eve: the cap plus hair falling down the back.
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 8), skin);
-  head.position.y = 0.88;
-  torso.add(head);
+  // Hair. Adam: a close cap. Eve: the cap plus hair falling down the back.
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.165, 10, 8), hair);
   cap.scale.set(1, 0.72, 1);
@@ -81,27 +90,21 @@ export function createCharacter({ eve = false } = {}) {
     torso.add(fall);
   }
 
-  // Limbs pivot at shoulder/hip; meshes hang below their pivots.
-  function limb(radius, length, px, py, parent) {
+  // Limbs pivot at shoulder/hip; meshes hang below their pivots. A leg
+  // and its simple foot, grounded at its base, are one mesh (v38).
+  function limb(radius, length, px, py, parent, foot = false) {
     const pivot = new THREE.Group();
     pivot.position.set(px, py, 0);
-    const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 3, 7), skin);
-    mesh.position.y = -(length / 2 + radius);
-    pivot.add(mesh);
+    const parts = [new THREE.CapsuleGeometry(radius, length, 3, 7).toNonIndexed().translate(0, -(length / 2 + radius), 0)];
+    if (foot) parts.push(new THREE.BoxGeometry(0.11, 0.07, 0.24).toNonIndexed().translate(0, -0.845, 0.05));
+    pivot.add(new THREE.Mesh(mergeGeos(parts), skin));
     parent.add(pivot);
     return pivot;
   }
   const armL = limb(0.062, 0.5, -0.285, 0.62, torso);
   const armR = limb(0.062, 0.5, 0.285, 0.62, torso);
-  const legL = limb(0.082, 0.6, -0.115, 0.9, body);
-  const legR = limb(0.082, 0.6, 0.115, 0.9, body);
-
-  // Simple feet grounded at the base of each leg.
-  for (const leg of [legL, legR]) {
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.24), skin);
-    foot.position.set(0, -0.845, 0.05);
-    leg.add(foot);
-  }
+  const legL = limb(0.082, 0.6, -0.115, 0.9, body, true);
+  const legR = limb(0.082, 0.6, 0.115, 0.9, body, true);
 
   // A soft blob shadow grounds the figure without shadow maps.
   const shadow = new THREE.Mesh(
@@ -140,6 +143,10 @@ export function createCharacter({ eve = false } = {}) {
   let stoopTo = 0;          // how far down he is bent to the grass for it, 0..1
   let stoop = 0;
   let shoulder = 0;         // 0 at his breast → 1 up across his shoulders (flock.js eases it)
+  let danceT = -1;          // seconds into the dance (v38), or −1 when he is not dancing
+  let danceDir = 1;         // which way round he turns
+  let jig = 0;              // 0 his own stance → 1 the dance's; eased in and out
+  let whirl = 0;            // the inner body's turn about itself, radians
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -421,12 +428,54 @@ export function createCharacter({ eve = false } = {}) {
       torso.position.y = mix(torso.position.y, 0.9 + 0.025 * Math.abs(s));
     }
 
+    // Dancing for joy (v38): over whatever else he was doing, standing.
+    // Cut short, the body comes the short way back round to face forward.
+    jig = damp(jig, danceT >= 0 ? 1 : 0, danceT >= 0 ? 7 : 5, dt);
+    if (danceT >= 0) {
+      whirl = danceDir * Math.PI * 2 * DANCE_TURNS * smoothstep(0.45, 4.1, danceT);
+    } else if (whirl !== 0) {
+      whirl += shortestAngle(whirl, 0) * (1 - Math.exp(-8 * dt));
+      if (Math.abs(shortestAngle(whirl, 0)) < 0.002) whirl = 0;
+    }
+    body.rotation.y = whirl;
+    if (jig > 0.001 && lie < 0.001) {
+      const t = Math.max(0, danceT), w = jig;
+      const mix = (from, to) => from * (1 - w) + to * w;
+      const up = smoothstep(0, 0.6, t) * (1 - smoothstep(4.95, 5.5, t));
+      const step = t * DANCE_BEAT * Math.PI * 2;
+      const s = Math.sin(step);
+      const leap = Math.sin(Math.PI * clamp((t - LEAP[0]) / (LEAP[1] - LEAP[0]), 0, 1));
+      const bow = Math.sin(Math.PI * clamp((t - 4.95) / 0.65, 0, 1));
+      const skip = (1 - leap) * smoothstep(0.2, 0.6, t) * (1 - smoothstep(4.85, 5.1, t));
+      // Each knee lifted in turn, both tucked up in the leap.
+      legL.rotation.x = mix(legL.rotation.x, -0.55 * Math.max(0, s) * skip - 0.55 * leap);
+      legR.rotation.x = mix(legR.rotation.x, -0.55 * Math.max(0, -s) * skip - 0.4 * leap);
+      // Arms up and wide, waving a little with the steps, highest in the leap.
+      const wave = Math.sin(step * 0.5) * 0.22;
+      const high = 2.3 + 0.35 * leap;
+      armL.rotation.x = mix(armL.rotation.x, (-0.15 + wave * 0.4) * up);
+      armR.rotation.x = mix(armR.rotation.x, (-0.15 - wave * 0.4) * up);
+      armL.rotation.z = mix(armL.rotation.z, 0.1 * (1 - up) - (high + wave) * up);
+      armR.rotation.z = mix(armR.rotation.z, -0.1 * (1 - up) + (high - wave) * up);
+      // Face lifted while he dances; bent forward in the bow.
+      torso.rotation.x = mix(torso.rotation.x, -0.13 * up + 0.42 * bow);
+      body.position.y = (0.075 * Math.abs(s) * skip + 0.34 * leap) * w;
+    } else if (!laid) {
+      body.position.y = 0;
+    }
+
     held.visible = carry > 0.6 && carrying && !holding && climb < 0.5;
     fruitHeld.visible = !!holding && !holding.leaf && climb < 0.5;
     leafHeld.visible = !!holding && !!holding.leaf && climb < 0.5;
   }
 
   function setSitting(b) { sitting = !!b; }
+  // v38: t seconds into the dance (dance.js keeps the time), or a negative
+  // t (or null) when he is not dancing; dir which way round he turns.
+  function setDance(t, dir = 1) {
+    danceT = typeof t === 'number' && t >= 0 ? Math.min(t, DANCE_LEN) : -1;
+    danceDir = dir < 0 ? -1 : 1;
+  }
   function setLying(b) { lying = !!b; }
   // on: whether he is on the ladder; rate: how quickly he is going, 0..1
   // (0 holds the rungs still).
@@ -461,9 +510,10 @@ export function createCharacter({ eve = false } = {}) {
 
   return {
     group, update, setSitting, setCarrying, setHolding, setClimbing, setPraying, setLying,
-    setCradling, cradleAt,
+    setCradling, cradleAt, setDance,
     get climbing() { return climbing; },
     get lie() { return lie; },
+    get dancing() { return danceT >= 0; },
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },
