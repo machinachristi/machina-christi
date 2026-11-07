@@ -74,7 +74,9 @@ export function createSong({ sea, incense, glory }) {
   // speed he is walking at, or trying to (character.js) — so a walk held
   // against the rim or a trunk, which goes nowhere, is never taken for
   // standing still; facing: his yaw, for where his lifted hands are.
-  function update(dt, time, walker, pace = 0, facing = 0) {
+  // busy: his hands are full (a leaf of the tree coming down to him or held,
+  // v37), so he does not lift them to pray, and stillness begins again after.
+  function update(dt, time, walker, pace = 0, facing = 0, busy = false) {
     clock = time;
     let prayer = null;
     if (walker) {
@@ -93,7 +95,7 @@ export function createSong({ sea, incense, glory }) {
           travel -= STRIDE;
           footfall(walker.x, walker.z, dx, dz);
         }
-        still = speed < STILL_SPEED && pace < STILL_SPEED ? still + dt : 0;
+        still = speed < STILL_SPEED && pace < STILL_SPEED && !busy ? still + dt : 0;
       }
 
       if (still >= PRAY_AFTER) {

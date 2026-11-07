@@ -216,6 +216,9 @@ const cradleSpot = { bosom: new THREE.Vector3(), shoulders: new THREE.Vector3() 
 // v33: in heaven, the harps under his steps and the multitude's answer.
 let heardHarp = 0;
 let heardAnswers = 0;
+// v37: leaves of the tree given into his hand, and given by him.
+let heardReceived = 0;
+let heardGiven = 0;
 // v34: a star's note each time one in sight sings.
 let heardStars = 0;
 
@@ -349,10 +352,21 @@ renderer.setAnimationLoop(() => {
 // The new song in heaven (v33, Revelation 14:2-3; 19:6): a harp's note for
 // each step he takes on the sea of glass, and when his prayer has risen, the
 // voice of the multitude answering. While he prays, his hands are lifted.
+const LEAF_HELD = { leaf: true };
 function heavenSong() {
   const song = realm.song();
   character.setPraying(!!(song && song.praying));
+  // A leaf of the Tree of Life in his raised hand (v37, Revelation 22:2).
+  character.setHolding(song && song.leaf ? LEAF_HELD : null);
   if (!song) return;
+  if (song.received !== heardReceived) {
+    heardReceived = song.received;
+    ambience.harp(9);
+  }
+  if (song.given !== heardGiven) {
+    heardGiven = song.given;
+    ambience.chime();
+  }
   if (song.notes !== heardHarp) {
     heardHarp = song.notes;
     ambience.harp(song.note);
