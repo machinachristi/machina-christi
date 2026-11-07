@@ -11,7 +11,7 @@
 // House rule for anything that moves or fades: assert with expect.poll windows,
 // never a single fixed-delay sample (CI's software renderer runs slow).
 const { test, expect } = require('@playwright/test');
-const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven } = require('./world-helpers');
+const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven, expectInBudget } = require('./world-helpers');
 
 test.describe('the garden\'s features', () => {
   test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
@@ -947,6 +947,105 @@ test.describe('the garden\'s features', () => {
     // By night they are gone to roost.
     await frame.evaluate(() => window.__world.setTime('night'));
     await expect.poll(async () => (await getState(page)).doves.shown, { timeout: 30000 }).toBe(false);
+  });
+
+  test('praise him in the dance: tap him and he dances for joy where he stands, petals whirling up round him, and a tap elsewhere stops him; his companion and the lambs dance with him (v38, Psalm 150:4)', async ({ page }) => {
+    test.setTimeout(240000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const box = await page.locator('iframe').boundingBox();
+    const tapHim = async () => {
+      const at = await frame.evaluate(() => window.__world.whereIsHe());
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    const s0 = await getState(page);
+    expect(s0.dance.dancing).toBe(false);
+    expect(s0.dance.petals).toBe(0);
+
+    // The very first touch only skips the opening shot (whose camera may
+    // not have him on the screen at all). Then, out on the open
+    // south-western meadow with the camera settled behind him, a tap on him
+    // sets him dancing (tapped again if the camera was still coming round).
+    const vp = page.viewportSize();
+    await page.mouse.click(12, vp.height - 12);
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(7.5);
+    await page.waitForTimeout(500);
+    await tapHim();
+    await page.waitForTimeout(800);
+    if (!(await getState(page)).dance.dancing) await tapHim();
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 10000 }).toBe(true);
+    const start = await getState(page);
+    expect(start.dance.petals).toBeGreaterThan(300);
+    expect(start.walk.target).toBe(null);
+    await expect.poll(async () => { const c = (await getState(page)).caption; return c && c.name; }, { timeout: 10000 })
+      .toBe('Betof umachol');
+
+    // He dances to the timbrel and the harp, leaps once, and bows — and is
+    // still where he began, within the budget all the while.
+    let most = { calls: 0, triangles: 0 };
+    await expect.poll(async () => {
+      const s = await getState(page);
+      most = { calls: Math.max(most.calls, s.render.calls), triangles: Math.max(most.triangles, s.render.triangles) };
+      return !s.dance.dancing && s.dance.times === 1;
+    }, { timeout: 90000 }).toBe(true);
+    expectInBudget({ render: most }, 'while he dances');
+    const done = await getState(page);
+    expect(done.dance.beats).toBeGreaterThanOrEqual(12);
+    expect(done.dance.notes).toBe(11);
+    expect(done.dance.leaps).toBe(1);
+    expect(dist2d(done.pos, start.pos)).toBeLessThan(0.3);
+    // The petals drift down and are gone.
+    await expect.poll(async () => (await getState(page)).dance.petals, { timeout: 60000 }).toBe(0);
+
+    // Tapped again, he dances the other way round; a tap on the grass
+    // away from him stops the dance and he walks there instead.
+    await tapHim();
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 10000 }).toBe(true);
+    expect((await getState(page)).dance.dir).toBe(-1);
+    await page.mouse.click(vp.width * 0.15, vp.height * 0.78);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return !s.dance.dancing && !!s.walk.target;
+    }, { timeout: 10000 }).toBe(true);
+
+    // Beside his companion, she turns to him and dances too. (Once she is
+    // up out of the river, he is set down two strides from her, on her side
+    // toward where every visit begins — never in the water, where he would
+    // take some up in his hands.)
+    let eve;
+    await expect.poll(async () => { eve = (await getState(page)).companion.pos; return eve.y; }, { timeout: 60000 })
+      .toBeGreaterThan(-0.3);
+    const toStart = Math.hypot(0 - eve.x, -9.5 - eve.z) || 1;
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z, 0),
+      [eve.x + (0 - eve.x) / toStart * 2, eve.z + (-9.5 - eve.z) / toStart * 2]);
+    expect(await frame.evaluate(() => window.__world.dance(true))).toBe(true);
+    await expect.poll(async () => (await getState(page)).dance.companion, { timeout: 10000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 90000 }).toBe(false);
+
+    // Among the flock, the lambs leap with him. (Set down a stride from a
+    // lamb, on its side toward the flock's own pasture — sheep never wade —
+    // and tried beside each lamb in turn.)
+    const flock = (await getState(page)).flock;
+    let leapt = false;
+    for (const lamb of flock.sheep.filter(S => S.lamb)) {
+      const toHome = Math.hypot(flock.home.x - lamb.x, flock.home.z - lamb.z) || 1;
+      await frame.evaluate(([x, z]) => window.__world.teleport(x, z, 0),
+        [lamb.x + (flock.home.x - lamb.x) / toHome * 1.2, lamb.z + (flock.home.z - lamb.z) / toHome * 1.2]);
+      if (!(await frame.evaluate(() => window.__world.dance(true)))) continue;
+      try {
+        await expect.poll(async () => (await getState(page)).flock.leaps, { timeout: 15000 }).toBeGreaterThan(flock.leaps);
+        leapt = true;
+        break;
+      } catch (e) { /* the next one */ }
+      await frame.evaluate(() => window.__world.dance(false));
+    }
+    expect(leapt).toBe(true);
+    await frame.evaluate(() => window.__world.dance(false));
+
+    // Not in the river: he does not dance in the water.
+    await frame.evaluate(() => window.__world.teleport(-20, 6));
+    expect(await frame.evaluate(() => window.__world.dance(true))).toBe(false);
   });
 
   test('the companion wanders on its own', async ({ page }) => {

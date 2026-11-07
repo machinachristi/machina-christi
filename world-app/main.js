@@ -13,8 +13,9 @@ import { createFooting } from './footing.js';
 import { createAmbience } from './audio.js';
 import { createRealm } from './realm.js';
 import { createConsider } from './consider.js';
+import { createDance } from './dance.js';
 import { riverEdgeDist } from './scenes/terrain.js';
-import { mulberry32, breathe } from './util.js';
+import { mulberry32, breathe, shortestAngle } from './util.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -86,6 +87,10 @@ const realm = createRealm({
 // 8:3) — see consider.js. Any tap or drag brings him up again.
 const consider = createConsider({ camera, canvas: renderer.domElement, character, rig, heightAt: garden.heightAt });
 
+// Tap him and he dances for joy (v38, Psalm 150:4) — see dance.js. Any drag,
+// or a tap anywhere else, and he stops.
+const dance = createDance({ scene, camera, canvas: renderer.domElement, character });
+
 // The naming caption (Genesis 2:19-20): a quiet line at the foot of the
 // screen, filled from the garden's sense of which creature the walker has
 // drawn near. CSS carries the fade; the last name lingers through it.
@@ -106,7 +111,8 @@ function updateNamingCaption() {
   // names of things round him, which he can no longer see.
   const given = realm.caption()
     || (realm.now === 'eden'
-      ? garden.tending() || consider.caption(garden.signNamed()) || (consider.lying ? null : garden.named())
+      ? garden.tending() || dance.caption() || consider.caption(garden.signNamed())
+        || (consider.lying ? null : garden.named())
       : null);
   captionNow = given || null;
   const key = given ? given.name + '·' + given.label : '';
@@ -139,6 +145,18 @@ const companionWander = { mode: 'pause', until: 1.5 + wanderRng() * 2, target: n
 // character.update() interface the player uses, so it gets the same turning,
 // terrain-following and walk-cycle animation for free.
 function updateCompanion(dt) {
+  // When he dances near her (v38, Jeremiah 31:13), she stops where she is,
+  // turns to him, and a moment after dances too, the other way round. Her
+  // own wandering waits until she has bowed.
+  const danceT = dance.companion();
+  companion.setDance(danceT !== null && danceT >= 0 ? danceT : null, -dance.dir);
+  if (danceT !== null) {
+    const p = character.group.position, q = companion.group.position;
+    const yaw = Math.atan2(p.x - q.x, p.z - q.z);
+    companion.group.rotation.y += shortestAngle(companion.group.rotation.y, yaw) * (1 - Math.exp(-6 * dt));
+    companion.update(dt, { x: 0, z: 0 }, null, garden.heightAt, garden.radius, footing.keepOut);
+    return;
+  }
   const w = companionWander;
   w.until -= dt;
   let move = { x: 0, z: 0 };
@@ -221,6 +239,10 @@ let heardReceived = 0;
 let heardGiven = 0;
 // v34: a star's note each time one in sight sings.
 let heardStars = 0;
+// v38: the timbrel under his dancing feet, the harp's tune, and the leap.
+let heardBeats = 0;
+let heardTune = 0;
+let heardLeaps = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -239,20 +261,28 @@ let forceSit = false;
 // cuts short an arrival's opening shot (heaven's, AB#106).
 // v34: while he lies looking up, a tap brings him up again; in the garden,
 // a tap on the open sky (which finds no ground to walk to) lays him down.
+// v38: a tap on him sets him dancing (while he dances, another tap on him
+// lets him finish); a tap anywhere else, or any drag, stops the dance.
 function readIntent(dt, kit) {
   const tap = controls.takeTap();
   if (tap) {
     rig.skipIntro();
     if (consider.lying) consider.rise();
-    else if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
-      && kit.name === 'eden' && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
-      liePutDown();
+    else if (kit.name === 'eden' && realm.idle && dance.onHim(tap.x, tap.y) && (dance.dancing || mayDance())) {
+      if (!dance.dancing) beginDance();
+    } else {
+      dance.stop();
+      if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
+        && kit.name === 'eden' && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
+        liePutDown();
+      }
     }
   }
   const v = controls.vector();
   if (Math.hypot(v.x, v.z) > 0.001) {
     rig.skipIntro();
     kit.wayfinding.cancel();
+    dance.stop();
     if (consider.lying) consider.rise();
     return { move: v, world: false };
   }
@@ -269,6 +299,28 @@ function liePutDown() {
   return true;
 }
 
+// Whether he may dance just now (v38): on dry ground in the garden, not
+// lying back, and with his hands free — no water, fruit or lamb in them, nor
+// a fruit on its way down into them. Whether he stands in the water is
+// asked of the ground itself (as character.js does each frame), so a jump
+// into the river a moment ago already counts.
+function mayDance() {
+  const p = character.group.position;
+  const inWater = garden.heightAt(p.x, p.z) < -0.6 && riverEdgeDist(p.x, p.z) < 0.01;
+  return realm.idle && realm.now === 'eden' && !consider.lying && character.lie === 0
+    && !inWater && !garden.carrying && !garden.gathering && !garden.cradling;
+}
+
+// He dances where he stands: any walk he was on is let go, and if he was
+// sitting by the water he gets up for it.
+function beginDance() {
+  // She joins in if she is near, and out of the water.
+  if (!mayDance() || !dance.start(companion.group.position, !companion.wading)) return false;
+  realm.kit().wayfinding.cancel();
+  forceSit = false;
+  return true;
+}
+
 function updateStillness(dt, v) {
   if (consider.lying) {
     stillFor = 0;
@@ -276,7 +328,8 @@ function updateStillness(dt, v) {
     character.setSitting(false);
     return;
   }
-  const moving = Math.hypot(v.x, v.z) > 0.001;
+  // Dancing (v38) is not sitting still.
+  const moving = Math.hypot(v.x, v.z) > 0.001 || dance.dancing;
   if (moving) forceSit = false;   // the first touch of input always rises
   const pos = character.group.position;
   const edge = riverEdgeDist(pos.x, pos.z);
@@ -301,6 +354,7 @@ renderer.setAnimationLoop(() => {
   if (driven) {
     controls.takeTap();
     kit.wayfinding.cancel();
+    dance.stop();
     if (consider.lying) consider.rise();
     intent = driven;
   } else {
@@ -330,6 +384,8 @@ renderer.setAnimationLoop(() => {
     character.setCarrying(false);
     character.setHolding(null);
     character.setCradling(false);
+    dance.stop();
+    dance.update(dt, 0);
     ambience.update(dt, 0, character.group.position, 0, 0, 0, 'heaven');
     heavenSong();
   }
@@ -387,7 +443,22 @@ function edenFrame(dt) {
     : null;
   // While the realm has him (the ladder) his arms are not his own.
   const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze,
-    realm.drive() ? null : character.cradleAt(cradleSpot));
+    realm.drive() ? null : character.cradleAt(cradleSpot), dance.dancing);
+  // v38 (Psalm 149:3): the dance keeps its own time; the timbrel sounds each
+  // step, the harp plays its tune, and the phone gives a little leap too.
+  dance.update(dt, hour.night);
+  if (dance.beats !== heardBeats) {
+    heardBeats = dance.beats;
+    ambience.timbrel(dance.accent);
+  }
+  if (dance.notes !== heardTune) {
+    heardTune = dance.notes;
+    ambience.harp(dance.note);
+  }
+  if (dance.leaps !== heardLeaps) {
+    heardLeaps = dance.leaps;
+    try { if (navigator.vibrate) navigator.vibrate(18); } catch (_) { /* not every phone */ }
+  }
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
   // …and a fruit given him under the tree, until it is eaten (v30).
@@ -413,10 +484,11 @@ function edenFrame(dt) {
   }
   // "Rejoice even with joy and singing" (v28, Isaiah 35:2): a note for the
   // flowers opening round his feet.
+  // (While he dances the harp has the tune, and the flowers keep quiet.)
   const bloom = garden.song();
   if (bloom.notes !== heardNotes) {
     heardNotes = bloom.notes;
-    ambience.bloom(bloom.note);
+    if (!dance.dancing) ambience.bloom(bloom.note);
   }
   // v30: a high note now and then as the water lights round him at night,
   // and one as the fruit comes into his hands and another when it is eaten.
@@ -739,6 +811,11 @@ window.__world = {
       // the Milky Way is drawn, `going`/`named` the sign his eyes go to and
       // the one whose name is given, `sung` how many stars have sung.
       consider: { ...consider.state(), host: garden.host() },
+      // v38: dancing for joy (Psalm 150:4) — `dancing`, `t` seconds into it,
+      // `dir` which way round he turns, `times` this visit, `beats`/`notes`
+      // the timbrel's strokes and the harp's notes so far, `petals` in the
+      // air now, `companion` whether she dances too, `leaps` taken.
+      dance: dance.state(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       render: {
@@ -791,12 +868,30 @@ window.__world = {
   stir() {
     return garden.stir();
   },
+  // Set him dancing where he stands (true), as a tap on him does, or stop
+  // (false) — for tests and the curious (v38). Returns whether he dances
+  // (not in the water, nor lying back, nor with his hands full, nor in
+  // heaven or on the ladder).
+  dance(on = true) {
+    if (!on) dance.stop();
+    else if (!dance.dancing) beginDance();
+    return dance.dancing;
+  },
+  // Where he presently stands on the screen, in client pixels — so a test
+  // can tap him as a visitor would.
+  whereIsHe() {
+    const p = character.group.position;
+    const v = new THREE.Vector3(p.x, p.y + 1.0, p.z).project(camera);
+    const rect = renderer.domElement.getBoundingClientRect();
+    return { x: rect.left + (v.x + 1) / 2 * rect.width, y: rect.top + (1 - v.y) / 2 * rect.height };
+  },
   // Send the walker to a place on the ground as a tap would (v26) — for
   // tests and the curious. Returns the place he is going (clamped inside
   // the garden's rim).
   walkTo(x, z) {
     if (!realm.idle) return null;   // not on the ladder, nor under the veil
     const kit = realm.kit();
+    dance.stop();   // he stops dancing to go (v38)
     return kit.wayfinding.walkTo(x, z, kit.namedThing());
   },
   // Drop the character anywhere, for tests and debugging — lets the smoke
@@ -808,6 +903,7 @@ window.__world = {
     if (!realm.idle) return this.getState().pos;   // never off the ladder, nor out from under the veil
     const kit = realm.kit();
     kit.wayfinding.cancel();   // a walk begun from somewhere else no longer applies
+    dance.stop();              // …nor a dance (v38)
     character.group.position.set(x, kit.heightAt(x, z), z);
     if (typeof facing === 'number') {
       character.group.rotation.y = facing;

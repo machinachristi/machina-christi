@@ -665,6 +665,48 @@ export function createAmbience() {
     longest.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 
+  // "Let them praise his name in the dance: let them sing praises unto him
+  // with the timbrel and harp" (Psalm 149:3): while he dances (v38), a
+  // hand drum under each skipping step — a soft low thump and the brief
+  // shiver of its jingles — the off-beats lighter than the on. The harp's
+  // tune over it is harp() above.
+  function timbrel(accent = false) {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    const t0 = ctx.currentTime + 0.015;
+    const k = accent ? 1 : 0.6;
+    const skin = ctx.createOscillator();
+    skin.type = 'sine';
+    skin.frequency.setValueAtTime(150, t0);
+    skin.frequency.exponentialRampToValueAtTime(72, t0 + 0.16);
+    const sg = ctx.createGain();
+    sg.gain.setValueAtTime(0.0001, t0);
+    sg.gain.linearRampToValueAtTime(0.06 * k, t0 + 0.006);
+    sg.gain.exponentialRampToValueAtTime(0.0002, t0 + 0.24);
+    skin.connect(sg).connect(master);
+    skin.start(t0);
+    skin.stop(t0 + 0.26);
+    // The jingles: three quick strikes of bright noise, close together.
+    const jingle = ctx.createBufferSource();
+    jingle.buffer = refs.rustleBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 4800;
+    bp.Q.value = 1.6;
+    const jg = ctx.createGain();
+    jg.gain.setValueAtTime(0.0001, t0);
+    for (let i = 0; i < 3; i++) {
+      const at = t0 + i * 0.022;
+      jg.gain.linearRampToValueAtTime(0.022 * k * (1 - i * 0.25), at + 0.004);
+      jg.gain.exponentialRampToValueAtTime(0.0008, at + 0.02);
+    }
+    jg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+    jingle.connect(bp).connect(jg).connect(master);
+    jingle.start(t0, Math.random() * 1.5);
+    jingle.stop(t0 + 0.18);
+    skin.onended = () => { skin.disconnect(); sg.disconnect(); };
+    jingle.onended = () => { jingle.disconnect(); bp.disconnect(); jg.disconnect(); };
+  }
+
   // "And I heard as it were the voice of a great multitude, and as the voice
   // of many waters, and as the voice of mighty thunderings, saying,
   // Alleluia" (Revelation 19:6): when his prayer has risen, heaven answers
@@ -976,5 +1018,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, star, pipe, bleat, harp, alleluia, state };
+  return { update, setMuted, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, state };
 }
