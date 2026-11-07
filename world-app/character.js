@@ -50,9 +50,9 @@ const HIP_LYING = 0.21;      // …and lying, so his back rests on the grass
 // bow at the end. The turn is the inner body's alone, so the camera holds
 // still while he whirls.
 export const DANCE_LEN = 5.6;        // seconds, from the first step to the bow
-const DANCE_BEAT = 2.6;              // skipping steps a second
+export const DANCE_STEP = 1 / 3.8;   // seconds a skipping step takes: left, right, left…
+export const LEAP = [4.15, 4.8];     // the leap, from leaving the ground to landing
 const DANCE_TURNS = 2;               // whole turns in the dance
-const LEAP = [4.15, 4.8];            // the leap, from leaving the ground to landing
 
 export function createCharacter({ eve = false } = {}) {
   const skin = new THREE.MeshLambertMaterial({ color: 0xC69572, flatShading: true });
@@ -146,7 +146,9 @@ export function createCharacter({ eve = false } = {}) {
   let danceT = -1;          // seconds into the dance (v38), or −1 when he is not dancing
   let danceDir = 1;         // which way round he turns
   let jig = 0;              // 0 his own stance → 1 the dance's; eased in and out
+  let poseT = 0;            // the moment of the dance his pose is drawn from (held once it stops)
   let whirl = 0;            // the inner body's turn about itself, radians
+  let whirlFrom = 0;        // …and where it stood as this dance began
 
   // Water held in his cupped hands (v27, Genesis 2:6) — shown only while he
   // carries it from the river to the ground he is going to water.
@@ -429,20 +431,26 @@ export function createCharacter({ eve = false } = {}) {
     }
 
     // Dancing for joy (v38): over whatever else he was doing, standing.
-    // Cut short, the body comes the short way back round to face forward.
-    jig = damp(jig, danceT >= 0 ? 1 : 0, danceT >= 0 ? 7 : 5, dt);
+    // Cut short, he eases out of the very pose he was in (not the first
+    // step's), and the body comes the short way back round to face forward;
+    // begun again while it is still turning back, the new dance takes up
+    // the turn from where it is.
+    jig = damp(jig, danceT >= 0 ? 1 : 0, danceT >= 0 ? 7 : 8, dt);
     if (danceT >= 0) {
-      whirl = danceDir * Math.PI * 2 * DANCE_TURNS * smoothstep(0.45, 4.1, danceT);
+      poseT = danceT;
+      whirl = whirlFrom * (1 - smoothstep(0, 0.45, danceT))
+        + danceDir * Math.PI * 2 * DANCE_TURNS * smoothstep(0.45, 4.1, danceT);
     } else if (whirl !== 0) {
       whirl += shortestAngle(whirl, 0) * (1 - Math.exp(-8 * dt));
       if (Math.abs(shortestAngle(whirl, 0)) < 0.002) whirl = 0;
     }
     body.rotation.y = whirl;
     if (jig > 0.001 && lie < 0.001) {
-      const t = Math.max(0, danceT), w = jig;
+      const t = poseT, w = jig;
       const mix = (from, to) => from * (1 - w) + to * w;
       const up = smoothstep(0, 0.6, t) * (1 - smoothstep(4.95, 5.5, t));
-      const step = t * DANCE_BEAT * Math.PI * 2;
+      // One whole swing of this is two steps, a knee lifted on each.
+      const step = t * Math.PI / DANCE_STEP;
       const s = Math.sin(step);
       const leap = Math.sin(Math.PI * clamp((t - LEAP[0]) / (LEAP[1] - LEAP[0]), 0, 1));
       const bow = Math.sin(Math.PI * clamp((t - 4.95) / 0.65, 0, 1));
@@ -473,7 +481,9 @@ export function createCharacter({ eve = false } = {}) {
   // v38: t seconds into the dance (dance.js keeps the time), or a negative
   // t (or null) when he is not dancing; dir which way round he turns.
   function setDance(t, dir = 1) {
-    danceT = typeof t === 'number' && t >= 0 ? Math.min(t, DANCE_LEN) : -1;
+    const next = typeof t === 'number' && t >= 0 ? Math.min(t, DANCE_LEN) : -1;
+    if (next >= 0 && danceT < 0) whirlFrom = shortestAngle(0, whirl);
+    danceT = next;
     danceDir = dir < 0 ? -1 : 1;
   }
   function setLying(b) { lying = !!b; }
@@ -513,7 +523,6 @@ export function createCharacter({ eve = false } = {}) {
     setCradling, cradleAt, setDance,
     get climbing() { return climbing; },
     get lie() { return lie; },
-    get dancing() { return danceT >= 0; },
     get speed() { return speed; },
     get gait() { return gait; },
     get sitting() { return sitting; },

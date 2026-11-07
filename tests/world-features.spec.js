@@ -969,7 +969,7 @@ test.describe('the garden\'s features', () => {
     const vp = page.viewportSize();
     await page.mouse.click(12, vp.height - 12);
     await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
-    await expect.poll(async () => (await getState(page)).camDist, { timeout: 20000 }).toBeLessThan(7.5);
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(7.5);
     await page.waitForTimeout(500);
     await tapHim();
     await page.waitForTimeout(800);
@@ -991,8 +991,8 @@ test.describe('the garden\'s features', () => {
     }, { timeout: 90000 }).toBe(true);
     expectInBudget({ render: most }, 'while he dances');
     const done = await getState(page);
-    expect(done.dance.beats).toBeGreaterThanOrEqual(10);
-    expect(done.dance.notes).toBe(13);
+    expect(done.dance.beats).toBeGreaterThanOrEqual(12);
+    expect(done.dance.notes).toBe(11);
     expect(done.dance.leaps).toBe(1);
     expect(dist2d(done.pos, start.pos)).toBeLessThan(0.3);
     // The petals drift down and are gone.

@@ -471,8 +471,8 @@ export async function createGarden(scene, rng) {
     fry.update(dt, playerPos);
     doves.update(dt, playerPos, hour.night);
     // With a lamb in his arms (v36) his hands are full: no water is taken
-    // up and no fruit given until it is down again.
-    watering.update(dt, playerPos, flock.cradling);
+    // up and no fruit given until it is down again — nor while he dances (v38).
+    watering.update(dt, playerPos, flock.cradling || dancing);
     blossom.update(dt, playerPos, hour.night);
     murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz, !!(gaze && gaze.lying));
     living.update(dt, playerPos, hour, hour.moonDir);
@@ -607,6 +607,8 @@ export async function createGarden(scene, rng) {
     alsoWalking: blossom.alsoWalking,
     solids,
     get carrying() { return watering.carrying; },
+    // v38: whether a fruit is falling into his hands, held, or being eaten.
+    get gathering() { return gather.busy; },
     // v36 (Isaiah 40:11): the lamb in his arms, and how far he is bent to it.
     get cradling() { return flock.cradling; },
     get stoop() { return flock.stoop; },

@@ -12,25 +12,33 @@
 // A tap on him used to send him to walk to the ground under his own feet,
 // so this takes nothing away from tapping to walk.
 //
-// The petals are one `Points` draw, worked out wholly in the vertex shader
-// from the moment the dance began, and drawn only while it lasts — so the
-// garden's opening shot never pays for them.
+// The petals are one `Points` draw, each petal worked out wholly in the
+// vertex shader from when and where it was flung up, and drawn only while
+// any is in the air — so the garden's opening shot never pays for them.
 
 import * as THREE from 'three';
 import { mulberry32, clamp } from './util.js';
-import { DANCE_LEN } from './character.js';
+import { DANCE_LEN, DANCE_STEP, LEAP } from './character.js';
 
 const PETALS = 360;
 const PETAL_LIFE = 3.6;          // seconds each petal is in the air
 const PETAL_SPREAD = 3.0;        // seconds over which the petals are flung up
-const SHOWN_FOR = PETAL_SPREAD + PETAL_LIFE;   // the petals' draw is let go after this
-const BEAT = 1 / 2.6;            // the timbrel, one stroke per skipping step
-// The harp's tune: steps of the garden's own E pentatonic (audio.js's
-// HARP_STEPS, 5 = E5), one to each skipping step, climbing to the top E for
-// the leap and coming home for the bow.
-const TUNE = [5, 7, 8, 7, 5, 7, 8, 9, 8, 9, 10, 8, 5];
-const TUNE_AT = 0.45;            // the first note…
-const TUNE_STEP = BEAT;          // …and the time between them
+const GONE = -1e4;               // a petal's birth time while it is not in the air
+// The timbrel: a stroke as each foot comes down from a skipping step (the
+// left foot's the stronger), none while he is up in the leap, and one as he
+// lands from it.
+const STROKES = [];              // [seconds into the dance, accented]
+for (let n = 1; n * DANCE_STEP < LEAP[0] - 0.05; n++) STROKES.push([n * DANCE_STEP, n % 2 === 1]);
+STROKES.push([LEAP[1], true]);
+// The harp's tune, on the strong strokes: steps of the garden's own E
+// pentatonic (audio.js's HARP_STEPS, 5 = E5) climbing to the top E as he
+// leaps, and coming home as he bows.
+const CLIMB = [5, 7, 8, 7, 8, 9, 8, 9];
+const NOTES = [];                // [seconds into the dance, harp step]
+for (const [at, strong] of STROKES) {
+  if (strong && at < LEAP[0]) NOTES.push([at, CLIMB[NOTES.length % CLIMB.length]]);
+}
+NOTES.push([LEAP[0], 10], [LEAP[1], 8], [5.1, 5]);
 const COMPANION_NEAR = 14;       // she dances along if she is within this many metres
 const COMPANION_LAG = 0.4;       // …a moment after him, turning the other way
 const CAPTION = { name: 'Betof umachol', label: 'with the timbrel and dance' };
@@ -43,12 +51,18 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   const rng = mulberry32(seed);
 
   // ── The petals ──
-  // aSeed: x the moment it is flung up, y how far out it goes, z how high,
-  // w its own flutter. aTint picks its colour.
+  // aSeed: x when in the dance it is flung up, y how far out it goes, z how
+  // high, w its own flutter. aTint picks its colour. Each petal also keeps
+  // its own aBorn (when it was flung up, on the petals' clock) and aFrom
+  // (where — the dancer's feet — and in w which way he was turning), so a
+  // dance begun while the last one's petals are still coming down only
+  // flings up those already down, and none is ever snatched out of the air.
   const geo = new THREE.BufferGeometry();
   const seeds = new Float32Array(PETALS * 4);
   const tints = new Float32Array(PETALS * 3);
   const pos = new Float32Array(PETALS * 3);
+  const born = new Float32Array(PETALS).fill(GONE);
+  const from = new Float32Array(PETALS * 4);
   const PALETTE = [
     [1.0, 0.97, 0.93],   // almond white
     [0.99, 0.78, 0.82],  // blush
@@ -67,10 +81,12 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
   geo.setAttribute('aTint', new THREE.BufferAttribute(tints, 3));
+  const bornAttr = new THREE.BufferAttribute(born, 1);
+  const fromAttr = new THREE.BufferAttribute(from, 4);
+  geo.setAttribute('aBorn', bornAttr);
+  geo.setAttribute('aFrom', fromAttr);
   const uniforms = {
-    uCentre: { value: new THREE.Vector3() },
-    uT: { value: 0 },
-    uDir: { value: 1 },
+    uNow: { value: 0 },
     uNight: { value: 0 },
     uScale: { value: 400 },   // the screen's height in device pixels, near enough
     uRatio: { value: 1 },     // device pixels to a CSS pixel
@@ -82,25 +98,27 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
     vertexShader: /* glsl */`
       attribute vec4 aSeed;
       attribute vec3 aTint;
-      uniform vec3 uCentre;
-      uniform float uT;
-      uniform float uDir;
+      attribute float aBorn;
+      attribute vec4 aFrom;
+      uniform float uNow;
       uniform float uScale;
       uniform float uRatio;
       varying vec3 vTint;
       varying float vAlpha;
       varying float vSpin;
       void main() {
-        float born = aSeed.x * ${PETAL_SPREAD.toFixed(2)};
-        float a = uT - born;
+        float flung = aSeed.x * ${PETAL_SPREAD.toFixed(2)};
+        float a = uNow - aBorn;
         float life = clamp(a / ${PETAL_LIFE.toFixed(2)}, 0.0, 1.0);
         // Flung up and out from round his hips in a turning spiral, the
         // spiral going the way he turns, then drifting down as it slows.
+        // (His turn takes the facing (sin, cos) round toward −angle in this
+        // x–z plane, so the spiral's angle runs against aFrom.w.)
         float reach = 0.35 + (1.4 + 3.2 * aSeed.y) * (1.0 - (1.0 - life) * (1.0 - life));
-        float ang = aSeed.w + uDir * (born * 2.6 + 3.4 * sqrt(life));
+        float ang = aSeed.w - aFrom.w * (flung * 2.6 + 3.4 * sqrt(life));
         float rise = (1.6 + 2.6 * aSeed.z) * sin(min(life, 1.0) * 2.4) * 0.9;
         float flutter = sin(a * 6.0 + aSeed.w * 3.0) * 0.12 * life;
-        vec3 p = uCentre + vec3(cos(ang) * reach + flutter, 0.7 + rise, sin(ang) * reach - flutter);
+        vec3 p = aFrom.xyz + vec3(cos(ang) * reach + flutter, 0.7 + rise, sin(ang) * reach - flutter);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         float alive = step(0.0, a) * step(life, 0.999);
@@ -131,19 +149,24 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   });
   const petals = new THREE.Points(geo, mat);
   petals.frustumCulled = false;   // every petal's place is the shader's
-  petals.visible = false;
+  // Left showing (every petal down, so nothing is drawn) for main.js's
+  // warm-up frame, so the shader is compiled then and not at the first
+  // dance; the first update hides it.
+  petals.visible = true;
   petals.renderOrder = 2;
   scene.add(petals);
 
   let t = -1;            // seconds into the dance, or −1
   let dir = 1;
-  let petalT = -1;       // seconds since the petals were flung up, or −1
+  let clock = 0;         // the petals' own clock, seconds
+  let airUntil = 0;      // …on which the last petal now in the air comes down
   let times = 0;
   let beats = 0;         // timbrel strokes so far
-  let notes = 0;         // pipe notes so far
-  let note = TUNE[0];
-  let nextBeat = 0;
-  let tuneAt = 0;        // which note of the tune comes next, this dance
+  let accent = false;    // whether the last was a strong one
+  let notes = 0;         // harp notes so far
+  let note = NOTES[0][1];
+  let strokeAt = 0;      // the next stroke of this dance…
+  let noteAt = 0;        // …and the next note
   let leaps = 0;
   let leapt = false;     // whether this dance's leap has been taken
   let captionLeft = 0;
@@ -172,21 +195,47 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
     return across < Math.max(24, Math.sqrt(len2) * 0.3);
   }
 
+  // Every petal already down is flung up afresh from where he dances, each
+  // at its own moment; those still in the air keep on as they were.
+  function fling(p) {
+    for (let i = 0; i < PETALS; i++) {
+      if (born[i] <= clock && clock < born[i] + PETAL_LIFE) continue;
+      born[i] = clock + seeds[i * 4] * PETAL_SPREAD;
+      from[i * 4] = p.x;
+      from[i * 4 + 1] = p.y;
+      from[i * 4 + 2] = p.z;
+      from[i * 4 + 3] = dir;
+    }
+    settle();
+  }
+
+  // Cut short: the petals not yet flung up stay down.
+  function withhold() {
+    for (let i = 0; i < PETALS; i++) if (born[i] > clock) born[i] = GONE;
+    settle();
+  }
+
+  function settle() {
+    airUntil = 0;
+    for (let i = 0; i < PETALS; i++) airUntil = Math.max(airUntil, born[i] + PETAL_LIFE);
+    bornAttr.needsUpdate = true;
+    fromAttr.needsUpdate = true;
+  }
+
   // Begin the dance where he stands (main.js decides whether he may).
-  function start(companionPos) {
+  // companionFree: whether she is out of the water, free to dance too.
+  function start(companionPos, companionFree = true) {
     if (t >= 0) return false;
     t = 0;
     dir = times % 2 === 0 ? 1 : -1;
     times++;
-    nextBeat = 0.12;
-    tuneAt = 0;
+    strokeAt = 0;
+    noteAt = 0;
     leapt = false;
-    petalT = 0;
     captionLeft = CAPTION_FOR;
     const p = character.group.position;
-    uniforms.uCentre.value.set(p.x, p.y, p.z);
-    uniforms.uDir.value = dir;
-    companionDances = !!companionPos
+    fling(p);
+    companionDances = !!companionPos && companionFree
       && Math.hypot(companionPos.x - p.x, companionPos.z - p.z) < COMPANION_NEAR;
     companionT = -COMPANION_LAG;
     character.setDance(0, dir);
@@ -194,23 +243,28 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   }
 
   // Let the dance go wherever it has got to — he turns back to face forward,
-  // and so does she.
+  // and so does she, and the dance's word goes with it.
   function stop() {
     if (t < 0) return;
     t = -1;
     character.setDance(null);
     companionDances = false;
+    captionLeft = 0;
+    withhold();
   }
 
   function update(dt, night = 0) {
     if (t >= 0) {
       t += dt;
-      if (t >= nextBeat && t < DANCE_LEN - 0.5) { beats++; nextBeat += BEAT; }
-      if (tuneAt < TUNE.length && t >= TUNE_AT + tuneAt * TUNE_STEP) {
-        note = TUNE[tuneAt++];
+      while (strokeAt < STROKES.length && t >= STROKES[strokeAt][0]) {
+        accent = STROKES[strokeAt++][1];
+        beats++;
+      }
+      while (noteAt < NOTES.length && t >= NOTES[noteAt][0]) {
+        note = NOTES[noteAt++][1];
         notes++;
       }
-      if (!leapt && t >= 4.15) { leapt = true; leaps++; }
+      if (!leapt && t >= LEAP[0]) { leapt = true; leaps++; }
       if (t >= DANCE_LEN) {
         // Bowed: the dance is done. She finishes hers a moment after.
         t = -1;
@@ -224,12 +278,16 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
       if (companionT >= DANCE_LEN) companionDances = false;
     }
     captionLeft = Math.max(0, captionLeft - dt);
-    if (petalT >= 0) {
-      petalT += dt;
-      if (petalT > SHOWN_FOR) petalT = -1;
+    clock += dt;
+    petals.visible = clock < airUntil;
+    // With every petal down, the clock starts again from nothing (and each
+    // petal is left long gone on it), so it never grows large enough to blur.
+    if (!petals.visible && t < 0 && clock > 600) {
+      clock = 0;
+      born.fill(GONE);
+      settle();
     }
-    petals.visible = petalT >= 0;
-    uniforms.uT.value = Math.max(0, petalT);
+    uniforms.uNow.value = clock;
     uniforms.uNight.value = clamp(night, 0, 1);
     const ratio = Math.min(window.devicePixelRatio || 1, 2);   // as main.js sets the renderer
     uniforms.uRatio.value = ratio;
@@ -257,6 +315,7 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
     get dir() { return dir; },
     get note() { return note; },
     get beats() { return beats; },
+    get accent() { return accent; },
     get notes() { return notes; },
     get leaps() { return leaps; },
   };

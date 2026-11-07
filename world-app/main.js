@@ -300,16 +300,22 @@ function liePutDown() {
 }
 
 // Whether he may dance just now (v38): on dry ground in the garden, not
-// lying back, and with his hands free — no water, fruit or lamb in them.
+// lying back, and with his hands free — no water, fruit or lamb in them, nor
+// a fruit on its way down into them. Whether he stands in the water is
+// asked of the ground itself (as character.js does each frame), so a jump
+// into the river a moment ago already counts.
 function mayDance() {
+  const p = character.group.position;
+  const inWater = garden.heightAt(p.x, p.z) < -0.6 && riverEdgeDist(p.x, p.z) < 0.01;
   return realm.idle && realm.now === 'eden' && !consider.lying && character.lie === 0
-    && !character.wading && !garden.carrying && !garden.holding() && !garden.cradling;
+    && !inWater && !garden.carrying && !garden.gathering && !garden.cradling;
 }
 
 // He dances where he stands: any walk he was on is let go, and if he was
 // sitting by the water he gets up for it.
 function beginDance() {
-  if (!mayDance() || !dance.start(companion.group.position)) return false;
+  // She joins in if she is near, and out of the water.
+  if (!mayDance() || !dance.start(companion.group.position, !companion.wading)) return false;
   realm.kit().wayfinding.cancel();
   forceSit = false;
   return true;
@@ -443,7 +449,7 @@ function edenFrame(dt) {
   dance.update(dt, hour.night);
   if (dance.beats !== heardBeats) {
     heardBeats = dance.beats;
-    ambience.timbrel(heardBeats % 2 === 1);
+    ambience.timbrel(dance.accent);
   }
   if (dance.notes !== heardTune) {
     heardTune = dance.notes;
@@ -885,6 +891,7 @@ window.__world = {
   walkTo(x, z) {
     if (!realm.idle) return null;   // not on the ladder, nor under the veil
     const kit = realm.kit();
+    dance.stop();   // he stops dancing to go (v38)
     return kit.wayfinding.walkTo(x, z, kit.namedThing());
   },
   // Drop the character anywhere, for tests and debugging — lets the smoke
