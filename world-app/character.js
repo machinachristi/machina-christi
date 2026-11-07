@@ -164,6 +164,21 @@ export function createCharacter({ eve = false } = {}) {
   let lift = 0;             // 0 → 1 the hand raised with the fruit in it
   fruitHeld.visible = false;
   torso.add(fruitHeld);
+  // A leaf of the Tree of Life in heaven (v37, Revelation 22:2), held up in
+  // the same hand: a pointed leaf of green light, drawn only while held.
+  const leafShape = new THREE.Shape();
+  leafShape.moveTo(0, -0.13);
+  leafShape.quadraticCurveTo(0.085, -0.02, 0, 0.14);
+  leafShape.quadraticCurveTo(-0.085, -0.02, 0, -0.13);
+  const leafHeld = new THREE.Mesh(
+    new THREE.ShapeGeometry(leafShape, 6),
+    new THREE.MeshBasicMaterial({ color: 0xA8F5A0, side: THREE.DoubleSide }),
+  );
+  leafHeld.position.set(0.24, 0.74, 0.56);
+  leafHeld.rotation.set(-0.35, 0, 0.25);
+  leafHeld.scale.setScalar(1.5);
+  leafHeld.visible = false;
+  torso.add(leafHeld);
 
   // Where a lamb lies in his arms (v36, Isaiah 40:11): high at his breast,
   // a little to his right (−x: his right is the screen's right seen from
@@ -407,7 +422,8 @@ export function createCharacter({ eve = false } = {}) {
     }
 
     held.visible = carry > 0.6 && carrying && !holding && climb < 0.5;
-    fruitHeld.visible = !!holding && climb < 0.5;
+    fruitHeld.visible = !!holding && !holding.leaf && climb < 0.5;
+    leafHeld.visible = !!holding && !!holding.leaf && climb < 0.5;
   }
 
   function setSitting(b) { sitting = !!b; }
@@ -434,10 +450,11 @@ export function createCharacter({ eve = false } = {}) {
     shoulderPoint.getWorldPosition(out.shoulders);
     return out;
   }
-  // h: { color, left } while he holds a fruit, or null.
+  // h: { color, left } while he holds a fruit, { leaf: true } while he holds
+  // a leaf of the tree in heaven (v37), or null.
   function setHolding(h) {
     holding = h || null;
-    if (!holding) return;
+    if (!holding || holding.leaf) return;
     fruitHeld.material.color.setHex(holding.color);
     fruitHeld.scale.setScalar(0.25 + 0.95 * holding.left);
   }

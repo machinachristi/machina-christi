@@ -815,6 +815,54 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).heaven.city.gateGlow, { timeout: 30000 }).toBeLessThan(0.2);
   });
 
+  test('the healing of the nations in heaven: leaves of the tree go out through every gate, and one comes down into his hand under the Tree of Life, to be carried out at the gate or let go (v37, Revelation 22:2; Ezekiel 47:12)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    await enterHeaven(page);
+    const frame = appFrame(page);
+    let s = await getState(page);
+    // Leaf-bearers bound for all twelve gates, and the month's fruit ripe.
+    expect(s.heaven.healing.gates).toBe(12);
+    expect(s.heaven.healing.bearers).toBeGreaterThanOrEqual(12 * 10);
+    expect(s.heaven.healing.ripe).toBe(await frame.evaluate(() => new Date().getMonth()));
+    expect(s.heaven.healing.stage).toBe('none');
+    // They walk: the south middle gate's first bearer moves on.
+    const lead0 = s.heaven.healing.lead;
+    await expect.poll(async () => dist2d((await getState(page)).heaven.healing.lead, lead0), { timeout: 30000 })
+      .toBeGreaterThan(0.5);
+
+    // Standing still under the crown, a leaf comes down to him, its word is
+    // given, and it is held in his hand; while he holds it he does not pray.
+    await frame.evaluate(() => window.__world.teleport(0.6, 30.4, 0));
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 60000 }).toEqual({
+      name: 'Aleh litrufah', label: 'and the leaf thereof for medicine',
+    });
+    await expect.poll(async () => (await getState(page)).heaven.healing.stage, { timeout: 60000 }).toBe('holding');
+    s = await getState(page);
+    expect(s.heaven.healing.received).toBe(1);
+    expect(s.heaven.song.praying).toBe(false);
+
+    // Carried to the south middle gate, it goes out of his hand through the
+    // gate, its word is given, and the stream there brightens.
+    await frame.evaluate(() => window.__world.teleport(11, -43, Math.PI));
+    await expect.poll(async () => (await getState(page)).heaven.healing.given, { timeout: 30000 }).toBe(1);
+    s = await getState(page);
+    expect(s.heaven.healing.stage).toBe('none');
+    expect(s.heaven.healing.out).toBe(true);
+    expect(s.caption).toEqual({ name: 'Marpe', label: 'the leaves of the tree were for the healing of the nations' });
+    await expect.poll(async () => (await getState(page)).heaven.healing.glow, { timeout: 60000 }).toBeGreaterThan(0.5);
+
+    // Another, once the first has gone out, let go where he stands away from
+    // the tree: it goes out over the city, and then, his hands free, he may
+    // lift them in prayer.
+    await expect.poll(async () => (await getState(page)).heaven.healing.out, { timeout: 120000 }).toBe(false);
+    await frame.evaluate(() => window.__world.teleport(0.6, 30.4, 0));
+    await expect.poll(async () => (await getState(page)).heaven.healing.stage, { timeout: 60000 }).toBe('holding');
+    await frame.evaluate(() => window.__world.teleport(-8, 10, 0));
+    await expect.poll(async () => (await getState(page)).heaven.healing.given, { timeout: 60000 }).toBe(2);
+    await expect.poll(async () => (await getState(page)).heaven.song.praying, { timeout: 60000 }).toBe(true);
+  });
+
   test('the lamb carried: stand among the flock and he takes its lamb up in his arms, carries it on his shoulders as he walks, and sets it down beside its mother when he stands (v36, Isaiah 40:11; Luke 15:5)', async ({ page }) => {
     test.setTimeout(180000);
     await gotoWorldReady(page);

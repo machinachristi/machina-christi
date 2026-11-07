@@ -1,5 +1,5 @@
 {
-  "version": 36,
+  "version": 37,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -461,13 +461,28 @@
         { "text": "Come in among them and they are not afraid: they turn to look at him and every one washes at once; draw near one and its name is given, Yonim. By night they are gone to roost.", "source": "Genesis 2:19" },
         { "text": "The lamb in his arms is still one of the flock's own instances, so carrying it costs no draw call; the doves are at most three (their bodies, their wings only while one shakes, and the drops only while some are in the air), none of them in the garden's opening view.", "source": null }
       ]
+    },
+    {
+      "version": 37,
+      "date": "2026-11-07",
+      "realm": "heaven",
+      "focus": "the healing of the nations",
+      "changes": [
+        { "text": "Out from under the crown of the Tree of Life a slow stream of green lights now walks back out of the city, each one a leaf of the tree carried, through every one of its twelve gates and on beyond the wall to the nations: gold coming in at the gates, green going out.", "source": "Revelation 22:2" },
+        { "text": "None of them walks through the saints: those bound for the gates south of the tree come out from under the crown past the end of the saints' ranks before they turn, so down the east side, outside the saints, toward the gate within his reach, the green stream walks beside the golden one coming up; both part round him where he stands.", "source": "Revelation 21:24" },
+        { "text": "Stand still under the crown and a leaf lets go above him and comes down, turning as it falls, into his raised hand, where it keeps a soft green light: Aleh litrufah, and the leaf thereof for medicine.", "source": "Ezekiel 47:12" },
+        { "text": "Carry it to the gate and it goes out of his hand through the gate with the rest, and the stream there brightens a while: Marpe, the leaves of the tree were for the healing of the nations.", "source": "Revelation 22:2" },
+        { "text": "Or stand still with it anywhere away from the tree and he lets it go, and it rises and goes out over the heads of all toward the nearest gate; then, his hands free, he may lift them in prayer again.", "source": null },
+        { "text": "The tree yields her fruit every month: its twelve fruits are the twelve months, and the month it is now hangs ripe, twice the size of the rest and swelling softly.", "source": "Revelation 22:2" },
+        { "text": "All of it is one draw call: the bearers walk wholly in their shader, and his own leaf, falling, held and given, is two more points in the same cloud; the leaf in his hand is drawn only while he holds it.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
     "The morning stars sing together: lying back as the night ends, every star in sight sings at once in a swelling chord as the east brightens behind them (Job 38:7)",
-    "Water a sapling: carried water poured at the roots of a young tree planted by the river, which grows a little with every visit he tends it (Isaiah 61:3)",
-    "The healing of the nations: the travellers who come up the street to the Tree of Life each take a leaf from it and carry it back out through the gates, glowing green, to the nations beyond (Revelation 22:2)"
+    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)",
+    "The water of life freely: stand at the river's brink in heaven and he stoops and drinks from his cupped hands, and the river's light runs up through the glass round him (Revelation 22:17)"
   ]
 }
