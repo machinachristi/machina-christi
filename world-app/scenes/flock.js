@@ -81,6 +81,11 @@ const LIFT_TIME = 0.8;            // seconds from the grass up into his arms, or
 const PUT_AFTER = 3.2;            // seconds standing with it held before he sets it down
 const REARM = 2.5;                // metres he walks after setting it down before he lifts it again
 const FRISK_FOR = 2.6;            // seconds the lamb skips about once it is down
+// v38 (Psalm 114:4, "the little hills like lambs"): while he dances, the
+// lambs near him leap about too, and go on a moment after he has bowed.
+const JOY_NEAR = 12;              // metres
+const JOY_FRISK = 1.1;            // seconds of skipping kept topped up while he dances…
+const JOY_AGAIN = 0.45;           // …from whenever it runs down to this
 const CALL_EVERY = 4.5;           // the ewe calls up to her lamb about this often
 // Where he sets the lamb down, in order of choice: a step before him on his
 // right, then on his left, then straight before him, at either side, and
@@ -295,6 +300,7 @@ export function createFlock(scene, solids = [], trees = []) {
   let armed = true;       // whether he will stoop for it again
   let walked = 0;         // metres walked since he last set it down
   let lifts = 0;
+  let leaps = 0;
   let setDowns = 0;
   let bleats = 0;         // the lamb's voice
   let calls = 0;          // its mother's
@@ -688,6 +694,17 @@ export function createFlock(scene, solids = [], trees = []) {
     hasLast = true;
     still = speed < STILL_SPEED ? still + dt : 0;
     carry(dt, walker, step, jumped, o);
+    if (o.joy) {
+      for (const S of sheep) {
+        if (S.lamb && S.mode !== 'carried'
+          && Math.hypot(S.pos.x - walker.x, S.pos.z - walker.z) < JOY_NEAR) {
+          // Topped up only once it has nearly run down, so the skipping
+          // (which keeps time by it) goes on rather than holding still.
+          if (S.frisk === 0) leaps++;
+          if (S.frisk < JOY_AGAIN) S.frisk = JOY_FRISK;
+        }
+      }
+    }
     if (still === 0) restAnnounced = false;
     const holding = stage !== 'none';
 
@@ -934,6 +951,8 @@ export function createFlock(scene, solids = [], trees = []) {
         rests,
         // v36 (Isaiah 40:11): the lamb carried — none|lifting|held|lowering.
         carry: { stage, lifts, setDowns, calls, bleats, shoulders: onShoulders },
+        // v38: how many times a lamb has started leaping for joy with him.
+        leaps,
         sheep: sheep.map(S => ({ x: S.pos.x, z: S.pos.z, mode: S.mode, lie: S.lie, lamb: S.lamb, rested: S.rested, up: S.up })),
       };
     },
