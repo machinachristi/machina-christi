@@ -541,6 +541,19 @@ drawn one by one are a thousand draw calls; drawn together as one batch
 (*instancing*), they're one. *Here:* Eden's budget is under 200 draw calls,
 and all 194 saint figures in heaven are a single one.
 
+**Camera and field of view.** A 3D world is drawn as a pretend camera would
+see it: from where it stands, pointing where it points. Its *field of view*
+is how much fits in the picture, as an angle: a wide angle sees more but
+makes each thing smaller, and stretches what's at the edges.
+*Here:* Eden's camera stands 10.5 m behind Adam and sees 72° from top to
+bottom on an upright phone, so he is a small figure in a large place.
+
+**Aspect ratio.** How wide a screen is compared to how tall: an upright phone
+is about 0.46 (much taller than wide), a laptop about 1.6. Anything drawn to
+fill a screen has to take it into account, or it looks squashed or stretched.
+*Here:* Eden's camera picks its field of view from the screen's aspect ratio,
+and picks again when a phone is turned on its side.
+
 **Lazy loading.** Doing the work only when it's first needed, not up front,
 like a theatre setting up the second stage only once the audience heads for
 it. People who never go there never pay for it.

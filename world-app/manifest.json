@@ -1,5 +1,5 @@
 {
-  "version": 38,
+  "version": 39,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -490,6 +490,17 @@
         { "text": "The lambs near him leap and toss their heads all the while he dances, and a moment after.", "source": "Psalm 114:4" },
         { "text": "Tap him again once he has bowed and he dances the other way round; a drag, or a tap anywhere else, and he simply stops. He does not dance in the water, lying back, or with water, fruit or a lamb in his hands.", "source": null },
         { "text": "The two figures are drawn in fewer pieces — each head is one with its body and each foot with its leg — so the garden's opening shot costs 186 draws instead of 192, and the petals cost one more only while they are in the air.", "source": null }
+      ]
+    },
+    {
+      "version": 39,
+      "date": "2026-11-14",
+      "realm": "eden",
+      "focus": "a large place",
+      "changes": [
+        { "text": "The camera stands further back and higher, and looks out level over his head: he is a small figure in a large place, with the garden and its sky opening out round him.", "source": "Psalm 18:19" },
+        { "text": "How much it sees follows the screen's shape: a phone held upright sees tall, a wide screen sees wide without stretching at the edges, and turning a phone on its side changes it there and then.", "source": null },
+        { "text": "He is smaller on the screen now, so the place to tap him to set him dancing reaches a fingertip's width round him, however small he is.", "source": null }
       ]
     }
   ],

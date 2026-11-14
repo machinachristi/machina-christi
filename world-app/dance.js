@@ -189,10 +189,14 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
     const lx = hx - fx, ly = hy - fy;
     const len2 = lx * lx + ly * ly;
     if (len2 < 1) return false;
+    // AB#127: with the camera further back he stands about 100 px tall on
+    // a phone, half what he was, so the reach round him is a whole
+    // fingertip wide however small he is, and runs a little past his feet
+    // and over his head.
     const along = ((clientX - fx) * lx + (clientY - fy) * ly) / len2;
-    if (along < -0.06 || along > 1.08) return false;
+    if (along < -0.15 || along > 1.15) return false;
     const across = Math.abs((clientX - fx) * ly - (clientY - fy) * lx) / Math.sqrt(len2);
-    return across < Math.max(24, Math.sqrt(len2) * 0.3);
+    return across < Math.max(36, Math.sqrt(len2) * 0.3);
   }
 
   // Every petal already down is flung up afresh from where he dances, each
