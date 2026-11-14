@@ -2,12 +2,30 @@
 // the character, easing toward its desired pose with frame-rate-independent
 // smoothing. On entry it holds a brief wide establishing shot of the sacred
 // trees before settling in behind the character; any input skips ahead.
+//
+// AB#127, a small figure in a large place: the camera stands well back and
+// looks out level over his head at the garden beyond him, rather than down
+// at his back, and it sees as much as the screen's shape allows.
 
 import * as THREE from 'three';
-import { damp, smoothstep, shortestAngle } from './util.js';
+import { clamp, damp, smoothstep, shortestAngle } from './util.js';
 
 const _desired = new THREE.Vector3();
 const _look = new THREE.Vector3();
+
+// How much the camera sees follows the screen's shape. A tall phone gets a
+// tall view, 72° from top to bottom (about 37° across); a wide screen is
+// held to 90° across instead, since past that the edges of the picture
+// stretch. (A screen 1.38 times wider than tall is where the two meet.)
+export const FOV_TALL = 72;
+export const FOV_ACROSS_MAX = 90;
+const DEG = Math.PI / 180;
+
+export function fovFor(aspect) {
+  const across = Math.tan((FOV_ACROSS_MAX / 2) * DEG);
+  const fitted = (2 * Math.atan(across / Math.max(aspect, 0.1))) / DEG;
+  return Math.min(FOV_TALL, fitted);
+}
 
 export class CameraRig {
   constructor(camera, target, heightAt) {
@@ -15,9 +33,14 @@ export class CameraRig {
     this.target = target;          // the character's root group
     this.heightAt = heightAt;
 
-    this.distance = 6.4;
-    this.height = 3.0;
-    this.lookHeight = 1.4;
+    // 10.5 m behind him and 3.4 m up, looking 9 m past him at that same
+    // height: a level gaze, so he stands low in the picture with the garden
+    // and its sky opening out above him (was 6.4 m back, 3.0 m up, looking
+    // down at a point 0.9 m ahead of him, 1.4 m up).
+    this.distance = 10.5;
+    this.height = 3.4;
+    this.ahead = 9;
+    this.lookHeight = 3.4;
     this.posLambda = 3.0;          // higher = snappier trailing
     this.lookLambda = 5.5;
     // v25 (Proverbs 4:26): the camera swings round behind the walker on its
@@ -43,6 +66,13 @@ export class CameraRig {
     this._blended = false;
   }
 
+  // Fits the view to the screen: its shape, and how much it sees (fovFor).
+  fit(width, height) {
+    this.camera.aspect = width / Math.max(height, 1);
+    this.camera.fov = fovFor(this.camera.aspect);
+    this.camera.updateProjectionMatrix();
+  }
+
   // k: 0..1 how far the view is his own, looking up; eye/look: where the
   // camera is then, and the point it looks at.
   setGaze(k, eye = null, look = null) {
@@ -61,12 +91,28 @@ export class CameraRig {
     return out;
   }
 
-  _desiredLook(out) {
-    const yaw = this.target.rotation.y;
+  // Where the camera looks from `from`: on along the line from it through
+  // him, `ahead` metres past him. (Not along the way he faces: with the
+  // point this far out, a look that followed his turning would swing him
+  // off the side of a phone's narrow picture.) The gaze is level when the
+  // camera stands where it means to; when it stands higher or lower over
+  // him than that (a slope behind him, the rule that keeps it out of the
+  // hillside, the climb up the ladder), it tips by just enough to keep his
+  // feet at the same place in the picture.
+  _desiredLook(out, from) {
+    const p = this.target.position;
+    let dx = p.x - from.x, dz = p.z - from.z;
+    const flat = Math.hypot(dx, dz);
+    if (flat > 1e-3) { dx /= flat; dz /= flat; }
+    else { dx = Math.sin(this.yaw); dz = Math.cos(this.yaw); }
+    const meant = Math.atan2(this.height, this.distance);
+    const seen = Math.atan2(from.y - p.y, Math.max(flat, 1));
+    const level = Math.atan2(this.height - this.lookHeight, this.distance + this.ahead);
+    const pitch = level + clamp(seen - meant, -0.5, 0.6);
     out.set(
-      this.target.position.x + Math.sin(yaw) * 0.9,
-      this.target.position.y + this.lookHeight,
-      this.target.position.z + Math.cos(yaw) * 0.9,
+      p.x + dx * this.ahead,
+      from.y - Math.tan(pitch) * (flat + this.ahead),
+      p.z + dz * this.ahead,
     );
     return out;
   }
@@ -94,9 +140,9 @@ export class CameraRig {
     this.intro = null;
     this._blended = false;
     this._desiredPosition(this.camera.position);
-    this._desiredLook(this.lookPoint);
     const floor = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.6;
     if (this.camera.position.y < floor) this.camera.position.y = floor;
+    this._desiredLook(this.lookPoint, this.camera.position);
     this.camera.lookAt(this.lookPoint);
   }
 
@@ -130,11 +176,11 @@ export class CameraRig {
     const follow = smoothstep(Math.PI * 0.75, Math.PI * 0.55, Math.abs(off));
     this.yaw += off * follow * (1 - Math.exp(-this.yawLambda * dt));
     const desired = this._desiredPosition(_desired);
-    const look = this._desiredLook(_look);
 
     if (this.intro) {
       this.intro.t += dt;
       const k = smoothstep(0, 1, this.intro.t / this.intro.dur);
+      const look = this._desiredLook(_look, desired);
       this.camera.position.lerpVectors(this.intro.fromPos, desired, k);
       this.lookPoint.lerpVectors(this.intro.fromLook, look, k);
       if (this.intro.t >= this.intro.dur) this.intro = null;
@@ -143,14 +189,19 @@ export class CameraRig {
       c.x = damp(c.x, desired.x, this.posLambda, dt);
       c.y = damp(c.y, desired.y, this.posLambda, dt);
       c.z = damp(c.z, desired.z, this.posLambda, dt);
-      this.lookPoint.x = damp(this.lookPoint.x, look.x, this.lookLambda, dt);
-      this.lookPoint.y = damp(this.lookPoint.y, look.y, this.lookLambda, dt);
-      this.lookPoint.z = damp(this.lookPoint.z, look.z, this.lookLambda, dt);
     }
 
     // Never sink into a hillside.
     const floor = this.heightAt(this.camera.position.x, this.camera.position.z) + 0.6;
     if (this.camera.position.y < floor) this.camera.position.y = floor;
+
+    if (!this.intro) {
+      // Past him from where the camera now is, after the hillside rule.
+      const look = this._desiredLook(_look, this.camera.position);
+      this.lookPoint.x = damp(this.lookPoint.x, look.x, this.lookLambda, dt);
+      this.lookPoint.y = damp(this.lookPoint.y, look.y, this.lookLambda, dt);
+      this.lookPoint.z = damp(this.lookPoint.z, look.z, this.lookLambda, dt);
+    }
 
     if (this.gaze > 0.001) {
       this._followPos.copy(this.camera.position);

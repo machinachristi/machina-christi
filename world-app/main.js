@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { createGarden } from './scenes/garden.js';
 import { createCharacter } from './character.js';
-import { CameraRig } from './camera-rig.js';
+import { CameraRig, fovFor } from './camera-rig.js';
 import { createControls } from './controls.js';
 import { createWayfinding } from './wayfinding.js';
 import { createFooting } from './footing.js';
@@ -43,7 +43,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 900);
+// How much it sees follows the screen's shape (AB#127) — see camera-rig.js.
+const aspect = window.innerWidth / window.innerHeight;
+const camera = new THREE.PerspectiveCamera(fovFor(aspect), aspect, 0.1, 900);
 
 // Deterministic planting: the same Eden for every visitor, every reload.
 // (Top-level await: the build yields between steps so the parent page's
@@ -190,8 +192,7 @@ function updateCompanion(dt) {
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  rig.fit(window.innerWidth, window.innerHeight);   // a phone turned on its side sees wider, not taller
 });
 
 // After a backgrounded tab resumes, don't let the accumulated clock delta
@@ -536,6 +537,7 @@ window.__world = {
       pos: { x: character.group.position.x, y: character.group.position.y, z: character.group.position.z },
       cam: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       camDist: camera.position.distanceTo(character.group.position),
+      camFov: camera.fov,
       // How the walker presently goes (v25, Isaiah 40:31): `gait` is what the
       // input asks for — 'still' | 'walk' | 'quick' — and `speed` the pace
       // actually reached, m/s (eased toward that gait's own steady pace).

@@ -969,7 +969,8 @@ test.describe('the garden\'s features', () => {
     const vp = page.viewportSize();
     await page.mouse.click(12, vp.height - 12);
     await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
-    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(7.5);
+    // (AB#127: the camera now settles about 11 m from him, where it was 7.)
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(11.5);
     await page.waitForTimeout(500);
     await tapHim();
     await page.waitForTimeout(800);
@@ -1046,6 +1047,38 @@ test.describe('the garden\'s features', () => {
     // Not in the river: he does not dance in the water.
     await frame.evaluate(() => window.__world.teleport(-20, 6));
     expect(await frame.evaluate(() => window.__world.dance(true))).toBe(false);
+  });
+
+  test('a small figure in a large place: the camera stands well back, looks out level past him, and sees as much as the screen\'s shape allows (AB#127)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const vp = page.viewportSize();
+    // The first touch skips the opening shot; then, out on the open meadow,
+    // the camera settles in behind him.
+    await page.mouse.click(12, vp.height - 12);
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(11.5);
+    await page.waitForTimeout(800);
+    let s = await getState(page);
+    // A tall phone gets a tall view, from well back and a little above him…
+    expect(s.camFov).toBeCloseTo(72, 0);
+    expect(s.camDist).toBeGreaterThan(10);
+    expect(s.cam.y - s.pos.y).toBeGreaterThan(3);
+    // …looking out level over his head, not down at him: he stands in the
+    // middle of the screen from side to side, low in it from top to bottom,
+    // with the garden and its sky above him.
+    const at = await frame.evaluate(() => window.__world.whereIsHe());
+    expect(Math.abs(at.x / vp.width - 0.5)).toBeLessThan(0.1);
+    expect(at.y / vp.height).toBeGreaterThan(0.6);
+    expect(at.y / vp.height).toBeLessThan(0.8);
+
+    // A wide screen is held to 90° across rather than stretched at the edges.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect.poll(async () => (await getState(page)).camFov, { timeout: 10000 }).toBeLessThan(66);
+    s = await getState(page);
+    const across = 2 * Math.atan(Math.tan(s.camFov * Math.PI / 360) * 1280 / 800) * 180 / Math.PI;
+    expect(across).toBeGreaterThan(88);
+    expect(across).toBeLessThan(90.5);
   });
 
   test('the companion wanders on its own', async ({ page }) => {
