@@ -11,7 +11,7 @@
 // House rule for anything that moves or fades: assert with expect.poll windows,
 // never a single fixed-delay sample (CI's software renderer runs slow).
 const { test, expect } = require('@playwright/test');
-const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven } = require('./world-helpers');
+const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven, expectInBudget } = require('./world-helpers');
 
 test.describe('the garden\'s features', () => {
   test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
@@ -813,6 +813,272 @@ test.describe('the garden\'s features', () => {
     await frame.evaluate(() => window.__world.teleport(-6, -20, 0));
     await expect.poll(async () => (await getState(page)).heaven.city.atGate, { timeout: 20000 }).toBe(false);
     await expect.poll(async () => (await getState(page)).heaven.city.gateGlow, { timeout: 30000 }).toBeLessThan(0.2);
+  });
+
+  test('the healing of the nations in heaven: leaves of the tree go out through every gate, and one comes down into his hand under the Tree of Life, to be carried out at the gate or let go (v37, Revelation 22:2; Ezekiel 47:12)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    await enterHeaven(page);
+    const frame = appFrame(page);
+    let s = await getState(page);
+    // Leaf-bearers bound for all twelve gates, and the month's fruit ripe.
+    expect(s.heaven.healing.gates).toBe(12);
+    expect(s.heaven.healing.bearers).toBeGreaterThanOrEqual(12 * 10);
+    expect(s.heaven.healing.ripe).toBe(await frame.evaluate(() => new Date().getMonth()));
+    expect(s.heaven.healing.stage).toBe('none');
+    // They walk: the south middle gate's first bearer moves on.
+    const lead0 = s.heaven.healing.lead;
+    await expect.poll(async () => dist2d((await getState(page)).heaven.healing.lead, lead0), { timeout: 30000 })
+      .toBeGreaterThan(0.5);
+
+    // Standing still under the crown, a leaf comes down to him, its word is
+    // given, and it is held in his hand; while he holds it he does not pray.
+    await frame.evaluate(() => window.__world.teleport(0.6, 30.4, 0));
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 60000 }).toEqual({
+      name: 'Aleh litrufah', label: 'and the leaf thereof for medicine',
+    });
+    await expect.poll(async () => (await getState(page)).heaven.healing.stage, { timeout: 60000 }).toBe('holding');
+    s = await getState(page);
+    expect(s.heaven.healing.received).toBe(1);
+    expect(s.heaven.song.praying).toBe(false);
+
+    // Carried to the south middle gate, it goes out of his hand through the
+    // gate, its word is given, and the stream there brightens.
+    await frame.evaluate(() => window.__world.teleport(11, -43, Math.PI));
+    await expect.poll(async () => (await getState(page)).heaven.healing.given, { timeout: 30000 }).toBe(1);
+    s = await getState(page);
+    expect(s.heaven.healing.stage).toBe('none');
+    expect(s.heaven.healing.out).toBe(true);
+    expect(s.caption).toEqual({ name: 'Marpe', label: 'the leaves of the tree were for the healing of the nations' });
+    await expect.poll(async () => (await getState(page)).heaven.healing.glow, { timeout: 60000 }).toBeGreaterThan(0.5);
+
+    // Another, once the first has gone out, let go where he stands away from
+    // the tree: it goes out over the city, and then, his hands free, he may
+    // lift them in prayer.
+    await expect.poll(async () => (await getState(page)).heaven.healing.out, { timeout: 120000 }).toBe(false);
+    await frame.evaluate(() => window.__world.teleport(0.6, 30.4, 0));
+    await expect.poll(async () => (await getState(page)).heaven.healing.stage, { timeout: 60000 }).toBe('holding');
+    await frame.evaluate(() => window.__world.teleport(-8, 10, 0));
+    await expect.poll(async () => (await getState(page)).heaven.healing.given, { timeout: 60000 }).toBe(2);
+    await expect.poll(async () => (await getState(page)).heaven.song.praying, { timeout: 60000 }).toBe(true);
+  });
+
+  test('the lamb carried: stand among the flock and he takes its lamb up in his arms, carries it on his shoulders as he walks, and sets it down beside its mother when he stands (v36, Isaiah 40:11; Luke 15:5)', async ({ page }) => {
+    test.setTimeout(180000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const f0 = (await getState(page)).flock;
+    expect(f0.carry.stage).toBe('none');
+
+    // Walk in among them and stand: they come round him, the lamb comes in
+    // to his feet, and he stoops and takes it up into his arms.
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z, Math.PI / 2), [f0.home.x, f0.home.z]);
+    await expect.poll(async () => (await getState(page)).flock.carry.stage, { timeout: 45000 }).toBe('held');
+    {
+      const s = await getState(page);
+      const lamb = s.flock.sheep.find(h => h.lamb);
+      expect(lamb.mode).toBe('carried');
+      expect(lamb.up).toBeGreaterThan(0.9);
+      expect(dist2d(lamb, s.pos)).toBeLessThan(0.9);   // in his arms, not on the grass
+      expect(s.flock.carry.lifts).toBe(1);
+    }
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 30000 }).toBe('Uvecheiko yissa');
+
+    // He walks on with it: it rides up across his shoulders, and goes with
+    // him. (Whether the ewe and the ram come too depends on whether they had
+    // already lain down round him while he stood — v31's rule, unchanged.)
+    const start = (await getState(page)).pos;
+    await frame.evaluate(([x, z]) => window.__world.walkTo(x, z), [start.x + 12, start.z - 5]);
+    await expect.poll(async () => (await getState(page)).flock.carry.shoulders, { timeout: 30000 }).toBe(true);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      const lamb = s.flock.sheep.find(h => h.lamb);
+      return dist2d(s.pos, start) >= 5 && lamb.mode === 'carried' && dist2d(lamb, s.pos) < 0.9;
+    }, { timeout: 45000 }).toBe(true);
+
+    // He stands: it comes down into his arms again and onto the grass
+    // beside him, and the word for it is given; it is on its own feet again.
+    await expect.poll(async () => frame.locator('.naming__name').textContent(), { timeout: 45000 }).toBe('Alot yenahel');
+    const down = await getState(page);
+    {
+      const lamb = down.flock.sheep.find(h => h.lamb);
+      expect(down.flock.carry.setDowns).toBe(1);
+      expect(lamb.mode === 'follow' || lamb.rested).toBe(true);
+      expect(lamb.up).toBe(0);
+      expect(down.flock.carry.bleats).toBeGreaterThanOrEqual(2);
+    }
+    // It skips about, and then lies down round him: the psalm's word again.
+    await expect.poll(async () => (await getState(page)).flock.rests, { timeout: 45000 }).toBeGreaterThan(down.flock.rests);
+  });
+
+  test('doves by the rivers of waters: white doves wash in a shallow of the slow reach, dip and shake off the water, all wash at once when he comes among them, and are gone by night (v36, Song of Solomon 5:12)', async ({ page }) => {
+    test.setTimeout(150000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const d0 = (await getState(page)).doves;
+    expect(d0.count).toBe(5);
+    expect(d0.shown).toBe(true);
+    // Every one stands in the water itself, at its edge.
+    for (const d of d0.doves) expect(d.wet).toBe(true);
+
+    // On their own they wash, now one and now another, and shake.
+    await expect.poll(async () => (await getState(page)).doves.shakes, { timeout: 45000 }).toBeGreaterThan(0);
+
+    // He comes in among them: they all wash and shake at once.
+    const before = await getState(page);
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z - 2.5, 0), [d0.at.x, d0.at.z]);
+    await expect.poll(async () => (await getState(page)).doves.joys, { timeout: 20000 }).toBeGreaterThan(before.doves.joys);
+    await expect.poll(async () => (await getState(page)).doves.shakes, { timeout: 30000 })
+      .toBeGreaterThanOrEqual(before.doves.shakes + 3);
+
+    // Drawn near one, it is named (tried at each in turn, since a flag in
+    // the same shallow may stand nearer to where he is set down).
+    let named = false;
+    for (const d of d0.doves) {
+      await frame.evaluate(([x, z]) => window.__world.teleport(x, z - 0.9, 0), [d.x, d.z]);
+      try {
+        await expect.poll(async () => { const n = (await getState(page)).naming; return n && n.name; }, { timeout: 8000 }).toBe('Yonim');
+        named = true;
+        break;
+      } catch (e) { /* the next one */ }
+    }
+    expect(named).toBe(true);
+
+    // By night they are gone to roost.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await expect.poll(async () => (await getState(page)).doves.shown, { timeout: 30000 }).toBe(false);
+  });
+
+  test('praise him in the dance: tap him and he dances for joy where he stands, petals whirling up round him, and a tap elsewhere stops him; his companion and the lambs dance with him (v38, Psalm 150:4)', async ({ page }) => {
+    test.setTimeout(240000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const box = await page.locator('iframe').boundingBox();
+    const tapHim = async () => {
+      const at = await frame.evaluate(() => window.__world.whereIsHe());
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    const s0 = await getState(page);
+    expect(s0.dance.dancing).toBe(false);
+    expect(s0.dance.petals).toBe(0);
+
+    // The very first touch only skips the opening shot (whose camera may
+    // not have him on the screen at all). Then, out on the open
+    // south-western meadow with the camera settled behind him, a tap on him
+    // sets him dancing (tapped again if the camera was still coming round).
+    const vp = page.viewportSize();
+    await page.mouse.click(12, vp.height - 12);
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    // (AB#127: the camera now settles about 11 m from him, where it was 7.)
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(11.5);
+    await page.waitForTimeout(500);
+    await tapHim();
+    await page.waitForTimeout(800);
+    if (!(await getState(page)).dance.dancing) await tapHim();
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 10000 }).toBe(true);
+    const start = await getState(page);
+    expect(start.dance.petals).toBeGreaterThan(300);
+    expect(start.walk.target).toBe(null);
+    await expect.poll(async () => { const c = (await getState(page)).caption; return c && c.name; }, { timeout: 10000 })
+      .toBe('Betof umachol');
+
+    // He dances to the timbrel and the harp, leaps once, and bows — and is
+    // still where he began, within the budget all the while.
+    let most = { calls: 0, triangles: 0 };
+    await expect.poll(async () => {
+      const s = await getState(page);
+      most = { calls: Math.max(most.calls, s.render.calls), triangles: Math.max(most.triangles, s.render.triangles) };
+      return !s.dance.dancing && s.dance.times === 1;
+    }, { timeout: 90000 }).toBe(true);
+    expectInBudget({ render: most }, 'while he dances');
+    const done = await getState(page);
+    expect(done.dance.beats).toBeGreaterThanOrEqual(12);
+    expect(done.dance.notes).toBe(11);
+    expect(done.dance.leaps).toBe(1);
+    expect(dist2d(done.pos, start.pos)).toBeLessThan(0.3);
+    // The petals drift down and are gone.
+    await expect.poll(async () => (await getState(page)).dance.petals, { timeout: 60000 }).toBe(0);
+
+    // Tapped again, he dances the other way round; a tap on the grass
+    // away from him stops the dance and he walks there instead.
+    await tapHim();
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 10000 }).toBe(true);
+    expect((await getState(page)).dance.dir).toBe(-1);
+    await page.mouse.click(vp.width * 0.15, vp.height * 0.78);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return !s.dance.dancing && !!s.walk.target;
+    }, { timeout: 10000 }).toBe(true);
+
+    // Beside his companion, she turns to him and dances too. (Once she is
+    // up out of the river, he is set down two strides from her, on her side
+    // toward where every visit begins — never in the water, where he would
+    // take some up in his hands.)
+    let eve;
+    await expect.poll(async () => { eve = (await getState(page)).companion.pos; return eve.y; }, { timeout: 60000 })
+      .toBeGreaterThan(-0.3);
+    const toStart = Math.hypot(0 - eve.x, -9.5 - eve.z) || 1;
+    await frame.evaluate(([x, z]) => window.__world.teleport(x, z, 0),
+      [eve.x + (0 - eve.x) / toStart * 2, eve.z + (-9.5 - eve.z) / toStart * 2]);
+    expect(await frame.evaluate(() => window.__world.dance(true))).toBe(true);
+    await expect.poll(async () => (await getState(page)).dance.companion, { timeout: 10000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 90000 }).toBe(false);
+
+    // Among the flock, the lambs leap with him. (Set down a stride from a
+    // lamb, on its side toward the flock's own pasture — sheep never wade —
+    // and tried beside each lamb in turn.)
+    const flock = (await getState(page)).flock;
+    let leapt = false;
+    for (const lamb of flock.sheep.filter(S => S.lamb)) {
+      const toHome = Math.hypot(flock.home.x - lamb.x, flock.home.z - lamb.z) || 1;
+      await frame.evaluate(([x, z]) => window.__world.teleport(x, z, 0),
+        [lamb.x + (flock.home.x - lamb.x) / toHome * 1.2, lamb.z + (flock.home.z - lamb.z) / toHome * 1.2]);
+      if (!(await frame.evaluate(() => window.__world.dance(true)))) continue;
+      try {
+        await expect.poll(async () => (await getState(page)).flock.leaps, { timeout: 15000 }).toBeGreaterThan(flock.leaps);
+        leapt = true;
+        break;
+      } catch (e) { /* the next one */ }
+      await frame.evaluate(() => window.__world.dance(false));
+    }
+    expect(leapt).toBe(true);
+    await frame.evaluate(() => window.__world.dance(false));
+
+    // Not in the river: he does not dance in the water.
+    await frame.evaluate(() => window.__world.teleport(-20, 6));
+    expect(await frame.evaluate(() => window.__world.dance(true))).toBe(false);
+  });
+
+  test('a small figure in a large place: the camera stands well back, looks out level past him, and sees as much as the screen\'s shape allows (AB#127)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const vp = page.viewportSize();
+    // The first touch skips the opening shot; then, out on the open meadow,
+    // the camera settles in behind him.
+    await page.mouse.click(12, vp.height - 12);
+    await frame.evaluate(() => window.__world.teleport(-20, -25, 0));
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 45000 }).toBeLessThan(11.5);
+    await page.waitForTimeout(800);
+    let s = await getState(page);
+    // A tall phone gets a tall view, from well back and a little above him…
+    expect(s.camFov).toBeCloseTo(72, 0);
+    expect(s.camDist).toBeGreaterThan(10);
+    expect(s.cam.y - s.pos.y).toBeGreaterThan(3);
+    // …looking out level over his head, not down at him: he stands in the
+    // middle of the screen from side to side, low in it from top to bottom,
+    // with the garden and its sky above him.
+    const at = await frame.evaluate(() => window.__world.whereIsHe());
+    expect(Math.abs(at.x / vp.width - 0.5)).toBeLessThan(0.1);
+    expect(at.y / vp.height).toBeGreaterThan(0.6);
+    expect(at.y / vp.height).toBeLessThan(0.8);
+
+    // A wide screen is held to 90° across rather than stretched at the edges.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect.poll(async () => (await getState(page)).camFov, { timeout: 10000 }).toBeLessThan(66);
+    s = await getState(page);
+    const across = 2 * Math.atan(Math.tan(s.camFov * Math.PI / 360) * 1280 / 800) * 180 / Math.PI;
+    expect(across).toBeGreaterThan(88);
+    expect(across).toBeLessThan(90.5);
   });
 
   test('the companion wanders on its own', async ({ page }) => {

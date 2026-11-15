@@ -11,10 +11,11 @@ const { SITE_PAGES } = require('../lib/site-pages');
 // built-in indexers would need keys to read these, so the API does their job
 // and uploads the cards itself (the "push" model).
 //
-// Runs when asked (a message on the search-reindex queue: the deploy, after
-// the saints publish; the prayers publisher, after a prayer changes) and every
-// Sunday an hour after the weekly saints publish, which also keeps the free
-// service in use (Azure may remove free services left unused for long).
+// Runs when asked: a message on the search-reindex queue from the deploy
+// (after the saints publish), the prayers publisher (after a prayer changes)
+// or the Weekly Jobs workflow (Sundays, an hour after the weekly saints
+// publish, which also keeps the free service in use: Azure may remove free
+// services left unused for long). No timer of its own, AB#126.
 
 async function reindex({ snapshot, prayers, store, log, now = () => new Date() }) {
   if (!store) throw new Error('SEARCH_ENDPOINT is not set');
@@ -36,11 +37,6 @@ async function reindexSearch(_trigger, context) {
   ]);
   return reindex({ snapshot, prayers, store: searchStore(), log });
 }
-
-app.timer('reindexSearch', {
-  schedule: '0 0 5 * * 0', // Sundays 05:00 UTC, an hour after publishSaints
-  handler: reindexSearch,
-});
 
 // As with saints-publish, the message's content doesn't matter: its arrival
 // is the request. Read through the host's own storage connection.

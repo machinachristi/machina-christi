@@ -157,13 +157,17 @@ Node.js, Azure Functions v4 programming model. Each file in
     couldn't be read and the site's own bios (`ordo/saints.json`, bundled like the
     calendars) answered instead (bio and source only). `null` on days with no
     celebration, and on Sundays and feasts of the Lord, which aren't saints' days.
-- **`publishSaints`** (timer, Sundays 04:00 UTC) reads the database as the
-  Function app's identity (read-only) and writes the saints snapshot to
-  `ordo-snapshot/saints.json` in the storage account. `/api/season` reads that
-  blob, keeping it in memory for 5 minutes, never the database. If the database
-  can't be reached the run fails and the last snapshot stays. After a migration, the deploy
-  asks for a run by posting a message to the `saints-publish` storage queue (in
-  `stmachina<suffix>`), and `publishSaintsOnRequest` (a queue trigger) runs it.
+- **`publishSaintsOnRequest`** (queue trigger, `saints-publish`) reads the
+  database as the Function app's identity (read-only) and writes the saints
+  snapshot to `ordo-snapshot/saints.json` in the storage account. `/api/season`
+  reads that blob, keeping it in memory for 5 minutes, never the database. If
+  the database can't be reached the run fails and the last snapshot stays. A run
+  is asked for by posting a message to the `saints-publish` storage queue (in
+  `stmachina<suffix>`): by the deploy after a migration, and by the **Weekly
+  Jobs** workflow (`.github/workflows/weekly-jobs.yml`) every Sunday at 04:07
+  UTC. There are no timer triggers: Flex checks every timer and queue trigger
+  for work every 10 seconds and bills each check to the host storage account,
+  about $0.10 a month per trigger, while a GitHub schedule is free (AB#126).
   The deploy identity holds only **Storage Queue Data Message Sender** on that
   queue (`modules/publish-queue.bicep`, by hand) and can't read the app's keys
   (Machina Deployer denies `listkeys`), so no workflow uses a Function key. A
@@ -178,12 +182,12 @@ Node.js, Azure Functions v4 programming model. Each file in
   that celebrates them, worked out from the bundled calendars at answer time.
   Results are kept 5 minutes; empty answers and errors aren't kept. Search terms
   are never logged.
-- **`reindexSearch`** (timer, Sundays 05:00 UTC) and **`reindexSearchOnRequest`**
-  (queue `search-reindex`): our own indexer. It rebuilds the search cards from
-  the saints snapshot, the prayers and the site's pages
-  (`functions/src/lib/site-pages.js`), then removes cards no longer made. The
-  deploy asks for it after every deploy, and the prayers publisher after
-  publishing. A failed read stops the rebuild, so the old cards stay.
+- **`reindexSearchOnRequest`** (queue `search-reindex`): our own indexer. It
+  rebuilds the search cards from the saints snapshot, the prayers and the site's
+  pages (`functions/src/lib/site-pages.js`), then removes cards no longer made.
+  The deploy asks for it after every deploy, the prayers publisher after
+  publishing, and the Weekly Jobs workflow every Sunday at 05:07 UTC. A failed
+  read stops the rebuild, so the old cards stay.
 - `cd functions && npm test` runs the unit tests (Node's built-in test runner).
 - Run it locally with Azure Functions Core Tools: in `functions/`, copy
   `local.settings.example.json` to `local.settings.json` (git ignores it), then

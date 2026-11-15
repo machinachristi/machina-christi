@@ -6,12 +6,14 @@ const { writeSnapshot } = require('../lib/snapshot-store');
 // The publish job: reads Ordo's saints from the database and stores them as
 // one JSON snapshot that /api/season serves. Visitors never wake the database.
 //
-// When it runs:
-//   - weekly, Sundays 04:00 UTC (the timer below);
-//   - on change: after it applies a migration, the deploy posts a message to
-//     the `saints-publish` storage queue, and the queue trigger below runs it.
-//     (A mailbox instead of the app's admin endpoint: the deploy needs no
-//     Function key, only the right to post to that one queue, AB#81.)
+// When it runs: whenever a message arrives on the `saints-publish` storage
+// queue, and the queue trigger below runs it.
+//   - weekly: the Weekly Jobs workflow posts one, Sundays at 04:07 UTC;
+//   - on change: after it applies a migration, the deploy posts one.
+// (A mailbox instead of the app's admin endpoint: the deploy needs no
+// Function key, only the right to post to that one queue, AB#81. And no
+// timer: Azure checks every timer and queue trigger for work every 10 s, and
+// bills each check to the host storage account, AB#126.)
 // Each run wakes the database, which then stays up for an hour (the free
 // offer's fixed auto-pause delay): about 1,800 of the month's 100,000 free
 // vCore-seconds. Hence weekly, not daily.
@@ -48,7 +50,7 @@ const QUERIES = {
     FROM dbo.patronages pa JOIN dbo.saints p ON p.id = pa.saint_id`,
 };
 
-async function publishSaints(_timer, context) {
+async function publishSaints(_trigger, context) {
   const started = Date.now();
   const pool = await connectWithRetry(config(), { log: m => context.log(m) });
   // How long the database took to answer: about a minute when it was asleep,
@@ -67,11 +69,6 @@ async function publishSaints(_timer, context) {
   const c = snapshot.counts;
   context.log(`published saints snapshot: ${c.feasts} feasts, ${c.people} people, ${c.patronages} patronages, ${bytes} bytes; database connect ${connectMs} ms, total ${Date.now() - started} ms`);
 }
-
-app.timer('publishSaints', {
-  schedule: '0 0 4 * * 0', // sec min hour day month weekday: Sundays 04:00 UTC
-  handler: publishSaints,
-});
 
 // The message's content doesn't matter: its arrival is the request. The queue
 // is read through the host's own storage connection (AzureWebJobsStorage, the

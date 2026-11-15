@@ -8,6 +8,10 @@
 // Its twelve fruits hang under the crown, each its own colour, softly alight.
 // The wood and leaves never move, so they are baked to one merged draw; the
 // fruits are one InstancedMesh. The two trunks are solid to walk round.
+//
+// v37, "and yielded her fruit every month": the twelve fruits are the twelve
+// months, January first, and the month it is now hangs ripe — larger than
+// the rest, and swelling a little with its own light.
 
 import * as THREE from 'three';
 import { mergeColored, mulberry32 } from '../util.js';
@@ -23,7 +27,12 @@ const LEAF_GOLD = new THREE.Color(0xE3E28C);
 const FRUIT = [0x8FB8E8, 0xE45B5B, 0xF2C14E, 0x49B67E, 0xF09A5B, 0xD9506E,
   0xF5E58C, 0x6FCF97, 0x7EC8D8, 0x9C6FD6, 0xE58FC6, 0xB3E36A];
 
-export function createTree(scene) {
+// The ripe fruit, this much larger than the rest.
+const RIPE = 2.1;
+
+// month: 0 (January) to 11, the month it is now.
+export function createTree(scene, month = 0) {
+  const ripe = Math.max(0, Math.min(FRUIT.length - 1, month | 0));
   const rng = mulberry32(20260856);
   const parts = [];
 
@@ -69,6 +78,7 @@ export function createTree(scene) {
   fruit.frustumCulled = false;
   const hang = [];
   const m = new THREE.Matrix4();
+  const _s = new THREE.Vector3();
   for (let i = 0; i < FRUIT.length; i++) {
     const u = (i + 0.5) / FRUIT.length;
     const a = u * Math.PI * 2;
@@ -79,6 +89,7 @@ export function createTree(scene) {
     );
     hang.push({ p, phase: rng() * Math.PI * 2 });
     m.makeTranslation(p.x, p.y, p.z);
+    if (i === ripe) m.scale(_s.setScalar(RIPE));
     fruit.setMatrixAt(i, m);
     fruit.setColorAt(i, new THREE.Color(FRUIT[i]));
   }
@@ -93,6 +104,7 @@ export function createTree(scene) {
         h.p.y + Math.sin(time * 0.7 + h.phase) * 0.03,
         h.p.z,
       );
+      if (i === ripe) m.scale(_s.setScalar(RIPE * (1 + 0.06 * Math.sin(time * 1.3))));
       fruit.setMatrixAt(i, m);
     }
     fruit.instanceMatrix.needsUpdate = true;
@@ -101,6 +113,7 @@ export function createTree(scene) {
   return {
     update,
     fruits: FRUIT.length,
+    ripe,
     solids: [-1, 1].map(side => ({ x: side * TREE.trunkX, z: TREE.z, r: 0.75 })),
   };
 }

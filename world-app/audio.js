@@ -563,6 +563,53 @@ export function createAmbience() {
     breath.onended = () => { breath.disconnect(); bp.disconnect(); bg.disconnect(); };
   }
 
+  // The lamb carried in his arms, and its mother calling up to it (v36,
+  // Isaiah 40:11): a sheep's soft "baa" — a reedy tone with the quaver of a
+  // bleat in it, through a nasal formant, the lamb's high and short, the
+  // ewe's lower and longer. Both kept quiet, under the pipe.
+  let lastBleat = 0;
+  function bleat(young = true) {
+    if (!ctx || ctx.state !== 'running' || muted || !master) return;
+    if (ctx.currentTime - lastBleat < 0.3) return;
+    lastBleat = ctx.currentTime;
+    const t0 = ctx.currentTime + 0.02;
+    const len = young ? 0.55 : 0.85;
+    const f = (young ? 470 : 255) * (0.96 + Math.random() * 0.08);
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f * 0.94, t0);
+    osc.frequency.linearRampToValueAtTime(f, t0 + 0.08);
+    osc.frequency.linearRampToValueAtTime(f * 0.9, t0 + len);
+    // The quaver: the voice wavers in loudness and a little in pitch.
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = young ? 8.5 : 6.5;
+    const shake = ctx.createGain();
+    shake.gain.value = 0.45;
+    const wobble = ctx.createGain();
+    wobble.gain.value = f * 0.012;
+    const amp = ctx.createGain();
+    amp.gain.value = 0.55;
+    lfo.connect(shake).connect(amp.gain);
+    lfo.connect(wobble).connect(osc.frequency);
+    const formant = ctx.createBiquadFilter();
+    formant.type = 'bandpass';
+    formant.frequency.value = young ? 1500 : 1000;
+    formant.Q.value = 2.2;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2600;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(young ? 0.07 : 0.06, t0 + 0.06);
+    g.gain.setValueAtTime(young ? 0.063 : 0.054, t0 + len * 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0004, t0 + len);
+    osc.connect(amp).connect(formant).connect(lp).connect(g).connect(master);
+    for (const n of [osc, lfo]) { n.start(t0); n.stop(t0 + len + 0.05); }
+    osc.onended = () => {
+      for (const n of [osc, lfo, shake, wobble, amp, formant, lp, g]) n.disconnect();
+    };
+  }
+
   // "I heard the voice of harpers harping with their harps" (Revelation
   // 14:2): in heaven each step on the sea of glass plucks a harp string
   // (v33). The scale is the garden's own E major pentatonic, here from E4 up
@@ -616,6 +663,48 @@ export function createAmbience() {
     tick.stop(t0 + 0.06);
     nodes.push(tick, bp, tg);
     longest.onended = () => { for (const n of nodes) n.disconnect(); };
+  }
+
+  // "Let them praise his name in the dance: let them sing praises unto him
+  // with the timbrel and harp" (Psalm 149:3): while he dances (v38), a
+  // hand drum under each skipping step — a soft low thump and the brief
+  // shiver of its jingles — the off-beats lighter than the on. The harp's
+  // tune over it is harp() above.
+  function timbrel(accent = false) {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    const t0 = ctx.currentTime + 0.015;
+    const k = accent ? 1 : 0.6;
+    const skin = ctx.createOscillator();
+    skin.type = 'sine';
+    skin.frequency.setValueAtTime(150, t0);
+    skin.frequency.exponentialRampToValueAtTime(72, t0 + 0.16);
+    const sg = ctx.createGain();
+    sg.gain.setValueAtTime(0.0001, t0);
+    sg.gain.linearRampToValueAtTime(0.06 * k, t0 + 0.006);
+    sg.gain.exponentialRampToValueAtTime(0.0002, t0 + 0.24);
+    skin.connect(sg).connect(master);
+    skin.start(t0);
+    skin.stop(t0 + 0.26);
+    // The jingles: three quick strikes of bright noise, close together.
+    const jingle = ctx.createBufferSource();
+    jingle.buffer = refs.rustleBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 4800;
+    bp.Q.value = 1.6;
+    const jg = ctx.createGain();
+    jg.gain.setValueAtTime(0.0001, t0);
+    for (let i = 0; i < 3; i++) {
+      const at = t0 + i * 0.022;
+      jg.gain.linearRampToValueAtTime(0.022 * k * (1 - i * 0.25), at + 0.004);
+      jg.gain.exponentialRampToValueAtTime(0.0008, at + 0.02);
+    }
+    jg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+    jingle.connect(bp).connect(jg).connect(master);
+    jingle.start(t0, Math.random() * 1.5);
+    jingle.stop(t0 + 0.18);
+    skin.onended = () => { skin.disconnect(); sg.disconnect(); };
+    jingle.onended = () => { jingle.disconnect(); bp.disconnect(); jg.disconnect(); };
   }
 
   // "And I heard as it were the voice of a great multitude, and as the voice
@@ -929,5 +1018,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, star, pipe, harp, alleluia, state };
+  return { update, setMuted, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, state };
 }

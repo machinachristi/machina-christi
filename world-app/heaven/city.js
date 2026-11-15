@@ -90,6 +90,7 @@ const PER_GATE = 36;
 const PACE = 1.05;
 const PART = 1.9;
 const AT_GATE = 9;          // this near a gate's threshold, he stands at it
+const BEYOND_WALL = 30;     // how far past the wall the leaves go on (v37)
 
 const GATE_WORD = { name: "Sha'ar", label: 'the gates of it shall not be shut at all by day' };
 
@@ -591,8 +592,18 @@ export function createCity(scene) {
     return { x: l.from.x + (l.to.x - l.from.x) * t, z: l.from.z + (l.to.z - l.from.z) * t };
   }
 
+  // v37: the gates, for the leaves going out of them (healing.js): each one's
+  // threshold inside, the way on outside, a step along the wall, and how
+  // near counts as standing at it.
+  const ways = gates.map(g => {
+    const out = sidePoint(g.side, g.along, 0, -BEYOND_WALL);
+    const step = sidePoint(g.side, g.along + 1, 0, THICK / 2 + 1.2).sub(g.at);
+    return { at: g.at.clone(), out, across: { x: step.x, z: step.z }, reach: AT_GATE };
+  });
+
   return {
     update,
+    ways,
     caption: () => (nearGate ? GATE_WORD : null),
     state() {
       const l = lead(1);   // the south side's middle gate

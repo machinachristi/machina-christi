@@ -28,8 +28,11 @@ module.exports = defineConfig({
   // true: the feature checks start once the core checks are done, while the
   // rest of the site's tests still share the second worker. (If a core check
   // fails, the feature checks are skipped rather than run on a broken garden.)
+  //
+  // tests/live/ is the daily check of the real site, with its own config: it
+  // never runs here, against the copy this config serves.
   projects: [
-    { name: 'site', testIgnore: /world-(core|features)\.spec\.js$/ },
+    { name: 'site', testIgnore: [/world-(core|features)\.spec\.js$/, /[\\/]live[\\/]/] },
     { name: 'world-core', testMatch: /world-core\.spec\.js$/ },
     { name: 'world-features', testMatch: /world-features\.spec\.js$/, dependencies: ['world-core'] },
   ],

@@ -89,7 +89,8 @@ export function createGather(scene, trees) {
     );
   }
 
-  function update(dt, walker, facing = 0) {
+  // busy: his hands are already full (a lamb in his arms, v36).
+  function update(dt, walker, facing = 0, busy = false) {
     if (!walker) return;
     if (last) speed = damp(speed, Math.hypot(walker.x - last.x, walker.z - last.z) / Math.max(dt, 1e-4), 10, dt);
     if (last && Math.hypot(walker.x - last.x, walker.z - last.z) > 3) speed = 0;   // a teleport is not a walk
@@ -106,7 +107,7 @@ export function createGather(scene, trees) {
     stageT += dt;
     if (stage === 'idle') {
       const ready = !tree || sinceGiven >= AGAIN_AFTER;
-      if (ready && near.d < REACH && still >= GIVE_AFTER) {
+      if (ready && !busy && near.d < REACH && still >= GIVE_AFTER) {
         // A fruit lets go from the side of the tree he stands on, high in it.
         tree = near.tree;
         const t = tree.pos;
@@ -168,6 +169,8 @@ export function createGather(scene, trees) {
   return {
     update,
     caption: () => caption,
+    // Whether a fruit is on its way to his hands or in them (v36).
+    get busy() { return stage !== 'idle'; },
     song: () => { sung.notes = notes; sung.note = note; return sung; },
     // What he holds: its colour and how much is left, or null.
     holding: () => {
