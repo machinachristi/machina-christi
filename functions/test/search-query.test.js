@@ -26,6 +26,14 @@ test('small English words are dropped, unless they are all there is', () => {
   assert.equal(Q.queryPlan('of the')[0].search, 'of (the | the*)');
 });
 
+test('the words of a question are dropped, but not the word still being typed', () => {
+  assert.equal(Q.queryPlan('how do i pray the rosary')[0].search, 'pray (rosary | rosary*)');
+  assert.equal(Q.queryPlan('what is advent')[0].search, '(advent | advent*)');
+  assert.equal(Q.queryPlan('saint do')[0].search, 'saint (do | do*)', 'do may be the start of Dominic');
+  assert.equal(Q.queryPlan('leo i')[0].search, 'leo (i | i*)', 'a final I is the pope\'s number');
+  assert.equal(Q.queryPlan('how is')[0].search, '(is | is*)', 'is may be the start of Isidore');
+});
+
 test('then one letter wrong for words of four letters or more, then any word', () => {
   const plan = Q.queryPlan('fransis assisi');
   assert.deepEqual(plan.map(p => p.step), ['exact', 'typo', 'any']);

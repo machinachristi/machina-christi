@@ -4,6 +4,10 @@
 // What the lab taught (infra/README.md, "Search"):
 //   - Strict first: every word must match (searchMode "all"), with small
 //     English words dropped ("martyrs of japan" failed only because of "of").
+//     The words of a question (how, what, do, is, I) are dropped too, but
+//     only when another word follows: "how do i pray the rosary" must not
+//     find popes numbered "I", yet "do" may be the start of Dominic, "is" of
+//     Isidore, and "leo i" means the pope.
 //   - The last word is still being typed, so it's also tried as a prefix
 //     ("agn" → Agnes). Prefix words aren't run through the analyzer, so the
 //     prefix copy has its accents folded here (Latin words only).
@@ -21,6 +25,7 @@ const PRE = ''; // highlight markers: private-use characters, never in
 const POST = ''; // the text (search-docs.js strips them)
 
 const STOP_WORDS = new Set(['a', 'an', 'and', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'with']);
+const QUESTION_WORDS = new Set(['how', 'what', 'do', 'is', 'i']); // dropped only before another word
 const THAI = /\p{Script=Thai}/u;
 const TERM = /[\p{L}\p{M}\p{N}]+/gu;
 
@@ -36,7 +41,7 @@ const isSearchable = q => [...q].length >= MIN_CHARS && (q.match(TERM) ?? []).le
 
 function termsOf(q) {
   const terms = q.match(TERM) ?? [];
-  const kept = terms.filter(t => !STOP_WORDS.has(t));
+  const kept = terms.filter((t, i) => !STOP_WORDS.has(t) && !(QUESTION_WORDS.has(t) && i < terms.length - 1));
   return kept.length ? kept : terms;
 }
 
