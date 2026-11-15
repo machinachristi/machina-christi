@@ -300,7 +300,8 @@ A fails, so a visitor sees something slightly older or simpler, not an error.
 Like candles in the drawer for a power cut.
 *Here:* if the saints snapshot can't be read, the API answers from the bios
 bundled with the site; if the database is asleep or broken, last week's
-snapshot stays up.
+snapshot stays up. And Eden's new light steps aside by itself on a slow phone
+or a computer without a graphics card, and the garden is drawn plainly.
 
 **Master key.** One key that can start or change anything in an app. Handing
 it out is only safe to someone who could already do all that, so it adds no
@@ -580,6 +581,33 @@ this way: every visitor sees the same Eden.
 having everything that needs it read it from there, like one master clock.
 *Here:* `lifetree.js` says how tall the Tree of Life is and where its
 perches, nest and fruits are; the birds, the shadow and the flock read it.
+
+**Render target (off-screen picture).** A picture the graphics chip paints
+into its own memory instead of straight onto the screen, like a painter
+working on a sheet at the back of the studio before hanging it. Once it's
+there, the program can work on the whole picture before anyone sees it.
+*Here:* with the light pass on, the garden is first painted off screen, in
+extra-fine colour that can hold light brighter than white.
+
+**Post-processing.** Changing a finished picture as a whole after it has been
+drawn, the way a photo is developed and graded after it's taken: haze,
+glow, colour, darkened corners. It costs a few extra paint orders per frame,
+however much is in the picture.
+*Here:* `lightpass.js` takes the off-screen garden and adds the air, the
+sun's beams, the glow and the colour of the hour, in five short steps.
+
+**Bloom.** Light spilling softly round anything very bright, the way a lamp
+seems to glow into the air in a photo or to tired eyes. It's made by picking
+out the brightest parts of the picture, blurring them, and laying them back
+on top.
+*Here:* the Tree of Life's gold, its twelve fruits, the lamps and the stars.
+
+**Tone mapping.** Squeezing a picture whose lights are far brighter than a
+screen can show into the screen's range, without the bright parts turning
+into flat white patches, like a photographer choosing how to print a sunset.
+*Here:* the garden uses ACES, a curve borrowed from film, and the whole
+picture's colour then follows the hour: clear by day, gold at evening, blue
+and silver by night.
 
 **Lazy loading.** Doing the work only when it's first needed, not up front,
 like a theatre setting up the second stage only once the audience heads for

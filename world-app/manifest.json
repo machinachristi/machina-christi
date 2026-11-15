@@ -1,5 +1,5 @@
 {
-  "version": 40,
+  "version": 41,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -514,6 +514,18 @@
         { "text": "Its twelve manner of fruits hang under the crown as twelve small lights, each its own colour, and its lamp sits in the fork, so by night it lights the boughs and the gold from beneath.", "source": "Revelation 22:2" },
         { "text": "The birds roost on top of the new crown at dusk, the sparrow's nest sits in its fork, its shadow is as broad as its crown, its gold leaves fall from all under its spread, and the flock goes round its roots.", "source": "Psalm 104:17" },
         { "text": "All its wood is one piece and all its crown another, so the greater tree costs no more to draw than the old one.", "source": null }
+      ]
+    },
+    {
+      "version": 41,
+      "date": "2026-11-15",
+      "realm": "eden",
+      "focus": "the light of the garden",
+      "changes": [
+        { "text": "The garden is drawn in a new light: the air between near and far takes the colour of the sky, the sun has a soft halo round it, and its beams fall through the boughs of the trees.", "source": "Ecclesiastes 11:7" },
+        { "text": "Bright things glow: the Tree of Life's gold, its twelve fruits, the lamps and the stars bloom softly into the air round them.", "source": "Psalm 36:9" },
+        { "text": "The colour of the whole picture follows the hour: clear by day, warm gold toward evening, deep blue and silver by night, changing smoothly as the sun goes down.", "source": "Genesis 1:5" },
+        { "text": "On a slow phone or a computer without a graphics card the garden steps back to its plain drawing by itself, so it still runs smoothly; adding ?light=off to the address does the same by hand.", "source": null }
       ]
     }
   ],

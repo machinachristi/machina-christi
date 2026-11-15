@@ -19,7 +19,7 @@
   "panes": [
     { "id": "threejs", "tier": "hands", "name": "three.js", "status": "live",
       "what": "A 3D graphics library for the web.",
-      "here": "Draws Eden, its garden, creatures and light, and up Jacob's ladder a first heaven where the saints of the calendar stand, right in your browser.",
+      "here": "Draws Eden, its garden, creatures and light, and up Jacob's ladder a first heaven where the saints of the calendar stand, right in your browser. In the garden it then finishes each picture like a photograph: haze, sunbeams, glow round bright things and the colour of the hour (it steps aside on slow phones).",
       "touches": ["swa", "signalr"] },
     { "id": "canvas", "tier": "hands", "name": "Canvas", "status": "live",
       "what": "The browser's 2D drawing surface.",
