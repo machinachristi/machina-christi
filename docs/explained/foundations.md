@@ -554,6 +554,24 @@ fill a screen has to take it into account, or it looks squashed or stretched.
 *Here:* Eden's camera picks its field of view from the screen's aspect ratio,
 and picks again when a phone is turned on its side.
 
+**Merged mesh.** Many small shapes melted into one before the program
+starts, so the graphics chip paints them with one draw call, like baking
+forty biscuits as one tray. The price: they can no longer move separately.
+*Here:* the new Tree of Life is about 80 tubes and squashed balls, merged
+into two meshes (wood and crown).
+
+**Procedural and seeded random.** *Procedural* means made by a recipe in
+code, not drawn by hand. A *seeded* random source gives the same "random"
+numbers every time it starts from the same seed, so a recipe that uses it
+makes the same thing for everyone.
+*Here:* the Tree of Life's boughs, and the whole garden's planting, are grown
+this way: every visitor sees the same Eden.
+
+**Single source of truth.** Keeping each fact in exactly one place, and
+having everything that needs it read it from there, like one master clock.
+*Here:* `lifetree.js` says how tall the Tree of Life is and where its
+perches, nest and fruits are; the birds, the shadow and the flock read it.
+
 **Lazy loading.** Doing the work only when it's first needed, not up front,
 like a theatre setting up the second stage only once the audience heads for
 it. People who never go there never pay for it.

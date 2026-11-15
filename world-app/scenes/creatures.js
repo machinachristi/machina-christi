@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { heightAt, riverZ, riverEdgeDist } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { LIFE_PERCHES } from './lifetree.js';
 import { OLIVE_BOUGH } from './olive.js';
 import { EYRIE } from './eyrie.js';
 import { clamp, damp, shortestAngle, mulberry32, smoothstep } from '../util.js';
@@ -602,11 +603,15 @@ export function createCreatures(scene, rng, staticNamables = []) {
   // day the doves take short perch-rests there too.
   const hL = heightAt(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z);
   const hK = heightAt(TREE_OF_KNOWLEDGE_POS.x, TREE_OF_KNOWLEDGE_POS.z);
+  // On the Tree of Life they settle on top of its crown (AB#129): the
+  // places come from lifetree.js, which shaped it.
+  const lifePerch = i => new THREE.Vector3(
+    TREE_OF_LIFE_POS.x + LIFE_PERCHES[i].x, hL + LIFE_PERCHES[i].y, TREE_OF_LIFE_POS.z + LIFE_PERCHES[i].z);
   const PERCHES = [
-    new THREE.Vector3(TREE_OF_LIFE_POS.x, hL + 5.55, TREE_OF_LIFE_POS.z),
-    new THREE.Vector3(TREE_OF_LIFE_POS.x - 0.95, hL + 4.2, TREE_OF_LIFE_POS.z + 0.3),
+    lifePerch(0),
+    lifePerch(1),
     new THREE.Vector3(TREE_OF_KNOWLEDGE_POS.x + 0.55, hK + 4.75, TREE_OF_KNOWLEDGE_POS.z),
-    new THREE.Vector3(TREE_OF_LIFE_POS.x + 0.85, hL + 4.45, TREE_OF_LIFE_POS.z - 0.45),
+    lifePerch(2),
     new THREE.Vector3(TREE_OF_KNOWLEDGE_POS.x - 0.5, hK + 3.85, TREE_OF_KNOWLEDGE_POS.z + 0.45),
   ];
 

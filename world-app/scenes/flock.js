@@ -46,6 +46,7 @@
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist, GARDEN_RADIUS } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { LIFE_TREE } from './lifetree.js';
 import { createFooting } from '../footing.js';
 import { clamp, damp, shortestAngle, mulberry32, smoothstep, mergeColored } from '../util.js';
 
@@ -178,7 +179,7 @@ export function createFlock(scene, solids = [], trees = []) {
   const rng = mulberry32(20260853);
   const footing = createFooting([
     ...solids,
-    { x: TREE_OF_LIFE_POS.x, z: TREE_OF_LIFE_POS.z, r: 0.7 },
+    { x: TREE_OF_LIFE_POS.x, z: TREE_OF_LIFE_POS.z, r: LIFE_TREE.rootRadius - 0.3 },   // round its flared roots (AB#129)
     { x: TREE_OF_KNOWLEDGE_POS.x, z: TREE_OF_KNOWLEDGE_POS.z, r: 0.7 },
     ...trees.map(t => ({ x: t.x, z: t.z, r: 0.45 })),
   ], GARDEN_RADIUS - 2);
