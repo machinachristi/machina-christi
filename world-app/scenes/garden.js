@@ -504,6 +504,11 @@ export async function createGarden(scene, rng) {
     setRain: sky.setRain,
     setDay: sky.setDay,
     hour: sky.state,
+    // AB#130, the light pass: the one great light it takes its sun from,
+    // and a word to the garden when it comes on or steps aside (the old
+    // wedges of low light rest while it draws the shafts itself).
+    greatLight: sky.greatLight,
+    lightPass(on) { rays.rest(on); },
     stones: stones.list,
     crossing: CROSSING,
     constellations: sky.constellations,

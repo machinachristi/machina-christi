@@ -110,13 +110,18 @@ export function createRays(scene, treeSpots) {
   const dir = new THREE.Vector3();
   let lit = 0;
   let reach = 0;
+  // AB#130: while the light pass draws the sun's shafts in the air itself,
+  // these wedges would lie under them like pale planks, so they rest. They
+  // still keep their count of the light (`lit`), and come back whenever
+  // the light pass steps aside.
+  let resting = false;
 
   // `sunElev` is the sun's height as a unit vector's y, `sunAz` its compass
   // bearing — the same pair scenes/shadows.js reads, and for the same reason.
   function update(dt, sunElev = 0, sunAz = 0, rain = 0) {
     lit = partedAt(sunElev, rain);
     mat.opacity = BASE_OPACITY * lit;
-    pool.visible = lit > 0.01;
+    pool.visible = lit > 0.01 && !resting;
     if (!pool.visible) return;
 
     // The way the light itself is travelling: away from the sun, and down.
@@ -140,6 +145,7 @@ export function createRays(scene, treeSpots) {
   return {
     update,
     count: casters.length,
+    rest(on) { resting = !!on; if (resting) pool.visible = false; },
     state: () => ({ count: casters.length, lit, reach }),
   };
 }

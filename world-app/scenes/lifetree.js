@@ -106,7 +106,7 @@ export function buildLifeTree() {
   // The crown: a soft golden mass over every tip, an upper tier over
   // those, and two great ones at the top — a broad layered dome.
   const lobe = (c, r, flat) => {
-    const g = new THREE.IcosahedronGeometry(1, 1).toNonIndexed();
+    const g = new THREE.IcosahedronGeometry(1, 1);   // already one corner per face
     g.scale(r, r * flat, r);
     g.rotateY(rng() * 6.28);
     g.translate(c.x, c.y, c.z);
