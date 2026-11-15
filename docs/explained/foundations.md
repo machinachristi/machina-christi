@@ -78,7 +78,16 @@ source; the site links each one.
 **Scheduled job (timer).** A program that nobody asks for: it runs by itself
 on a clock, like a dishwasher set to start at 2 a.m.
 *Here:* every Sunday the "librarian" wakes the database and writes out the
-saints.
+saints. The alarm clock lives in GitHub (a scheduled workflow), not in the
+API, because Azure charged for watching the API's own clocks (see polling).
+
+**Polling (asking "anything yet?").** Checking again and again whether
+something has arrived, like opening the letterbox every ten seconds instead
+of waiting for the doorbell. Simple, but every look costs a little, and the
+looks add up even when nothing ever comes.
+*Here:* Azure looked in each of the API's four mailboxes and alarm clocks
+every 10 seconds, about a million looks a month, billed to the API's storage
+account (AB#126). Moving the Sunday alarms to GitHub took away two of them.
 
 **Blob storage.** A cupboard for files in the cloud. "Blob" just means "a lump
 of data", whatever's in it: a photo, a video, a JSON file. Much cheaper and
