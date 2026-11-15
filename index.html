@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -26,18 +27,9 @@
        fade only plays when JS can run it. Without JS the page renders fully
        visible and the portals are plain links in a native scroll-snap strip. -->
   <script>document.documentElement.classList.add('js');</script>
-  <!-- Every journey from this room goes through one of six doors — fetch
-       their pages (just the HTML, a few KB each; none of their data or 3D
-       payloads) while the visitor is still choosing, so the walk through a
-       gate lands on an already-delivered page. Browsers without prefetch
-       simply ignore these. -->
-  <link rel="prefetch" href="workshop.html" />
-  <link rel="prefetch" href="game.html" />
-  <link rel="prefetch" href="world.html" />
-  <link rel="prefetch" href="about.html" />
-  <link rel="prefetch" href="ordo.html" />
-  <link rel="prefetch" href="pray.html" />
-  <link rel="prefetch" href="logos.html" />
+  <!-- No <link rel="prefetch"> here: Cloudflare refuses every prefetch
+       request (measured November 2026), so they only cost wasted requests
+       and red errors in the log. The pages are small enough not to need it. -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -799,8 +791,9 @@
         document.body.classList.add('leaving');
         // Navigate just as the room finishes fading (see body's 0.24s+0.04s
         // opacity transition). Kept brief on purpose: the destination pages
-        // are tiny and prefetched, so a longer hold here is dead time the
-        // visitor reads as "slow to load" rather than as ceremony.
+        // are tiny (50 to 60 kB) and arrive in about a second, so a longer
+        // hold here is dead time the visitor reads as "slow to load" rather
+        // than as ceremony.
         setTimeout(() => { window.location.href = portal.getAttribute('href'); }, reduced ? 150 : 300);
       }
 

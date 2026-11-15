@@ -143,9 +143,10 @@ for harmless noise, and each was told apart. The usual pre-merge tests list
   requests at once; it now seats 32 ([the waiting room at Azure's
   door](api-waiting-room.md)). If the recordings check slows down again,
   look there first.
-- The pages' prefetch hints (homepage gates, Eden's warm-up) never help on
-  the live site, because Cloudflare refuses them. That's speed, not breakage,
-  so the check ignores it; Cloudflare's Speed Brain setting decides it.
+- The pages' prefetch hints never helped on the live site, because
+  Cloudflare refuses them. Since AB#136 (November 2026) the homepage and Pray
+  no longer send any; Eden's warm-up still does, and is the Eden build's to
+  remove. That's speed, not breakage, so the check still ignores them.
 - Not covered yet: links to other websites (Vatican.va, the saints' sources)
   and whether the newest merge has reached the live site.
 
