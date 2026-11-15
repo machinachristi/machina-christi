@@ -780,7 +780,7 @@ export function createSky(scene) {
 
   apply();
   return {
-    update, setTime, setRain, setDay, setGaze, state, celestial, signs,
+    update, setTime, setRain, setDay, setGaze, state, celestial, signs, greatLight,
     constellations: CONSTELLATIONS.map(c => c.name),
   };
 }

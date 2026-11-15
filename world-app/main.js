@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { createGarden } from './scenes/garden.js';
 import { createCharacter } from './character.js';
 import { CameraRig, fovFor } from './camera-rig.js';
+import { createLightPass } from './lightpass.js';
 import { createControls } from './controls.js';
 import { createWayfinding } from './wayfinding.js';
 import { createFooting } from './footing.js';
@@ -52,6 +53,24 @@ const camera = new THREE.PerspectiveCamera(fovFor(aspect), aspect, 0.1, 900);
 // loading animation stays alive; a failure here surfaces as an unhandled
 // rejection, which index.html relays to the shell as world:error.)
 const garden = await createGarden(scene, mulberry32(20260703));
+
+// The light pass (AB#130): the garden drawn off-screen, then finished like
+// a graded film. It steps aside by itself where it cannot run or keep up,
+// and the garden is then drawn plainly — see lightpass.js.
+const lightPass = createLightPass({
+  renderer, scene, light: garden.greatLight, params,
+  onChange: on => garden.lightPass(on),
+});
+
+// `?fps=1` shows a small line in the corner: whether the light pass is on,
+// why, and the frame rate — the easy way to say how a phone is coping.
+const fpsNote = params.get('fps') ? document.createElement('div') : null;
+if (fpsNote) {
+  fpsNote.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9;padding:4px 8px;border-radius:6px;'
+    + 'background:rgba(0,0,0,.55);color:#f3e6c0;font:14px/1.3 system-ui,sans-serif;pointer-events:none';
+  document.body.appendChild(fpsNote);
+}
+let fpsNoteIn = 0;
 
 const eve = params.get('character') === 'eve';
 const character = createCharacter({ eve });
@@ -192,6 +211,7 @@ function updateCompanion(dt) {
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
+  lightPass.resize();
   rig.fit(window.innerWidth, window.innerHeight);   // a phone turned on its side sees wider, not taller
 });
 
@@ -212,7 +232,7 @@ fetch('./manifest.json')
 // Warm-up frame: the first render compiles every shader and uploads every
 // buffer — a one-time stall. Take it here, while the parent's veil still
 // fully covers the stage, so the reveal that follows never stutters.
-renderer.render(scene, camera);
+lightPass.render(scene, camera, garden.hour);
 await breathe();
 
 // The reverence chime is struck once per approach to the sacred trees,
@@ -391,8 +411,14 @@ renderer.setAnimationLoop(() => {
     heavenSong();
   }
   updateNamingCaption();
+  if (fpsNote && (fpsNoteIn -= dt) <= 0) {
+    fpsNoteIn = 0.5;
+    const l = lightPass.state();
+    fpsNote.textContent = `light ${l.on ? 'on' : 'off'} (${l.reason}) · ${l.fps || '…'} fps`;
+  }
   try {
-    renderer.render(kit.scene, camera);
+    // Heaven keeps its own light; only the garden is finished by the pass.
+    lightPass.render(kit.scene, camera, garden.hour, kit.name === 'eden');
   } catch (err) {
     // Only heaven's drawing is guarded; the garden's is as it always was.
     if (kit.name !== 'heaven') throw err;
@@ -820,10 +846,15 @@ window.__world = {
       dance: dance.state(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
+      // (AB#130: the garden's own cost, taken before the light pass's
+      // finishing steps, which are not the garden's.)
       render: {
-        calls: renderer.info.render.calls,
-        triangles: renderer.info.render.triangles,
+        calls: lightPass.cost.calls,
+        triangles: lightPass.cost.triangles,
       },
+      // The light pass: whether it is on, why, and the frame rate it last
+      // measured (0 until its first three-second window is in).
+      light: lightPass.state(),
     };
   },
   // Jump the day's clock — 'dawn'|'morning'|'noon'|'evening'|'dusk'|'night'
@@ -918,7 +949,7 @@ window.__world = {
   // Reads back a grid of drawing-buffer pixels right after an explicit
   // render, so the smoke test can prove the canvas holds a real scene.
   samplePixels(grid = 5) {
-    renderer.render(realm.kit().scene, camera);
+    { const k = realm.kit(); lightPass.render(k.scene, camera, garden.hour, k.name === 'eden'); }
     const gl = renderer.getContext();
     const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
     const px = new Uint8Array(4);

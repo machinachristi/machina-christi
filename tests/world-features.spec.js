@@ -1081,6 +1081,54 @@ test.describe('the garden\'s features', () => {
     expect(across).toBeLessThan(90.5);
   });
 
+  test('the light pass steps aside on a software renderer and when asked, and the garden is drawn plainly (AB#130)', async ({ page }) => {
+    // These tests run on a software renderer, as CI does: there the light
+    // pass must not run at all, and the garden must still be a real picture.
+    await gotoWorldReady(page);
+    let s = await getState(page);
+    expect(s.light.on).toBe(false);
+    expect(s.light.reason).toBe('software renderer');
+    expectInBudget(s, 'with the light pass off');
+    expect(s.render.calls).toBeGreaterThan(50);
+
+    // ?light=off turns it off whatever the device.
+    await gotoWorldReady(page, '?light=off');
+    s = await getState(page);
+    expect(s.light.on).toBe(false);
+    expect(s.light.reason).toBe('asked off');
+    const pixels = await appFrame(page).evaluate(() => window.__world.samplePixels(5));
+    expect(new Set(pixels.map(p => p.slice(0, 3).join(','))).size).toBeGreaterThanOrEqual(6);
+  });
+
+  test('the light pass, forced on: the picture is finished off-screen, and the garden\'s cost is still the garden\'s own (AB#130)', async ({ page }) => {
+    test.setTimeout(120000);
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await gotoWorldReady(page, '?light=on');
+    const frame = appFrame(page);
+    // It is on, and stays on (a forced pass is never judged too slow).
+    await expect.poll(async () => (await getState(page)).light.on, { timeout: 30000 }).toBe(true);
+    const s = await getState(page);
+    expect(s.light.reason).toBe('asked on');
+    // The cost reported is the garden's: far more than the one draw of a
+    // finishing step, and inside the budget.
+    expect(s.render.calls).toBeGreaterThan(50);
+    expectInBudget(s, 'with the light pass on');
+    // The finished picture reaches the screen: many colours, some bright.
+    const pixels = await frame.evaluate(() => window.__world.samplePixels(5));
+    expect(new Set(pixels.map(p => p.slice(0, 3).join(','))).size).toBeGreaterThanOrEqual(6);
+    expect(pixels.filter(p => Math.max(p[0], p[1], p[2]) > 90).length).toBeGreaterThan(5);
+    // Through the day's turning and a resize it keeps drawing.
+    await frame.evaluate(() => window.__world.setTime('night'));
+    await page.setViewportSize({ width: 600, height: 500 });
+    await expect.poll(async () => {
+      const g = await getState(page);
+      return g.light.on && g.time.night > 0.9 && g.render.calls > 50;
+    }, { timeout: 30000 }).toBe(true);
+    expect((await getState(page)).light.on).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
   test('the companion wanders on its own', async ({ page }) => {
     await gotoWorldReady(page);
     const s0 = await getState(page);

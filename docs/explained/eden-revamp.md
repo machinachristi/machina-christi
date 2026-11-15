@@ -148,3 +148,97 @@ those numbers. This is called a **single source of truth**.
 - **Tune by eye, in real pixels.** The first render had the right shape and
   the wrong colour (a dull brown), and ten of the twelve fruits were hidden
   inside the crown. No test would have caught either; a screenshot did.
+
+## Stage 3: the light of the garden (AB#130)
+
+### What changed
+
+Until now each frame of the garden went straight from the 3D scene onto the
+screen, with flat air, a hard sun and colours that were the same at every
+hour. Now each frame is first painted off screen and then *finished*, the
+way a photograph is developed: the air between near and far takes the
+colour of the sky, the sun gets a soft halo and its beams fall through the
+boughs, bright things (the Tree of Life's gold, its fruits, the lamps, the
+stars) glow softly into the air round them, and the colour of the whole
+picture follows the hour, from clear day through warm gold to blue and
+silver night. The new file is `world-app/lightpass.js`.
+
+### The story, like you're five
+
+**Painting at the back of the studio.** Before, the garden was painted
+straight onto the window you look through. Now it's painted on a sheet at
+the back first (a **render target**), and the sheet is worked on as a whole
+before it's hung up. That second step is called **post-processing**. The
+sheet uses extra-fine colour, so it can hold light *brighter than white*:
+the sun really is many times brighter than a white sheep, and the finishing
+steps need to know that.
+
+**Five finishing steps.** Each one is a small program run once over every
+dot of the picture:
+
+1. *Air*: far things fade toward the sky's colour, a little more toward the
+   sun; the sun gets its halo.
+2. *Beams*: from every dot, look back toward the sun; where the way is open
+   sky, light streams through, and where boughs are in the way, shadow. This
+   makes the shafts of light through the trees.
+3. *Glow* (**bloom**): pick out only the brightest parts, blur them at four
+   sizes, lay them back on top.
+4. *Squeeze to the screen* (**tone mapping**): a curve borrowed from film
+   brings the too-bright light back into what a screen can show, without
+   flat white patches.
+5. *Grade*: a touch of contrast and colour for the hour, and slightly
+   darker corners, like an old lens.
+
+**Three airs, blended.** There is a *day* air, a *gold* air and a *night*
+air, each a short list of settings (how thick the haze, how bright the
+glow, how warm the colour). Every frame the garden looks at how high the sun
+is and how dark it's become, and blends the three, so evening slides into
+night with no jump.
+
+**Knowing when to step aside.** All this costs the graphics chip real work.
+A phone that can't keep up would rather have the plain garden running
+smoothly than a beautiful one stuttering. So the light pass switches itself
+off:
+
+- on a computer with no graphics chip (where the "chip" is really the main
+  processor pretending), which is also how the automatic tests run;
+- if the screen can't show the extra-fine colour at all;
+- if the garden runs under 28 frames a second for three seconds; it then
+  remembers that for a week on that phone, so it doesn't stutter each visit;
+- if the drawing ever fails, in which case it quietly goes back to the plain
+  way rather than leaving a black screen.
+
+This is **graceful degradation**: plan A where it works, plan B by itself
+where it doesn't. Adding `?light=off` to the address forces plan B, and
+`?light=on` forces plan A; `?fps=1` shows a small corner readout of which
+one is running and how fast.
+
+**The old beams rest.** The garden used to fake sunbeams with pale
+see-through wedges. With the real beams on, those are hidden; when the light
+pass steps aside, they come back.
+
+### What it cost, and how we know
+
+The finishing steps are 14 extra paint orders per frame, *whatever* is in
+the garden, so they're counted apart: `getState().render` still reports
+what the garden itself costs, against its own budget.
+
+| Where | Before | After | Limit |
+|---|---|---|---|
+| Opening shot, 1280 × 800 desktop (the garden's own cost) | 189 draws | 188 | 200 |
+| Arrival, upright phone | 149 draws | 149 | 200 |
+| Finishing steps, every frame | none | 14 | n/a |
+| Speed on the Mac, light pass on | 60 frames a second | 60 | n/a |
+
+### What it teaches about software
+
+- **A fixed cost versus a cost per thing.** Adding a tree adds paint
+  orders; the finishing steps cost the same however much is drawn. Knowing
+  which kind of cost you're adding tells you how it will grow.
+- **Measure on the device, decide on the device.** No list of phone models
+  says which phones are fast enough. The garden times itself and decides,
+  and remembers, on each phone.
+- **A plan B that is tested too.** The tests run on a computer with no
+  graphics chip, so one test checks the light pass steps aside there, and
+  another forces it on and checks it draws, survives night and survives the
+  screen changing size.
