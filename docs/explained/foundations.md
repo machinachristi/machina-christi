@@ -179,6 +179,17 @@ API was parked overnight. Not every slow answer is a cold start: the waits of
 10 to 55 seconds found while building it (AB#125) came even while the API was
 busy answering. They were a concurrency limit (next entry).
 
+**Show what you have, then check (stale-while-revalidate).** Answer at once
+from a copy you already hold, and ask the slow source in the background; if
+its answer turns out different, quietly swap it in. Like a shop that hands
+you the loaf on the shelf while it phones the baker, instead of making you
+wait for the call. The copy might be a little out of date, so this suits
+things that change rarely. *Here:* since AB#134 the Pray list and each
+prayer's words come at once from `pray/prayers.json`, which ships with the
+site; the API is asked alongside, and only adds the recordings or redraws the
+list if its answer differs. A sleeping API no longer means a 5-second
+"Loading…". A test proves it by holding the API's answer back on purpose.
+
 **Concurrency (and its limit).** How many things a program handles at the
 same moment, like the number of seats in a café. A program that mostly waits
 on others (a database, a file store) can serve many people at once, the way a

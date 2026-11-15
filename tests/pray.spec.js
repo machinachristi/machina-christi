@@ -119,6 +119,71 @@ test.describe('prayer list', () => {
   });
 });
 
+// On the live site the Pray pages also ask the API, which sleeps when nobody
+// calls and can take seconds to wake. The bundled copy answers first, so a
+// visitor never waits for it. Here the API's answer is held back until the
+// test lets it go.
+test.describe('the bundled prayers answer first on the live site', () => {
+  const { LIVE, API, serveLiveCopy, apiJson } = require('./live-copy');
+  const cardsOf = prayers => prayers.map(({ id, title, title_th, about }) => ({ id, title, title_th, about }));
+
+  // The API, held: each call waits until release(answer) is called.
+  async function heldApi(page) {
+    let release;
+    const answer = new Promise(r => { release = r; });
+    const asked = [];
+    await serveLiveCopy(page);
+    await page.route(`${API}/**`, async route => {
+      asked.push(new URL(route.request().url()).pathname);
+      const body = await answer;
+      return body === null ? route.fulfill({ status: 503, body: '' }) : apiJson(route, body);
+    });
+    return { release, asked };
+  }
+
+  test('with the API asleep, the list is there within a second', async ({ page }) => {
+    const errors = watchErrors(page);
+    const { release, asked } = await heldApi(page);
+    await page.goto(`${LIVE}/pray.html`);
+    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length, { timeout: 1000 });
+    expect(asked).toContain('/api/prayers');
+    release(null);
+    expect(errors).toEqual([]);
+  });
+
+  test('the same list from the API leaves the page alone; a different one replaces it', async ({ page }) => {
+    const { release } = await heldApi(page);
+    await page.goto(`${LIVE}/pray.html`);
+    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
+    await page.locator('.card').first().evaluate(el => { el.dataset.first = 'kept'; });
+    const answered = page.waitForResponse(`${API}/api/prayers`);
+    release(cardsOf(DATA.prayers));
+    await answered;
+    await page.waitForTimeout(200);
+    await expect(page.locator('.card').first()).toHaveAttribute('data-first', 'kept'); // not redrawn
+
+    const { release: releaseNew } = await heldApi(page);
+    await page.reload();
+    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
+    releaseNew([...cardsOf(DATA.prayers), { id: 'angelus', title: 'The Angelus', title_th: 'ทูตสวรรค์แจ้งข่าว', about: '' }]);
+    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length + 1);
+    await expect(page.locator('.card').last()).toContainText('The Angelus');
+  });
+
+  test('a prayer\'s words show at once, and its recordings follow from the API', async ({ page }) => {
+    await stubSpeech(page);
+    const { release } = await heldApi(page);
+    await page.goto(`${LIVE}/prayer.html?p=glory-be`);
+    await expect(page.locator('h1')).toHaveText(byId('glory-be').title, { timeout: 1000 });
+    await expect(page.locator('.line')).toHaveCount(byId('glory-be').lines.length);
+    await expect(page.locator('#source')).not.toContainText('Recorded voices');
+    const take = (voice) => ({ voice, normal: { file: 'glory-be/x.mp3', starts: [0], duration: 2 }, slow: { file: 'glory-be/y.mp3', starts: [0], duration: 3 } });
+    release({ ...byId('glory-be'), audio: { th: take('th-TH-NiwatNeural'), en: take('en-US-AndrewNeural') } });
+    await expect(page.locator('#source')).toContainText('Recorded voices: Niwat (Thai) and Andrew (English)');
+    await expect(page.locator('.line')).toHaveCount(byId('glory-be').lines.length);
+  });
+});
+
 test.describe('prayer page', () => {
   test('every prayer renders line by line in Thai, pronunciation, and English, with no sideways scroll', async ({ page }) => {
     const errors = watchErrors(page);
