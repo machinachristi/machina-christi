@@ -179,7 +179,7 @@
     </ul>
   </div>
 
-  <script src="/assets/pray-data.js?v=1"></script>
+  <script src="/assets/pray-data.js?v=2"></script>
   <script>
     (() => {
       'use strict';
@@ -192,18 +192,20 @@
 
       // Every prayer lives in one data file (pray/prayers.json), published to
       // the API; adding a new one there is all it takes for it to appear here,
-      // and on its own page. mcPray asks the API and falls back to the file.
-      window.mcPray.list()
-        .then(prayers => {
-          list.innerHTML = prayers.map(p => `
-            <li>
-              <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
-                <h2>${escapeHtml(p.title)}</h2>
-                <span class="th" lang="th">${escapeHtml(p.title_th)}</span>
-                ${p.about ? `<p>${escapeHtml(p.about)}</p>` : ''}
-              </a>
-            </li>`).join('');
-        })
+      // and on its own page. mcPray answers at once from the file that ships
+      // with the site, and redraws the list only if the API's answer differs.
+      const draw = prayers => {
+        list.innerHTML = prayers.map(p => `
+          <li>
+            <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
+              <h2>${escapeHtml(p.title)}</h2>
+              <span class="th" lang="th">${escapeHtml(p.title_th)}</span>
+              ${p.about ? `<p>${escapeHtml(p.about)}</p>` : ''}
+            </a>
+          </li>`).join('');
+      };
+      window.mcPray.list(draw)
+        .then(draw)
         .catch(() => {
           list.innerHTML = '<li><p class="notice">The prayers couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
         });

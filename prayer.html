@@ -384,7 +384,7 @@
     </div>
   </div>
 
-  <script src="/assets/pray-data.js?v=1"></script>
+  <script src="/assets/pray-data.js?v=2"></script>
   <script>
     (() => {
       'use strict';
@@ -620,6 +620,21 @@
       }
 
       /* ── Drawing the prayer ───────────────────────────────────── */
+      // The foot of the page names the text's source and, once the
+      // recordings are known, the voices that read it.
+      function showSource(prayer) {
+        if (!prayer.source) return;
+        const s = $('source');
+        const voiceName = v => String(v || '').replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
+        const voices = rec && rec.th && rec.en
+          ? ` Recorded voices: ${escapeHtml(voiceName(rec.th.voice))} (Thai) and ${escapeHtml(voiceName(rec.en.voice))} (English), synthetic neural voices made with Azure AI Speech.`
+          : '';
+        s.innerHTML = `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. English: the traditional wording.${voices}`;
+        s.hidden = false;
+      }
+
+      let listening = false; // the voiceschanged listener is added once
+
       function render(prayer) {
         document.title = prayer.title + ' · Pray · Machina Christi';
         $('title').textContent = prayer.title;
@@ -643,15 +658,7 @@
           </li>`).join('');
         lineEls = Array.from(linesEl.querySelectorAll('.line'));
 
-        if (prayer.source) {
-          const s = $('source');
-          const voiceName = v => String(v || '').replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
-          const voices = rec && rec.th && rec.en
-            ? ` Recorded voices: ${escapeHtml(voiceName(rec.th.voice))} (Thai) and ${escapeHtml(voiceName(rec.en.voice))} (English), synthetic neural voices made with Azure AI Speech.`
-            : '';
-          s.innerHTML = `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. English: the traditional wording.${voices}`;
-          s.hidden = false;
-        }
+        showSource(prayer);
 
         $('toggles').hidden = false;
         $('guide').hidden = false;
@@ -662,7 +669,8 @@
           const hint = $('tap-hint');
           if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) hint.textContent = 'Click any line to hear it in Thai.';
           hint.hidden = false;
-          if (synth) {
+          if (synth && !listening) {
+            listening = true;
             refreshVoices();
             if (synth.addEventListener) synth.addEventListener('voiceschanged', refreshVoices);
             else synth.onvoiceschanged = refreshVoices;
@@ -720,9 +728,25 @@
       window.addEventListener('pageshow', e => { if (e.persisted) { now = null; mark(-1); paint(); } });
 
       /* ── Load ─────────────────────────────────────────────────── */
+      // The words come at once from the copy that ships with the site. On the
+      // live site the API's copy follows, with the recordings: if its words
+      // are the same, the recordings are simply added (a reading already under
+      // way carries on in the device's voice); if not, the prayer is redrawn.
       const id = new URLSearchParams(location.search).get('p');
-      window.mcPray.get(id)
-        .then(prayer => { if (prayer) render(prayer); else notFound(); })
+      let shown = null;
+      const sameWords = (a, b) => JSON.stringify([a.title, a.title_th, a.lines]) === JSON.stringify([b.title, b.title_th, b.lines]);
+      function newer(prayer) {
+        if (shown && sameWords(prayer, shown) && (canListen() || !prayer.audio)) {
+          rec = prayer.audio || null;
+          showSource(prayer);
+        } else {
+          if (now) stop();
+          render(prayer);
+        }
+        shown = prayer;
+      }
+      window.mcPray.get(id, newer)
+        .then(prayer => { if (shown) return; if (prayer) { shown = prayer; render(prayer); } else notFound(); })
         .catch(() => {
           linesEl.innerHTML = '<li><p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
         });
