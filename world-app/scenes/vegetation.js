@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { heightAt, riverEdgeDist } from './terrain.js';
 import { mergeGeos, smoothstep, mulberry32 } from '../util.js';
+import { buildLifeTree, LIFE_TREE, LIFE_FRUITS } from './lifetree.js';
 import { windOf, gustAt } from './wind.js';
 
 // A fixed lean direction for the wind — +X, the same way the gust's own
@@ -15,6 +16,7 @@ import { windOf, gustAt } from './wind.js';
 // (Rotating about -Z by a positive angle tips a point above the origin
 // toward +X; see the sway math in update() and swayCanopies() below.)
 const WIND_AXIS = new THREE.Vector3(0, 0, -1);
+const LIFE_GLOW = 0.3;   // the golden crown's own light by day; more by night and when he is near
 const TREE_TILT = 0.16;    // radians at full gust, sacred trees (hinged at the ground)
 const CANOPY_TILT = 0.5;   // radians at full gust, background canopies (hinged at the trunk top)
 // "All the trees of the field shall clap their hands" (Isaiah 55:12, v24): on
@@ -95,69 +97,48 @@ export function createVegetation(scene, rng) {
   let lifeFruitSpot;
 
   // ── The two sacred trees, hand-shaped ─────────────────────
-  // Tree of Life: pale trunk, golden triple canopy, its own warm light.
+  // Tree of Life (AB#129): the greatest and brightest thing in the garden —
+  // a pale trunk, seven boughs opening like a lampstand, a broad layered
+  // crown of gold about ten metres to its top. Shaped in lifetree.js; all
+  // its wood is one mesh and all its crown another, so it costs what the
+  // old trunk and three-lobed canopy did.
   {
     const t = new THREE.Group();
-    const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.26, 0.4, 3.1, 7),
-      new THREE.MeshLambertMaterial({ color: 0xC9B896, flatShading: true }),
-    );
-    trunk.position.y = 1.55;
-    t.add(trunk);
+    const { woodGeo, crownGeo } = buildLifeTree();
+    t.add(new THREE.Mesh(woodGeo, new THREE.MeshLambertMaterial({
+      vertexColors: true, flatShading: true, emissive: 0x6A5A3C, emissiveIntensity: 0.25,
+    })));
+    // The crown glows of itself, and answers the dark (see update).
     const gold = new THREE.MeshLambertMaterial({
-      color: 0xE8C86A, emissive: 0x8A6B1C, emissiveIntensity: 0.55, flatShading: true,
+      vertexColors: true, flatShading: true, emissive: 0xC8962E, emissiveIntensity: LIFE_GLOW,
     });
-    // The three lobes of the golden canopy are one mesh from v20 on — a
-    // plain merge, no vertex colours, so the gold material itself carries
-    // over and its answer to the dark (see update) is untouched.
-    {
-      const lobes = [];
-      for (const [dx, dy, dz, s] of [[0, 3.9, 0, 1.7], [-0.9, 3.2, 0.3, 1.05], [0.8, 3.35, -0.4, 1.15]]) {
-        lobes.push(new THREE.IcosahedronGeometry(1, 0).scale(s, s, s).translate(dx, dy, dz));
-      }
-      t.add(new THREE.Mesh(mergeGeos(lobes), gold));
-      for (const lobe of lobes) lobe.dispose();
-    }
+    t.add(new THREE.Mesh(crownGeo, gold));
 
     // Its own fruit in season, not just gold leaves (v11, Revelation 22:2,
-    // echoing): "which bare twelve manner of fruits" — a dozen small
-    // jewel-toned fruits hung among the gold, each a slightly different hue.
-    // Its own seeded stream: inserting these draws into the shared `rng`
-    // here would shift every planting after it, so this stays independent,
-    // the same idiom as the falling leaves below.
-    const lifeFruitRng = mulberry32(20260719);
-    const FRUIT_COUNT = 12;
+    // echoing): "which bare twelve manner of fruits" — twelve small lights
+    // hung under the crown, each its own colour. One instanced mesh; unlit,
+    // so each shines its own hue by day and by night.
     const fruitMesh = new THREE.InstancedMesh(
-      new THREE.IcosahedronGeometry(0.1, 0),
-      new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x3A2A08, emissiveIntensity: 0.3 }),
-      FRUIT_COUNT,
+      new THREE.IcosahedronGeometry(0.19, 1),
+      new THREE.MeshBasicMaterial(),
+      LIFE_FRUITS.length,
     );
     {
-      const fA = new THREE.Color(0xE8C86A);
-      const fB = new THREE.Color(0xC65A6E);
       const fm = new THREE.Matrix4();
-      const fq = new THREE.Quaternion();
-      const fp = new THREE.Vector3();
-      const fs = new THREE.Vector3();
       const fc = new THREE.Color();
-      for (let i = 0; i < FRUIT_COUNT; i++) {
-        const a = (i / FRUIT_COUNT) * Math.PI * 2 + lifeFruitRng() * 0.4;
-        const rr = 1.0 + lifeFruitRng() * 0.9;
-        fp.set(Math.cos(a) * rr, 3.15 + lifeFruitRng() * 1.1, Math.sin(a) * rr * 0.85);
-        fq.setFromEuler(new THREE.Euler(lifeFruitRng() * Math.PI, lifeFruitRng() * Math.PI, lifeFruitRng() * Math.PI));
-        fs.setScalar(0.9 + lifeFruitRng() * 0.5);
-        fm.compose(fp, fq, fs);
-        fruitMesh.setMatrixAt(i, fm);
-        fc.copy(fA).lerp(fB, lifeFruitRng());
-        fruitMesh.setColorAt(i, fc);
-      }
+      LIFE_FRUITS.forEach((f, i) => {
+        fruitMesh.setMatrixAt(i, fm.makeTranslation(f.x, f.y, f.z));
+        fruitMesh.setColorAt(i, fc.set(f.hue));
+      });
       fruitMesh.instanceMatrix.needsUpdate = true;
       fruitMesh.instanceColor.needsUpdate = true;
     }
     t.add(fruitMesh);
 
-    const lamp = new THREE.PointLight(0xFFD98A, 26, 15, 2);
-    lamp.position.y = 3.6;
+    // Its lamp hangs up under the crown now, lighting the gold from below
+    // and the grass in a wider ring.
+    const lamp = new THREE.PointLight(0xFFD98A, 26, 24, 2);
+    lamp.position.y = LIFE_TREE.lamp;
     t.add(lamp);
     t.position.set(TREE_OF_LIFE_POS.x, heightAt(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z), TREE_OF_LIFE_POS.z);
     group.add(t);
@@ -359,11 +340,12 @@ export function createVegetation(scene, rng) {
   );
   const leafSeed = [];
   function shedLeaf(s2) {
+    // From anywhere under the crown's spread, at the height of its underside.
     const a = leafRng() * Math.PI * 2;
-    const r = 0.5 + leafRng() * 1.5;
+    const r = 0.6 + leafRng() * (LIFE_TREE.crownRadius - 1.2);
     s2.x = TREE_OF_LIFE_POS.x + Math.cos(a) * r;
     s2.z = TREE_OF_LIFE_POS.z + Math.sin(a) * r;
-    s2.y = lifeGroundY + 3.4 + leafRng() * 1.8;
+    s2.y = lifeGroundY + LIFE_TREE.crownUnder + leafRng() * 1.6;
     s2.vy = 0.28 + leafRng() * 0.24;
     s2.sway = leafRng() * Math.PI * 2;
     s2.spin = leafRng() * Math.PI * 2;
@@ -372,7 +354,7 @@ export function createVegetation(scene, rng) {
   for (let i = 0; i < LEAVES; i++) {
     const s2 = {};
     shedLeaf(s2);
-    s2.y = lifeGroundY + 0.2 + leafRng() * 4.6;   // first fall: already mid-air
+    s2.y = lifeGroundY + 0.2 + leafRng() * (LIFE_TREE.crownUnder + 1.2);   // first fall: already mid-air
     leafSeed.push(s2);
   }
   group.add(leaves);
@@ -468,7 +450,7 @@ export function createVegetation(scene, rng) {
     }
 
     lifeLamp.intensity = 26 + night * 30 + reverence * 16;
-    lifeGold.emissiveIntensity = 0.55 + night * 0.5 + reverence * 0.3;
+    lifeGold.emissiveIntensity = LIFE_GLOW + night * 0.22 + reverence * 0.12;
     motes.material.opacity = Math.min(1, 0.8 + night * 0.2 + reverence * 0.15);
     motes.material.size = 0.16 + night * 0.06 + reverence * 0.03;
 

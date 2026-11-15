@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { LIFE_TREE } from './lifetree.js';
 import { mulberry32, clamp, smoothstep } from '../util.js';
 
 const MAX_LEN = 13;        // how far a shadow may reach before the light fails
@@ -35,11 +36,15 @@ export function createShadows(scene, treeSpots) {
     });
   }
   // The two sacred trees stand far above the rest, and throw accordingly.
-  for (const p of [TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS]) {
+  // (AB#129: the Tree of Life throws the shadow of its own broad crown.)
+  for (const [p, r, h] of [
+    [TREE_OF_LIFE_POS, LIFE_TREE.crownRadius, LIFE_TREE.height - 1.5],
+    [TREE_OF_KNOWLEDGE_POS, 2.6, 5.4],
+  ]) {
     casters.push({
       x: p.x, z: p.z,
       groundY: heightAt(p.x, p.z),
-      r: 2.6, h: 5.4,
+      r, h,
     });
   }
 

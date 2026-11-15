@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { LIFE_TREE } from './lifetree.js';
 import { mulberry32, clamp, smoothstep } from '../util.js';
 
 const SHAFTS = 16;        // of the garden's trees let a beam through
@@ -43,8 +44,11 @@ export function createRays(scene, treeSpots) {
   // The two sacred trees stand far above the rest and part the most light of
   // any of them, so they always carry a shaft; the others are drawn for.
   const casters = [];
-  for (const p of [TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS]) {
-    casters.push({ x: p.x, z: p.z, groundY: heightAt(p.x, p.z), r: 1.8, h: 5.6 });
+  // (AB#129: the Tree of Life's shaft comes in under its crown, which now
+  // begins about where the old one's top was; a shaft from its new top
+  // would lie across the gold like a plank.)
+  for (const [p, h] of [[TREE_OF_LIFE_POS, LIFE_TREE.crownUnder], [TREE_OF_KNOWLEDGE_POS, 5.6]]) {
+    casters.push({ x: p.x, z: p.z, groundY: heightAt(p.x, p.z), r: 1.8, h });
   }
   const order = treeSpots.map((_, i) => i);
   for (let i = order.length - 1; i > 0; i--) {

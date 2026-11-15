@@ -1,5 +1,5 @@
 {
-  "version": 39,
+  "version": 40,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -501,6 +501,19 @@
         { "text": "The camera stands further back and higher, and looks out level over his head: he is a small figure in a large place, with the garden and its sky opening out round him.", "source": "Psalm 18:19" },
         { "text": "How much it sees follows the screen's shape: a phone held upright sees tall, a wide screen sees wide without stretching at the edges, and turning a phone on its side changes it there and then.", "source": null },
         { "text": "He is smaller on the screen now, so the place to tap him to set him dancing reaches a fingertip's width round him, however small he is.", "source": null }
+      ]
+    },
+    {
+      "version": 40,
+      "date": "2026-11-15",
+      "realm": "eden",
+      "focus": "the tree of life in the midst of the garden",
+      "changes": [
+        { "text": "The Tree of Life is grown anew as the greatest thing in the garden: a pale trunk rising from flared roots, and a broad, layered crown of gold about ten metres to its top, where the old one stood under six.", "source": "Genesis 2:9" },
+        { "text": "Seven boughs open from its trunk like the branches of the lampstand.", "source": "Exodus 25:32" },
+        { "text": "Its twelve manner of fruits hang under the crown as twelve small lights, each its own colour, and its lamp sits in the fork, so by night it lights the boughs and the gold from beneath.", "source": "Revelation 22:2" },
+        { "text": "The birds roost on top of the new crown at dusk, the sparrow's nest sits in its fork, its shadow is as broad as its crown, its gold leaves fall from all under its spread, and the flock goes round its roots.", "source": "Psalm 104:17" },
+        { "text": "All its wood is one piece and all its crown another, so the greater tree costs no more to draw than the old one.", "source": null }
       ]
     }
   ],

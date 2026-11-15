@@ -12,13 +12,15 @@
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
+import { LIFE_NEST } from './lifetree.js';
 import { clamp, shortestAngle, mulberry32, smoothstep } from '../util.js';
 
 // `hatchAt`: seconds into the visit before that nest's chick shows itself.
 // `keeper`: the bird whose house this nest is (Psalm 84:3).
 const SPOTS = [
   {
-    base: TREE_OF_LIFE_POS, dx: 0.55, dy: 4.85, dz: -0.35, hatchAt: 45,
+    // In the fork of the Tree of Life, where its boughs leave the trunk (AB#129).
+    base: TREE_OF_LIFE_POS, dx: LIFE_NEST.x, dy: LIFE_NEST.y, dz: LIFE_NEST.z, hatchAt: 45,
     keeper: { tone: 0xA98A5F, wing: 0x7C6440, name: 'Tsippor', label: 'the sparrow', kind: 'sparrow' },
   },
   {

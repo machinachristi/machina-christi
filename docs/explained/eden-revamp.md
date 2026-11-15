@@ -89,3 +89,62 @@ once. Measured on this Mac, over the first five seconds:
   number was changed to 11.5 m, with a note saying why, and a new test pins
   the new camera: well back, a tall view on a phone, held to 90° across on a
   wide screen, and Adam low and centred in the picture.
+
+## Stage 2: the Tree of Life, the greatest thing in the garden (AB#129)
+
+### What changed
+
+The old Tree of Life was a straight post with three yellow lumps on top,
+under 6 m tall. The new one is a real spreading tree about 10 m tall: a pale
+trunk rising in a slow S from flared roots, seven boughs opening from it
+like the branches of the lampstand (Exodus 25:32), and a broad, layered
+crown of gold over them. Its twelve fruits (Revelation 22:2) now hang under
+the crown as twelve small lights, each its own colour, and its lamp sits in
+the fork, so at night it lights the boughs and the underside of the gold.
+
+### The story, like you're five
+
+**A tree made of simple shapes.** The computer has no idea what a tree is.
+The trunk and boughs are 40 or so tapering tubes laid end to end; the crown
+is 40 squashed balls, one over the tip of every bough and twig, then a ring
+above those, then two big ones on top. A short recipe (a **procedure**)
+places them, so the tree is *grown by code* rather than drawn by hand.
+Wherever the recipe needs a little variety ("this bough reaches a bit
+further") it asks a **seeded random** number source, which gives the same
+"random" numbers every time, so every visitor sees the same tree.
+
+**Eighty shapes, two paint orders.** Painting 80 shapes one by one would be
+80 **draw calls**, and the garden's whole budget is 200. So before the
+garden opens, all the tubes are melted into one shape and all the balls into
+another (a **merged mesh**), each corner carrying its own colour: pale wood
+darkening toward the root, amber gold brightening toward the top. The tree
+is then two paint orders, plus one for the twelve fruits: three, exactly
+what the old post and lumps cost.
+
+**One place for the measurements.** A dozen things hang off this tree: the
+birds that roost on it at dusk, the sparrow's nest, its shadow, the shaft of
+low light under it, the gold leaves it sheds, the flock that walks round its
+trunk. Each used to have the old tree's size typed in by hand (a perch at
+5.55 m, a shadow 2.6 m wide). Now the tree's own file says how tall and wide
+it is and where its perches, nest and fruits are, and everything else reads
+those numbers. This is called a **single source of truth**.
+
+### What it cost, and how we know
+
+| Where | Before | After | Limit |
+|---|---|---|---|
+| Opening shot, 1280 × 800 desktop | 190 draws | 189 | 200 |
+| Arrival, upright phone | 149 draws | 149 | 200 |
+| Triangles at arrival, upright phone | about 56,000 | about 61,000 | 150,000 |
+
+### What it teaches about software
+
+- **Detail is cheap; separate objects are expensive.** The new tree has
+  about 4,000 more triangles and costs no more to draw, because the graphics
+  chip is slowed by the *number of paint orders*, not much by their size.
+- **Say a fact once.** When the same number is typed in six files, changing
+  the tree means hunting for all six, and missing one leaves a bird sitting
+  in mid-air. Keep each fact in one place and let everything else read it.
+- **Tune by eye, in real pixels.** The first render had the right shape and
+  the wrong colour (a dull brown), and ten of the twelve fruits were hidden
+  inside the crown. No test would have caught either; a screenshot did.
