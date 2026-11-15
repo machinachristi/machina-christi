@@ -22,6 +22,12 @@ test.describe('about hub', () => {
     expect(errors).toEqual([]);
   });
 
+  test('opens with John 15:12, naming its translation', async ({ page }) => {
+    await page.goto('/about.html');
+    await expect(page.locator('figure.verse blockquote')).toHaveText('This is my commandment, that you love one another, as I have loved you.');
+    await expect(page.locator('figure.verse figcaption')).toContainText('John 15:12 (Douay-Rheims)');
+  });
+
   test('the back link returns home', async ({ page }) => {
     await page.goto('/about.html');
     await page.locator('.back').click();

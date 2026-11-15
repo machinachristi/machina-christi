@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
   <meta name="description" content="About Machina Christi — the site, the runner, the garden, today in the Church, and prayers in Thai and English." />
@@ -136,6 +137,23 @@
     .card p { margin: 0; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+
+    /* The verse that opens the page, set apart. */
+    figure.verse { margin: 0 0 1.8em; max-width: 62ch; }
+    figure.verse blockquote {
+      font-style: italic;
+      font-size: 18px;
+      line-height: 1.55;
+      color: rgba(232, 213, 163, 0.86);
+      border-left: 2px solid rgba(201, 162, 39, 0.5);
+      padding-left: 1.1em;
+    }
+    figure.verse figcaption {
+      font-size: 14px;
+      color: rgba(232, 213, 163, 0.56);
+      padding-left: calc(1.1em + 2px);
+      margin-top: 0.5em;
+    }
   </style>
   <script src="/assets/telemetry.js" async></script>
   <script src="/assets/season.js?v=2" defer></script>
@@ -144,7 +162,10 @@
   <div class="wrap">
     <a class="back" href="index.html">&lsaquo; home</a>
     <h1>About</h1>
-    <p>Machina Christi is a small, growing collection of experiences, built one conversation at a time. This is home base for the story behind them — what they are, why they exist, and how they keep changing.</p>
+    <figure class="verse">
+      <blockquote>This is my commandment, that you love one another, as I have loved you.</blockquote>
+      <figcaption>&mdash; John 15:12 (Douay-Rheims)</figcaption>
+    </figure>
 
     <div class="cards">
       <a class="card" href="about-camino.html">
