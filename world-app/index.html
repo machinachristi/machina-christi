@@ -137,6 +137,66 @@
       visibility: hidden;
       background: radial-gradient(ellipse at 50% 42%, #fffdf7 0%, #fff6e3 55%, #f6e5c2 100%);
     }
+    /* AB#164, the new way of steering (controls.js): the thumb stick, drawn
+       where the thumb came down on the lower part of the screen — a faint
+       ring and a bead. It never takes a touch. */
+    .stick {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 9;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .stick--shown { opacity: 1; }
+    .stick::before {
+      content: "";
+      position: absolute;
+      left: -62px;
+      top: -62px;
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(244, 230, 186, 0.5);
+      background: rgba(11, 10, 8, 0.12);
+      transition: border-color 0.2s ease;
+    }
+    .stick--quick::before { border-color: rgba(255, 215, 0, 0.85); }
+    .stick__bead {
+      position: absolute;
+      left: -19px;
+      top: -19px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(244, 230, 186, 0.55);
+      box-shadow: 0 0 10px rgba(11, 10, 8, 0.35);
+    }
+
+    /* …and a line of help for the first moments of a visit (main.js). */
+    .howto {
+      position: fixed;
+      left: 50%;
+      top: max(64px, calc(env(safe-area-inset-top) + 56px));
+      transform: translateX(-50%);
+      z-index: 10;
+      width: max-content;
+      max-width: calc(100vw - 40px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      font-family: "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 15px;
+      line-height: 1.55;
+      text-align: center;
+      text-wrap: balance;
+      color: #f1e3b8;
+      text-shadow: 0 1px 10px rgba(11, 10, 8, 0.8), 0 0 3px rgba(11, 10, 8, 0.6);
+    }
+    .howto--shown { opacity: 1; }
   </style>
   <script>
     // Error relay to the parent shell (world.html). Registered before the

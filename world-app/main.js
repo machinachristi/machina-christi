@@ -16,6 +16,8 @@ import { createRealm } from './realm.js';
 import { createConsider } from './consider.js';
 import { createDance } from './dance.js';
 import { riverEdgeDist } from './scenes/terrain.js';
+import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './scenes/vegetation.js';
+import { LADDER_FOOT } from './scenes/ladder.js';
 import { mulberry32, breathe, shortestAngle } from './util.js';
 
 const params = new URLSearchParams(location.search);
@@ -25,6 +27,20 @@ const params = new URLSearchParams(location.search);
 if (params.get('debug') === 'forceError') {
   throw new Error('forced test error (debug=forceError)');
 }
+
+// AB#164: which way the touches are read (controls.js) — 'new', feet below
+// and eyes above, which is what a visitor gets; or 'old', the single drag
+// anywhere, kept for now as a way back. `?controls=old` (or `=new`) chooses,
+// and the choice is remembered on this device so the plain address keeps it.
+const SCHEME = (() => {
+  const asked = params.get('controls');
+  try {
+    if (asked === 'new' || asked === 'old') localStorage.setItem('eden_controls', asked);
+    return localStorage.getItem('eden_controls') === 'old' ? 'old' : 'new';
+  } catch (_) {
+    return asked === 'old' ? 'old' : 'new';   // storage blocked: this visit only
+  }
+})();
 
 function post(msg) {
   try {
@@ -82,7 +98,13 @@ scene.add(character.group);
 const rig = new CameraRig(camera, character.group, garden.heightAt);
 rig.beginIntro(garden.sacredMidpoint);
 
-const controls = createControls(renderer.domElement, () => rig.skipIntro());
+const controls = createControls(renderer.domElement, () => rig.skipIntro(), { scheme: SCHEME });
+if (SCHEME === 'new') {
+  document.body.classList.add('controls-new');
+  // He comes round into view from behind a little sooner (still well short
+  // of his own turning, or a sideways drag would chase its tail — v25).
+  rig.yawLambda = 1.5;
+}
 
 // The garden's rock is solid ground to go round, not through (v27) — see
 // footing.js. Both walkers keep to it.
@@ -293,7 +315,9 @@ function readIntent(dt, kit) {
       if (!dance.dancing) beginDance();
     } else {
       dance.stop();
-      if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
+      const near = snapTap(tap.x, tap.y);
+      if (near) kit.wayfinding.walkTo(near.x, near.z, kit.namedThing());
+      else if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
         && kit.name === 'eden' && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
         liePutDown();
       }
@@ -309,6 +333,40 @@ function readIntent(dt, kit) {
   }
   const step = kit.wayfinding.intent(character.group.position, kit.namedThing(), dt);
   return step ? { move: step, world: true } : { move: v, world: false };
+}
+
+// AB#164 (new scheme, in the garden): a tap that falls within a thumb's
+// width of something worth walking to — a beast of the field, his companion,
+// the two trees, the ladder — is taken as meant for it, however small it
+// stands in the picture. Gives the place to walk to (a step short of it, on
+// his side), or null when the tap is nowhere near any of them.
+const SNAP_PX = 44;
+const _snap = new THREE.Vector3();
+function screenOf(x, z, lift = 0) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  _snap.set(x, garden.heightAt(x, z) + lift, z).project(camera);
+  if (_snap.z > 1 || _snap.z < -1) return null;   // behind the camera
+  return { x: rect.left + (_snap.x + 1) / 2 * rect.width, y: rect.top + (1 - _snap.y) / 2 * rect.height };
+}
+function snapTap(tx, ty) {
+  if (SCHEME !== 'new' || realm.now !== 'eden' || !realm.idle) return null;
+  let best = null, bestD = SNAP_PX;
+  const offer = (x, z, lift, stand, what) => {
+    const at = screenOf(x, z, lift);
+    if (!at) return;
+    const d = Math.hypot(at.x - tx, at.y - ty);
+    if (d < bestD) { bestD = d; best = { x, z, stand, what }; }
+  };
+  for (const g of garden.fauna().grazers) offer(g.x, g.z, 0.5, 1.4, g.kind);
+  offer(companion.group.position.x, companion.group.position.z, 0.9, 1.4, 'companion');
+  offer(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z, 2.5, 3.5, 'tree of life');
+  offer(TREE_OF_KNOWLEDGE_POS.x, TREE_OF_KNOWLEDGE_POS.z, 2.5, 3.5, 'tree of knowledge');
+  offer(LADDER_FOOT.x, LADDER_FOOT.z, 1.5, 0, 'ladder');
+  if (!best) return null;
+  const me = character.group.position;
+  const dx = me.x - best.x, dz = me.z - best.z, d = Math.hypot(dx, dz);
+  if (d <= best.stand + 0.3) return null;   // already beside it
+  return { x: best.x + (dx / d) * best.stand, z: best.z + (dz / d) * best.stand, what: best.what };
 }
 
 // Down onto the grass where he stands: any walk he was on is let go, and
@@ -368,6 +426,11 @@ renderer.setAnimationLoop(() => {
 
   controls.update(dt);
   let kit = realm.kit();
+  // The eyes' finger turns the view (AB#164) — but not on the ladder or
+  // under the veil, nor while he lies looking up. A drag to the right looks
+  // to the right.
+  const turn = controls.takeLook();
+  if (turn && realm.idle && !consider.lying) rig.look(-turn);
   // On the ladder, or under the veil between the realms, the realm has him
   // (AB#106): any tap or drag meanwhile is let go.
   const driven = realm.drive();
@@ -429,8 +492,23 @@ renderer.setAnimationLoop(() => {
     ready = true;
     document.body.dataset.worldReady = '1';
     post({ type: 'world:ready' });
+    showHowTo();
   }
 });
+
+// AB#164 (new scheme): a few words on how to go about, shown as the garden
+// opens and let go a little after. They take no touch.
+function showHowTo() {
+  if (SCHEME !== 'new') return;
+  const el = document.createElement('p');
+  el.className = 'howto';
+  el.setAttribute('role', 'note');
+  el.textContent = 'Tap a place to walk there. Slide your thumb low on the screen to steer, or higher up to look around.';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('howto--shown'));
+  setTimeout(() => el.classList.remove('howto--shown'), 18000);
+  setTimeout(() => el.remove(), 19500);
+}
 
 // The new song in heaven (v33, Revelation 14:2-3; 19:6): a harp's note for
 // each step he takes on the sea of glass, and when his prayer has risen, the
@@ -575,6 +653,9 @@ window.__world = {
       // v27 (Isaiah 43:2; Proverbs 4:12): `wading` whether he is in the
       // water, and `round` whether a tap's walk is going round rock.
       walk: { gait: character.gait, speed: character.speed, wading: character.wading, ...wayfinding.state() },
+      // AB#164: which way the touches are read ('old' | 'new'), whether the
+      // thumb stick is out, and how far the view has been turned by hand.
+      controls: { ...controls.state(), camYaw: rig.getYaw() },
       // The garden's solid rock (v27, footing.js): how many circles of it.
       footing: { solids: footing.count },
       companion: {
@@ -927,6 +1008,11 @@ window.__world = {
     dance.stop();   // he stops dancing to go (v38)
     return kit.wayfinding.walkTo(x, z, kit.namedThing());
   },
+  // AB#164: where a place in the garden stands on the screen, and what a
+  // tap at a screen point would be taken as meant for (new scheme) — so the
+  // tests can aim a tap a little wide of a creature and see it still land.
+  screenOf(x, z, lift = 0) { return screenOf(x, z, lift); },
+  snapFor(x, y) { return snapTap(x, y); },
   // Drop the character anywhere, for tests and debugging — lets the smoke
   // suite probe far terrain (the river's four heads, the rim) without
   // scripted walks. The walk-radius clamp still governs actual walking.
@@ -943,6 +1029,7 @@ window.__world = {
       // The camera's own slower yaw (v25) takes the new facing outright, so
       // it settles in behind as promptly as it always did.
       rig.yaw = facing;
+      rig.held = 0;   // …and any turn of the view by hand is forgotten (AB#164)
     }
     return this.getState().pos;
   },

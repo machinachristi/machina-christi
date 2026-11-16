@@ -1144,3 +1144,121 @@ test.describe('the garden\'s features', () => {
     }, { timeout: 15000 }).toBeGreaterThan(0.3);
   });
 });
+
+// AB#164: how the touches are read (the default since the owner tried it on
+// a phone; `?controls=old` is the earlier single drag). The lower part of the screen is his feet (a drawn thumb
+// stick), the upper part his eyes (a sideways drag turns the view), and a
+// tap near a creature is taken as meant for it.
+test.describe('the new way of steering (AB#164)', () => {
+  // The opening shot takes the first touch for itself; spend it, and let the
+  // camera come down behind him.
+  async function settle(page) {
+    await page.mouse.click(195, 700);
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 20000 }).toBeLessThan(13);
+  }
+
+  test('the new way is what a visitor gets; ?controls=old is the way back', async ({ page }) => {
+    await gotoWorldReady(page);
+    expect((await getState(page)).controls.scheme).toBe('new');
+    await expect(appFrame(page).locator('.stick')).toHaveCount(1);
+
+    await gotoWorldReady(page, '?controls=old');
+    expect((await getState(page)).controls.scheme).toBe('old');
+    await expect(appFrame(page).locator('.stick')).toHaveCount(0);
+    await expect(appFrame(page).locator('.howto')).toHaveCount(0);
+  });
+
+  test('low on the screen, a short drag walks him and the stick is drawn', async ({ page }) => {
+    await gotoWorldReady(page, '?controls=new');
+    const frame = appFrame(page);
+    expect((await getState(page)).controls.scheme).toBe('new');
+    await expect(frame.locator('.howto')).toBeVisible();
+    await settle(page);
+
+    const s0 = await getState(page);
+    await page.mouse.move(195, 640);
+    await page.mouse.down();
+    await page.mouse.move(195, 585, { steps: 6 });   // 55 px: a thumb's small reach
+    await expect(frame.locator('.stick--shown')).toHaveCount(1);
+    await expect.poll(async () => dist2d((await getState(page)).pos, s0.pos), { timeout: 15000 }).toBeGreaterThan(0.8);
+    const s1 = await getState(page);
+    const away = { x: s0.pos.x - s0.cam.x, z: s0.pos.z - s0.cam.z };
+    const step = { x: s1.pos.x - s0.pos.x, z: s1.pos.z - s0.pos.z };
+    const dot = (step.x * away.x + step.z * away.z) / (Math.hypot(away.x, away.z) * Math.hypot(step.x, step.z));
+    expect(dot).toBeGreaterThan(0.5);
+    expect(s1.controls.looked).toBe(0);
+    await page.mouse.up();
+    await expect(frame.locator('.stick--shown')).toHaveCount(0);
+  });
+
+  test('higher up, a sideways drag turns the view and he stays where he is', async ({ page }) => {
+    await gotoWorldReady(page, '?controls=new');
+    const frame = appFrame(page);
+    await settle(page);
+    await expect.poll(async () => (await getState(page)).walk.speed, { timeout: 15000 }).toBe(0);
+
+    const s0 = await getState(page);
+    // Two places either side of him: whichever stands to the right in the
+    // picture should slide left as the view turns to the right.
+    const spots = [{ x: s0.pos.x + 6, z: s0.pos.z + 8 }, { x: s0.pos.x - 6, z: s0.pos.z + 8 }];
+    const before = await frame.evaluate(ps => ps.map(p => window.__world.screenOf(p.x, p.z, 0)), spots);
+    const right = before[0] && (!before[1] || before[0].x > before[1].x) ? 0 : 1;
+
+    await page.mouse.move(120, 220);
+    await page.mouse.down();
+    await page.mouse.move(250, 220, { steps: 8 });   // a third of the width: about 60°
+    await page.mouse.up();
+
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return Math.abs(Math.atan2(Math.sin(s.controls.camYaw - s0.controls.camYaw), Math.cos(s.controls.camYaw - s0.controls.camYaw)));
+    }, { timeout: 15000 }).toBeGreaterThan(0.6);
+    const s1 = await getState(page);
+    expect(s1.controls.looked).toBeGreaterThan(0.6);
+    expect(dist2d(s1.pos, s0.pos)).toBeLessThan(0.3);
+    expect(s1.walk.target).toBeNull();
+    const after = await frame.evaluate(p => window.__world.screenOf(p.x, p.z, 0), spots[right]);
+    if (after) expect(after.x).toBeLessThan(before[right].x);
+
+    // He stands still: the view stays where it was put.
+    await page.waitForTimeout(1200);
+    const s2 = await getState(page);
+    expect(Math.abs(Math.atan2(Math.sin(s2.controls.camYaw - s1.controls.camYaw), Math.cos(s2.controls.camYaw - s1.controls.camYaw)))).toBeLessThan(0.35);
+  });
+
+  test('a tap a little wide of a landmark is taken as meant for it', async ({ page }) => {
+    await gotoWorldReady(page, '?controls=new');
+    const frame = appFrame(page);
+    await settle(page);
+    // Let him and the camera come to rest where the visit begins: the two
+    // trees stand ahead of him. (A tree, not a beast: a lamb wanders off
+    // between the aiming and the tap on a slow machine.)
+    await expect.poll(async () => {
+      const a = await getState(page);
+      await page.waitForTimeout(300);
+      const b = await getState(page);
+      return Math.hypot(b.cam.x - a.cam.x, b.cam.z - a.cam.z) + b.walk.speed;
+    }, { timeout: 30000 }).toBeLessThan(0.05);
+
+    // 30 px out from the Tree of Knowledge, on the side away from him: off
+    // its trunk, well inside a thumb's width.
+    const TREE = { x: 3.4, z: 0.8 };
+    const aim = await frame.evaluate(T => {
+      const at = window.__world.screenOf(T.x, T.z, 2.5);
+      const x = at.x + (at.x < window.innerWidth / 2 ? -30 : 30);
+      const hit = window.__world.snapFor(x, at.y);
+      return { x, y: at.y, what: hit && hit.what };
+    }, TREE);
+    expect(aim.what).toBe('tree of knowledge');
+    expect(aim.x).toBeGreaterThan(10);
+    expect(aim.x).toBeLessThan(380);
+
+    const before = (await getState(page)).pos;
+    await page.mouse.click(aim.x, aim.y);
+    // He sets out for the tree and comes to stand by it (3.5 m short).
+    await expect.poll(async () => {
+      const s = await getState(page);
+      return Math.hypot(s.pos.x - TREE.x, s.pos.z - TREE.z);
+    }, { timeout: 40000 }).toBeLessThan(Math.min(6, Math.hypot(before.x - TREE.x, before.z - TREE.z) - 2));
+  });
+});
