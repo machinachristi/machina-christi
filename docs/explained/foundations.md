@@ -870,3 +870,21 @@ step behind.
 *Here:* an API from before The Mass says nothing about which prayers have a
 card on the Pray list, so the list goes by the site's own copy and Lamb of God
 never appears there as a card.
+
+**Generated file.** A file a program wrote from a smaller file of rules, the
+way a printed timetable is produced from the railway's rules instead of being
+typed out train by train. People check and edit the rules; the program redoes
+the big file whenever they change. A test can rerun the program and compare,
+so nobody quietly edits the big file by hand.
+*Here:* `ordo/gospel-2026.json` names the Gospel for all 365 days. It is made
+by `scripts/build-gospel-table.mjs` from the year's calendar and one file of
+rules, and a test fails if the two ever disagree (AB#152).
+
+**Boundary case (edge case).** A mistake that only shows at the edge of a
+rule: the last day of a month, the first item in a list, the moment one season
+turns into the next. Like a shop sign saying "closed from the 24th" that
+forgets to say which month. Most days pass; the edge fails, so edges get tests
+of their own.
+*Here:* "from the 17th, use the special December Gospels" looked only at the
+day of the month, so 29 November 2027 got a Christmas-week reading. Comparing
+with a printed calendar found it, and a test now names that date.

@@ -6,13 +6,13 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0a08" />
-  <meta name="description" content="Ordo — today in the Church: the day's Gospel reading and, on a feast or memorial, the saint of the day from Butler's Lives of the Saints." />
+  <meta name="description" content="Ordo — today in the Church: the feast, the day's Gospel to read, the saint of the day, and a prayer for today." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/ordo.html" />
   <meta property="og:title" content="Ordo · Machina Christi" />
-  <meta property="og:description" content="Today in the Church: the day's Gospel reading and, on a feast or memorial, the saint of the day from Butler's Lives of the Saints." />
+  <meta property="og:description" content="Today in the Church: the feast, the day's Gospel to read, the saint of the day, and a prayer for today." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -181,6 +181,66 @@
       outline: none;
     }
 
+    /* ── The day's Gospel, and the prayer for the day ──────────── */
+    .label {
+      display: block;
+      max-width: none;
+      font-size: 13px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+    #gospel { margin-top: 1.6em; }
+    /* The Gospel takes the colour of the day, like the rule under the title. */
+    .gospel-ref { color: rgba(var(--season, var(--violet)), 0.95); }
+    .gospel-note { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); margin: -2px 0 10px; }
+    .gospel blockquote {
+      margin: 0;
+      padding: 2px 0 2px 18px;
+      border-left: 2px solid rgba(var(--season, var(--violet)), 0.5);
+      font-style: italic;
+      font-size: 17px;
+      line-height: 1.65;
+      color: rgba(232, 213, 163, 0.9);
+    }
+    .gospel blockquote p { color: inherit; margin-bottom: 0.8em; }
+    .gospel blockquote p:last-child { margin-bottom: 0; }
+    .gospel .more {
+      display: inline-block;
+      min-height: 44px;           /* a thumb-sized target */
+      padding: 10px 0;
+      margin-top: 2px;
+      background: none;
+      border: 0;
+      font: inherit;
+      font-size: 15px;
+      color: var(--gold-soft);
+      text-decoration: underline;
+      text-decoration-color: rgba(201, 162, 39, 0.55);
+      text-underline-offset: 4px;
+      cursor: pointer;
+    }
+    .gospel .more:hover, .gospel .more:focus-visible { color: #fff; outline: none; text-decoration-color: rgba(201, 162, 39, 0.9); }
+    .gospel .attribution { font-size: 13px; color: rgba(232, 213, 163, 0.5); margin: 4px 0 0; }
+    .gospel .attribution a { color: inherit; }
+
+    #prayer:not(:empty) { margin-top: 34px; }
+    .prayer-label { color: rgba(138, 170, 222, 0.95); margin-bottom: 10px; }
+    .prayer-card {
+      display: block;
+      border: 1px solid rgba(201, 162, 39, 0.35);
+      border-radius: 16px;
+      padding: 16px 20px;
+      text-decoration: none;
+      background: rgba(201, 162, 39, 0.04);
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .prayer-card:hover, .prayer-card:focus-visible { border-color: rgba(201, 162, 39, 0.8); background: rgba(201, 162, 39, 0.1); outline: none; }
+    .prayer-card span { display: block; }
+    .prayer-title { font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold-soft); }
+    .prayer-th { font-size: 19px; color: var(--gold-soft); margin: 4px 0 6px; }
+    .prayer-why { font-style: italic; font-size: 15px; line-height: 1.5; color: rgba(232, 213, 163, 0.72); }
+
     h2 {
       font-weight: normal;
       font-size: 14px;
@@ -227,6 +287,7 @@
   </style>
   <script src="/assets/telemetry.js" async></script>
   <script src="/assets/season.js?v=2" defer></script>
+  <script src="/assets/today-prayer.js?v=1" defer></script>
 </head>
 <body>
   <div class="wrap">
@@ -247,7 +308,11 @@
       <p class="notice">Loading&hellip;</p>
     </div>
 
+    <div id="gospel" class="gospel"></div>
+
     <div id="saint"></div>
+
+    <div id="prayer"></div>
   </div>
 
   <script>
@@ -302,6 +367,8 @@
       const dateLabelEl = document.getElementById('date-label');
       const celebrationEl = document.getElementById('celebration');
       const saintEl = document.getElementById('saint');
+      const gospelEl = document.getElementById('gospel');
+      const prayerEl = document.getElementById('prayer');
       const prevLink = document.getElementById('prev-day');
       const nextLink = document.getElementById('next-day');
       const todayLink = document.getElementById('today-link');
@@ -402,6 +469,103 @@
         return calendarCache[year];
       }
 
+      // ── The day's Gospel ──────────────────────────────────────────
+      // ordo/gospel-YEAR.json says which Gospel is read on each day
+      // ({ r: "Luke 18:1–8", b: "lk", s: [[18, 1, 8]] }, built by
+      // scripts/build-gospel-table.mjs). The words themselves are kept one
+      // small file per chapter (ordo/gospel/lk-18.json, the Douay-Rheims
+      // Bible), so a day downloads a few kB and not the four Gospels.
+      const gospelCache = {};
+      function gospelsFor(year) {
+        if (!gospelCache[year]) {
+          gospelCache[year] = fetch(`./ordo/gospel-${year}.json`).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+        return gospelCache[year];
+      }
+      const chapterCache = {};
+      function chapter(book, n) {
+        const k = `${book}-${n}`;
+        if (!chapterCache[k]) {
+          chapterCache[k] = fetch(`./ordo/gospel/${k}.json`).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+        return chapterCache[k];
+      }
+      // The passage as parts, each a list of verses; a new part begins
+      // wherever the reading skips verses. null if a chapter can't be had.
+      function passage(g) {
+        const chapters = [...new Set(g.s.map(x => x[0]))];
+        return Promise.all(chapters.map(c => chapter(g.b, c))).then(texts => {
+          if (texts.some(t => !t)) return null;
+          const parts = [];
+          g.s.forEach(([c, from, to], i) => {
+            const verses = texts[chapters.indexOf(c)];
+            // An empty verse is one this Bible prints with the verse before.
+            while (from > 1 && verses[from - 1] === '') from--;
+            const words = verses.slice(from - 1, to).filter(Boolean);
+            const before = g.s[i - 1];
+            if (before && before[0] === c - 1 && from === 1) parts[parts.length - 1].push(...words);  // runs on across the chapter
+            else parts.push(words);
+          });
+          return parts;
+        });
+      }
+
+      const EXCERPT = 200;   // characters: about a phone screen's worth of an opening
+      function renderGospel(d, g, seq) {
+        const readings = `<a href="${usccbUrl(d)}" target="_blank" rel="noopener">all the day&rsquo;s readings at USCCB</a>`;
+        if (!g) {
+          // No table for this year (or it failed to load): the old link out.
+          const whose = toDateKey(d) === toDateKey(today) ? 'today&rsquo;s' : 'the day&rsquo;s';
+          gospelEl.innerHTML = `<p><a class="enter" href="${usccbUrl(d)}" target="_blank" rel="noopener">read ${whose} gospel &middot; usccb</a></p>`;
+          return;
+        }
+        const head = `<p class="label gospel-ref">The Gospel &middot; ${escapeHtml(g.r)}</p>` +
+          (g.n ? `<p class="gospel-note">${escapeHtml(g.n)}</p>` : '');
+        gospelEl.innerHTML = head;
+        passage(g).then(parts => {
+          if (seq !== renderSeq) return;
+          if (!parts) {
+            gospelEl.innerHTML = head + `<p class="notice">The text didn&rsquo;t load. Read ${readings}.</p>`;
+            return;
+          }
+          const all = parts.flat();
+          let n = 0, len = 0;
+          while (n < all.length && len < EXCERPT) len += all[n++].length;
+          const short = n < all.length;
+          const opening = `<p>${escapeHtml(all.slice(0, n).join(' ').replace(/[,;:]$/, ''))}&hellip;</p>`;
+          const whole = parts.map(p => `<p>${escapeHtml(p.join(' '))}</p>`).join('');
+          gospelEl.innerHTML = head +
+            `<blockquote id="gospel-text">${short ? opening : whole}</blockquote>` +
+            (short ? `<button type="button" class="more" aria-expanded="false" aria-controls="gospel-text">Read the whole Gospel &rsaquo;</button>` : '') +
+            `<p class="attribution">&mdash; <a href="https://www.gutenberg.org/ebooks/8300" target="_blank" rel="noopener">Douay-Rheims Bible</a> &middot; ${readings}</p>`;
+          const more = gospelEl.querySelector('.more');
+          if (!more) return;
+          more.addEventListener('click', () => {
+            const open = more.getAttribute('aria-expanded') !== 'true';
+            more.setAttribute('aria-expanded', String(open));
+            gospelEl.querySelector('blockquote').innerHTML = open ? whole : opening;
+            more.innerHTML = open ? '&lsaquo; Show less' : 'Read the whole Gospel &rsaquo;';
+          });
+        });
+      }
+
+      // ── A prayer for the day (the rule lives in assets/today-prayer.js) ──
+      function renderPrayer(d, entry, seq) {
+        seasonReady.then(() => {
+          if (seq !== renderSeq) return;
+          if (!window.mcTodayPrayer) { prayerEl.innerHTML = ''; return; }
+          const p = window.mcTodayPrayer(d, entry && entry.name);
+          const label = toDateKey(d) === toDateKey(today) ? 'A prayer for today' : 'A prayer for the day';
+          prayerEl.innerHTML =
+            `<p class="label prayer-label">${label}</p>` +
+            `<a class="prayer-card" href="prayer.html?p=${encodeURIComponent(p.id)}">` +
+              `<span class="prayer-title">${escapeHtml(p.title)}</span>` +
+              `<span class="prayer-th" lang="th">${escapeHtml(p.title_th)}</span>` +
+              `<span class="prayer-why">${escapeHtml(p.why)} &middot; listen in Thai or English &rsaquo;</span>` +
+            `</a>`;
+        });
+      }
+
       // Renders are async (they await fetched data), so a quick prev/next
       // flip can have two in flight at once; the sequence number lets the
       // newest one win and any stale completion quietly stand down.
@@ -423,24 +587,28 @@
         const seq = ++renderSeq;
         const year = d.getFullYear();
         // The celebration needs only the year's calendar (~40KB), so it paints
-        // the moment that file arrives; the saint's bio fills in below when
+        // the moment that file arrives; the Gospel follows from its own two
+        // small files, and the saint's bio fills in below when
         // the much larger saints.json (~120KB) lands. On a phone connection
         // that's the difference between reading the day right away and
         // watching "Loading…" while a bio you may not even need downloads.
+        const gospels = gospelsFor(year);   // asked for now, alongside the calendar
         calendarFor(year).then(calendar => {
           if (seq !== renderSeq) return;
           if (!calendar) {
+            gospelEl.innerHTML = '';
+            renderPrayer(d, null, seq);
             celebrationEl.innerHTML = `<p class="notice">The liturgical calendar for ${year} isn't available yet — check back once it's been added, or read the <a href="${usccbUrl(d)}" target="_blank" rel="noopener">day's Gospel at USCCB</a> directly.</p>`;
             saintEl.innerHTML = '';
             return;
           }
           const key = toDateKey(d);
           const entry = calendar[key];
-          const whose = key === toDateKey(today) ? 'today&rsquo;s' : 'the day&rsquo;s';
-          const gospelLink = `<p><a class="enter" href="${usccbUrl(d)}" target="_blank" rel="noopener">read ${whose} gospel &middot; usccb</a></p>`;
+          gospels.then(table => { if (seq === renderSeq) renderGospel(d, table && table[key], seq); });
+          renderPrayer(d, entry, seq);
 
           if (!entry || entry.grade === 0) {
-            celebrationEl.innerHTML = `<p class="celebration">${entry ? escapeHtml(entry.name) : 'Ordinary Weekday'}</p>${gospelLink}`;
+            celebrationEl.innerHTML = `<p class="celebration">${entry ? escapeHtml(entry.name) : 'Ordinary Weekday'}</p>`;
             saintEl.innerHTML = '';
             return;
           }
@@ -448,7 +616,7 @@
           // weekday_name is present only when the calendar API itself says the
           // ferial weekday is still the day's default celebration (optional
           // memorials and Lenten commemorations). In that case the weekday
-          // stays up top and the memorial appears below the gospel link. On
+          // stays up top and the memorial appears below the Gospel. On
           // obligatory memorials, feasts, solemnities, and Sundays, the
           // celebration replaces the weekday outright — so it takes the top
           // spot itself, with its rank label above it.
@@ -459,8 +627,7 @@
             (hasWeekday
               ? `<p class="celebration">${escapeHtml(entry.weekday_name)}</p>`
               : (label ? `<span class="rank">${escapeHtml(label)}</span>` : '') +
-                `<p class="celebration">${escapeHtml(entry.name)}</p>`) +
-            gospelLink;
+                `<p class="celebration">${escapeHtml(entry.name)}</p>`);
 
           const isSaint = /^Saints?\b/.test(entry.name);
 

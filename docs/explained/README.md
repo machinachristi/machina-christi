@@ -16,6 +16,7 @@ afterthought: every phase of work adds to them.
   - [Logos — the vowels, the phone guide's card page, and why the tones waited](logos-vowels-and-tones.md)
   - [Pray — the Thai voice, checked by machine and taught eight words](pray-voice-check.md)
   - [Pray — The Mass, line by line: one prayer made of others](pray-the-mass.md)
+  - [Ordo — a daily page: the Gospel itself, and a prayer for the day](ordo-daily-page.md)
   - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
   - [The homepage gates — three look tests, and the light they left behind](homepage-gates-look-tests.md)
   - [The morning walk — a robot checks the live site every day](live-site-check.md)
