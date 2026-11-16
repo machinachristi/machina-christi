@@ -15,7 +15,8 @@
 // he stood. The game stays a separate page that also works by itself.
 //
 // Like heaven (realm.js), a station can never take the garden down: if the
-// game does not load in time, the veil lifts on the garden again, a quiet
+// game does not say it is ready in time (it never loads, or what loads is
+// broken), the veil lifts on the garden again, a quiet
 // warning is noted in the console, and that station rests for the visit.
 
 import { createWaymarker } from './scenes/waymarker.js';
@@ -49,7 +50,7 @@ const REARM = 3;           // m away again before it opens again
 const NEAR = 5;            // m: its name is given
 const VEIL_IN = 700;       // ms for the veil to gather before the game is laid over
 const VEIL_CLOSE = 380;    // ms for it to gather over the game on the way back
-const LOAD_MAX = 12000;    // ms for the game to load under the full veil
+const LOAD_MAX = 12000;    // ms for the game to say it is ready, under the full veil
 
 const HOLD = { move: { x: 0, z: 0, quick: false }, world: true };
 
@@ -92,14 +93,16 @@ export function createStations({ scene, character, cancelWalk, pause, tell }) {
   }
 
   // Under the full veil: the game's page is laid over the garden, and the
-  // garden pauses. The veil lifts once the game has loaded.
+  // garden pauses. The veil lifts once the game says it is ready.
   function mount() {
     phase = 'loading';
     frame = document.createElement('iframe');
     frame.className = 'station__frame';
     frame.title = current.def.title;
     frame.setAttribute('allow', 'autoplay');
-    frame.addEventListener('load', opened, { once: true });
+    // The veil does not lift when a page merely arrives in the frame (it
+    // could be an error page): it lifts when the game itself says it is
+    // drawn and ready ('station:ready', below).
     frame.src = current.def.game;
     layer.hidden = false;
     layer.appendChild(frame);
@@ -109,7 +112,7 @@ export function createStations({ scene, character, cancelWalk, pause, tell }) {
     try { history.pushState({ station: current.def.id }, ''); pushed = true; } catch (_) { pushed = false; }
     later(() => {
       if (phase !== 'loading') return;
-      console.warn(`station: ${current.def.id} did not load in time, so he stays in the garden`);
+      console.warn(`station: ${current.def.id} was not ready in time, so he stays in the garden`);
       current.failed = true;
       requestClose();
     }, LOAD_MAX);
@@ -164,7 +167,9 @@ export function createStations({ scene, character, cancelWalk, pause, tell }) {
 
   window.addEventListener('message', e => {
     if (!frame || e.source !== frame.contentWindow || e.origin !== location.origin) return;
-    if (e.data && e.data.type === 'station:close') requestClose();
+    if (!e.data) return;
+    if (e.data.type === 'station:ready') opened();
+    else if (e.data.type === 'station:close') requestClose();
   });
   window.addEventListener('popstate', () => {
     if (!pushed) return;

@@ -1422,4 +1422,30 @@ test.describe('stations: a game opened from the garden (AB#165)', () => {
     // The garden goes on: its clock runs.
     await expect.poll(async () => (await getState(page)).time.t, { timeout: 20000 }).not.toBe(s.time.t);
   });
+
+  test('a page that arrives in the game\'s place but is not the game (an error page) cannot keep him either: the veil only lifts when the game says it is ready', async ({ page }) => {
+    test.setTimeout(120000);
+    // Something loads, but it is not the game.
+    await page.route(/game\.html\?from=eden/, r => r.fulfill({ status: 404, contentType: 'text/html', body: '<h1>Not found</h1>' }));
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    await frame.evaluate(p => window.__world.teleport(p.x, p.z, 1.3), NEARBY);
+    let sawOpen = false;
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (s.stations.phase === 'open') sawOpen = true;
+      if (!s.stations.phase && !s.walk.target && !s.stations.list[0].failed) {
+        await frame.evaluate(m => window.__world.walkTo(m.x, m.z), MARK);
+      }
+      return s.stations.list[0].failed && s.stations.phase === null;
+    }, { timeout: 90000, intervals: [500] }).toBe(true);
+    // The veil never lifted on the broken page; he is back in the garden,
+    // with the way home showing and the clock running.
+    expect(sawOpen).toBe(false);
+    const s = await getState(page);
+    expect(s.stations.visits).toBe(0);
+    await expect(frame.locator('.station__frame')).toHaveCount(0);
+    expect(await homeLink(page)).toBe('visible');
+    await expect.poll(async () => (await getState(page)).time.t, { timeout: 20000 }).not.toBe(s.time.t);
+  });
 });
