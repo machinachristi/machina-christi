@@ -11,7 +11,10 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 const { ROOT, LIVE, API, serveLiveCopy, apiJson } = require('./live-copy');
-const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'pray', 'prayers.json'), 'utf8'));
+// The prayers as the publisher sends them to the API: The Mass with its parts' lines.
+const { expand } = require('../functions/src/lib/prayers.js');
+const DATA = expand(JSON.parse(fs.readFileSync(path.join(ROOT, 'pray', 'prayers.json'), 'utf8')));
+const LISTED = DATA.prayers.filter(p => p.listed !== false); // the parts said only at Mass have no card
 
 // A published document, as /api/prayers/{id} returns it: line i starts at 2i s.
 function published(id) {
@@ -37,7 +40,7 @@ async function liveSite(page, { api = true } = {}) {
     asked.push(url.pathname);
     const json = body => apiJson(route, body);
     if (!api) return route.fulfill({ status: 503, body: '' });
-    if (url.pathname === '/api/prayers') return json(DATA.prayers.map(({ id, title, title_th, about }) => ({ id, title, title_th, about })));
+    if (url.pathname === '/api/prayers') return json(DATA.prayers.map(({ id, title, title_th, about, listed }) => ({ id, title, title_th, about, listed: listed !== false })));
     const m = /^\/api\/prayers\/([a-z0-9-]+)$/.exec(url.pathname);
     if (m && DATA.prayers.some(p => p.id === m[1])) return json(published(m[1]));
     return route.fulfill({ status: 404, body: '' });
@@ -140,6 +143,29 @@ test.describe('recorded voices on the live site', () => {
     expect(plays).toEqual(['th-slow-0123456789.mp3', 'en-slow-0123456789.mp3']);
   });
 
+  test('in The Mass, a part\'s own Listen plays just its stretch of the one recording, then stops', async ({ page }) => {
+    await liveSite(page);
+    await openRecorded(page, 'mass');
+    const mass = DATA.prayers.find(p => p.id === 'mass');
+    const n = mass.parts.findIndex(p => p.id === 'lamb-of-god');
+    const first = mass.parts[n].start, next = mass.parts[n + 1].start; // each line is 2 s long here
+    const th = page.locator('#part-lamb-of-god .listen[data-lang="th"]');
+    await th.click();
+    const m = await media(page);
+    expect(m.plays.at(-1).src).toBe(`${API}/api/audio/mass/th-normal-0123456789.mp3`);
+    expect(m.plays.at(-1).from).toBe(first * 2);
+    expect(await page.evaluate(() => window.__spoken.length)).toBe(0); // the recording, not the device
+    await expect(lit(page)).toHaveAttribute('data-i', String(first));
+    await expect(th.locator('.label')).toHaveText('Stop');
+    await expect(page.locator('#player .listen[data-lang="th"] .label')).toHaveText('Listen');
+    await at(page, next * 2 - 0.5);
+    await expect(lit(page)).toHaveAttribute('data-i', String(next - 1));
+    await at(page, next * 2); // the next part begins: stop here
+    await expect(lit(page)).toHaveCount(0);
+    expect((await media(page)).paused).toBe(true);
+    await expect(th.locator('.label')).toHaveText('Listen');
+  });
+
   test('tapping a line plays just that line, from its start until the next line begins', async ({ page }) => {
     await liveSite(page);
     await openRecorded(page, 'our-father');
@@ -165,7 +191,7 @@ test.describe('recorded voices on the live site', () => {
   test('with the API down, both pages use the bundled prayers and the device\'s voice', async ({ page }) => {
     const { asked, errors } = await liveSite(page, { api: false });
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
     await page.goto(`${LIVE}/prayer.html?p=memorare`);
     await expect(page.locator('h1')).toHaveText('The Memorare');
     await expect(page.locator('#source')).not.toContainText('Recorded voices');
@@ -179,8 +205,8 @@ test.describe('recorded voices on the live site', () => {
   test('on the live site the list is also asked of the API', async ({ page }) => {
     const { asked } = await liveSite(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
-    await expect(page.locator('.card').first()).toContainText('The Sign of the Cross');
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    await expect(page.locator('.card').first()).toContainText(LISTED[0].title);
     expect(asked).toContain('/api/prayers');
   });
 });

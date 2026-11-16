@@ -5,9 +5,12 @@ const path = require('node:path');
 const { buildSnapshot } = require('../src/lib/snapshot');
 const { buildSearchDocs, slug, joinSyllables, summaryOf } = require('../src/lib/search-docs');
 const { SITE_PAGES } = require('../src/lib/site-pages');
+const { expand } = require('../src/lib/prayers');
 
 const ROOT = path.join(__dirname, '..', '..');
-const prayers = JSON.parse(fs.readFileSync(path.join(ROOT, 'pray', 'prayers.json'), 'utf8')).prayers;
+// As the publisher sends them to Cosmos DB, where the index reads them: The
+// Mass with its parts' lines.
+const prayers = expand(JSON.parse(fs.readFileSync(path.join(ROOT, 'pray', 'prayers.json'), 'utf8'))).prayers;
 const at = '2026-10-17T05:00:00.000Z';
 
 // A snapshot made the way the publish job makes it, from rows like its queries'.

@@ -169,6 +169,8 @@
     mark { background: rgba(201, 162, 39, 0.22); color: var(--gold-soft); border-radius: 3px; padding: 0 1px; }
 
     .fallback { margin-top: 1.4em; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    /* The English credit, under results that show that English. */
+    .credit { margin-top: 1.4em; font-size: 14px; line-height: 1.6; color: rgba(232, 213, 163, 0.55); }
 
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
   </style>
@@ -188,9 +190,10 @@
     <p class="status" id="status" role="status" aria-live="polite"></p>
 
     <ul class="results" id="results"></ul>
+    <p class="credit" id="credit" hidden></p>
     <p class="fallback" id="fallback" hidden>A simple search of names and titles, while the full search is resting.</p>
   </div>
 
-  <script src="/assets/search.js?v=1"></script>
+  <script src="/assets/search.js?v=2"></script>
 </body>
 </html>

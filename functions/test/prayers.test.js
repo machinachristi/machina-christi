@@ -15,8 +15,100 @@ const prayer = {
 };
 
 test('the published settings are complete, and every prayer has both languages on every line', () => {
-  P.checkSettings(DATA.audio, DATA.prayers);
-  for (const p of DATA.prayers) for (const l of p.lines) for (const lang of P.LANGS) assert.ok(l[lang], `${p.id}: ${lang}`);
+  const { prayers } = P.expand(DATA);
+  P.checkSettings(DATA.audio, prayers);
+  for (const p of prayers) for (const l of p.lines) for (const lang of P.LANGS) assert.ok(l[lang], `${p.id}: ${lang}`);
+});
+
+// ── A prayer made of other prayers ───────────────────────────────────────────
+
+const line = (th, en = th) => ({ th, rom: 'r', en });
+const part = (id, lines, extra = {}) => ({ id, title: id.toUpperCase(), title_th: 'ท', about: `about ${id}`, source: { name: 's', url: 'https://example.org' }, lines, ...extra });
+const ICEL = { name: 'The Roman Missal (ICEL, 2010)', notice: 'Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved.' };
+const sample = () => ({
+  audio: settings,
+  prayers: [
+    { id: 'whole', title: 'Whole', title_th: 'ทั้งหมด', aka: ['All'], about: 'all of it', parts: ['a', { id: 'b', amen: false }, 'c'] },
+    part('a', [line('ก'), line('ข')]),
+    part('b', [line('ค'), line('อาเมน', 'Amen.')], { source_en: ICEL }),
+    part('c', [line('ง')], { listed: false }),
+  ],
+});
+
+test('a prayer made of parts gets their lines in order, and notes where each part starts', () => {
+  const data = sample();
+  const whole = P.expand(data).prayers[0];
+  assert.deepEqual(whole.lines.map(l => l.th), ['ก', 'ข', 'ค', 'ง'], 'b is said without its Amen');
+  assert.deepEqual(whole.parts.map(p => [p.id, p.start]), [['a', 0], ['b', 2], ['c', 3]]);
+  assert.deepEqual(whole.parts[1], { id: 'b', title: 'B', title_th: 'ท', about: 'about b', source: data.prayers[2].source, source_en: ICEL, start: 2 });
+  assert.equal(whole.lines[0], data.prayers[1].lines[0], 'the very same lines, not copies');
+  assert.deepEqual(P.expand(data).prayers[2].lines.map(l => l.th), ['ค', 'อาเมน'], 'its own page keeps the Amen');
+  assert.deepEqual(P.expand(P.expand(data)), P.expand(data), 'expanding twice changes nothing');
+  assert.equal(P.expand(data).audio, settings, 'everything else in the file passes through');
+});
+
+test('expanding refuses a missing part, a part made of parts, a shared id, and an Amen that isn\'t there', () => {
+  const refuse = (edit, message) => { const d = sample(); edit(d); assert.throws(() => P.expand(d), message); };
+  refuse(d => { d.prayers[0].parts.push('nope'); }, /no prayer "nope"/);
+  refuse(d => { d.prayers.push({ id: 'bigger', title: 'x', parts: ['whole'] }); }, /"whole" is itself made of parts/);
+  refuse(d => { d.prayers.push(part('a', [line('จ')])); }, /two prayers share the id "a"/);
+  refuse(d => { d.prayers[0].parts[0] = { id: 'a', amen: false }; }, /"a" has no closing Amen/);
+  refuse(d => { d.prayers[0].lines = [line('ฉ')]; }, /no lines of its own/);
+  refuse(d => { d.prayers[0].parts = []; }, /"parts" is empty/);
+});
+
+test('the Mass in prayers.json: its parts in Mass order, the Our Father without its Amen', () => {
+  const { prayers } = P.expand(DATA);
+  const mass = prayers.find(p => p.id === 'mass');
+  const byId = id => prayers.find(p => p.id === id);
+  assert.deepEqual(mass.parts.map(p => p.id), ['sign-of-the-cross', 'i-confess', 'nicene-creed', 'our-father', 'lamb-of-god', 'lord-i-am-not-worthy']);
+  const expected = mass.parts.flatMap(p => (p.id === 'our-father' ? byId(p.id).lines.slice(0, -1) : byId(p.id).lines));
+  assert.deepEqual(mass.lines, expected);
+  for (const [i, p] of mass.parts.entries()) {
+    assert.equal(mass.lines[p.start], expected[p.start]);
+    assert.equal(p.start, mass.parts.slice(0, i).reduce((n, q) => n + (q.id === 'our-father' ? byId(q.id).lines.length - 1 : byId(q.id).lines.length), 0));
+  }
+  assert.equal(mass.lines.at(-1).th, byId('lord-i-am-not-worthy').lines.at(-1).th);
+});
+
+test('a change in any part records The Mass again, and only The Mass and that part', () => {
+  const data = sample();
+  const first = P.plan(data);
+  assert.deepEqual([...new Set(first.map(i => i.id))], ['whole', 'a', 'b', 'c'], 'The Mass is planned like any prayer');
+  assert.equal(first.find(i => i.id === 'whole' && i.lang === 'th').chars, Array.from('กขคง').length);
+  const published = {};
+  for (const i of first) {
+    published[i.id] ??= { audio: { th: {}, en: {} } };
+    published[i.id].audio[i.lang][i.speed] = { hash: i.hash, starts: [0], duration: 1 };
+  }
+  assert.ok(P.plan(data, published).every(i => i.reuse), 'nothing changed: everything kept');
+  data.prayers[3].lines[0].th = 'งู';
+  const fresh = P.plan(data, published).filter(i => !i.reuse);
+  assert.deepEqual(fresh.map(i => `${i.id} ${i.lang}/${i.speed}`), ['whole th/normal', 'whole th/slow', 'c th/normal', 'c th/slow']);
+});
+
+test('the published document carries where the English comes from, whether it\'s listed, and the parts', () => {
+  const recs = {};
+  for (const lang of P.LANGS) for (const speed of P.SPEEDS) recs[`${lang}/${speed}`] = { file: 'f', hash: 'h', starts: [0], duration: 1 };
+  const [whole, a, b, c] = P.expand(sample()).prayers;
+  const doc = P.buildDoc(whole, 0, recs, settings);
+  assert.deepEqual(doc.parts.map(p => [p.id, p.start]), [['a', 0], ['b', 2], ['c', 3]]);
+  assert.deepEqual(doc.parts[1].source_en, ICEL);
+  assert.equal(doc.lines.length, 4);
+  assert.equal(doc.listed, true);
+  assert.deepEqual(P.buildDoc(b, 2, recs, settings).source_en, ICEL);
+  assert.equal(P.buildDoc(a, 1, recs, settings).source_en, undefined);
+  assert.equal(P.buildDoc(a, 1, recs, settings).parts, undefined);
+  assert.equal(P.buildDoc(c, 3, recs, settings).listed, false);
+  // As stored: the fields that aren't there are left out, not written as null.
+  assert.deepEqual(Object.keys(JSON.parse(JSON.stringify(P.buildDoc(a, 1, recs, settings)))),
+    ['id', 'type', 'order', 'title', 'title_th', 'aka', 'about', 'lines', 'source', 'listed', 'audio']);
+});
+
+test('every English credit names its source', () => {
+  const credited = DATA.prayers.filter(p => p.source_en);
+  assert.deepEqual(credited.map(p => p.id).sort(), ['apostles-creed', 'i-confess', 'lamb-of-god', 'lord-i-am-not-worthy', 'nicene-creed']);
+  for (const p of credited) assert.deepEqual(p.source_en, ICEL, p.id);
 });
 
 test('the script marks the start of every line, pauses between lines, and escapes the words', () => {

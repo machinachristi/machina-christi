@@ -178,7 +178,7 @@
     </ul>
   </div>
 
-  <script src="/assets/pray-data.js?v=2"></script>
+  <script src="/assets/pray-data.js?v=3"></script>
   <script>
     (() => {
       'use strict';
@@ -193,8 +193,10 @@
       // the API; adding a new one there is all it takes for it to appear here,
       // and on its own page. mcPray answers at once from the file that ships
       // with the site, and redraws the list only if the API's answer differs.
+      // A part shown only inside The Mass ("listed": false) keeps its own page
+      // and is found by search, but has no card here.
       const draw = prayers => {
-        list.innerHTML = prayers.map(p => `
+        list.innerHTML = prayers.filter(p => p.listed !== false).map(p => `
           <li>
             <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
               <h2>${escapeHtml(p.title)}</h2>

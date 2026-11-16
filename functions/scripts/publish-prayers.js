@@ -42,11 +42,12 @@ function table(items, extra = () => '') {
   for (const i of items) say(`| ${i.id} | ${i.lang} ${i.speed} | ${i.chars} | ${i.reuse ? 'kept' : '**new**'}${extra(i)} |`);
 }
 
-// Published documents keyed by id, shaped enough for plan() to compare.
+// Published documents keyed by id, shaped enough for plan() to compare. The
+// other copy is expanded too, so The Mass is compared with The Mass.
 function asPublished(data) {
   if (!data?.audio) return {};
   const out = {};
-  for (const p of data.prayers) {
+  for (const p of P.expand(data).prayers) {
     out[p.id] = { audio: {} };
     for (const lang of P.LANGS) {
       out[p.id].audio[lang] = {};
@@ -178,8 +179,11 @@ async function publish(data) {
   table(items, i => (i.reuse ? '' : ` · ${Math.round((sizes[i.file] ?? 0) / 1024)} KB`) + (charges[i.id] !== undefined && i.lang === 'th' && i.speed === 'normal' ? ` · doc write ${charges[i.id].toFixed(1)} RU` : ''));
 }
 
+// Everything below works on the expanded prayers: The Mass carries its parts'
+// lines, so it's recorded, written and kept like any other prayer (and never
+// removed as "not in the file").
 (async () => {
-  const data = readJson(DATA_PATH);
+  const data = P.expand(readJson(DATA_PATH));
   P.checkSettings(data.audio, data.prayers);
   if (flag('--dry-run')) dryRun(data);
   else await publish(data);

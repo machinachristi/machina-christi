@@ -23,6 +23,21 @@
   },
   "prayers": [
     {
+      "id": "mass",
+      "title": "The Mass",
+      "title_th": "พิธีบูชาขอบพระคุณ",
+      "aka": ["Holy Mass", "The Order of Mass", "มิสซา"],
+      "about": "the people’s prayers at Mass, in the order they come",
+      "parts": [
+        "sign-of-the-cross",
+        "i-confess",
+        "nicene-creed",
+        { "id": "our-father", "amen": false },
+        "lamb-of-god",
+        "lord-i-am-not-worthy"
+      ]
+    },
+    {
       "id": "sign-of-the-cross",
       "title": "The Sign of the Cross",
       "title_th": "เครื่องหมายกางเขน",
@@ -284,19 +299,14 @@
         {
           "th": "พระบิดาผู้ทรงสรรพานุภาพ ทรงเนรมิตฟ้าดิน",
           "rom": "phrá-bì-daa phûu song sàp-phaa-nú-phâap, song nee-rá-mít fáa-din",
-          "en": "the Father almighty, Creator of heaven and earth,",
+          "en": "the Father almighty,\nCreator of heaven and earth,",
           "lit": "the all-powerful Father, who made the sky and the earth"
         },
         {
-          "th": "ข้าพเจ้าเชื่อในพระเยซูคริสตเจ้า พระบุตรหนึ่งเดียวของพระเจ้า",
-          "rom": "khâa-phá-jâo chûea nai phrá-yee-suu-khrít-dtà-jâo, phrá-bùt nùeng-diao khǎwng phrá-jâo",
-          "en": "and in Jesus Christ, his only Son,",
-          "lit": "I believe in Jesus Christ, the one Son of God"
-        },
-        {
-          "th": "องค์พระผู้เป็นเจ้าของข้าพเจ้าทั้งหลาย",
-          "rom": "ong-phrá-phûu-bpen-jâo khǎwng khâa-phá-jâo tháng-lǎai",
-          "en": "our Lord,"
+          "th": "ข้าพเจ้าเชื่อในพระเยซูคริสตเจ้า พระบุตรหนึ่งเดียวของพระเจ้า องค์พระผู้เป็นเจ้าของข้าพเจ้าทั้งหลาย",
+          "rom": "khâa-phá-jâo chûea nai phrá-yee-suu-khrít-dtà-jâo, phrá-bùt nùeng-diao khǎwng phrá-jâo, ong-phrá-phûu-bpen-jâo khǎwng khâa-phá-jâo tháng-lǎai",
+          "en": "and in Jesus Christ, his only Son, our Lord,",
+          "lit": "I believe in Jesus Christ, the one Son of God, the Lord of us all"
         },
         {
           "th": "ทรงปฏิสนธิเดชะพระจิตเจ้า",
@@ -351,7 +361,8 @@
         {
           "th": "ข้าพเจ้าเชื่อในพระจิตเจ้า",
           "rom": "khâa-phá-jâo chûea nai phrá-jìt-jâo",
-          "en": "I believe in the Holy Spirit,"
+          "en": "I believe in the Holy Spirit,",
+          "stanza": true
         },
         {
           "th": "พระศาสนจักรศักดิ์สิทธิ์สากล",
@@ -377,19 +388,18 @@
           "lit": "the body’s return to life"
         },
         {
-          "th": "และชีวิตนิรันดร",
-          "rom": "láe chii-wít ní-ran-dawn",
-          "en": "and life everlasting."
-        },
-        {
-          "th": "อาเมน",
-          "rom": "aa-meen",
-          "en": "Amen."
+          "th": "และชีวิตนิรันดร อาเมน",
+          "rom": "láe chii-wít ní-ran-dawn, aa-meen",
+          "en": "and life everlasting. Amen."
         }
       ],
       "source": {
         "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
         "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%82%E0%B8%B2%E0%B8%9E%E0%B9%80%E0%B8%88%E0%B8%B2%E0%B9%80%E0%B8%8A%E0%B8%AD"
+      },
+      "source_en": {
+        "name": "The Roman Missal (ICEL, 2010)",
+        "notice": "Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved."
       }
     },
     {
@@ -407,14 +417,15 @@
         {
           "th": "พระบิดาผู้ทรงสรรพานุภาพ เนรมิตฟ้าดิน ทั้งสิ่งที่เห็นได้และเห็นไม่ได้",
           "rom": "phrá-bì-daa phûu song sàp-phaa-nú-phâap, nee-rá-mít fáa-din, tháng sìng thîi hěn dâi láe hěn mâi dâi",
-          "en": "the Father almighty, maker of heaven and earth, of all things visible and invisible.",
+          "en": "the Father almighty,\nmaker of heaven and earth,\nof all things visible and invisible.",
           "lit": "who made sky and earth, both the things that can be seen and those that cannot"
         },
         {
           "th": "ข้าพเจ้าเชื่อในพระเยซูคริสตเจ้าพระบุตรหนึ่งเดียวของพระเจ้า",
           "rom": "khâa-phá-jâo chûea nai phrá-yee-suu-khrít-dtà-jâo phrá-bùt nùeng-diao khǎwng phrá-jâo",
-          "en": "And in one Lord Jesus Christ, the only-begotten Son of God,",
-          "lit": "I believe in Jesus Christ, the one Son of God"
+          "en": "I believe in one Lord Jesus Christ,\nthe Only Begotten Son of God,",
+          "lit": "I believe in Jesus Christ, the one Son of God",
+          "stanza": true
         },
         {
           "th": "ทรงบังเกิดจากพระบิดาก่อนกาลเวลา",
@@ -423,14 +434,9 @@
           "lit": "born of the Father before time began"
         },
         {
-          "th": "ทรงเป็นพระเจ้าจากพระเจ้า",
-          "rom": "song bpen phrá-jâo jàak phrá-jâo",
-          "en": "God from God,"
-        },
-        {
-          "th": "ทรงเป็นองค์ความสว่าง จากองค์ความสว่าง",
-          "rom": "song bpen ong khwaam sà-wàang, jàak ong khwaam sà-wàang",
-          "en": "Light from Light,"
+          "th": "ทรงเป็นพระเจ้าจากพระเจ้า ทรงเป็นองค์ความสว่าง จากองค์ความสว่าง",
+          "rom": "song bpen phrá-jâo jàak phrá-jâo, song bpen ong khwaam sà-wàang, jàak ong khwaam sà-wàang",
+          "en": "God from God, Light from Light,"
         },
         {
           "th": "ทรงเป็นพระเจ้าแท้ จากพระเจ้าแท้",
@@ -440,7 +446,7 @@
         {
           "th": "มิได้ทรงถูกสร้าง แต่ทรงบังเกิดร่วมพระธรรมชาติเดียวกับพระบิดา",
           "rom": "mí-dâi song thùuk sâang, dtàe song bang-gòet rûam phrá-tham-má-châat diao gàp phrá-bì-daa",
-          "en": "begotten, not made, of one substance with the Father;",
+          "en": "begotten, not made, consubstantial with the Father;",
           "lit": "not created, but born sharing one and the same nature with the Father"
         },
         {
@@ -452,20 +458,14 @@
         {
           "th": "เพราะเห็นแก่เรามนุษย์ เพื่อทรงช่วยเราให้รอด พระองค์จึงเสด็จจากสวรรค์",
           "rom": "phráw hěn gàe rao má-nút, phûea song chûai rao hâi râwt, phrá-ong jueng sà-dèt jàak sà-wǎn",
-          "en": "For us men and for our salvation he came down from heaven,",
+          "en": "For us men and for our salvation\nhe came down from heaven,",
           "lit": "for the sake of us humans, to save us, he came down from heaven"
         },
         {
-          "th": "พระองค์ทรงรับสภาพมนุษย์ จากพระนางมารีย์พรหมจารี",
-          "rom": "phrá-ong song ráp sà-phâap má-nút, jàak phrá-naang maa-rii phrom-má-jaa-rii",
-          "en": "and became incarnate of the Virgin Mary",
-          "lit": "he took on human nature from the Virgin Mary (at Mass, all bow from here to “and became man”)"
-        },
-        {
-          "th": "ด้วยพระอานุภาพของพระจิตเจ้า",
-          "rom": "dûai phrá-aa-nú-phâap khǎwng phrá-jìt-jâo",
-          "en": "by the Holy Spirit,",
-          "lit": "by the power of the Holy Spirit"
+          "th": "พระองค์ทรงรับสภาพมนุษย์ จากพระนางมารีย์พรหมจารี ด้วยพระอานุภาพของพระจิตเจ้า",
+          "rom": "phrá-ong song ráp sà-phâap má-nút, jàak phrá-naang maa-rii phrom-má-jaa-rii, dûai phrá-aa-nú-phâap khǎwng phrá-jìt-jâo",
+          "en": "and by the Holy Spirit was incarnate of the Virgin Mary,",
+          "lit": "he took on human nature from the Virgin Mary, by the power of the Holy Spirit (at Mass, all bow from here to “and became man”)"
         },
         {
           "th": "และทรงบังเกิดเป็นมนุษย์",
@@ -476,7 +476,7 @@
         {
           "th": "สมัยปอนทิอัส ปิลาต พระองค์ทรงถูกตรึงกางเขนเพื่อเรา",
           "rom": "sà-mǎi bpawn-thí-àt bpì-lâat, phrá-ong song thùuk dtrueng gaang-khěen phûea rao",
-          "en": "For our sake he was crucified under Pontius Pilate;",
+          "en": "For our sake he was crucified under Pontius Pilate,",
           "lit": "in the time of Pontius Pilate he was crucified for us"
         },
         {
@@ -488,17 +488,17 @@
         {
           "th": "ทรงกลับคืนพระชนมชีพในวันที่สาม ตามความในพระคัมภีร์",
           "rom": "song glàp khuen phrá-chon-má-chîip nai wan thîi sǎam, dtaam khwaam nai phrá-kham-phii",
-          "en": "and rose again on the third day in accordance with the Scriptures."
+          "en": "and rose again on the third day\nin accordance with the Scriptures."
         },
         {
           "th": "เสด็จสู่สวรรค์ ประทับเบื้องขวาพระบิดา",
           "rom": "sà-dèt sùu sà-wǎn, bprà-tháp bûeang-khwǎa phrá-bì-daa",
-          "en": "He ascended into heaven and is seated at the right hand of the Father."
+          "en": "He ascended into heaven\nand is seated at the right hand of the Father."
         },
         {
           "th": "พระองค์จะเสด็จมาอีกด้วยพระสิริรุ่งโรจน์ เพื่อทรงพิพากษาผู้เป็นและผู้ตาย",
           "rom": "phrá-ong jà sà-dèt maa ìik dûai phrá-sì-rì-rûng-rôot, phûea song phí-phâak-sǎa phûu bpen láe phûu dtaai",
-          "en": "He will come again in glory to judge the living and the dead,"
+          "en": "He will come again in glory\nto judge the living and the dead"
         },
         {
           "th": "รัชสมัยของพระองค์จะไม่สิ้นสุด",
@@ -510,7 +510,8 @@
           "th": "ข้าพเจ้าเชื่อในพระจิต พระเจ้าผู้ทรงบันดาลชีวิต",
           "rom": "khâa-phá-jâo chûea nai phrá-jìt, phrá-jâo phûu song ban-daan chii-wít",
           "en": "I believe in the Holy Spirit, the Lord, the giver of life,",
-          "lit": "I believe in the Spirit, God who gives life"
+          "lit": "I believe in the Spirit, God who gives life",
+          "stanza": true
         },
         {
           "th": "ทรงเนื่องมาจากพระบิดาและพระบุตร",
@@ -531,12 +532,13 @@
           "th": "ข้าพเจ้าเชื่อว่ามีพระศาสนจักร หนึ่งเดียว ศักดิ์สิทธิ์ สากล และสืบเนื่องจากอัครสาวก",
           "rom": "khâa-phá-jâo chûea wâa mii phrá-sàat-sà-ná-jàk nùeng-diao, sàk-sìt, sǎa-gon, láe sùep-nûeang jàak àk-khrá-sǎa-wók",
           "en": "I believe in one, holy, catholic and apostolic Church.",
-          "lit": "I believe there is a Church that is one, holy, universal, and handed down from the Apostles"
+          "lit": "I believe there is a Church that is one, holy, universal, and handed down from the Apostles",
+          "stanza": true
         },
         {
           "th": "ข้าพเจ้าประกาศยืนยันว่า มีศีลล้างบาปหนึ่งเดียวเพื่ออภัยบาป",
           "rom": "khâa-phá-jâo bprà-gàat yuen-yan wâa, mii sǐin-láang-bàap nùeng-diao phûea à-phai bàap",
-          "en": "I confess one baptism for the forgiveness of sins"
+          "en": "I confess one Baptism for the forgiveness of sins"
         },
         {
           "th": "ข้าพเจ้ารอวันที่ผู้ตายจะกลับคืนชีพ",
@@ -545,19 +547,160 @@
           "lit": "I await the day the dead return to life"
         },
         {
-          "th": "และคอยชีวิตในโลกหน้า",
-          "rom": "láe khoi chii-wít nai lôok nâa",
-          "en": "and the life of the world to come."
-        },
-        {
-          "th": "อาเมน",
-          "rom": "aa-meen",
-          "en": "Amen."
+          "th": "และคอยชีวิตในโลกหน้า อาเมน",
+          "rom": "láe khoi chii-wít nai lôok nâa, aa-meen",
+          "en": "and the life of the world to come. Amen."
         }
       ],
       "source": {
         "name": "Catechetical Center, Archdiocese of Bangkok (“Amen” in the 2010 spelling อาเมน)",
         "url": "https://www.kamsonbkk.com/interesting-catechism/year-of-faith/1381-007"
+      },
+      "source_en": {
+        "name": "The Roman Missal (ICEL, 2010)",
+        "notice": "Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved."
+      }
+    },
+    {
+      "id": "i-confess",
+      "title": "I Confess",
+      "title_th": "บทสารภาพบาป",
+      "aka": ["Confiteor", "The Penitential Act"],
+      "about": "said near the start of Mass, and before sleep",
+      "lines": [
+        {
+          "th": "ข้าพเจ้าขอสารภาพต่อพระเจ้า ผู้ทรงสรรพานุภาพ",
+          "rom": "khâa-phá-jâo khǎw sǎa-rá-phâap dtàw phrá-jâo, phûu song sàp-phaa-nú-phâap",
+          "en": "I confess to almighty God"
+        },
+        {
+          "th": "และต่อพี่น้องด้วย",
+          "rom": "láe dtàw phîi-náwng dûai",
+          "en": "and to you, my brothers and sisters,",
+          "lit": "and to my brothers and sisters too"
+        },
+        {
+          "th": "ว่าข้าพเจ้าได้ทำบาปมากมาย",
+          "rom": "wâa khâa-phá-jâo dâi tham bàap mâak-maai",
+          "en": "that I have greatly sinned,",
+          "lit": "that I have committed many sins"
+        },
+        {
+          "th": "ด้วยกาย วาจา ใจ และด้วยการละเลย",
+          "rom": "dûai gaai, waa-jaa, jai, láe dûai gaan lá-loei",
+          "en": "in my thoughts and in my words,\nin what I have done and in what I have failed to do,",
+          "lit": "by body, speech and mind, and by neglect"
+        },
+        {
+          "th": "ข้าพเจ้าเป็นคนบาป",
+          "rom": "khâa-phá-jâo bpen khon bàap",
+          "en": "through my fault, through my fault,",
+          "lit": "I am a sinner"
+        },
+        {
+          "th": "ข้าพเจ้ายอมรับว่าเป็นคนบาป",
+          "rom": "khâa-phá-jâo yawm-ráp wâa bpen khon bàap",
+          "en": "through my most grievous fault;",
+          "lit": "I admit that I am a sinner (here the Thai text adds ข้อนอกเพียงครั้งเดียว, “strike the breast just once”)"
+        },
+        {
+          "th": "ดังนั้น ขอพระนางมารีย์ผู้ทรงเป็นพรหมจารีเสมอ",
+          "rom": "dang-nán, khǎw phrá-naang maa-rii phûu song bpen phrom-má-jaa-rii sà-mǒe",
+          "en": "therefore I ask blessed Mary ever-Virgin,",
+          "lit": "so I ask Mary, who is ever a virgin"
+        },
+        {
+          "th": "ขอทูตสวรรค์และนักบุญทั้งหลาย",
+          "rom": "khǎw thûut-sà-wǎn láe nák-bun tháng-lǎai",
+          "en": "all the Angels and Saints,",
+          "lit": "I ask the angels and all the saints"
+        },
+        {
+          "th": "และพี่น้องด้วย",
+          "rom": "láe phîi-náwng dûai",
+          "en": "and you, my brothers and sisters,",
+          "lit": "and my brothers and sisters too"
+        },
+        {
+          "th": "ช่วยวิงวอนพระเจ้าเพื่อข้าพเจ้าด้วยเทอญ",
+          "rom": "chûai wing-wawn phrá-jâo phûea khâa-phá-jâo dûai thoen",
+          "en": "to pray for me to the Lord our God.",
+          "lit": "please plead with God for me (เทอญ is a solemn “so be it”)"
+        }
+      ],
+      "source": {
+        "name": "Catholic Commission for Liturgy, Thailand (2010 revision)",
+        "url": "https://sites.google.com/site/websitethailiturgy/sunday/%E0%B8%9A%E0%B8%97%E0%B8%AA%E0%B8%B2%E0%B8%A3%E0%B8%A0%E0%B8%B2%E0%B8%9E%E0%B8%9A%E0%B8%B2%E0%B8%9B"
+      },
+      "source_en": {
+        "name": "The Roman Missal (ICEL, 2010)",
+        "notice": "Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved."
+      }
+    },
+    {
+      "id": "lamb-of-god",
+      "title": "Lamb of God",
+      "title_th": "บทลูกแกะพระเจ้า",
+      "aka": ["Agnus Dei"],
+      "about": "sung as the priest breaks the Host",
+      "listed": false,
+      "lines": [
+        {
+          "th": "ลูกแกะพระเจ้า ผู้ทรงลบล้างบาปของโลก ทรงพระกรุณาเทอญ",
+          "rom": "lûuk-gàe phrá-jâo, phûu song lóp-láang bàap khǎwng lôok, song phrá-gà-rú-naa thoen",
+          "en": "Lamb of God, you take away the sins of the world,\nhave mercy on us.",
+          "lit": "Lamb of God, you who wipe away the sin of the world, be merciful (เทอญ is a solemn “so be it”)"
+        },
+        {
+          "th": "ลูกแกะพระเจ้า ผู้ทรงลบล้างบาปของโลก ทรงพระกรุณาเทอญ",
+          "rom": "lûuk-gàe phrá-jâo, phûu song lóp-láang bàap khǎwng lôok, song phrá-gà-rú-naa thoen",
+          "en": "Lamb of God, you take away the sins of the world,\nhave mercy on us.",
+          "lit": "Lamb of God, you who wipe away the sin of the world, be merciful (เทอญ is a solemn “so be it”)"
+        },
+        {
+          "th": "ลูกแกะพระเจ้า ผู้ทรงลบล้างบาปของโลก โปรดประทานสันติสุขเทอญ",
+          "rom": "lûuk-gàe phrá-jâo, phûu song lóp-láang bàap khǎwng lôok, bpròot bprà-thaan sǎn-dtì-sùk thoen",
+          "en": "Lamb of God, you take away the sins of the world,\ngrant us peace.",
+          "lit": "Lamb of God, you who wipe away the sin of the world, please grant peace"
+        }
+      ],
+      "source": {
+        "name": "Thai Order of Mass (พิธีบูชาขอบพระคุณ), Redemptorists of Thailand",
+        "url": "https://www.cssr.or.th/%E0%B8%A8%E0%B8%99%E0%B8%A2%E0%B8%AA%E0%B8%AD%E0%B8%A1%E0%B8%A7%E0%B8%A5%E0%B8%8A%E0%B8%99%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B9%84%E0%B8%96/%E0%B8%9A%E0%B8%97%E0%B8%A1%E0%B8%AA%E0%B8%8B%E0%B8%B2-the-order-of-mass/%E0%B8%9E%E0%B8%98%E0%B8%9A%E0%B8%8A%E0%B8%B2%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%84%E0%B8%93-%E0%B8%A0%E0%B8%B2%E0%B8%A9%E0%B8%B2%E0%B9%84%E0%B8%97%E0%B8%A2"
+      },
+      "source_en": {
+        "name": "The Roman Missal (ICEL, 2010)",
+        "notice": "Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved."
+      }
+    },
+    {
+      "id": "lord-i-am-not-worthy",
+      "title": "Lord, I Am Not Worthy",
+      "title_th": "บทข้าพเจ้าไม่สมควร",
+      "aka": ["Domine, non sum dignus"],
+      "about": "said just before Communion",
+      "listed": false,
+      "lines": [
+        {
+          "th": "พระเจ้าข้า ข้าพเจ้าไม่สมควรจะรับเสด็จมาประทับอยู่กับข้าพเจ้า",
+          "rom": "phrá-jâo-khâa, khâa-phá-jâo mâi sǒm-khuan jà ráp sà-dèt maa bprà-tháp yùu gàp khâa-phá-jâo",
+          "en": "Lord, I am not worthy\nthat you should enter under my roof,",
+          "lit": "O Lord, I am not worthy to welcome you coming to dwell with me"
+        },
+        {
+          "th": "โปรดตรัสเพียงพระวาจาเดียว แล้วจิตใจข้าพเจ้าก็จะบริสุทธิ์",
+          "rom": "bpròot dtràt phiang phrá-waa-jaa diao, láeo jìt-jai khâa-phá-jâo gâw jà baw-rí-sùt",
+          "en": "but only say the word\nand my soul shall be healed.",
+          "lit": "please say just one word, and my heart will be pure"
+        }
+      ],
+      "source": {
+        "name": "Catechetical Center, Archdiocese of Bangkok",
+        "url": "https://www.kamsonbkk.com/catholic-catechism/007/7410-"
+      },
+      "source_en": {
+        "name": "The Roman Missal (ICEL, 2010)",
+        "notice": "Excerpts from the English translation of The Roman Missal © 2010, International Commission on English in the Liturgy Corporation. All rights reserved."
       }
     },
     {

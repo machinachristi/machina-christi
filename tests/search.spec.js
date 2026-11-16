@@ -13,6 +13,10 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 
 const P = ''; // never sent by the API; only here to prove they'd be shown as text
 
+const PRAYERS = JSON.parse(fs.readFileSync(path.join(ROOT, 'pray', 'prayers.json'), 'utf8')).prayers;
+const prayer = id => PRAYERS.find(p => p.id === id);
+const CREDIT = `English: ${prayer('lord-i-am-not-worthy').source_en.notice}`;
+
 // Answers shaped like /api/search's.
 const ANSWERS = {
   agnes: [{
@@ -24,6 +28,11 @@ const ANSWERS = {
     kind: 'prayer', id: 'prayer-our-father', title: 'The Our Father', title_th: 'บทข้าแต่พระบิดา',
     summary: 'the prayer Jesus taught us', url: '/prayer.html?p=our-father', date: null,
     snippet: { text: 'ข้าแต่พระบิดาของข้าพเจ้าทั้งหลาย', marks: [[6, 7]], lang: 'th' },
+  }],
+  'not worthy': [{
+    kind: 'prayer', id: 'prayer-lord-i-am-not-worthy', title: prayer('lord-i-am-not-worthy').title, title_th: prayer('lord-i-am-not-worthy').title_th,
+    summary: prayer('lord-i-am-not-worthy').about, url: '/prayer.html?p=lord-i-am-not-worthy', date: null,
+    snippet: { text: prayer('lord-i-am-not-worthy').lines[0].en, marks: [[11, 10]], lang: 'en' },
   }],
   evil: [{
     kind: 'page', id: 'page-x', title: '<img src=x onerror="window.__xss=1">', title_th: null, summary: null,
@@ -109,6 +118,27 @@ test.describe('search page', () => {
     await page.goto(`${LIVE}/search.html?q=Agnes`);
     await expect(page.locator('#q')).toHaveValue('Agnes');
     await expect(page.locator('.result')).toHaveCount(1);
+  });
+
+  test('results showing English from a credited source carry its credit underneath; other results none', async ({ page }) => {
+    await liveSite(page);
+    await page.goto(`${LIVE}/search.html?q=not%20worthy`);
+    await expect(page.locator('.result')).toHaveCount(1);
+    await expect(page.locator('#credit')).toHaveText(CREDIT);
+    await page.locator('#q').fill('agnes');
+    await expect(page.locator('.result .title')).toHaveText('Saint Agnes, Virgin and Martyr');
+    await expect(page.locator('#credit')).toBeHidden();
+    await page.locator('#q').fill('');
+    await expect(page.locator('.result')).toHaveCount(0);
+    await expect(page.locator('#credit')).toBeHidden();
+  });
+
+  test('the simple search credits its English too, The Mass included', async ({ page }) => {
+    await liveSite(page, { api: 'down' });
+    await page.goto(`${LIVE}/search.html?q=the%20mass`);
+    await expect(page.locator('.result[href="/prayer.html?p=mass"]')).toHaveCount(1);
+    await expect(page.locator('#credit')).toHaveText(CREDIT);
+    expect(await page.locator('#credit').evaluate(n => parseFloat(getComputedStyle(n).fontSize))).toBeGreaterThanOrEqual(14);
   });
 
   test('nothing found says so', async ({ page }) => {
