@@ -125,7 +125,7 @@ test.describe('each gate does its work', () => {
     const list = apiAnswer(page, '/api/prayers');
     await page.goto('/pray.html');
     expect((await list).status()).toBe(200);
-    await expect(page.locator('.card')).toHaveCount(PRAYERS.length);
+    await expect(page.locator('.card')).toHaveCount(PRAYERS.filter(p => p.listed !== false).length); // the parts said only at Mass have no card
     expect(await v.problems()).toEqual([]);
   });
 

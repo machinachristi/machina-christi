@@ -14,7 +14,8 @@ function fakeContainer(docs, { fail = false } = {}) {
         fetchAll: async () => {
           calls.query++;
           if (fail) throw new Error('down');
-          return { resources: docs.map(({ id, title, title_th, about, order }) => ({ id, title, title_th, about, order })), requestCharge: 2.9 };
+          // Like Cosmos DB, a field the document doesn't have is left out of the row.
+          return { resources: docs.map(({ id, title, title_th, about, listed, order }) => ({ id, title, title_th, about, ...(listed === undefined ? {} : { listed }), order })), requestCharge: 2.9 };
         },
       }),
     },
@@ -42,7 +43,17 @@ test('the list comes in prayers.json order, with only what the list page needs',
   assert.equal(res.status, 200);
   assert.equal(res.headers['Cache-Control'], 'public, max-age=300');
   assert.deepEqual(res.jsonBody.map(p => p.id), ['sign-of-the-cross', 'hail-mary']);
-  assert.deepEqual(Object.keys(res.jsonBody[0]), ['id', 'title', 'title_th', 'about']);
+  assert.deepEqual(Object.keys(res.jsonBody[0]), ['id', 'title', 'title_th', 'about', 'listed']);
+});
+
+test('the list says which prayers are shown only inside The Mass; one written before that counts as listed', async () => {
+  const withParts = [
+    ...docs,
+    { id: 'mass', type: 'prayer', order: 3, title: 'The Mass', title_th: 'พิธีบูชาขอบพระคุณ', about: 'c', listed: true, lines: [] },
+    { id: 'lamb-of-god', type: 'prayer', order: 4, title: 'Lamb of God', title_th: 'บทลูกแกะพระเจ้า', about: 'd', listed: false, lines: [] },
+  ];
+  const res = await handlers(() => prayersStore(fakeContainer(withParts))).list(req());
+  assert.deepEqual(res.jsonBody.map(p => [p.id, p.listed]), [['sign-of-the-cross', true], ['hail-mary', true], ['mass', true], ['lamb-of-god', false]]);
 });
 
 test('one prayer is a point read, without Cosmos DB\'s own fields; unknown is 404 and a bad id is 400', async () => {

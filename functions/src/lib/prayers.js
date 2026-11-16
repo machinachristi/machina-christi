@@ -70,6 +70,58 @@ function recordingHash(prayer, lang, speed, settings) {
 
 const recordingName = (id, lang, speed, hash) => `${id}/${lang}-${speed}-${hash}.mp3`;
 
+// A prayer made of other prayers. In prayers.json, The Mass lists its parts by
+// id ("parts": ["sign-of-the-cross", "i-confess", …]) instead of having lines
+// of its own. Everything that reads the file expands it first: the parts'
+// lines, joined in order, become its lines, and `parts` notes where each one
+// starts, with what its heading needs. From then on it's an ordinary prayer:
+// recorded, stored and searched like the rest. Nothing is copied, so a word
+// fixed in the Creed changes the Creed's page and The Mass alike, and both are
+// recorded again. assets/pray-data.js does the same for the pages (a test
+// checks the two agree line for line).
+//
+// A part is named by its id, or as { "id": …, "amen": false } when The Mass
+// says it without its closing Amen (at Mass, the Our Father runs straight on
+// into the priest's prayer); that is refused unless the part ends in one.
+//
+// Refused: two prayers with one id, a part that doesn't exist, and a part
+// that is itself made of parts. Expanding twice changes nothing: an expanded
+// prayer's parts carry `start`, so it's passed through as it is.
+const AMEN = /^(อาเมน|อาแมน)$/;
+const partRef = x => (typeof x === 'string' ? { id: x } : x);
+const madeOfParts = p => Array.isArray(p.parts) && p.parts.every(x => typeof x === 'string' || (x && typeof x.id === 'string' && !('start' in x)));
+
+function expand(data) {
+  const prayers = data?.prayers ?? [];
+  const byId = new Map();
+  for (const p of prayers) {
+    if (byId.has(p.id)) throw new Error(`two prayers share the id "${p.id}"`);
+    byId.set(p.id, p);
+  }
+  const expanded = prayers.map(p => {
+    if (!madeOfParts(p)) return p;
+    if (!p.parts.length) throw new Error(`${p.id}: "parts" is empty`);
+    if (p.lines) throw new Error(`${p.id}: a prayer made of parts has no lines of its own`);
+    const lines = [];
+    const parts = p.parts.map(partRef).map(({ id, amen }) => {
+      const part = byId.get(id);
+      if (!part) throw new Error(`${p.id}: no prayer "${id}" to be its part`);
+      if (part.parts) throw new Error(`${p.id}: its part "${id}" is itself made of parts`);
+      let own = part.lines;
+      if (amen === false) {
+        if (!AMEN.test(own.at(-1)?.th ?? '')) throw new Error(`${p.id}: "${id}" has no closing Amen to leave out`);
+        own = own.slice(0, -1);
+      }
+      const { title, title_th, about, source, source_en } = part;
+      const at = { id, title, title_th, about, source, source_en, start: lines.length };
+      lines.push(...own);
+      return at;
+    });
+    return { ...p, lines, parts };
+  });
+  return { ...data, prayers: expanded };
+}
+
 // What a recording costs from the free 500,000 characters a month: the words
 // read (SSML tags aren't counted).
 const characters = (prayer, lang, settings) => prayer.lines.reduce((sum, l) => sum + Array.from(spokenText(l[lang], lang, settings)).length, 0);
@@ -91,11 +143,13 @@ function timingsFromBookmarks(marks, lineCount, durationTicks) {
 }
 
 // Which recordings to make, and which can be reused from what's published.
-// `published` maps prayer id → its document as stored (or nothing).
+// `published` maps prayer id → its document as stored (or nothing). The Mass
+// is planned like any prayer, from its expanded lines, so a change in any of
+// its parts records it again.
 function plan(data, published = {}, { rerecordAll = false } = {}) {
   const settings = data.audio;
   const items = [];
-  for (const prayer of data.prayers) {
+  for (const prayer of expand(data).prayers) {
     for (const lang of LANGS) {
       for (const speed of SPEEDS) {
         const hash = recordingHash(prayer, lang, speed, settings);
@@ -116,7 +170,12 @@ function plan(data, published = {}, { rerecordAll = false } = {}) {
 // The published document: the prayer as written in prayers.json (with `aka`,
 // its other names, which search finds it by), its place in the list, and its
 // four recordings. `recordings` maps "lang/speed" →
-// { file, hash, starts, duration }.
+// { file, hash, starts, duration }. Also carried: `source_en` (where the
+// English comes from, with its credit line, when it isn't the traditional
+// wording), `listed` (false for a part shown only inside The Mass), and, for
+// a prayer made of parts, `parts` (where each starts). The API's copy replaces
+// the bundled one a moment after a page opens, so anything left out here
+// would vanish from the page.
 function buildDoc(prayer, order, recordings, settings) {
   const audio = {};
   for (const lang of LANGS) {
@@ -127,8 +186,8 @@ function buildDoc(prayer, order, recordings, settings) {
       audio[lang][speed] = { file: r.file, hash: r.hash, starts: r.starts, duration: r.duration };
     }
   }
-  const { id, title, title_th, aka = [], about, lines, source } = prayer;
-  return { id, type: 'prayer', order, title, title_th, aka, about, lines, source, audio };
+  const { id, title, title_th, aka = [], about, lines, source, source_en, listed, parts } = prayer;
+  return { id, type: 'prayer', order, title, title_th, aka, about, lines, source, source_en, listed: listed !== false, parts, audio };
 }
 
 // Cosmos DB adds its own bookkeeping fields (_rid, _etag, _ts…); they never
@@ -152,7 +211,7 @@ function checkSettings(settings, prayers) {
     for (const [word, as] of Object.entries(words)) {
       if (!word.trim() || typeof as !== 'string' || !as.trim()) throw new Error(`"say" ${lang}: "${word}" needs a respelling`);
       if (as === word) throw new Error(`"say" ${lang}: "${word}" is respelled as itself`);
-      if (prayers && !prayers.some(p => p.lines.some(l => String(l[lang] ?? '').includes(word)))) throw new Error(`"say" ${lang}: no prayer has "${word}"`);
+      if (prayers && !prayers.some(p => (p.lines ?? []).some(l => String(l[lang] ?? '').includes(word)))) throw new Error(`"say" ${lang}: no prayer has "${word}"`);
     }
   }
 }
@@ -160,5 +219,5 @@ function checkSettings(settings, prayers) {
 module.exports = {
   GENERATOR_VERSION, LANGS, SPEEDS,
   spokenText, buildSsml, recordingHash, recordingName, characters,
-  timingsFromBookmarks, plan, buildDoc, stripSystemFields, checkSettings,
+  expand, timingsFromBookmarks, plan, buildDoc, stripSystemFields, checkSettings,
 };

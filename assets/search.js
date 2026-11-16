@@ -24,6 +24,12 @@
   const status = document.getElementById('status');
   const list = document.getElementById('results');
   const fallbackNote = document.getElementById('fallback');
+  const creditNote = document.getElementById('credit');
+
+  // The site's own copy of the prayers, read once: the simple search looks
+  // in it, and so does the English credit below.
+  let prayersFile = null;
+  const prayersData = () => (prayersFile ??= fetch('/pray/prayers.json').then(r => (r.ok ? r.json() : null)).catch(() => null));
 
   // The same tidying the API does, so the same search from many people is
   // one address (and one copy in Cloudflare's cache).
@@ -73,7 +79,7 @@
     const json = url => fetch(url).then(r => (r.ok ? r.json() : null)).catch(() => null);
     const year = new Date().getFullYear();
     const [prayers, saints, ...calendars] = await Promise.all([
-      json('/pray/prayers.json'), json('/ordo/saints.json'),
+      prayersData(), json('/ordo/saints.json'),
       json(`/ordo/calendar-${year}.json`), json(`/ordo/calendar-${year + 1}.json`), json(`/ordo/calendar-${year - 1}.json`),
     ]);
     // Each feast's dates in the calendars this site has, to open the right day.
@@ -170,6 +176,43 @@
     }));
   }
 
+  // ── The English credit ────────────────────────────────────────────────────
+
+  // Some prayers' English comes from a source that is credited by name. A
+  // result can show a line of a prayer, so when the results include one of
+  // those prayers (or The Mass, which has some among its parts), the credit
+  // goes under them. Which prayers they are comes from the site's own
+  // prayers.json: the search index needs nothing new.
+  let credits = null;
+  function englishCredits() {
+    credits ??= prayersData().then(data => {
+      const byId = new Map(((data && data.prayers) || []).map(p => [p.id, p]));
+      const out = new Map();
+      for (const p of byId.values()) {
+        const parts = Array.isArray(p.parts) ? p.parts.map(x => byId.get(typeof x === 'string' ? x : x && x.id)).filter(Boolean) : [];
+        const en = p.source_en || (parts.find(q => q.source_en) || {}).source_en;
+        if (en && en.notice) out.set(p.id, en);
+      }
+      return out;
+    });
+    return credits;
+  }
+
+  const prayerId = r => {
+    if (r.kind !== 'prayer') return null;
+    try { return new URL(safeUrl(r.url), location.origin).searchParams.get('p'); } catch (e) { return null; }
+  };
+
+  async function showCredit(results, q) {
+    const ids = results.map(prayerId).filter(Boolean);
+    const map = ids.length ? await englishCredits() : new Map();
+    if (shown !== q) return; // typed on meanwhile
+    const en = ids.map(id => map.get(id)).find(Boolean);
+    if (!en) { creditNote.hidden = true; return; }
+    creditNote.textContent = `English: ${en.notice}`;
+    creditNote.hidden = false;
+  }
+
   // ── Wiring ────────────────────────────────────────────────────────────────
 
   let shown = ''; // the query whose results are on screen
@@ -188,6 +231,7 @@
       list.replaceChildren();
       status.textContent = '';
       fallbackNote.hidden = true;
+      creditNote.hidden = true;
       return;
     }
     status.textContent = 'Searching…';
@@ -204,6 +248,7 @@
     if (simple) results = await simpleSearch(q);
     if (shown !== q) return; // typed on meanwhile
     draw(results);
+    showCredit(results, q);
     fallbackNote.hidden = !simple;
     status.textContent = results.length
       ? `${results.length} ${results.length === 1 ? 'result' : 'results'}`

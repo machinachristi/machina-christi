@@ -199,6 +199,9 @@
     /* ── The prayer, phrase by phrase ─────────────────────────── */
     .lines { list-style: none; }
     .lines > li + li { border-top: 1px solid rgba(201, 162, 39, 0.1); }
+    /* A new stanza, as the Missal sets its texts out: a little more room and
+       no rule, like the blank line between the verses of a hymn. */
+    .lines > li.stanza { margin-top: 18px; border-top-color: transparent; }
     .line {
       position: relative;
       display: block;
@@ -261,6 +264,9 @@
       line-height: 1.55;
       color: rgba(232, 213, 163, 0.74);
       margin-top: 7px;
+      /* One English part may hold several of the Missal's lines; each keeps
+         its own line, as the Missal prints it. */
+      white-space: pre-line;
     }
     .line .lit {
       display: block;
@@ -277,6 +283,53 @@
       font-size: 14px;
       color: rgba(232, 213, 163, 0.5);
     }
+
+    /* ── The Mass: a heading where each part begins ─────────────
+       The Mass is a prayer made of other prayers; each part keeps its own
+       name, a note on when it's said, and where its words come from. */
+    /* At the top, the parts in order, numbered, each a link to its place:
+       at Mass, a tap goes straight to the part being said. */
+    .parts-nav__label { font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(201, 162, 39, 0.85); margin: 0 0 6px; }
+    .parts-nav ol { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 1.6em; }
+    .parts-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid rgba(201, 162, 39, 0.32);
+      border-radius: 22px;
+      background: rgba(201, 162, 39, 0.04);
+      color: rgba(232, 213, 163, 0.9);
+      text-decoration: none;
+      font-size: 15px;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+    .parts-nav a:hover, .parts-nav a:focus-visible { border-color: rgba(201, 162, 39, 0.7); background: rgba(201, 162, 39, 0.08); outline: none; }
+    /* Each part begins under a numbered band, its number the same as in the list. */
+    .part { scroll-margin-top: 20px; counter-increment: part; }
+    .part + .part { margin-top: 2.6em; }
+    .part__title {
+      font-weight: normal;
+      font-size: 15px;
+      line-height: 1.5;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(var(--marian), 0.10);
+      border-left: 2px solid rgba(var(--marian), 0.7);
+      border-radius: 0 10px 10px 0;
+      padding: 8px 12px;
+      margin-left: -14px;
+    }
+    .part__title::before { content: counter(part) " · "; color: rgba(var(--marian), 0.95); }
+    .part__th {
+      display: block;
+      font-size: 19px;
+      line-height: 1.7;
+      color: rgba(var(--marian), 0.92);
+    }
+    .part__when { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); margin: 0.15em 0 0.5em; }
+    .part__source { font-size: 14px; color: rgba(232, 213, 163, 0.5); margin: 0.7em 0 0; }
 
     /* ── The listen bar ───────────────────────────────────────── */
     .player {
@@ -364,9 +417,9 @@
 
     <p class="tap-hint" id="tap-hint" hidden>Tap any line to hear it in Thai.</p>
 
-    <ol class="lines" id="lines">
-      <li><p class="notice">Loading&hellip;</p></li>
-    </ol>
+    <div id="lines">
+      <p class="notice">Loading&hellip;</p>
+    </div>
 
     <p class="notice" id="voice-note" hidden></p>
     <p class="source" id="source" hidden></p>
@@ -385,7 +438,7 @@
     </div>
   </div>
 
-  <script src="/assets/pray-data.js?v=2"></script>
+  <script src="/assets/pray-data.js?v=3"></script>
   <script>
     (() => {
       'use strict';
@@ -621,17 +674,34 @@
       }
 
       /* ── Drawing the prayer ───────────────────────────────────── */
+      // Where the English comes from: the traditional wording, or a credit
+      // to its source (`source_en.notice`).
+      const credit = en => escapeHtml(en.notice);
+      const englishFrom = prayer => (prayer.parts ? (prayer.parts.find(p => p.source_en) || {}).source_en : prayer.source_en);
+
       // The foot of the page names the text's source and, once the
-      // recordings are known, the voices that read it.
+      // recordings are known, the voices that read it. The Mass names each
+      // part's sources under that part, so its foot carries only the English
+      // credit, once.
       function showSource(prayer) {
-        if (!prayer.source) return;
+        if (!prayer.source && !prayer.parts) return;
         const s = $('source');
         const voiceName = v => String(v || '').replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
         const voices = rec && rec.th && rec.en
           ? ` Recorded voices: ${escapeHtml(voiceName(rec.th.voice))} (Thai) and ${escapeHtml(voiceName(rec.en.voice))} (English), synthetic neural voices made with Azure AI Speech.`
           : '';
-        s.innerHTML = `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. English: the traditional wording.${voices}`;
+        const thai = prayer.source
+          ? `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. `
+          : '';
+        const en = englishFrom(prayer);
+        s.innerHTML = `${thai}English: ${en ? credit(en) : 'the traditional wording.'}${voices}`;
         s.hidden = false;
+      }
+
+      // Under each part of The Mass: where its Thai and its English come from.
+      function partSource(p) {
+        const thai = p.source ? `Thai: <a href="${escapeHtml(p.source.url)}" target="_blank" rel="noopener">${escapeHtml(p.source.name)}</a>. ` : '';
+        return `${thai}English: ${p.source_en ? escapeHtml(p.source_en.name) : 'the traditional wording'}.`;
       }
 
       let listening = false; // the voiceschanged listener is added once
@@ -645,18 +715,41 @@
         marked = -1;
 
         // Each line is a button when the prayer can be heard (tap to hear it
-        // in Thai), and plain text when it can't.
+        // in Thai), and plain text when it can't. A line's number (data-i) is
+        // its place in the whole prayer, so in The Mass a tap on any part's
+        // line plays that line of the one long recording.
         const listen = canListen();
         const tag = listen ? 'button' : 'div';
-        linesEl.innerHTML = lines.map((l, i) => `
-          <li>
+        const row = (l, i) => `
+          <li${l.stanza ? ' class="stanza"' : ''}>
             <${tag} ${listen ? 'type="button" ' : ''}class="line" data-i="${i}">
               <span class="th" lang="th">${escapeHtml(l.th)}</span>
               <span class="rom" lang="th-Latn">${escapeHtml(l.rom)}</span>
               <span class="en">${escapeHtml(l.en)}</span>
               ${l.lit ? `<span class="lit">literally, &ldquo;${escapeHtml(l.lit)}&rdquo;</span>` : ''}
             </${tag}>
-          </li>`).join('');
+          </li>`;
+        const list = (from, to) => `<ol class="lines">${lines.slice(from, to).map((l, k) => row(l, from + k)).join('')}</ol>`;
+        const parts = Array.isArray(prayer.parts) ? prayer.parts : [];
+        const nav = () => `
+          <nav class="parts-nav" aria-labelledby="parts-nav-label">
+            <p class="parts-nav__label" id="parts-nav-label">In this order</p>
+            <ol>${parts.map((p, n) => `<li><a href="#part-${escapeHtml(p.id)}">${n + 1}&nbsp;·&nbsp;${escapeHtml(p.title)}</a></li>`).join('')}</ol>
+          </nav>`;
+        linesEl.innerHTML = parts.length
+          ? nav() + parts.map((p, n) => {
+              const id = `part-${escapeHtml(p.id)}`;
+              const end = n + 1 < parts.length ? parts[n + 1].start : lines.length;
+              return `
+          <section class="part" id="${id}" aria-labelledby="${id}-title">
+            <h2 class="part__title" id="${id}-title">${escapeHtml(p.title)}</h2>
+            <span class="part__th" lang="th">${escapeHtml(p.title_th)}</span>
+            ${p.about ? `<p class="part__when">${escapeHtml(p.about)}</p>` : ''}
+            ${list(p.start, end)}
+            <p class="part__source">${partSource(p)}</p>
+          </section>`;
+            }).join('')
+          : list(0, lines.length);
         lineEls = Array.from(linesEl.querySelectorAll('.line'));
 
         showSource(prayer);
@@ -685,7 +778,15 @@
 
       function notFound() {
         $('title').textContent = 'Prayer not found';
-        linesEl.innerHTML = '<li><p class="notice">That prayer isn&rsquo;t here. <a href="pray.html">Back to the prayers</a>.</p></li>';
+        linesEl.innerHTML = '<p class="notice">That prayer isn&rsquo;t here. <a href="pray.html">Back to the prayers</a>.</p>';
+      }
+
+      // prayer.html?p=mass#part-lamb-of-god opens at that part. The parts are
+      // drawn after the page loads, too late for the browser's own jump, so
+      // it's made once they're there.
+      function jumpToPart() {
+        const at = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (at && at.classList.contains('part')) at.scrollIntoView({ block: 'start' });
       }
 
       /* ── Switches ─────────────────────────────────────────────── */
@@ -735,7 +836,7 @@
       // way carries on in the device's voice); if not, the prayer is redrawn.
       const id = new URLSearchParams(location.search).get('p');
       let shown = null;
-      const sameWords = (a, b) => JSON.stringify([a.title, a.title_th, a.lines]) === JSON.stringify([b.title, b.title_th, b.lines]);
+      const sameWords = (a, b) => JSON.stringify([a.title, a.title_th, a.lines, a.parts]) === JSON.stringify([b.title, b.title_th, b.lines, b.parts]);
       function newer(prayer) {
         if (shown && sameWords(prayer, shown) && (canListen() || !prayer.audio)) {
           rec = prayer.audio || null;
@@ -747,9 +848,9 @@
         shown = prayer;
       }
       window.mcPray.get(id, newer)
-        .then(prayer => { if (shown) return; if (prayer) { shown = prayer; render(prayer); } else notFound(); })
+        .then(prayer => { if (shown) return; if (prayer) { shown = prayer; render(prayer); jumpToPart(); } else notFound(); })
         .catch(() => {
-          linesEl.innerHTML = '<li><p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p></li>';
+          linesEl.innerHTML = '<p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p>';
         });
     })();
   </script>

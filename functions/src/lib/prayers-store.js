@@ -55,14 +55,17 @@ function prayersStore(container = cosmosContainer(), { log = () => {} } = {}) {
   const options = () => ({ abortSignal: AbortSignal.timeout(TIMEOUT_MS) });
 
   return {
-    // [{ id, title, title_th, about }] in the order prayers.json lists them.
+    // [{ id, title, title_th, about, listed }] in the order prayers.json lists
+    // them. `listed` is false for a part shown only inside The Mass; the list
+    // page leaves those out (a document written before `listed` existed
+    // counts as listed).
     list: () => remembered('list', async () => {
       const res = await container.items
-        .query('SELECT c.id, c.title, c.title_th, c.about, c["order"] FROM c WHERE c.type = "prayer"', options())
+        .query('SELECT c.id, c.title, c.title_th, c.about, c.listed, c["order"] FROM c WHERE c.type = "prayer"', options())
         .fetchAll();
       const value = res.resources
         .sort((a, b) => a.order - b.order)
-        .map(({ id, title, title_th, about }) => ({ id, title, title_th, about }));
+        .map(({ id, title, title_th, about, listed }) => ({ id, title, title_th, about, listed: listed !== false }));
       return { value, ru: res.requestCharge ?? 0 };
     }),
 

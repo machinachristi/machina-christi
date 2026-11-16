@@ -428,6 +428,12 @@ switch over, then remove the old: blue-green, for an index.
 last person before closing its doors. The search page asks only after you stop
 typing for 0.3 seconds, rather than once for every letter.
 
+**Link to a place in a page (anchor).** A web address can end with `#` and a
+name, which opens the page at that spot instead of at the top, like a ribbon
+bookmark in a book.
+*Here:* `prayer.html?p=mass#part-lamb-of-god` opens The Mass at the Lamb of
+God, and the numbered list at the top of that page is made of these links.
+
 ## Learning and remembering
 
 **Spaced repetition (the box system).** Reviewing what you're about to forget,
@@ -593,6 +599,15 @@ having everything that needs it read it from there, like one master clock.
 *Here:* `lifetree.js` says how tall the Tree of Life is and where its
 perches, nest and fruits are; the birds, the shadow and the flock read it.
 
+**Built from parts (composition).** Making something bigger by naming the
+smaller things it is made of, instead of copying them in, like a playlist that
+lists songs rather than holding copies of them. Fix a song and every playlist
+with it plays the fixed one. Before it is shown, the list is *expanded*: each
+name is swapped for the real thing. Expanding twice changes nothing the second
+time (programmers call that *idempotent*), so it is safe wherever it runs.
+*Here:* The Mass in `pray/prayers.json` names its six parts. The publisher and
+the Pray pages each expand it, and a test checks they get the same 53 lines.
+
 **Render target (off-screen picture).** A picture the graphics chip paints
 into its own memory instead of straight onto the screen, like a painter
 working on a sheet at the back of the studio before hanging it. Once it's
@@ -646,6 +661,22 @@ from a fallback, which swaps in a plan B; a fail-safe makes sure the failure
 itself can't do harm.
 *Here:* if anything in heaven goes wrong, Adam stays in, or is brought back
 to, the garden, and the world carries on.
+
+## Other people's work
+
+**Copyright and credit.** Words someone wrote belong to them, the way a
+photograph belongs to whoever took it. When the site uses words that belong to
+someone, it says whose they are, like the name printed under a photo in a
+newspaper. That line is the credit.
+*Here:* every prayer page names where its Thai and its English come from. The
+English of the prayers said at Mass comes from the Church's English Missal of
+2010, and its credit line is at the foot of those pages and under search
+results that show them.
+
+**Public domain.** Words so old, or so freely given, that they belong to
+everyone, like a folk song.
+*Here:* the traditional English of the older prayers, such as the Our Father
+and the Hail Mary.
 
 ## Making changes safely
 
@@ -810,3 +841,12 @@ reaches everything with that name. Unique, specific names prevent it.
 *Here:* Logos's "‹ home" link and the back of every card were both called
 `back`, so turned cards borrowed the link's spacing and left a dark strip
 under them. The link is now called `home`.
+
+**Old and new side by side (version skew).** A site in two halves, the pages
+and the API, is updated in two steps, so for a few minutes new pages can talk
+to an old API. It's like a shop that has put up new price labels before the
+till knows the new prices. Each half is built to cope with the other being a
+step behind.
+*Here:* an API from before The Mass says nothing about which prayers have a
+card on the Pray list, so the list goes by the site's own copy and Lamb of God
+never appears there as a card.

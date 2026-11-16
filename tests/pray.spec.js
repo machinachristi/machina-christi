@@ -6,8 +6,15 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'pray', 'prayers.json'), 'utf8'));
+// The file as written (The Mass names its parts), and as the publisher sends
+// it to the API (The Mass with its parts' lines), which is what pages draw.
+const { expand } = require('../functions/src/lib/prayers.js');
+const RAW = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'pray', 'prayers.json'), 'utf8'));
+const DATA = expand(RAW);
 const byId = id => DATA.prayers.find(p => p.id === id);
+// A part shown only inside The Mass ("listed": false) has no card on the list.
+const LISTED = DATA.prayers.filter(p => p.listed !== false);
+const MASS = byId('mass');
 
 function watchErrors(page) {
   const errors = [];
@@ -75,13 +82,14 @@ const spoken = page => page.evaluate(() => window.__spoken);
 test.describe('prayer data', () => {
   test('every prayer is complete and uniquely named', () => {
     expect(DATA.prayers.length).toBeGreaterThanOrEqual(4);
-    const ids = DATA.prayers.map(p => p.id);
+    const ids = RAW.prayers.map(p => p.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const p of DATA.prayers) {
       expect(p.id).toMatch(/^[a-z0-9-]+$/);
       expect(p.title, p.id).toBeTruthy();
       expect(p.title_th, p.id).toMatch(/[฀-๿]/);
-      expect(p.source && p.source.url, p.id).toMatch(/^https:\/\//);
+      // A prayer names its source; The Mass names each part's.
+      for (const s of p.parts ? p.parts : [p]) expect(s.source && s.source.url, `${p.id}: ${s.id}`).toMatch(/^https:\/\//);
       expect(p.lines.length, p.id).toBeGreaterThan(0);
       for (const l of p.lines) {
         expect(l.th, p.id).toMatch(/[฀-๿]/);   // real Thai script
@@ -89,6 +97,13 @@ test.describe('prayer data', () => {
         expect(l.en, p.id).toBeTruthy();
       }
     }
+  });
+
+  test('a prayer left off the list is said within The Mass', () => {
+    const inMass = new Set(RAW.prayers.flatMap(p => (p.parts || []).map(x => (typeof x === 'string' ? x : x.id))));
+    const unlisted = RAW.prayers.filter(p => p.listed === false).map(p => p.id);
+    expect(unlisted.length).toBeGreaterThan(0);
+    for (const id of unlisted) expect(inMass.has(id), id).toBe(true);
   });
 });
 
@@ -98,12 +113,20 @@ test.describe('prayer list', () => {
     await page.goto('/pray.html');
     await expect(page.locator('h1')).toContainText('Pray');
     const cards = page.locator('.card');
-    await expect(cards).toHaveCount(DATA.prayers.length);
-    for (const [i, p] of DATA.prayers.entries()) {
+    await expect(cards).toHaveCount(LISTED.length);
+    for (const [i, p] of LISTED.entries()) {
       await expect(cards.nth(i)).toHaveAttribute('href', `prayer.html?p=${p.id}`);
       await expect(cards.nth(i).locator('.th')).toHaveText(p.title_th);
     }
     expect(errors).toEqual([]);
+  });
+
+  test('The Mass has a card; the parts said only at Mass do not', async ({ page }) => {
+    await page.goto('/pray.html');
+    await expect(page.locator('.card[href="prayer.html?p=mass"]')).toHaveCount(1);
+    for (const p of DATA.prayers.filter(p => p.listed === false)) {
+      await expect(page.locator(`.card[href="prayer.html?p=${p.id}"]`)).toHaveCount(0);
+    }
   });
 
   test('a card opens its prayer, and the back links walk home', async ({ page }) => {
@@ -125,7 +148,7 @@ test.describe('prayer list', () => {
 // test lets it go.
 test.describe('the bundled prayers answer first on the live site', () => {
   const { LIVE, API, serveLiveCopy, apiJson } = require('./live-copy');
-  const cardsOf = prayers => prayers.map(({ id, title, title_th, about }) => ({ id, title, title_th, about }));
+  const cardsOf = prayers => prayers.map(({ id, title, title_th, about, listed }) => ({ id, title, title_th, about, listed: listed !== false }));
 
   // The API, held: each call waits until release(answer) is called.
   async function heldApi(page) {
@@ -145,7 +168,7 @@ test.describe('the bundled prayers answer first on the live site', () => {
     const errors = watchErrors(page);
     const { release, asked } = await heldApi(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length, { timeout: 1000 });
+    await expect(page.locator('.card')).toHaveCount(LISTED.length, { timeout: 1000 });
     expect(asked).toContain('/api/prayers');
     release(null);
     expect(errors).toEqual([]);
@@ -154,7 +177,7 @@ test.describe('the bundled prayers answer first on the live site', () => {
   test('the same list from the API leaves the page alone; a different one replaces it', async ({ page }) => {
     const { release } = await heldApi(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
     await page.locator('.card').first().evaluate(el => { el.dataset.first = 'kept'; });
     const answered = page.waitForResponse(`${API}/api/prayers`);
     release(cardsOf(DATA.prayers));
@@ -164,10 +187,25 @@ test.describe('the bundled prayers answer first on the live site', () => {
 
     const { release: releaseNew } = await heldApi(page);
     await page.reload();
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length);
-    releaseNew([...cardsOf(DATA.prayers), { id: 'angelus', title: 'The Angelus', title_th: 'ทูตสวรรค์แจ้งข่าว', about: '' }]);
-    await expect(page.locator('.card')).toHaveCount(DATA.prayers.length + 1);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    releaseNew([...cardsOf(DATA.prayers), { id: 'angelus', title: 'The Angelus', title_th: 'ทูตสวรรค์แจ้งข่าว', about: '', listed: true }]);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length + 1);
     await expect(page.locator('.card').last()).toContainText('The Angelus');
+  });
+
+  test('an API from before the list could leave prayers off still never shows the parts said only at Mass', async ({ page }) => {
+    // For a few minutes after a deploy the pages and the API can be from
+    // different days: an older API says nothing about `listed`.
+    const { release } = await heldApi(page);
+    await page.goto(`${LIVE}/pray.html`);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    await page.locator('.card').first().evaluate(el => { el.dataset.first = 'kept'; });
+    const answered = page.waitForResponse(`${API}/api/prayers`);
+    release(DATA.prayers.map(({ id, title, title_th, about }) => ({ id, title, title_th, about })));
+    await answered;
+    await page.waitForTimeout(200);
+    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    await expect(page.locator('.card').first()).toHaveAttribute('data-first', 'kept'); // the same list: not redrawn
   });
 
   test('a prayer\'s words show at once, and its recordings follow from the API', async ({ page }) => {
@@ -196,7 +234,13 @@ test.describe('prayer page', () => {
       await expect(page.locator('.line .th').first()).toHaveText(p.lines[0].th);
       await expect(page.locator('.line .rom').first()).toHaveText(p.lines[0].rom);
       await expect(page.locator('.line .en').first()).toHaveText(p.lines[0].en);
-      await expect(page.locator('#source a')).toHaveAttribute('href', p.source.url);
+      if (p.parts) {
+        // The Mass: each part names its own source, under it.
+        await expect(page.locator('.part')).toHaveCount(p.parts.length);
+        for (const part of p.parts) await expect(page.locator(`#part-${part.id} .part__source a`)).toHaveAttribute('href', part.source.url);
+      } else {
+        await expect(page.locator('#source a')).toHaveAttribute('href', p.source.url);
+      }
       const overflow = await page.evaluate(() =>
         document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, p.id).toBeLessThanOrEqual(1);
@@ -333,12 +377,115 @@ test.describe('prayer page', () => {
     expect(errors).toEqual([]);
   });
 
+  test('the English names its source: a credit where the text has one, the traditional wording elsewhere', async ({ page }) => {
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=nicene-creed');
+    await expect(page.locator('#source')).toContainText(`English: ${byId('nicene-creed').source_en.notice}`);
+    await page.goto('/prayer.html?p=our-father');
+    await expect(page.locator('#source')).toContainText('English: the traditional wording.');
+  });
+
   test('an unknown prayer shows a gentle way back', async ({ page }) => {
     await stubSpeech(page);
     await page.goto('/prayer.html?p=no-such-prayer');
     await expect(page.locator('#lines')).toContainText('isn’t here');
     await expect(page.locator('#lines a[href="pray.html"]')).toBeVisible();
     await expect(page.locator('#player')).toBeHidden();
+  });
+});
+
+// The Mass is one prayer made of others: one page, a heading where each part
+// begins, and one Listen that reads straight through.
+test.describe('The Mass', () => {
+  const endOf = n => (n + 1 < MASS.parts.length ? MASS.parts[n + 1].start : MASS.lines.length);
+
+  test('each part has its own heading, in order, with its own lines; the Our Father has no Amen here', async ({ page }) => {
+    const errors = watchErrors(page);
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass');
+    await expect(page.locator('h1')).toHaveText(MASS.title);
+    const parts = page.locator('.part');
+    await expect(parts).toHaveCount(MASS.parts.length);
+    for (const [n, part] of MASS.parts.entries()) {
+      const section = parts.nth(n);
+      await expect(section).toHaveAttribute('id', `part-${part.id}`);
+      await expect(section.locator('h2')).toHaveText(part.title);
+      await expect(section.locator('.part__th')).toHaveText(part.title_th);
+      await expect(section.locator('.line .th')).toHaveText(MASS.lines.slice(part.start, endOf(n)).map(l => l.th));
+    }
+    const ourFather = byId('our-father').lines;
+    await expect(page.locator('#part-our-father .line')).toHaveCount(ourFather.length - 1);
+    await expect(page.locator('#part-our-father .line .th').last()).toHaveText(ourFather.at(-2).th);
+    // Its own page keeps the Amen.
+    await page.goto('/prayer.html?p=our-father');
+    await expect(page.locator('.line .th').last()).toHaveText(ourFather.at(-1).th);
+    expect(errors).toEqual([]);
+  });
+
+  test('Listen reads the whole Mass, and the highlight walks on into each new part', async ({ page }) => {
+    await stubSpeech(page, { beat: 80 });
+    await page.goto('/prayer.html?p=mass');
+    await expect(page.locator('.line')).toHaveCount(MASS.lines.length);
+    await page.evaluate(() => {
+      window.__lit = [];
+      const lines = [...document.querySelectorAll('.line')];
+      new MutationObserver(() => {
+        const i = lines.findIndex(el => el.classList.contains('is-speaking'));
+        if (window.__lit[window.__lit.length - 1] !== i) window.__lit.push(i);
+      }).observe(document.getElementById('lines'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    const th = page.locator('.listen[data-lang="th"]');
+    await th.click();
+    expect((await spoken(page)).map(s => s.text)).toEqual(MASS.lines.map(l => l.th));
+    await expect(th).not.toHaveClass(/is-playing/, { timeout: 20000 });
+    expect(await page.evaluate(() => window.__lit)).toEqual([...MASS.lines.keys(), -1]);
+  });
+
+  test('tapping a line in a later part reads that very line', async ({ page }) => {
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass');
+    const line = page.locator('#part-lamb-of-god .line').nth(1);
+    await line.click();
+    expect((await spoken(page)).map(s => s.text)).toEqual([byId('lamb-of-god').lines[1].th]);
+    await expect(line).toHaveClass(/is-speaking/);
+    await expect(page.locator('.line.is-speaking')).toHaveCount(1);
+  });
+
+  test('the numbered list at the top names every part and goes straight to it', async ({ page }) => {
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass');
+    const links = page.locator('.parts-nav a');
+    await expect(links).toHaveText(MASS.parts.map((p, n) => `${n + 1} · ${p.title}`));
+    for (const [n, p] of MASS.parts.entries()) await expect(links.nth(n)).toHaveAttribute('href', `#part-${p.id}`);
+    for (const box of await links.evaluateAll(as => as.map(a => a.getBoundingClientRect().height))) expect(box).toBeGreaterThanOrEqual(44);
+    await links.nth(4).click();
+    await expect(page.locator('#part-lamb-of-god h2')).toBeInViewport();
+    expect(new URL(page.url()).hash).toBe('#part-lamb-of-god');
+  });
+
+  test('a link to a part opens The Mass at that part', async ({ page }) => {
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass#part-lamb-of-god');
+    await expect(page.locator('#part-lamb-of-god h2')).toBeInViewport();
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  });
+
+  test('the page puts The Mass together exactly as the publisher does', async ({ page }) => {
+    await page.goto('/pray.html');
+    const fromPage = await page.evaluate(raw => JSON.parse(JSON.stringify(window.mcPray.expand(raw))), RAW);
+    expect(fromPage).toEqual(JSON.parse(JSON.stringify(DATA)));
+  });
+
+  test('readable on a small phone: no sideways scroll, every word 14px or more', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass');
+    await expect(page.locator('.part')).toHaveCount(MASS.parts.length);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    const size = sel => page.locator(sel).first().evaluate(n => parseFloat(getComputedStyle(n).fontSize));
+    for (const sel of ['.parts-nav__label', '.parts-nav a', '.part__title', '.part__th', '.part__when', '.part__source', '.line .en', '#source']) {
+      expect(await size(sel), sel).toBeGreaterThanOrEqual(14);
+    }
   });
 });
 
