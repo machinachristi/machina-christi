@@ -75,8 +75,8 @@ test.describe('home page', () => {
   test('portals are keyboard-focusable', async ({ page }) => {
     await page.goto('/index.html');
     const focused = await page.evaluate(() => {
-      document.querySelector('.portal--camino').focus();
-      return document.activeElement.classList.contains('portal--camino');
+      document.querySelector('.portal--workshop').focus();
+      return document.activeElement.classList.contains('portal--workshop');
     });
     expect(focused).toBe(true);
   });
