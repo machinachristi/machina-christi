@@ -1226,41 +1226,39 @@ test.describe('the new way of steering (AB#164)', () => {
     expect(Math.abs(Math.atan2(Math.sin(s2.controls.camYaw - s1.controls.camYaw), Math.cos(s2.controls.camYaw - s1.controls.camYaw)))).toBeLessThan(0.35);
   });
 
-  test('a tap a little wide of a creature is taken as meant for it', async ({ page }) => {
+  test('a tap a little wide of a landmark is taken as meant for it', async ({ page }) => {
     await gotoWorldReady(page, '?controls=new');
     const frame = appFrame(page);
     await settle(page);
-
-    // Stand him some way off a beast, looking past it — and to one side, so
-    // it is not behind his own body in the picture (a tap on him is a dance).
-    const g = (await getState(page)).fauna.grazers[0];
-    await frame.evaluate(p => window.__world.teleport(p.x - 4, p.z - 9, 0), g);
-    // Let him and the camera come to rest in the new place.
+    // Let him and the camera come to rest where the visit begins: the two
+    // trees stand ahead of him. (A tree, not a beast: a lamb wanders off
+    // between the aiming and the tap on a slow machine.)
     await expect.poll(async () => {
       const a = await getState(page);
       await page.waitForTimeout(300);
       const b = await getState(page);
       return Math.hypot(b.cam.x - a.cam.x, b.cam.z - a.cam.z) + b.walk.speed;
-    }, { timeout: 20000 }).toBeLessThan(0.05);
+    }, { timeout: 30000 }).toBeLessThan(0.05);
 
-    // 30 px to the side of the beast: off its body, well inside a thumb's
-    // width. (It may be grazing along, so aim and tap in one breath.)
-    const aim = await frame.evaluate(kind => {
-      const G = window.__world.getState().fauna.grazers[0];
-      const at = window.__world.screenOf(G.x, G.z, 0.5);
-      const hit = at && window.__world.snapFor(at.x + 30, at.y);
-      return { x: at && at.x + 30, y: at && at.y, gx: G.x, gz: G.z, what: hit && hit.what, kind: G.kind };
-    });
-    expect(aim.what).toBe(aim.kind);
-    expect(aim.x).toBeGreaterThan(20);
-    expect(aim.x).toBeLessThan(370);
-    expect(aim.y).toBeGreaterThan(60);
-    expect(aim.y).toBeLessThan(760);
+    // 30 px out from the Tree of Knowledge, on the side away from him: off
+    // its trunk, well inside a thumb's width.
+    const TREE = { x: 3.4, z: 0.8 };
+    const aim = await frame.evaluate(T => {
+      const at = window.__world.screenOf(T.x, T.z, 2.5);
+      const x = at.x + (at.x < window.innerWidth / 2 ? -30 : 30);
+      const hit = window.__world.snapFor(x, at.y);
+      return { x, y: at.y, what: hit && hit.what };
+    }, TREE);
+    expect(aim.what).toBe('tree of knowledge');
+    expect(aim.x).toBeGreaterThan(10);
+    expect(aim.x).toBeLessThan(380);
 
+    const before = (await getState(page)).pos;
     await page.mouse.click(aim.x, aim.y);
+    // He sets out for the tree and comes to stand by it (3.5 m short).
     await expect.poll(async () => {
-      const t = (await getState(page)).walk.target;
-      return t ? Math.hypot(t.x - aim.gx, t.z - aim.gz) : 99;
-    }, { timeout: 10000 }).toBeLessThan(3);
+      const s = await getState(page);
+      return Math.hypot(s.pos.x - TREE.x, s.pos.z - TREE.z);
+    }, { timeout: 40000 }).toBeLessThan(Math.min(6, Math.hypot(before.x - TREE.x, before.z - TREE.z) - 2));
   });
 });

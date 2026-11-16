@@ -96,5 +96,5 @@ switch can be removed.
 Four new tests in `tests/world-features.spec.js`: the new way is the default
 and `?controls=old` brings back the old; a short low drag walks him away from the camera and the stick is
 drawn; a high sideways drag turns the view the right way, leaves him where he
-is, and the view holds; and a tap 30 pixels wide of an animal still walks him
+is, and the view holds; and a tap 30 pixels wide of the Tree of Knowledge still walks him
 to it. Every older Eden test now runs against the new way, unchanged.
