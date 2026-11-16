@@ -54,6 +54,14 @@ export class CameraRig {
     this.lookPoint = new THREE.Vector3();
     this.intro = null;
 
+    // AB#164: the view may be turned by hand (`look`). While it is — and
+    // for a moment of walking afterwards — the camera keeps the bearing it
+    // was given instead of swinging back round behind him, and it comes to
+    // its new place briskly, so the picture answers the finger.
+    this.held = 0;                 // seconds of walking left before it follows again
+    this.brisk = 0;                // 0..1, fading: how briskly it takes its place
+    this._last = new THREE.Vector3().copy(target.position);
+
     // v34 (Psalm 8:3): lying back in the grass, he looks up, and the camera
     // goes with his eyes — blended over the follow pose by `gaze`, 0..1. The
     // follow pose itself keeps easing along underneath, untouched, so when
@@ -117,6 +125,14 @@ export class CameraRig {
     return out;
   }
 
+  // Turn the view by hand, `d` radians (AB#164).
+  look(d) {
+    if (this.intro) return;
+    this.yaw += d;
+    this.held = 1.2;
+    this.brisk = 1;
+  }
+
   // Opening shot: a slow dolly-in from high behind the character, straight
   // down the axis they face — the sacred trees stay centre-frame the whole
   // descent into the follow pose.
@@ -174,7 +190,15 @@ export class CameraRig {
     // him, and a held drag toward it walks him in a tight circle for ever.
     const off = shortestAngle(this.yaw, this.target.rotation.y);
     const follow = smoothstep(Math.PI * 0.75, Math.PI * 0.55, Math.abs(off));
-    this.yaw += off * follow * (1 - Math.exp(-this.yawLambda * dt));
+    // A view turned by hand is kept while he stands, and for a little of his
+    // walk after; then the camera goes back to following him.
+    const p = this.target.position;
+    const walked = Math.hypot(p.x - this._last.x, p.z - this._last.z) > 0.4 * dt;
+    this._last.copy(p);
+    if (this.held > 0 && walked) this.held = Math.max(0, this.held - dt);
+    if (this.held <= 0) this.yaw += off * follow * (1 - Math.exp(-this.yawLambda * dt));
+    this.brisk = Math.max(0, this.brisk - dt / 0.6);
+    const posLambda = this.posLambda + (14 - this.posLambda) * this.brisk;
     const desired = this._desiredPosition(_desired);
 
     if (this.intro) {
@@ -186,9 +210,9 @@ export class CameraRig {
       if (this.intro.t >= this.intro.dur) this.intro = null;
     } else {
       const c = this.camera.position;
-      c.x = damp(c.x, desired.x, this.posLambda, dt);
-      c.y = damp(c.y, desired.y, this.posLambda, dt);
-      c.z = damp(c.z, desired.z, this.posLambda, dt);
+      c.x = damp(c.x, desired.x, posLambda, dt);
+      c.y = damp(c.y, desired.y, posLambda, dt);
+      c.z = damp(c.z, desired.z, posLambda, dt);
     }
 
     // Never sink into a hillside.

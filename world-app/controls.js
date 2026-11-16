@@ -17,17 +17,66 @@
 // and is kept for the frame loop to take (`takeTap`) — main.js turns it into
 // a place on the ground to walk to (see wayfinding.js). Nothing is drawn.
 
+//
+// AB#164 (Psalm 18:33, "he maketh my feet like hinds' feet"): a second way of
+// reading the same touches, tried beside the first — `scheme: 'new'`. On a
+// phone the drag-anywhere stick began under a finger in the middle of the
+// picture, hiding the walker; its reach was long; and nothing could turn the
+// view. So the screen is given two parts. The LOWER part is his feet: a
+// short-reach stick begins where the thumb lands there, and is drawn (a
+// faint ring and a bead) so the thumb can see what it is doing. The UPPER
+// part is his eyes: a sideways drag there turns the view (`takeLook`), and
+// a second finger may do so while the first walks. A tap is a tap in either
+// part, and is forgiven a little more time and a little more wobble.
+
 import { clamp } from './util.js';
 
-const DEADZONE = 8;     // px of drag before walking starts, so taps don't jitter
-const QUICK_ON = 110;   // px from the origin at which the walk quickens…
-const QUICK_OFF = 80;   // …and only below this does it ease back to a walk
-const TRAIL = 140;      // the origin follows the thumb past this reach
+const OLD = {
+  DEADZONE: 8,     // px of drag before walking starts, so taps don't jitter
+  QUICK_ON: 110,   // px from the origin at which the walk quickens…
+  QUICK_OFF: 80,   // …and only below this does it ease back to a walk
+  TRAIL: 140,      // the origin follows the thumb past this reach
+  TAP_MS: 320,     // a touch lifted sooner than this, never dragged, is a tap
+};
+const NEW = {
+  DEADZONE: 12,    // a thumb's own wobble, on a tap, is not a walk
+  QUICK_ON: 50,    // a short reach: the thumb stays low and out of the picture
+  QUICK_OFF: 36,
+  TRAIL: 62,       // also the drawn ring's radius
+  TAP_MS: 500,
+};
 const HEAD_LAMBDA = 10; // how eagerly the drag's heading follows the thumb
-const TAP_MS = 320;     // a touch lifted sooner than this, never dragged, is a tap
+export const FEET_FROM = 0.55;   // new scheme: touches below this share of the height are his feet
+export const LOOK_SWEEP = Math.PI; // new scheme: a drag the whole width of the screen turns the view half round
 
-export function createControls(el, onFirstInput) {
+export function createControls(el, onFirstInput, { scheme = 'old' } = {}) {
+  const fresh = scheme === 'new';
+  const { DEADZONE, QUICK_ON, QUICK_OFF, TRAIL, TAP_MS } = fresh ? NEW : OLD;
   const drag = { id: null, ox: 0, oy: 0, dx: 0, dy: 0, quick: false, angle: 0, live: false, t0: 0, far: false, opening: false };
+  // The eyes' own finger (new scheme): `turn` gathers radians until taken.
+  const look = { id: null, x: 0, ox: 0, oy: 0, t0: 0, far: false, opening: false, turn: 0, total: 0 };
+
+  // The stick as the thumb sees it (new scheme): a ring where it began and a
+  // bead where the thumb is. They take no touches and are shown only while
+  // a finger is down on the lower part.
+  let ringEl = null, beadEl = null;
+  if (fresh) {
+    ringEl = document.createElement('div');
+    ringEl.className = 'stick';
+    beadEl = document.createElement('div');
+    beadEl.className = 'stick__bead';
+    ringEl.appendChild(beadEl);
+    document.body.appendChild(ringEl);
+  }
+  function drawStick() {
+    if (!ringEl) return;
+    const on = drag.id !== null && drag.far;
+    ringEl.classList.toggle('stick--shown', on);
+    ringEl.classList.toggle('stick--quick', on && drag.quick);
+    if (!on) return;
+    ringEl.style.transform = `translate(${drag.ox}px, ${drag.oy}px)`;
+    beadEl.style.transform = `translate(${drag.dx}px, ${drag.dy}px)`;
+  }
   let tap = null;   // { x, y } in client px, waiting for the frame loop
   const keys = new Set();
   let shift = false;
@@ -39,6 +88,20 @@ export function createControls(el, onFirstInput) {
 
   el.addEventListener('pointerdown', e => {
     e.preventDefault();
+    if (fresh) {
+      const r = el.getBoundingClientRect();
+      if (e.clientY - r.top < r.height * FEET_FROM) {
+        if (look.id !== null) return;
+        look.id = e.pointerId;
+        look.x = look.ox = e.clientX; look.oy = e.clientY;
+        look.t0 = e.timeStamp;
+        look.far = false;
+        look.opening = !!first;
+        try { el.setPointerCapture(e.pointerId); } catch (_) { /* not critical */ }
+        notifyFirst();
+        return;
+      }
+    }
     if (drag.id !== null) return;           // first finger steers; ignore extras
     drag.id = e.pointerId;
     drag.ox = e.clientX; drag.oy = e.clientY;
@@ -55,6 +118,19 @@ export function createControls(el, onFirstInput) {
   });
 
   el.addEventListener('pointermove', e => {
+    if (e.pointerId === look.id) {
+      if (!look.far && Math.hypot(e.clientX - look.ox, e.clientY - look.oy) > DEADZONE) {
+        look.far = true;
+        look.x = e.clientX;                 // the turn begins from here, without a jump
+      }
+      if (look.far) {
+        const r = el.getBoundingClientRect();
+        const d = ((e.clientX - look.x) / Math.max(r.width, 1)) * LOOK_SWEEP;
+        look.turn += d; look.total += d;
+        look.x = e.clientX;
+      }
+      return;
+    }
     if (e.pointerId !== drag.id) return;
     let dx = e.clientX - drag.ox;
     let dy = e.clientY - drag.oy;
@@ -70,9 +146,17 @@ export function createControls(el, onFirstInput) {
     }
     drag.dx = dx; drag.dy = dy;
     if (drag.quick ? len < QUICK_OFF : len > QUICK_ON) drag.quick = !drag.quick;
+    drawStick();
   });
 
   function release(e) {
+    if (e.pointerId === look.id) {
+      if (e.type === 'pointerup' && !look.far && !look.opening && e.timeStamp - look.t0 < TAP_MS) {
+        tap = { x: e.clientX, y: e.clientY };
+      }
+      look.id = null;
+      return;
+    }
     if (e.pointerId !== drag.id) return;
     if (e.type === 'pointerup' && !drag.far && !drag.opening && e.timeStamp - drag.t0 < TAP_MS) {
       tap = { x: e.clientX, y: e.clientY };
@@ -81,6 +165,7 @@ export function createControls(el, onFirstInput) {
     drag.dx = 0; drag.dy = 0;
     drag.quick = false;
     drag.live = false;
+    drawStick();
   }
   el.addEventListener('pointerup', release);
   el.addEventListener('pointercancel', release);
@@ -143,5 +228,17 @@ export function createControls(el, onFirstInput) {
     return t;
   }
 
-  return { vector, update, takeTap };
+  // How far the eyes' finger has asked the view to turn since last asked,
+  // in radians — positive for a drag to the right. (Always 0 in the old way.)
+  function takeLook() {
+    const t = look.turn;
+    look.turn = 0;
+    return t;
+  }
+
+  function state() {
+    return { scheme, stick: drag.id !== null && drag.far, looking: look.id !== null && look.far, looked: look.total };
+  }
+
+  return { vector, update, takeTap, takeLook, state };
 }

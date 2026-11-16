@@ -568,6 +568,18 @@ drawn one by one are a thousand draw calls; drawn together as one batch
 (*instancing*), they're one. *Here:* Eden's budget is under 200 draw calls,
 and all 194 saint figures in heaven are a single one.
 
+**Pointer events (touch input).** How a web page learns about fingers: the
+browser reports "a finger came down here", "it moved to there", "it lifted".
+The page's own code decides what that means. This is separate from drawing,
+so the look of a game and the feel of steering it are two different jobs.
+*Here:* in Eden's new controls a finger that comes down low on the screen is
+a thumb stick for Adam's feet, and one that comes down higher turns the view.
+
+**Touch target.** The area that counts as "you tapped this". A fingertip is
+about 9 mm wide and hides what it touches, so the target should be at least
+that big even when the thing drawn is smaller.
+*Here:* a tap within 44 pixels of a far-off lamb walks Adam to the lamb.
+
 **Camera and field of view.** A 3D world is drawn as a pretend camera would
 see it: from where it stands, pointing where it points. Its *field of view*
 is how much fits in the picture, as an angle: a wide angle sees more but
@@ -689,6 +701,13 @@ each other, like a second desk with its own papers. Both desks share one
 history, so finished work from either is merged the usual way.
 *Here:* each morning the live-site check sets up a fresh desk holding main
 (what is live) and runs from there, whatever branch the usual folder is on.
+
+**Feature flag.** A switch in the code that turns a new piece of work on or
+off without removing it. The new work can be merged and live on the site but
+stay off for visitors until it has been tried. Like wiring a new light into
+the house and leaving the switch off until you like the bulb.
+*Here:* Eden's new phone controls only come on with `?controls=new` in the
+address; everyone else gets the old ones.
 
 **Pull request (PR).** Asking to fold the scribbled copy back into the real one.
 It's where the changes are reviewed and the automatic checks run first.
