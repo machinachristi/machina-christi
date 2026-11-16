@@ -13,6 +13,7 @@ import { createWayfinding } from './wayfinding.js';
 import { createFooting } from './footing.js';
 import { createAmbience } from './audio.js';
 import { createRealm } from './realm.js';
+import { createStations } from './stations.js';
 import { createConsider } from './consider.js';
 import { createDance } from './dance.js';
 import { riverEdgeDist } from './scenes/terrain.js';
@@ -134,6 +135,25 @@ const consider = createConsider({ camera, canvas: renderer.domElement, character
 // or a tap anywhere else, and he stops.
 const dance = createDance({ scene, camera, canvas: renderer.domElement, character });
 
+// Stations (AB#165): a landmark he walks into opens a game laid over the
+// garden, and he comes back to the same spot when it is over — see
+// stations.js. While a game is open the garden's drawing and sound pause.
+const stations = createStations({
+  scene, character,
+  cancelWalk: () => wayfinding.cancel(),
+  pause: pauseGarden,
+  tell: post,
+});
+function pauseGarden(on) {
+  if (on) {
+    renderer.setAnimationLoop(null);
+  } else {
+    clock.getDelta();   // the time away is not garden time
+    renderer.setAnimationLoop(frame);
+  }
+  ambience.rest(on);
+}
+
 // The naming caption (Genesis 2:19-20): a quiet line at the foot of the
 // screen, filled from the garden's sense of which creature the walker has
 // drawn near. CSS carries the fade; the last name lingers through it.
@@ -155,7 +175,7 @@ function updateNamingCaption() {
   const given = realm.caption()
     || (realm.now === 'eden'
       ? garden.tending() || dance.caption() || consider.caption(garden.signNamed())
-        || (consider.lying ? null : garden.named())
+        || (consider.lying ? null : stations.caption() || garden.named())
       : null);
   captionNow = given || null;
   const key = given ? given.name + '·' + given.label : '';
@@ -349,7 +369,7 @@ function screenOf(x, z, lift = 0) {
   return { x: rect.left + (_snap.x + 1) / 2 * rect.width, y: rect.top + (1 - _snap.y) / 2 * rect.height };
 }
 function snapTap(tx, ty) {
-  if (SCHEME !== 'new' || realm.now !== 'eden' || !realm.idle) return null;
+  if (SCHEME !== 'new' || realm.now !== 'eden' || !realm.idle || !stations.idle) return null;
   let best = null, bestD = SNAP_PX;
   const offer = (x, z, lift, stand, what) => {
     const at = screenOf(x, z, lift);
@@ -362,6 +382,7 @@ function snapTap(tx, ty) {
   offer(TREE_OF_LIFE_POS.x, TREE_OF_LIFE_POS.z, 2.5, 3.5, 'tree of life');
   offer(TREE_OF_KNOWLEDGE_POS.x, TREE_OF_KNOWLEDGE_POS.z, 2.5, 3.5, 'tree of knowledge');
   offer(LADDER_FOOT.x, LADDER_FOOT.z, 1.5, 0, 'ladder');
+  for (const st of stations.places()) offer(st.x, st.z, 1.1, 0, st.id);
   if (!best) return null;
   const me = character.group.position;
   const dx = me.x - best.x, dz = me.z - best.z, d = Math.hypot(dx, dz);
@@ -421,7 +442,7 @@ function updateStillness(dt, v) {
   character.setSitting(seated);
 }
 
-renderer.setAnimationLoop(() => {
+function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
 
   controls.update(dt);
@@ -433,7 +454,8 @@ renderer.setAnimationLoop(() => {
   if (turn && realm.idle && !consider.lying) rig.look(-turn);
   // On the ladder, or under the veil between the realms, the realm has him
   // (AB#106): any tap or drag meanwhile is let go.
-  const driven = realm.drive();
+  // …and under a station's veil, the station has him (AB#165).
+  const driven = realm.drive() || stations.drive();
   let intent;
   if (driven) {
     controls.takeTap();
@@ -456,6 +478,8 @@ renderer.setAnimationLoop(() => {
   // The ladder: may carry him up out of the garden, or back down into it.
   realm.update(dt);
   kit = realm.kit();
+  // A station: walking into its landmark opens its game over the garden.
+  stations.update(dt, realm.idle && realm.now === 'eden' && !consider.lying && !dance.dancing);
   const inEden = kit.name === 'eden';
   if (inEden) updateCompanion(dt);
   if (!inEden && consider.lying) consider.rise();
@@ -494,7 +518,8 @@ renderer.setAnimationLoop(() => {
     post({ type: 'world:ready' });
     showHowTo();
   }
-});
+}
+renderer.setAnimationLoop(frame);
 
 // AB#164 (new scheme): a few words on how to go about, shown as the garden
 // opens and let go a little after. They take no touch.
@@ -698,6 +723,9 @@ window.__world = {
       // The eastward gate of light (Genesis 3:24, foreshadowed) — and how
       // strongly the keeper is presently hinted above it (v9, dawn only).
       gate: garden.gate(),
+      // AB#165: the stations — which there are, where each stands, and
+      // whether one's game is open over the garden just now.
+      stations: stations.state(),
       // How many reed blades stand along the banks.
       reeds: garden.reeds,
       // Reflections on the water (v9): how many bank trees lay an impression

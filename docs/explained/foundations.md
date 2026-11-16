@@ -139,6 +139,33 @@ also means it works with a keyboard for free.
 pressed, every play button says what it plays, and the practice counts are read
 aloud when they change.
 
+**Iframe (a page inside a page).** A window cut into one web page through
+which a second, complete web page shows, like a television standing in a
+room: the room and the programme are separate things, and switching the
+television off changes nothing in the room. Each page keeps its own code and
+cannot reach into the other's.
+*Here:* the Eden garden is shown inside `world.html` through an iframe, and
+when Adam walks into the waymarker the Camino game is shown over the garden
+through another one. Camino is still its own page, which is why it also
+opens by itself at `/game.html`.
+
+**Messages between pages (postMessage).** Because a page in an iframe cannot
+reach into the page around it, the two pass notes instead. One says "here is
+a note for you"; the other listens, checks who sent it, and decides what to
+do. It is the note pushed under a door between two rooms.
+*Here:* when the game is over, Camino pushes a note saying "close me" to the
+garden. The garden checks that the note really comes from its own game
+before it acts, then takes the game's frame away.
+
+**Browser history and the back button.** The browser keeps a list of where
+you have been, and Back goes one step down that list. A page can add its own
+step to the list without loading anything new ("the game was opened here"),
+and is told when you step back over it. That is how Back can close a pop-up
+or a game rather than throwing you out of the page.
+*Here:* opening the Camino game from the garden adds one step. Pressing Back
+closes the game and leaves you in the garden; pressing it again leaves the
+garden as it always did.
+
 ## Speed and cost
 
 **Snapshot (publishing).** Copying what you need from a slow or costly place
@@ -673,6 +700,17 @@ from a fallback, which swaps in a plan B; a fail-safe makes sure the failure
 itself can't do harm.
 *Here:* if anything in heaven goes wrong, Adam stays in, or is brought back
 to, the garden, and the world carries on.
+
+**The drawing loop, and pausing it.** A 3D world is not a picture but a
+habit: sixty times a second the program moves everything a little and paints
+it again. Stop the habit and the world freezes exactly as it is, costing
+nothing, like a film paused on one frame; start it again and it carries on
+from that frame. Nothing has to be loaded again, because nothing was thrown
+away.
+*Here:* while the Camino game is open over the garden, the garden's loop is
+stopped and its sound is put to rest, so the phone spends its strength on
+the game alone. When Adam comes back, the loop starts again and he is
+standing where he stood.
 
 ## Other people's work
 

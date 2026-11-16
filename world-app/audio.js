@@ -851,7 +851,7 @@ export function createAmbience() {
   // Phones only honour audio from a completed tap (touchend / click) or a key
   // press — not pointerdown or touchstart, and not the end of a drag — so
   // listen for those, and stop bothering once the sound is really running.
-  function wake() { if (!muted && !running()) ensureStarted(); }
+  function wake() { if (!muted && !resting && !running()) ensureStarted(); }
   for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) {
     window.addEventListener(ev, wake, { capture: true, passive: true });
   }
@@ -864,14 +864,31 @@ export function createAmbience() {
   // swallowed (resume() on a still-'running' context is a no-op), so re-check.
   function sleep() {
     if (!ctx || ctx.state !== 'running') return;
-    const again = () => { if (!muted && !document.hidden) ensureStarted(); else syncButton(); };
+    const again = () => { if (!muted && !resting && !document.hidden) ensureStarted(); else syncButton(); };
     ctx.suspend().then(again, again);
   }
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
     if (document.hidden) sleep();
-    else if (!muted) ensureStarted();
+    else if (!muted && !resting) ensureStarted();
   });
+
+  // A station's game is open over the garden (AB#165, stations.js): the
+  // ambience rests under it, and wakes when he comes back. The game shares
+  // the sound setting, so it is read again on the way back — sound switched
+  // off (or on) in the game stays so in the garden.
+  let resting = false;
+  function rest(on) {
+    resting = !!on;
+    if (resting) {
+      if (ctx && ctx.state === 'running') ctx.suspend().then(syncButton, syncButton);
+      return;
+    }
+    let off = muted;
+    try { off = localStorage.getItem(PREF_KEY) === 'off'; } catch (_) { /* private mode etc. */ }
+    if (off !== muted) setMuted(off);
+    else if (!muted) ensureStarted();
+  }
 
   function setMuted(next) {
     muted = !!next;
@@ -1013,10 +1030,11 @@ export function createAmbience() {
     return {
       supported,
       muted,
+      resting,
       running: running(),
       ctxState: ctx ? ctx.state : 'none',
     };
   }
 
-  return { update, setMuted, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, state };
+  return { update, setMuted, rest, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, state };
 }

@@ -12,8 +12,9 @@ The homepage is a row of gates, each one a small experience of its own:
 - **Ordo**: today in the Church: the season, the day's Gospel, and the saint of
   the day from Butler's *Lives of the Saints*.
 - **Logos**: learning to read Thai, letter by letter.
-- **Eden**: a living 3D garden, with Jacob's ladder up to a first heaven.
-- **Camino**: an endless runner about walking the narrow way.
+- **Eden**: a living 3D garden, with Jacob's ladder up to a first heaven, and
+  a waymarker at its gate that opens **Camino**, an endless runner about
+  walking the narrow way (also reachable directly at `/game.html`).
 - **Workshop**: a map of every technology the site is built with.
 - **About**: the story behind each gate.
 

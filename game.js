@@ -126,8 +126,49 @@ function pointInRect(x, y, r) {
   return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
+// Opened from the Garden of Eden (AB#165): the garden lays this page over
+// itself in a frame, at game.html?from=eden. Then the way home leads back to
+// the garden — the game tells the garden's page it is over, and the garden
+// takes the frame away. Opened by itself, everything is as it always was.
+const FROM_EDEN = /[?&]from=eden\b/.test(location.search) && window.parent !== window;
+const HOME_LABEL = FROM_EDEN ? 'Return to the garden' : 'Return home';
+
 function goHome() {
+  if (FROM_EDEN) {
+    try {
+      window.parent.postMessage({ type: 'station:close' }, location.origin);
+      return;
+    } catch (e) { /* no garden to tell — go home the usual way */ }
+  }
   window.location.href = 'index.html';
+}
+
+// From the garden, the first screen also offers the way back (top-left), so
+// walking into the waymarker by mistake is one tap to undo.
+let backButton = null;
+function drawBackButton() {
+  backButton = null;
+  if (!FROM_EDEN) return;
+  const size = Math.max(14, Math.min(W * 0.038, 16));
+  const label = '‹ the garden';
+  ctx.save();
+  ctx.font = `${size}px ${UI_SERIF}`;
+  ctx.letterSpacing = `${size * 0.16}px`;
+  const w = ctx.measureText(label).width + 30;
+  const h = 44;
+  const r = { x: Math.max(14, W * 0.035), y: Math.max(16, H * 0.022), w, h };
+  roundRectPath(r.x, r.y, r.w, r.h, r.h / 2);
+  ctx.fillStyle = 'rgba(11,10,8,0.4)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(232,213,163,0.35)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(232,213,163,0.85)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, r.x + 15, r.y + h / 2 + 1);
+  ctx.restore();
+  backButton = r;
 }
 
 const BASE_SPEED = 2.4;
@@ -223,7 +264,8 @@ canvas.addEventListener('touchend', e => {
   // The first journey begins by tapping Start — a real tap, which is also what
   // lets the music start.
   if (gameState === 'start') {
-    if (isTap && pointInRect(end.clientX, end.clientY, startButton)) startGame();
+    if (isTap && pointInRect(end.clientX, end.clientY, backButton)) goHome();
+    else if (isTap && pointInRect(end.clientX, end.clientY, startButton)) startGame();
     return;
   }
 
@@ -249,7 +291,8 @@ canvas.addEventListener('click', e => {
   if (!canRestart()) return;
   // Before the first game, only the Start button begins it.
   if (gameState === 'start') {
-    if (pointInRect(e.clientX, e.clientY, startButton)) startGame();
+    if (pointInRect(e.clientX, e.clientY, backButton)) goHome();
+    else if (pointInRect(e.clientX, e.clientY, startButton)) startGame();
     return;
   }
   if (gameState !== 'gameover') return;
@@ -1050,7 +1093,7 @@ function drawGameOver() {
     gameOverButtons = { again, home };
 
     drawButton(again, 'Walk again',  true,  fade);
-    drawButton(home,  'Return home', false, fade);
+    drawButton(home,  HOME_LABEL, false, fade);
   }
 
   ctx.restore();
@@ -1060,7 +1103,7 @@ function drawGameOver() {
 function render() {
   ctx.clearRect(0, 0, W, H);
 
-  if (gameState === 'start') { drawStart(); drawMuteButton(); return; }
+  if (gameState === 'start') { drawStart(); drawBackButton(); drawMuteButton(); return; }
 
   // Screen shake offset
   ctx.save();
