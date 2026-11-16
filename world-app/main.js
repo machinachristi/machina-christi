@@ -28,17 +28,17 @@ if (params.get('debug') === 'forceError') {
   throw new Error('forced test error (debug=forceError)');
 }
 
-// AB#164: which way the touches are read (controls.js) — 'old', the single
-// drag anywhere, or 'new', feet below and eyes above. `?controls=new` (or
-// `=old`) chooses, and the choice is remembered on this device so the plain
-// address keeps it; with neither, it is the old way.
+// AB#164: which way the touches are read (controls.js) — 'new', feet below
+// and eyes above, which is what a visitor gets; or 'old', the single drag
+// anywhere, kept for now as a way back. `?controls=old` (or `=new`) chooses,
+// and the choice is remembered on this device so the plain address keeps it.
 const SCHEME = (() => {
   const asked = params.get('controls');
   try {
     if (asked === 'new' || asked === 'old') localStorage.setItem('eden_controls', asked);
-    return localStorage.getItem('eden_controls') === 'new' ? 'new' : 'old';
+    return localStorage.getItem('eden_controls') === 'old' ? 'old' : 'new';
   } catch (_) {
-    return asked === 'new' ? 'new' : 'old';   // storage blocked: this visit only
+    return asked === 'old' ? 'old' : 'new';   // storage blocked: this visit only
   }
 })();
 

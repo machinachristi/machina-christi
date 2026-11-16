@@ -706,8 +706,9 @@ history, so finished work from either is merged the usual way.
 off without removing it. The new work can be merged and live on the site but
 stay off for visitors until it has been tried. Like wiring a new light into
 the house and leaving the switch off until you like the bulb.
-*Here:* Eden's new phone controls only come on with `?controls=new` in the
-address; everyone else gets the old ones.
+*Here:* Eden's new phone controls were first only on with `?controls=new` in
+the address. After a try on a real phone the switch was flipped: now the old
+controls are the ones behind a flag (`?controls=old`).
 
 **Pull request (PR).** Asking to fold the scribbled copy back into the real one.
 It's where the changes are reviewed and the automatic checks run first.

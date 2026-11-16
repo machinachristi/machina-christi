@@ -1145,8 +1145,8 @@ test.describe('the garden\'s features', () => {
   });
 });
 
-// AB#164: a second way of reading the touches, tried beside the first —
-// `?controls=new`. The lower part of the screen is his feet (a drawn thumb
+// AB#164: how the touches are read (the default since the owner tried it on
+// a phone; `?controls=old` is the earlier single drag). The lower part of the screen is his feet (a drawn thumb
 // stick), the upper part his eyes (a sideways drag turns the view), and a
 // tap near a creature is taken as meant for it.
 test.describe('the new way of steering (AB#164)', () => {
@@ -1157,8 +1157,12 @@ test.describe('the new way of steering (AB#164)', () => {
     await expect.poll(async () => (await getState(page)).camDist, { timeout: 20000 }).toBeLessThan(13);
   }
 
-  test('the old way is still what a visitor gets', async ({ page }) => {
+  test('the new way is what a visitor gets; ?controls=old is the way back', async ({ page }) => {
     await gotoWorldReady(page);
+    expect((await getState(page)).controls.scheme).toBe('new');
+    await expect(appFrame(page).locator('.stick')).toHaveCount(1);
+
+    await gotoWorldReady(page, '?controls=old');
     expect((await getState(page)).controls.scheme).toBe('old');
     await expect(appFrame(page).locator('.stick')).toHaveCount(0);
     await expect(appFrame(page).locator('.howto')).toHaveCount(0);

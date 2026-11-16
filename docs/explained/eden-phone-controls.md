@@ -1,14 +1,16 @@
 # Eden on a phone: feet below, eyes above, and taps that find their mark
 
-*Board item AB#164. Started November 2026. A try-out: nothing here is what a
-visitor gets until the owner has tried it on a phone and said yes. Words in
+*Board item AB#164. Started November 2026. Built first as a try-out behind a
+switch; the owner tried it on a phone on 16 November 2026, found it much
+better, and it became what every visitor gets. Words in
 **bold** are explained in [foundations.md](foundations.md).*
 
 ## What is changing, in one sentence
 
-Steering Adam with one finger was hard on a phone, so there is now a second
-way to steer him, sitting beside the old one behind a switch, to be tried on a
-real phone before it replaces anything.
+Steering Adam with one finger was hard on a phone, so there is now a new way
+to steer him. It was built beside the old one behind a switch, tried on a
+real phone, and then made the default; the old way is kept for now as a way
+back.
 
 ## What was wrong
 
@@ -61,21 +63,25 @@ is his eyes.**
 Everything else a tap means is unchanged: a tap on Adam is a dance, a tap on
 the sky lays him down to look up.
 
-## How to try it
+## The switch
 
-Add `?controls=new` to the garden's address:
+The new way is what a visitor gets. The old way is still there for now, in
+case some device misbehaves: add `?controls=old` to the garden's address.
 
-`https://machinachristi.com/world.html?controls=new`
+`https://machinachristi.com/world.html?controls=old`
 
-The choice is remembered on that phone, so the plain address keeps it.
-`?controls=old` puts it back. Without either, a visitor gets the old way.
+The choice is remembered on that device; `?controls=new` puts it back. Once
+the new way has been live a while without trouble, the old way and the
+switch can be removed.
 
 ## What this shows about software in general
 
-- **A feature flag.** The new way is in the code, but switched off unless
-  asked for. That lets new work be merged and tried on real devices without
-  changing anything for visitors. It is like wiring a new light into a house
-  and leaving the switch off until you are happy with the bulb.
+- **A feature flag.** The new way began in the code switched off unless
+  asked for. That let it be tried on a real phone without changing anything
+  for visitors. It is like wiring a new light into a house and leaving the
+  switch off until you are happy with the bulb. Once the owner was happy,
+  the switch was flipped, and the old light stays wired in for a while in
+  case the new bulb fails.
 - **Input is not drawing.** The library that draws the garden (three.js) has
   nothing to do with fingers. Touches come from the browser as **pointer
   events**, and our own code decides what they mean. So how a game *feels*
@@ -87,8 +93,8 @@ The choice is remembered on that phone, so the plain address keeps it.
 
 ## What the checks cover
 
-Four new tests in `tests/world-features.spec.js`: the old way is still the
-default; a short low drag walks him away from the camera and the stick is
+Four new tests in `tests/world-features.spec.js`: the new way is the default
+and `?controls=old` brings back the old; a short low drag walks him away from the camera and the stick is
 drawn; a high sideways drag turns the view the right way, leaves him where he
 is, and the view holds; and a tap 30 pixels wide of an animal still walks him
-to it. Every older Eden test runs against the old way, untouched.
+to it. Every older Eden test now runs against the new way, unchanged.
