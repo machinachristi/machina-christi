@@ -1242,7 +1242,18 @@ function loop(now) {
 
   update(dt);
   render();
+  if (!toldReady) tellReady();
   requestAnimationFrame(loop);
+}
+
+// From the garden (AB#165): once the first picture has really been drawn, the
+// game says so, and only then does the garden lift its veil. A page that
+// arrives broken never says it, so the garden keeps the visitor.
+let toldReady = false;
+function tellReady() {
+  toldReady = true;
+  if (!FROM_EDEN) return;
+  try { window.parent.postMessage({ type: 'station:ready' }, location.origin); } catch (e) { /* no garden to tell */ }
 }
 
 requestAnimationFrame(loop);

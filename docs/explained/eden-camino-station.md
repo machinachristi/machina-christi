@@ -76,10 +76,18 @@ page make sound after a finger has touched it, and that rule applies to a
 page in a frame too. Here the game's first tap on "start" is that touch.
 
 **If the game will not load.** A station must never be able to take the
-garden down. If the game has not appeared within twelve seconds (no signal,
-say), the veil lifts on the garden again and that station rests for the
-visit. This is a **fail-safe**, the same idea that protects the garden from
-anything going wrong in heaven.
+garden down. The garden does not lift its veil just because *something*
+arrived in the frame, because that something could be an error page. It
+waits for the game itself to say "I am drawn and ready", a short message the
+game sends after its first picture. If that word has not come within twelve
+seconds (no signal, say, or a page that arrived broken), the veil lifts on
+the garden again and that station rests for the visit. This is a
+**fail-safe**, the same idea that protects the garden from anything going
+wrong in heaven. The lesson underneath: "something loaded" and "the right
+thing loaded and works" are two different facts, and careful software waits
+for the second. It is the difference between hearing the oven door and
+hearing the cook say the meal is ready. (A review before merging found the
+gap: the first version lifted the veil on any page at all.)
 
 ## The pattern: one small list
 
@@ -116,7 +124,8 @@ to judge:
   the same spot, and the garden's clock runs again;
 - the garden's sound rests under the game, wakes after it, and keeps a
   choice made in the game;
-- a game that never loads leaves him safely in the garden.
+- a game that never loads leaves him safely in the garden, and so does a
+  page that loads in its place but is not the game.
 
 The homepage checks were changed to expect six gates and no Camino gate,
 and still check that the game opens by its own address.
