@@ -1262,3 +1262,164 @@ test.describe('the new way of steering (AB#164)', () => {
     }, { timeout: 40000 }).toBeLessThan(Math.min(6, Math.hypot(before.x - TREE.x, before.z - TREE.z) - 2));
   });
 });
+
+// AB#165: stations — places in the garden he walks to that open something to
+// play (world-app/stations.js). The first is the Camino game, at a waymarker
+// beside the eastward gate. The game is laid over the paused garden as its own
+// page in a frame; when it is over he stands where he stood.
+//
+// These aim at things that hold still: a clock that has stopped, a place that
+// has not changed, a frame that is or is not there.
+test.describe('stations: a game opened from the garden (AB#165)', () => {
+  const MARK = { x: 46.6, z: 4.9 };
+  const NEARBY = { x: 42.5, z: 3.6 };   // a few strides off, on dry ground
+
+  // The way a visitor goes: set down a few strides short, then walked into
+  // it. If anything stops him on the way, he is sent on again.
+  async function walkIn(page) {
+    const frame = appFrame(page);
+    await frame.evaluate(p => window.__world.teleport(p.x, p.z, 1.3), NEARBY);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (!s.stations.phase && !s.walk.target) await frame.evaluate(m => window.__world.walkTo(m.x, m.z), MARK);
+      return s.stations.open;
+    }, { timeout: 60000, intervals: [400] }).toBe('camino');
+  }
+  const gameFrame = page => page.frames().find(f => /game\.html\?from=eden/.test(f.url()));
+  const homeLink = page => page.evaluate(() => getComputedStyle(document.querySelector('.home')).visibility);
+
+  test('a waymarker stands by the eastward gate: listed, named when he is near, one drawn thing, and a tap beside it is meant for it (Isaiah 35:8)', async ({ page }) => {
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const s0 = await getState(page);
+    expect(s0.stations.phase).toBeNull();
+    expect(s0.stations.list).toHaveLength(1);
+    const camino = s0.stations.list[0];
+    expect(camino).toMatchObject({ id: 'camino', verse: 'Isaiah 35:8', armed: true, failed: false });
+    // On the garden's side of the gate, within the walkable rim.
+    expect(dist2d(camino, { x: 49, z: 3 })).toBeLessThan(6);   // the gate stands at (49, 3)
+    expect(Math.hypot(camino.x, camino.z)).toBeLessThan(49);
+
+    // Set down near it (standing, so it does not open): its name is given,
+    // and the garden is still inside its budget with the landmark in view.
+    await frame.evaluate(p => window.__world.teleport(p.x, p.z, 1.3), NEARBY);
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 })
+      .toMatchObject({ name: 'Derekh', label: 'the pilgrim road' });
+    const near = await getState(page);
+    expectInBudget(near, 'beside the waymarker');
+    expect(near.stations.phase).toBeNull();
+
+    // A tap a little wide of the stone is taken as meant for the station.
+    const hit = await frame.evaluate(m => {
+      const at = window.__world.screenOf(m.x, m.z, 1.1);
+      return at && window.__world.snapFor(at.x + 14, at.y - 10);
+    }, MARK);
+    expect(hit && hit.what).toBe('camino');
+  });
+
+  test('walking into the waymarker opens the game over the paused garden; the game\'s own way back, and the browser\'s back button, set him down where he stood', async ({ page }) => {
+    test.setTimeout(150000);
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+
+    await walkIn(page);
+    // The game is its own page in a frame over the garden, told where it
+    // was opened from; the "home" link of the page outside steps aside.
+    const game = gameFrame(page);
+    expect(game, 'the game frame').toBeTruthy();
+    await expect(frame.locator('.station__frame')).toBeVisible();
+    expect(await homeLink(page)).toBe('hidden');
+    expect(await game.evaluate(() => HOME_LABEL)).toBe('Return to the garden');
+
+    // The garden is paused, not gone: its clock stands still, and so does he.
+    const held = await getState(page);
+    await page.waitForTimeout(1200);
+    const still = await getState(page);
+    expect(still.time.t).toBe(held.time.t);
+    expect(still.pos).toEqual(held.pos);
+    expect(still.sound.resting).toBe(true);
+
+    // The game's own way back (the pill on its opening screen).
+    await expect.poll(() => game.evaluate(() => !!backButton), { timeout: 20000 }).toBe(true);
+    const pill = await game.evaluate(() => backButton);
+    await page.mouse.click(pill.x + pill.w / 2, pill.y + pill.h / 2);
+    await expect.poll(async () => (await getState(page)).stations.phase, { timeout: 20000 }).toBeNull();
+
+    // He stands where he stood; the frame is gone, the link is back, the
+    // clock runs again, and the station waits until he has walked off.
+    const back = await getState(page);
+    expect(dist2d(back.pos, held.pos)).toBeLessThan(0.05);
+    expect(back.stations.visits).toBe(1);
+    expect(back.stations.list[0].armed).toBe(false);
+    expect(back.sound.resting).toBe(false);
+    await expect(frame.locator('.station__frame')).toHaveCount(0);
+    expect(await homeLink(page)).toBe('visible');
+    await expect.poll(async () => (await getState(page)).time.t, { timeout: 20000 }).not.toBe(back.time.t);
+    // Standing beside it does not open it again.
+    await page.waitForTimeout(800);
+    expect((await getState(page)).stations.phase).toBeNull();
+
+    // Once more, and this time the browser's back button: it closes the
+    // game and leaves him in the garden, on the same page.
+    await walkIn(page);
+    const again = await getState(page);
+    await page.evaluate(() => history.back());
+    await expect.poll(async () => (await getState(page)).stations.phase, { timeout: 20000 }).toBeNull();
+    expect(page.url()).toContain('world.html');
+    const end = await getState(page);
+    expect(dist2d(end.pos, again.pos)).toBeLessThan(0.05);
+    expect(end.stations.visits).toBe(2);
+    await expect(frame.locator('.station__frame')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('the garden\'s sound rests under the game, wakes when he comes back, and keeps a choice made in the game (the setting is shared)', async ({ page }) => {
+    test.setTimeout(120000);
+    await gotoWorldReady(page, '', { sound: true });
+    const sound = async () => (await getState(page)).sound;
+    // The tap on "Enter" has let the sound begin.
+    await expect.poll(async () => (await sound()).running, { timeout: 20000 }).toBe(true);
+
+    await walkIn(page);
+    await expect.poll(async () => { const a = await sound(); return a.resting && !a.running; }, { timeout: 20000 }).toBe(true);
+    expect((await sound()).muted).toBe(false);          // resting, not switched off
+
+    // Back by the browser's button: the ambience wakes by itself.
+    await page.evaluate(() => history.back());
+    await expect.poll(async () => (await getState(page)).stations.phase, { timeout: 20000 }).toBeNull();
+    await expect.poll(async () => { const a = await sound(); return !a.resting && a.running; }, { timeout: 20000 }).toBe(true);
+
+    // In again; sound is switched off there (as the game's own button
+    // does, in the setting both share), and the garden keeps it off.
+    await walkIn(page);
+    await gameFrame(page).evaluate(() => localStorage.setItem('camino_sound', 'off'));
+    await page.evaluate(() => history.back());
+    await expect.poll(async () => (await getState(page)).stations.phase, { timeout: 20000 }).toBeNull();
+    const after = await sound();
+    expect(after.muted).toBe(true);
+    expect(after.resting).toBe(false);
+  });
+
+  test('a game that never loads cannot take the garden down: the veil lifts, and the station rests for the visit', async ({ page }) => {
+    test.setTimeout(120000);
+    // The game's page is held back for good.
+    await page.route(/game\.html\?from=eden/, () => {});
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    await frame.evaluate(p => window.__world.teleport(p.x, p.z, 1.3), NEARBY);
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (!s.stations.phase && !s.walk.target && !s.stations.list[0].failed) {
+        await frame.evaluate(m => window.__world.walkTo(m.x, m.z), MARK);
+      }
+      return s.stations.list[0].failed && s.stations.phase === null;
+    }, { timeout: 90000, intervals: [500] }).toBe(true);
+    const s = await getState(page);
+    expect(s.stations.visits).toBe(0);
+    await expect(frame.locator('.station__frame')).toHaveCount(0);
+    // The garden goes on: its clock runs.
+    await expect.poll(async () => (await getState(page)).time.t, { timeout: 20000 }).not.toBe(s.time.t);
+  });
+});

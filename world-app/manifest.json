@@ -1,5 +1,5 @@
 {
-  "version": 41,
+  "version": 42,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -526,6 +526,18 @@
         { "text": "Bright things glow: the Tree of Life's gold, its twelve fruits, the lamps and the stars bloom softly into the air round them.", "source": "Psalm 36:9" },
         { "text": "The colour of the whole picture follows the hour: clear by day, warm gold toward evening, deep blue and silver by night, changing smoothly as the sun goes down.", "source": "Genesis 1:5" },
         { "text": "On a slow phone or a computer without a graphics card the garden steps back to its plain drawing by itself, so it still runs smoothly; adding ?light=off to the address does the same by hand.", "source": null }
+      ]
+    },
+    {
+      "version": 42,
+      "date": "2026-11-16",
+      "realm": "eden",
+      "focus": "the way at the gate",
+      "changes": [
+        { "text": "A waymarker stands beside the eastward gate: a milestone with the pilgrim's scallop shell in gold on its face, a staff and gourd leaning on it, and the first stones of a road leading out. Near it, its name is given: Derekh, the pilgrim road.", "source": "Isaiah 35:8" },
+        { "text": "Walk into it (or tap it, and he walks there) and the Camino game opens over the garden. When the game is over, or when you choose to return, he is standing in the garden where he stood.", "source": null },
+        { "text": "While the game is open the garden waits: nothing in it moves and its sound rests, and both go on when he comes back. Sound switched off in the game stays off in the garden.", "source": null },
+        { "text": "The waymarker is the first of the garden's stations, places he walks to that open something to play. Camino no longer has a gate of its own on the homepage; this is its door.", "source": null }
       ]
     }
   ],
