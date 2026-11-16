@@ -434,11 +434,63 @@ test.describe('The Mass', () => {
         if (window.__lit[window.__lit.length - 1] !== i) window.__lit.push(i);
       }).observe(document.getElementById('lines'), { subtree: true, attributes: true, attributeFilter: ['class'] });
     });
-    const th = page.locator('.listen[data-lang="th"]');
+    const th = page.locator('#player .listen[data-lang="th"]');
     await th.click();
     expect((await spoken(page)).map(s => s.text)).toEqual(MASS.lines.map(l => l.th));
     await expect(th).not.toHaveClass(/is-playing/, { timeout: 20000 });
     expect(await page.evaluate(() => window.__lit)).toEqual([...MASS.lines.keys(), -1]);
+  });
+
+  test('each part has its own Listen, which reads just that prayer, in Thai or English', async ({ page }) => {
+    await stubSpeech(page);
+    await page.goto('/prayer.html?p=mass');
+    await expect(page.locator('.part__listen')).toHaveCount(MASS.parts.length);
+    for (const h of await page.locator('.part__listen .listen').evaluateAll(bs => bs.map(b => b.getBoundingClientRect().height))) {
+      expect(h).toBeGreaterThanOrEqual(44);
+    }
+    await expect(page.locator('#part-nicene-creed .listen[data-lang="th"]')).toHaveText('ไทย', { useInnerText: true }); // compact: "▶ ไทย"
+    const n = MASS.parts.findIndex(p => p.id === 'nicene-creed');
+    const creed = MASS.lines.slice(MASS.parts[n].start, endOf(n));
+    const th = page.locator('#part-nicene-creed .listen[data-lang="th"]');
+    await expect(th).toHaveAttribute('aria-label', 'Listen to The Nicene Creed in Thai');
+    await th.click();
+    expect((await spoken(page)).map(s => s.text)).toEqual(creed.map(l => l.th));
+    await expect(th.locator('.label')).toHaveText('Stop');
+    await expect(th).toHaveAttribute('aria-label', 'Stop');
+    await expect(page.locator('.line.is-speaking')).toHaveAttribute('data-i', String(MASS.parts[n].start));
+    // Only this part's button turns to Stop: not the bar's, not the English.
+    await expect(page.locator('#player .listen.is-playing, #part-nicene-creed .listen[data-lang="en"].is-playing')).toHaveCount(0);
+    await th.click();
+    await expect(th.locator('.label')).toHaveText('Listen');
+    await expect(th).toHaveAttribute('aria-label', 'Listen to The Nicene Creed in Thai');
+    await expect(page.locator('.line.is-speaking')).toHaveCount(0);
+
+    // In English, the Our Father as said at Mass: without its Amen.
+    const m = MASS.parts.findIndex(p => p.id === 'our-father');
+    await page.locator('#part-our-father .listen[data-lang="en"]').click();
+    const said = (await spoken(page)).slice(creed.length);
+    expect(said.map(s => s.text)).toEqual(MASS.lines.slice(MASS.parts[m].start, endOf(m)).map(l => l.en));
+    expect(said.every(s => s.lang === 'en-US')).toBe(true);
+  });
+
+  test('a part read to its end settles on its own, and the highlight stays inside the part', async ({ page }) => {
+    await stubSpeech(page, { beat: 80 });
+    await page.goto('/prayer.html?p=mass');
+    await expect(page.locator('.line')).toHaveCount(MASS.lines.length);
+    await page.evaluate(() => {
+      window.__lit = [];
+      const lines = [...document.querySelectorAll('.line')];
+      new MutationObserver(() => {
+        const i = lines.findIndex(el => el.classList.contains('is-speaking'));
+        if (window.__lit[window.__lit.length - 1] !== i) window.__lit.push(i);
+      }).observe(document.getElementById('lines'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    const n = MASS.parts.findIndex(p => p.id === 'lamb-of-god');
+    const th = page.locator('#part-lamb-of-god .listen[data-lang="th"]');
+    await th.click();
+    await expect(th).not.toHaveClass(/is-playing/, { timeout: 5000 });
+    const within = [...Array(endOf(n) - MASS.parts[n].start).keys()].map(k => MASS.parts[n].start + k);
+    expect(await page.evaluate(() => window.__lit)).toEqual([...within, -1]);
   });
 
   test('tapping a line in a later part reads that very line', async ({ page }) => {
@@ -483,7 +535,12 @@ test.describe('The Mass', () => {
     await expect(page.locator('.part')).toHaveCount(MASS.parts.length);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     const size = sel => page.locator(sel).first().evaluate(n => parseFloat(getComputedStyle(n).fontSize));
-    for (const sel of ['.parts-nav__label', '.parts-nav a', '.part__title', '.part__th', '.part__when', '.part__source', '.line .en', '#source']) {
+    // Each prayer's two Listen buttons sit side by side, even playing.
+    const tops = () => page.locator('#part-nicene-creed .listen').evaluateAll(bs => bs.map(b => Math.round(b.getBoundingClientRect().top)));
+    expect(new Set(await tops()).size).toBe(1);
+    await page.locator('#part-nicene-creed .listen[data-lang="th"]').click();
+    expect(new Set(await tops()).size).toBe(1);
+    for (const sel of ['.parts-nav__label', '.parts-nav a', '.part__listen .listen', '.part__title', '.part__th', '.part__when', '.part__source', '.line .en', '#source']) {
       expect(await size(sel), sel).toBeGreaterThanOrEqual(14);
     }
   });

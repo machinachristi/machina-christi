@@ -143,6 +143,29 @@ test.describe('recorded voices on the live site', () => {
     expect(plays).toEqual(['th-slow-0123456789.mp3', 'en-slow-0123456789.mp3']);
   });
 
+  test('in The Mass, a part\'s own Listen plays just its stretch of the one recording, then stops', async ({ page }) => {
+    await liveSite(page);
+    await openRecorded(page, 'mass');
+    const mass = DATA.prayers.find(p => p.id === 'mass');
+    const n = mass.parts.findIndex(p => p.id === 'lamb-of-god');
+    const first = mass.parts[n].start, next = mass.parts[n + 1].start; // each line is 2 s long here
+    const th = page.locator('#part-lamb-of-god .listen[data-lang="th"]');
+    await th.click();
+    const m = await media(page);
+    expect(m.plays.at(-1).src).toBe(`${API}/api/audio/mass/th-normal-0123456789.mp3`);
+    expect(m.plays.at(-1).from).toBe(first * 2);
+    expect(await page.evaluate(() => window.__spoken.length)).toBe(0); // the recording, not the device
+    await expect(lit(page)).toHaveAttribute('data-i', String(first));
+    await expect(th.locator('.label')).toHaveText('Stop');
+    await expect(page.locator('#player .listen[data-lang="th"] .label')).toHaveText('Listen');
+    await at(page, next * 2 - 0.5);
+    await expect(lit(page)).toHaveAttribute('data-i', String(next - 1));
+    await at(page, next * 2); // the next part begins: stop here
+    await expect(lit(page)).toHaveCount(0);
+    expect((await media(page)).paused).toBe(true);
+    await expect(th.locator('.label')).toHaveText('Listen');
+  });
+
   test('tapping a line plays just that line, from its start until the next line begins', async ({ page }) => {
     await liveSite(page);
     await openRecorded(page, 'our-father');

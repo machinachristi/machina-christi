@@ -330,6 +330,13 @@
     }
     .part__when { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); margin: 0.15em 0 0.5em; }
     .part__source { font-size: 14px; color: rgba(232, 213, 163, 0.5); margin: 0.7em 0 0; }
+    /* Each part's own Listen buttons: just that prayer, in Thai or English. */
+    .part__listen { display: flex; flex-wrap: wrap; gap: 10px; margin: 0.5em 0 0.9em; }
+    .part__listen .listen { flex: 0 1 auto; min-height: 44px; padding: 0 16px; }
+    /* Compact, so both fit on one row on a phone: the triangle and the
+       language say it; "Stop" shows while one plays. */
+    .part__listen .listen:not(.is-playing) .label,
+    .part__listen .listen:not(.is-playing) .lang::before { display: none; }
 
     /* ── The listen bar ───────────────────────────────────────── */
     .player {
@@ -467,6 +474,7 @@
 
       let lines = [];      // the prayer's lines once loaded: { th, rom, en, lit? }
       let lineEls = [];
+      let ranges = new Map(); // The Mass: each part's id → its lines' indices
       let slow = store.get('pray.slow', false);
       let showRom = store.get('pray.rom', true);
 
@@ -534,7 +542,9 @@
       // `run` changes on every start and stop, so events from utterances
       // that were cancelled (they still fire end/error afterwards) stand down.
       let run = 0;
-      let now = null;      // { lang, only } while something plays; only = line index for a single line
+      // { lang, only, part } while something plays: only = line index for a
+      // single line, part = a part's id when one part of The Mass plays.
+      let now = null;
 
       // The utterances of the run that's playing. Holding them here matters:
       // once queued, nothing else in the page refers to them, and mobile
@@ -561,13 +571,16 @@
         }
       }
 
+      // A Listen button is on while its own run plays: the bar's for the
+      // whole prayer, a part's for that part.
       function paint() {
-        player.querySelectorAll('.listen').forEach(b => {
+        document.querySelectorAll('.listen').forEach(b => {
           const lang = b.dataset.lang;
-          const on = !!now && now.lang === lang && now.only === null;
+          const part = b.dataset.part || null;
+          const on = !!now && now.lang === lang && now.only === null && (now.part || null) === part;
           b.classList.toggle('is-playing', on);
           b.querySelector('.label').textContent = on ? 'Stop' : 'Listen';
-          b.setAttribute('aria-label', on ? 'Stop' : 'Listen in ' + (lang === 'th' ? 'Thai' : 'English'));
+          b.setAttribute('aria-label', on ? 'Stop' : b.dataset.say || 'Listen in ' + (lang === 'th' ? 'Thai' : 'English'));
         });
       }
 
@@ -581,17 +594,18 @@
         paint();
       }
 
-      // Play a recording: the whole prayer, or one line's stretch of it (from
-      // its start to the next line's). The highlight follows the playing
-      // position, checked every frame while the page is visible and on every
-      // timeupdate (a few times a second) when it isn't.
-      function playRecording(indices, lang, r) {
+      // Play a recording: the whole prayer, one part of The Mass, or one
+      // line: a stretch from its first line's start to the start of the line
+      // after its last. The highlight follows the playing position, checked
+      // every frame while the page is visible and on every timeupdate (a few
+      // times a second) when it isn't.
+      function playRecording(indices, lang, r, part = null) {
         stop();
         const mine = ++run;
         const only = indices.length === 1 ? indices[0] : null;
-        now = { lang, only };
+        now = { lang, only, part };
         const from = r.starts[indices[0]] || 0;
-        const to = only === null ? Infinity : (r.starts[only + 1] ?? Infinity);
+        const to = r.starts[indices[indices.length - 1] + 1] ?? Infinity;
 
         if (!audio) audio = new Audio();
         audio.preload = 'none';
@@ -619,7 +633,7 @@
           if (mine !== run) return;
           failed[lang] = true;
           stop();
-          if (synth) speak(indices, lang);
+          if (synth) speak(indices, lang, part);
         };
         audio.onloadedmetadata = () => { if (mine === run) seek(); };
         audio.ontimeupdate = place;
@@ -633,12 +647,12 @@
         paint();
       }
 
-      function speak(indices, lang) {
+      function speak(indices, lang, part = null) {
         const r = recording(lang);
-        if (r) { playRecording(indices, lang, r); return; }
+        if (r) { playRecording(indices, lang, r, part); return; }
         stop();
         const mine = ++run;
-        now = { lang, only: indices.length === 1 ? indices[0] : null };
+        now = { lang, only: indices.length === 1 ? indices[0] : null, part };
         const voice = pickVoice(LANG[lang]);
         // One utterance per line, all queued right here inside the tap:
         // iOS only lets speech start from a user gesture, separate lines let
@@ -731,6 +745,14 @@
           </li>`;
         const list = (from, to) => `<ol class="lines">${lines.slice(from, to).map((l, k) => row(l, from + k)).join('')}</ol>`;
         const parts = Array.isArray(prayer.parts) ? prayer.parts : [];
+        const endOf = n => (n + 1 < parts.length ? parts[n + 1].start : lines.length);
+        ranges = new Map(parts.map((p, n) => [p.id, lines.slice(p.start, endOf(n)).map((_, k) => p.start + k)]));
+        const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-play" d="M2.5 1.2 L10.8 6 L2.5 10.8 Z" /><rect class="i-stop" x="1.8" y="1.8" width="8.4" height="8.4" rx="1.2" /></svg>';
+        const partListen = p => `
+            <div class="part__listen">${['th', 'en'].map(lang => {
+              const say = `Listen to ${escapeHtml(p.title)} in ${lang === 'th' ? 'Thai' : 'English'}`;
+              return `<button type="button" class="listen" data-lang="${lang}" data-part="${escapeHtml(p.id)}" data-say="${say}" aria-label="${say}">${PLAY}<span class="label">Listen</span><span class="lang"${lang === 'th' ? ' lang="th"' : ''}>${lang === 'th' ? 'ไทย' : 'English'}</span></button>`;
+            }).join('')}</div>`;
         const nav = () => `
           <nav class="parts-nav" aria-labelledby="parts-nav-label">
             <p class="parts-nav__label" id="parts-nav-label">In this order</p>
@@ -739,12 +761,13 @@
         linesEl.innerHTML = parts.length
           ? nav() + parts.map((p, n) => {
               const id = `part-${escapeHtml(p.id)}`;
-              const end = n + 1 < parts.length ? parts[n + 1].start : lines.length;
+              const end = endOf(n);
               return `
           <section class="part" id="${id}" aria-labelledby="${id}-title">
             <h2 class="part__title" id="${id}-title">${escapeHtml(p.title)}</h2>
             <span class="part__th" lang="th">${escapeHtml(p.title_th)}</span>
             ${p.about ? `<p class="part__when">${escapeHtml(p.about)}</p>` : ''}
+            ${listen ? partListen(p) : ''}
             ${list(p.start, end)}
             <p class="part__source">${partSource(p)}</p>
           </section>`;
@@ -804,12 +827,21 @@
         const b = e.target.closest('.listen');
         if (!b || !canListen() || !lines.length) return;
         const lang = b.dataset.lang;
-        if (now && now.lang === lang && now.only === null) { stop(); return; }
+        if (now && now.lang === lang && now.only === null && !now.part) { stop(); return; }
         speak(lines.map((_, i) => i), lang);
       });
 
+      // In The Mass, a part's own Listen plays just that part; again, stops.
       // Tap a line to hear just that line in Thai; tap it again to stop.
       linesEl.addEventListener('click', e => {
+        const p = e.target.closest('.listen[data-part]');
+        if (p) {
+          if (!canListen() || !ranges.has(p.dataset.part)) return;
+          const { part, lang } = p.dataset;
+          if (now && now.part === part && now.lang === lang) { stop(); return; }
+          speak(ranges.get(part), lang, part);
+          return;
+        }
         const b = e.target.closest('button.line');
         if (!b || !canListen()) return;
         const i = Number(b.dataset.i);

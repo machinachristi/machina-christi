@@ -39,9 +39,15 @@ I Confess is also prayed at night, so it keeps its card.
 **The page.** At the top is a numbered list of the six parts. At Mass you tap
 the part being said and the page jumps to it. Each part begins under a
 numbered band with its name in English and Thai, a short note on when it is
-said, and its sources. A line's number counts through the whole Mass (53
-lines), so tapping any line plays that line, and Listen lights up each line in
-turn from the Sign of the Cross to Communion.
+said, its own two Listen buttons (▶ ไทย and ▶ English, just that prayer), and
+its sources. The bar at the bottom still plays the whole Mass, from the Sign of
+the Cross to Communion. A line's number counts through the whole Mass (53
+lines), so tapping any line plays that line.
+
+**One recording, many ways in.** The Mass has one long recording per language
+and speed, with the moment each line starts. Playing one prayer means starting
+at its first line and stopping where the next prayer's first line begins, the
+same way a tapped line plays from its start to the next line's.
 
 **The English is the Church's own.** For the prayers said at Mass, the English
 now comes from the Church's English Missal of 2010, set out in the same lines
@@ -127,14 +133,17 @@ free 500,000 a month.
   without its Amen, a change to one part re-recording only that part and the
   Mass, the API's list saying which prayers are listed, and every English
   credit naming its source.
-- **Page tests** (51, in `tests/`): the list shows The Mass and hides the two
+- **Page tests** (160 across the site, in `tests/`): the list shows The Mass and hides the two
   parts said only at Mass; the Mass page draws every part's heading and lines
   in order; Listen reads all 53 lines and the highlight walks into each new
-  part; tapping a line in a later part plays that line; the numbered list
+  part; each part's own Listen reads just that prayer (the Our Father without
+  its Amen) and, with recordings, plays just its stretch and stops where the
+  next part begins; tapping a line in a later part plays that line; the numbered list
   jumps to its part; a link to a part opens there; the page and the publisher
   expand the Mass the same way; the credit shows on prayer pages and under
   search results; everything is 14px or more on a small phone, with no
   sideways scrolling.
 - **Look test**: real screenshots at two phone sizes (390×844 and 375×667),
   where the owner chose the card's place, the list at the top, the numbered
-  bands, the credit line, and every new sentence a visitor reads.
+  bands, the credit line, each prayer's compact Listen row (keeping the
+  whole-Mass bar), and every new sentence a visitor reads.
