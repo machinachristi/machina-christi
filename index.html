@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Eden, a living 3D garden, with the Camino pilgrim road at its gate; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Camino, an endless runner; Eden, a living 3D garden; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Eden, a living 3D garden, with the Camino pilgrim road at its gate; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
   <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -37,7 +37,7 @@
       --bg:        #0b0a08;
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
-      --amber:     255, 196, 92;   /* Camino — warm lamplight (rgb parts) */
+      --amber:     255, 196, 92;   /* warm lamplight (rgb parts) */
       --leaf:      168, 205, 140;  /* Eden — living green */
       --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
       --marian:    138, 170, 222;  /* Pray — Marian blue */
@@ -199,7 +199,6 @@
       transition: border-color 0.35s ease;
     }
 
-    .portal--camino { --glow: var(--amber); }
     .portal--eden   { --glow: var(--leaf); }
     .portal--ordo   { --glow: var(--violet); }
     .portal--pray   { --glow: var(--marian); }
@@ -469,20 +468,6 @@
         </span>
         <span class="portal__title">Workshop</span>
         <span class="portal__desc">how it&rsquo;s built</span>
-      </a>
-
-      <a class="portal portal--camino" href="game.html" aria-label="Enter Camino, the pilgrim's road">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- a wayside cross above the road -->
-            <path d="M24 12 V44" />
-            <path d="M14 22 H34" />
-            <path d="M10 54 Q24 48 38 54" />
-          </svg>
-        </span>
-        <span class="portal__title">Camino</span>
-        <span class="portal__desc">the pilgrim&rsquo;s road</span>
       </a>
 
       <a class="portal portal--eden" href="world.html" aria-label="Enter Eden, the digital garden">

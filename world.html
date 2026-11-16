@@ -82,6 +82,9 @@
       backdrop-filter: blur(6px);
       transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
     }
+    /* A station's game is open over the garden (AB#165): it has its own
+       way back, so this link steps aside until the game closes. */
+    body[data-station="open"] .home { visibility: hidden; }
     .home:hover, .home:focus-visible {
       color: #fff;
       border-color: rgba(201, 162, 39, 0.7);
@@ -329,6 +332,10 @@
           if (!msg || typeof msg.type !== 'string') return;
           if (msg.type === 'world:ready') ready();
           else if (msg.type === 'world:error') fail(msg.message);
+          // AB#165: a station's game is open over the garden, and has its
+          // own way back to it — this page's "return home" steps aside so it
+          // does not sit on the game's score.
+          else if (msg.type === 'world:station') body.dataset.station = msg.open ? 'open' : 'closed';
         });
 
         function ready() {
