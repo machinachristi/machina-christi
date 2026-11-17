@@ -338,6 +338,11 @@ export function createRealm({ camera, canvas, character, rig, eden, params }) {
     heavenState() {
       return heaven ? guarded('state', () => heaven.state(), null) : null;
     },
+    // v43: how far up the view has been carried to show him the city
+    // (behold.js), told to heaven every frame while he is in it.
+    behold(k, settled) {
+      if (heaven && now === 'heaven') guarded('beholding', () => heaven.behold(k, settled), null);
+    },
     // v33: the new song, read by main.js every frame while he is in heaven —
     // the harps' notes under his steps and the multitude's answers; null in
     // Eden, or once anything in heaven has failed.

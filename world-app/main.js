@@ -16,6 +16,7 @@ import { createRealm } from './realm.js';
 import { createStations } from './stations.js';
 import { createConsider } from './consider.js';
 import { createDance } from './dance.js';
+import { createBehold } from './behold.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './scenes/vegetation.js';
 import { LADDER_FOOT } from './scenes/ladder.js';
@@ -135,6 +136,23 @@ const consider = createConsider({ camera, canvas: renderer.domElement, character
 // or a tap anywhere else, and he stops.
 const dance = createDance({ scene, camera, canvas: renderer.domElement, character });
 
+// In heaven, tap the sky and the view is carried up to a great height and
+// shown the whole city (v43, Revelation 21:10) — see behold.js. Any tap, or
+// a drag to walk, brings it down to him again. It only moves the camera, but
+// it runs out here, beyond heaven's own guard (realm.js), so every call to it
+// goes through `beholding`: if it ever threw, the view comes straight back
+// to him and the ladder takes him home, as for any other fault in heaven.
+const behold = createBehold({ camera, rig, character });
+function beholding(fn, fallback = null) {
+  try {
+    return fn();
+  } catch (err) {
+    try { behold.reset(); } catch (_) { /* nothing more to do */ }
+    realm.fault('beholding', err);
+    return fallback;
+  }
+}
+
 // Stations (AB#165): a landmark he walks into opens a game laid over the
 // garden, and he comes back to the same spot when it is over — see
 // stations.js. While a game is open the garden's drawing and sound pause.
@@ -172,7 +190,9 @@ function updateNamingCaption() {
   // nearest thing named.
   // Lying back to look up (v34), the heavens' own words come before the
   // names of things round him, which he can no longer see.
-  const given = realm.caption()
+  // Shown the city from on high (v43), the height's own word comes first.
+  const given = (realm.now === 'heaven' ? beholding(() => behold.caption()) : null)
+    || realm.caption()
     || (realm.now === 'eden'
       ? garden.tending() || dance.caption() || consider.caption(garden.signNamed())
         || (consider.lying ? null : stations.caption() || garden.named())
@@ -306,6 +326,9 @@ let heardStars = 0;
 let heardBeats = 0;
 let heardTune = 0;
 let heardLeaps = 0;
+// v43: the harp as the golden reed passes each gate, and the city measured.
+let heardReed = 0;
+let heardMeasured = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -330,7 +353,8 @@ function readIntent(dt, kit) {
   const tap = controls.takeTap();
   if (tap) {
     rig.skipIntro();
-    if (consider.lying) consider.rise();
+    if (behold.on) behold.end();
+    else if (consider.lying) consider.rise();
     else if (kit.name === 'eden' && realm.idle && dance.onHim(tap.x, tap.y) && (dance.dancing || mayDance())) {
       if (!dance.dancing) beginDance();
     } else {
@@ -338,8 +362,11 @@ function readIntent(dt, kit) {
       const near = snapTap(tap.x, tap.y);
       if (near) kit.wayfinding.walkTo(near.x, near.z, kit.namedThing());
       else if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
-        && kit.name === 'eden' && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
-        liePutDown();
+        && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
+        // A tap on the open sky: in the garden he lies back to look up into
+        // it; in heaven he is carried up to be shown the city (v43).
+        if (kit.name === 'eden') liePutDown();
+        else beginBeholding();
       }
     }
   }
@@ -348,6 +375,7 @@ function readIntent(dt, kit) {
     rig.skipIntro();
     kit.wayfinding.cancel();
     dance.stop();
+    behold.end();
     if (consider.lying) consider.rise();
     return { move: v, world: false };
   }
@@ -396,6 +424,15 @@ function liePutDown() {
   if (!consider.lieDown()) return false;
   realm.kit().wayfinding.cancel();
   forceSit = false;
+  return true;
+}
+
+// Carried up to be shown the city (v43): only in heaven, and only while the
+// realm does not have him; any walk he was on is let go.
+function beginBeholding() {
+  if (realm.now !== 'heaven' || !realm.idle) return false;
+  if (!beholding(() => behold.begin(), false)) return false;
+  realm.kit().wayfinding.cancel();
   return true;
 }
 
@@ -451,7 +488,11 @@ function frame() {
   // under the veil, nor while he lies looking up. A drag to the right looks
   // to the right.
   const turn = controls.takeLook();
-  if (turn && realm.idle && !consider.lying) rig.look(-turn);
+  // (Shown the city from on high, the same drag swings that view instead.)
+  if (turn && realm.idle && !consider.lying) {
+    if (behold.on) beholding(() => behold.turn(-turn));
+    else rig.look(-turn);
+  }
   // On the ladder, or under the veil between the realms, the realm has him
   // (AB#106): any tap or drag meanwhile is let go.
   // …and under a station's veil, the station has him (AB#165).
@@ -484,6 +525,11 @@ function frame() {
   if (inEden) updateCompanion(dt);
   if (!inEden && consider.lying) consider.rise();
   consider.update(dt, garden.hour.night, garden.heavensGuide);
+  // v43: in heaven the view may be carried up to show him the city; heaven
+  // is told how far up it is (the air clears, the reed measures).
+  beholding(() => behold.update(dt, !inEden && realm.idle));
+  if (!inEden) realm.behold(behold.k, behold.settled);
+  heavenHowTo(!inEden);
   rig.update(dt);
   // In heaven the garden waits, its clock stilled — "there shall be no
   // night there" (Revelation 21:25) — and his companion with it.
@@ -525,14 +571,50 @@ renderer.setAnimationLoop(frame);
 // opens and let go a little after. They take no touch.
 function showHowTo() {
   if (SCHEME !== 'new') return;
+  showNote('Tap a place to walk there. Slide your thumb low on the screen to steer, or higher up to look around.', 18000);
+}
+
+// A few quiet words near the top of the screen, let go after `hold` ms (or
+// sooner, by calling what this gives back). They take no touch.
+function showNote(text, hold) {
   const el = document.createElement('p');
   el.className = 'howto';
   el.setAttribute('role', 'note');
-  el.textContent = 'Tap a place to walk there. Slide your thumb low on the screen to steer, or higher up to look around.';
+  el.textContent = text;
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add('howto--shown'));
-  setTimeout(() => el.classList.remove('howto--shown'), 18000);
-  setTimeout(() => el.remove(), 19500);
+  let gone = false;
+  const letGo = () => {
+    if (gone) return;
+    gone = true;
+    el.classList.remove('howto--shown');
+    setTimeout(() => el.remove(), 1500);
+  };
+  setTimeout(letGo, hold);
+  return letGo;
+}
+
+// v43: the first time he stands in heaven, a few words say that the sky may
+// be tapped — once each time the garden is opened, and no more once he has been shown the city on
+// this device (remembered as camino_beheld; if storage is blocked, the words
+// are simply given each visit). They go as soon as the view is carried up.
+let beheldBefore = false;
+try { beheldBefore = localStorage.getItem('camino_beheld') === '1'; } catch (_) { /* each visit, then */ }
+let heavenNoted = false;
+let heavenNote = null;
+function heavenHowTo(inHeaven) {
+  if (inHeaven && realm.idle && !heavenNoted && !beheldBefore && !behold.on) {
+    heavenNoted = true;
+    heavenNote = showNote('Tap the sky to be shown the whole city.', 16000);
+  }
+  if (heavenNote && (!inHeaven || behold.on)) {
+    heavenNote();
+    heavenNote = null;
+  }
+  if (behold.settled && !beheldBefore) {
+    beheldBefore = true;
+    try { localStorage.setItem('camino_beheld', '1'); } catch (_) { /* not kept */ }
+  }
 }
 
 // The new song in heaven (v33, Revelation 14:2-3; 19:6): a harp's note for
@@ -556,6 +638,16 @@ function heavenSong() {
   if (song.notes !== heardHarp) {
     heardHarp = song.notes;
     ambience.harp(song.note);
+  }
+  // v43: a harp note as the golden reed passes each gate, and a chime when
+  // the whole city is measured.
+  if (song.reedNotes !== heardReed) {
+    heardReed = song.reedNotes;
+    ambience.harp(song.reedNote);
+  }
+  if (song.measured !== heardMeasured) {
+    heardMeasured = song.measured;
+    ambience.chime();
   }
   if (song.answers !== heardAnswers) {
     heardAnswers = song.answers;
@@ -953,6 +1045,13 @@ window.__world = {
       // the timbrel's strokes and the harp's notes so far, `petals` in the
       // air now, `companion` whether she dances too, `leaps` taken.
       dance: dance.state(),
+      // v43: shown the city from on high (Revelation 21:10) — `on` while the
+      // view is carried up, `k` how far up it is (0 with him → 1), `settled`
+      // once it is there and looking, `turned` how far a drag has swung it,
+      // `range` how far off it stands (by the screen's shape), `word` the
+      // height's word while it is given, `times` this visit. What heaven
+      // does meanwhile rides on `heaven.reed`.
+      behold: behold.state(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       // (AB#130: the garden's own cost, taken before the light pass's
@@ -1018,6 +1117,14 @@ window.__world = {
     if (!on) dance.stop();
     else if (!dance.dancing) beginDance();
     return dance.dancing;
+  },
+  // Carry the view up to show him the city (true), as a tap on heaven's sky
+  // does, or bring it down again (false) — for tests and the curious (v43).
+  // Returns whether it is carried up (only in heaven, off the ladder).
+  behold(on = true) {
+    if (!on) behold.end();
+    else beginBeholding();
+    return behold.on;
   },
   // Where he presently stands on the screen, in client pixels — so a test
   // can tap him as a visitor would.

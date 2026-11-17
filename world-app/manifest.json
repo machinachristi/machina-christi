@@ -1,5 +1,5 @@
 {
-  "version": 42,
+  "version": 43,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -539,13 +539,28 @@
         { "text": "While the game is open the garden waits: nothing in it moves and its sound rests, and both go on when he comes back. Sound switched off in the game stays off in the garden.", "source": null },
         { "text": "The waymarker is the first of the garden's stations, places he walks to that open something to play. Camino no longer has a gate of its own on the homepage; this is its door.", "source": null }
       ]
+    },
+    {
+      "version": 43,
+      "date": "2026-11-17",
+      "realm": "heaven",
+      "focus": "a great and high mountain",
+      "changes": [
+        { "text": "In heaven, tap the sky and the view is carried up and back to a great height, and the whole city is shown at once: the wall foursquare with its twelve gates, the river and the street of gold up the middle of it, the Tree of Life, the saints, the multitude and the glory. Har gavoah, a great and high mountain.", "source": "Revelation 21:10" },
+        { "text": "While he looks, a light of burnished gold sets out from a corner of the wall and runs the whole way round its top, measuring it; the wall behind it stays golden, and over each of the twelve gates, as it passes, a pillar of gold light stands up and a harp note sounds. Qaneh, the golden reed.", "source": "Revelation 21:15" },
+        { "text": "When the light comes home the city stands outlined in gold, foursquare, a chime sounds, and the multitude's lights answer with a wave and the glory brightens: Ravua, the length is as large as the breadth.", "source": "Revelation 21:16" },
+        { "text": "From up there the gold air clears so the far wall can be seen, the glass lies quieter, and the river is seen to proceed out of the glory rather than run on beyond it.", "source": "Revelation 22:1" },
+        { "text": "The view drifts slowly from side to side, and a sideways drag swings it by hand. He himself stays standing where he was, small on the glass; any tap, or a drag to walk, brings the view down to him again, and the gold fades slowly from the wall.", "source": null },
+        { "text": "The first time he stands in heaven a few quiet words say that the sky may be tapped; once he has been shown the city on a device, they are not given there again.", "source": null },
+        { "text": "The reed's line, its running light and the twelve pillars are one draw call between them: heaven's arrival is 30 draws, and the whole city seen from on high 32, of the 200 allowed.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
-    "Water flung for joy: tap him while he carries water from the river and he dances with it, flinging it out round him in a ring of bright drops that waters the ground all about (Genesis 2:6)",
     "Dancing before the glory: in heaven, tap him on the sea of glass and he dances before the light with all his might, and the multitude's lights sway with him (2 Samuel 6:14)",
-    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)"
+    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)",
+    "The kings of the earth: seen from on high, roads of light run in across the glass to all twelve gates from far off, and now and then a greater light comes in along one of them, bringing its glory into the city (Revelation 21:24)"
   ]
 }

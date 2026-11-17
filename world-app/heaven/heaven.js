@@ -24,6 +24,9 @@
 // v37, the healing of the nations: healing.js (the leaves of the tree carried
 // out through every gate, and one given into his hand to carry), and the
 // tree's fruit of the month hanging ripe (tree.js).
+// v43, a great and high mountain: the view carried up to show the whole city
+// (behold.js, at the world's root, moves the camera), and reed.js (the golden
+// reed's light measuring the wall and its gates while he looks).
 
 import * as THREE from 'three';
 import { breathe } from '../util.js';
@@ -39,10 +42,17 @@ import { createLeaves } from './leaves.js';
 import { createSong } from './song.js';
 import { createCity } from './city.js';
 import { createHealing } from './healing.js';
+import { createReed } from './reed.js';
 
 // Near the head of the ladder the line under the screen names the way down
 // (realm.js), so the new song keeps its words for the rest of heaven.
 const HEAD_WORDS = 3.6;
+
+// The gold air (sky.js, sea.js): how far he sees on the glass, and how far
+// when he is shown the city from on high (v43) — there the far wall stands a
+// good 370 m off, and must be seen.
+const AIR = { near: 70, far: 260 };
+const AIR_HIGH = { near: 215, far: 800 };
 
 // The month it is (0 = January), for the tree's fruit of the month — the
 // day realm.js was asked for (?day=YYYY-MM-DD), or today.
@@ -76,6 +86,24 @@ export async function createHeaven(scene, saintsData) {
   await breathe();
   const healing = createHealing(scene, city.ways, saints.places);
   await breathe();
+  const reed = createReed(scene, city.wall, city.gateSpots);
+
+  // v43: how far up the view has been carried (0 with him, 1 on high), and
+  // whether it is there and looking — told by main.js, every frame.
+  let lifted = 0;
+  let looking = false;
+  let airAt = -1;
+  function behold(k, settled) {
+    lifted = Math.min(1, Math.max(0, +k || 0));
+    looking = !!settled;
+    if (lifted === airAt) return;
+    airAt = lifted;
+    // The air clears as he rises, and closes in again as he comes down.
+    const near = AIR.near + (AIR_HIGH.near - AIR.near) * lifted;
+    const far = AIR.far + (AIR_HIGH.far - AIR.far) * lifted;
+    if (scene.fog) { scene.fog.near = near; scene.fog.far = far; }
+    sea.setFog(near, far, lifted);
+  }
 
   let time = 0;
   let lastWalker = null;
@@ -95,6 +123,9 @@ export async function createHeaven(scene, saintsData) {
     leaves.update(time);
     saints.update(dt, walker);
     city.update(dt, time, walker);
+    // The reed measures while he looks from on high; as it comes home,
+    // heaven answers (the wave through the multitude, the glory brightening).
+    if (reed.update(dt, time, looking)) glory.answer(time);
   }
 
   // The line under the screen. Away from the ladder's head (whose own name
@@ -108,6 +139,9 @@ export async function createHeaven(scene, saintsData) {
   function caption() {
     const w = lastWalker;
     const byHead = !!w && Math.hypot(w.x - LADDER_HEAD.x, w.z - LADDER_HEAD.z) < HEAD_WORDS;
+    // Shown the city from on high (v43), the reed's word comes before all.
+    const measure = reed.caption();
+    if (measure) return measure;
     const answer = byHead ? null : song.answerWord();
     if (answer) return answer;
     const leaf = byHead ? null : healing.caption();
@@ -131,6 +165,8 @@ export async function createHeaven(scene, saintsData) {
     // leaf's, or null.
     caption,
     namedThing: saints.namedThing,
+    // v43: main.js says how far up the view is, and whether it looks.
+    behold,
     // For main.js, every frame: the harps' notes and heaven's answers, and
     // (v37) whether a leaf of the tree is in his hand and how many he has
     // been given and has given.
@@ -140,6 +176,12 @@ export async function createHeaven(scene, saintsData) {
       sung.leaf = healing.holding();
       sung.received = c.received;
       sung.given = c.given;
+      // v43: the harp's note as the reed passes each gate, and each time the
+      // whole city has been measured.
+      const r = reed.song();
+      sung.reedNotes = r.notes;
+      sung.reedNote = r.note;
+      sung.measured = r.rounds;
       return sung;
     },
     state() {
@@ -179,6 +221,12 @@ export async function createHeaven(scene, saintsData) {
         // stream is (`glow`), and where the south middle gate's first bearer
         // (`lead`) has walked to; and the tree's `ripe` fruit, by month.
         healing: { ...healing.state(), ripe: tree.ripe },
+        // v43, the golden reed (Revelation 21:15-16): `measuring` while its
+        // light runs the wall, `measured` how far round it has gone (0..1),
+        // `gates` it has passed `of` twelve, `rounds` the whole city measured,
+        // `shown` how much of the gold is to be seen; and `air`, how far the
+        // gold air has cleared for the view from on high (0..1).
+        reed: { ...reed.state(), air: lifted },
       };
     },
   };
