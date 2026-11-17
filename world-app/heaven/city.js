@@ -604,6 +604,10 @@ export function createCity(scene) {
   return {
     update,
     ways,
+    // v43: the wall's four sides and the height of its top, and where each
+    // gate stands, for the golden reed that measures them (reed.js).
+    wall: { south: SOUTH, north: NORTH, half: HALF, top: WALL_H + COPING_H },
+    gateSpots: gates.map(g => ({ x: g.at.x, z: g.at.z })),
     caption: () => (nearGate ? GATE_WORD : null),
     state() {
       const l = lead(1);   // the south side's middle gate

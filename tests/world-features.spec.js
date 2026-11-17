@@ -863,6 +863,70 @@ test.describe('the garden\'s features', () => {
     await expect.poll(async () => (await getState(page)).heaven.song.praying, { timeout: 60000 }).toBe(true);
   });
 
+  test('a great and high mountain: in heaven, a tap on the sky carries the view up to show the whole city, the golden reed measures its wall and gates, and a tap brings the view down to him again (v43, Revelation 21:10, 15-16)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const vp = page.viewportSize();
+
+    // In the garden the view is never carried up: there a tap on the sky
+    // lays him down instead (v34).
+    expect(await frame.evaluate(() => window.__world.behold(true))).toBe(false);
+    expect((await getState(page)).behold.on).toBe(false);
+
+    await enterHeaven(page);
+    let s = await getState(page);
+    expect(s.behold).toMatchObject({ on: false, k: 0, times: 0 });
+    expect(s.heaven.reed).toMatchObject({ measuring: false, gates: 0, of: 12, rounds: 0, shown: 0, air: 0 });
+    // A few words say the sky may be tapped.
+    await expect(frame.locator('.howto', { hasText: 'Tap the sky' })).toHaveCount(1);
+    const where = s.pos;
+
+    // A tap on heaven's sky (the top of the screen). The very first touch
+    // only skips the arrival's opening shot, so tap again if it was taken
+    // for that.
+    await page.mouse.click(vp.width / 2, 100);
+    await page.waitForTimeout(800);
+    if (!(await getState(page)).behold.on) await page.mouse.click(vp.width / 2, 100);
+    await expect.poll(async () => (await getState(page)).behold.on, { timeout: 10000 }).toBe(true);
+
+    // The view is carried up, high over the city and out beyond its south
+    // wall, while he stays standing where he was; the air clears with it,
+    // and the height's word is given.
+    await expect.poll(async () => {
+      const st = await getState(page);
+      return st.behold.settled && st.cam.y > 100 && st.cam.z < -60 && st.camDist > 150
+        && st.heaven.reed.air > 0.9 && dist2d(st.pos, where) < 0.5;
+    }, { timeout: 90000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).caption, { timeout: 20000 }).toEqual({
+      name: 'Har gavoah', label: 'a great and high mountain: he shewed me that great city',
+    });
+    s = await getState(page);
+    expect(s.behold.times).toBe(1);
+    expect(s.realm).toMatchObject({ now: 'heaven', passage: null, failed: false });
+    // The whole city in view costs no more than the budget allows.
+    expectInBudget(s, 'shown the city from on high');
+
+    // The golden reed's light sets out along the wall, and the gates stand
+    // up in light one by one as it passes them.
+    await expect.poll(async () => {
+      const r = (await getState(page)).heaven.reed;
+      return r.measuring && r.shown > 0.5 && r.measured > 0 && r.gates >= 2;
+    }, { timeout: 120000 }).toBe(true);
+
+    // A tap anywhere brings the view down to him again; the gold fades from
+    // the wall, and the air closes in as it was.
+    await page.mouse.click(vp.width / 2, vp.height / 2);
+    await expect.poll(async () => (await getState(page)).behold.on, { timeout: 10000 }).toBe(false);
+    await expect.poll(async () => {
+      const st = await getState(page);
+      return st.behold.k === 0 && st.camDist < 20 && st.heaven.reed.air === 0 && !st.heaven.reed.measuring;
+    }, { timeout: 60000 }).toBe(true);
+    s = await getState(page);
+    expect(s.realm).toMatchObject({ now: 'heaven', passage: null, failed: false });
+    expect(dist2d(s.pos, where)).toBeLessThan(0.5);
+  });
+
   test('the lamb carried: stand among the flock and he takes its lamb up in his arms, carries it on his shoulders as he walks, and sets it down beside its mother when he stands (v36, Isaiah 40:11; Luke 15:5)', async ({ page }) => {
     test.setTimeout(180000);
     await gotoWorldReady(page);

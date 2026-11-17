@@ -43,6 +43,7 @@ export function createSea(scene) {
     uStreetW: { value: STREET.halfWidth },
     uRings: { value: rings },
     uFire: { value: 0 },
+    uHigh: { value: 0 },
   };
   const material = new THREE.ShaderMaterial({
     uniforms: u,
@@ -72,6 +73,7 @@ export function createSea(scene) {
       uniform float uStreetW;
       uniform vec4 uRings[${RINGS}];
       uniform float uFire;
+      uniform float uHigh;
       varying vec3 vWorld;
       varying float vDepth;
       void main() {
@@ -87,20 +89,27 @@ export function createSea(scene) {
         // Light moving slowly in the crystal, and its cut facets.
         float w = sin(p.x * 0.8 + uTime * 0.31) * sin(p.y * 0.62 - uTime * 0.23)
                 + 0.6 * sin((p.x - p.y) * 0.37 + uTime * 0.17);
-        col += vec3(0.11) * smoothstep(0.9, 1.5, w);
+        // (Seen from on high, v43, both are quieted: from there the moving
+        // lights read as spots and the facets as a grid.)
+        float fine = 1.0 - 0.8 * uHigh;
+        col += vec3(0.11) * smoothstep(0.9, 1.5, w) * fine;
         vec2 g = abs(fract(p / 7.0) - 0.5);
-        col += vec3(0.05) * (1.0 - smoothstep(0.0, 0.025, min(g.x, g.y)));
+        col += vec3(0.05) * (1.0 - smoothstep(0.0, 0.025, min(g.x, g.y))) * fine;
 
         // The street of gold on either bank, as it were transparent glass.
         float ax = abs(p.x - uGlory.x);
         float along = smoothstep(uRiverFrom - 4.0, uRiverFrom + 2.0, p.y);
+        // From on high the river is seen to proceed out of the glory, and
+        // the street with it: neither runs on beyond it.
+        float source = 1.0 - uHigh * smoothstep(uGlory.y - 5.0, uGlory.y + 1.0, p.y);
+        along *= source;
         float street = (1.0 - smoothstep(uStreetW - 0.12, uStreetW, ax)) * along;
         vec3 gold = uGold + vec3(0.1) * smoothstep(0.9, 1.5, w);
         col = mix(col, gold, street * 0.7);
 
         // The river, clear as crystal, flowing down out of the glory.
         float river = (1.0 - smoothstep(uRiverW - 0.18, uRiverW, ax))
-          * smoothstep(uRiverFrom, uRiverFrom + 5.0, p.y);
+          * smoothstep(uRiverFrom, uRiverFrom + 5.0, p.y) * source;
         float flow = 0.5 + 0.5 * sin(p.y * 1.15 + uTime * 2.1 + sin(p.x * 2.6 - uTime * 0.8) * 0.9);
         vec3 water = mix(uRiver, vec3(1.0), 0.25 + 0.35 * flow);
         col = mix(col, water, river);
@@ -147,6 +156,14 @@ export function createSea(scene) {
     update(time) {
       u.uTime.value = time;
       u.uFire.value = time - lastKindled < FIRE_LIFE ? 1 : 0;
+    },
+    // v43: how far the gold air lets him see (heaven.js clears it while he is
+    // shown the city from on high).
+    // `high`, 0..1: how far up the view has been carried.
+    setFog(near, far, high = 0) {
+      u.uFogNear.value = near;
+      u.uFogFar.value = far;
+      u.uHigh.value = high;
     },
     // A footfall at (x, z), at heaven's time `time`.
     kindle(x, z, time, power = 1) {
