@@ -52,6 +52,8 @@ const VERTEX = /* glsl */`
   uniform vec3 uSunCol;
   uniform vec3 uMoonCol;
   uniform vec3 uGlowCol;
+  uniform vec4 uPraise;           // v44: the garden's praise going out — its x, z, radius, strength
+  uniform vec3 uPraiseCol;
   varying vec3 vCol;
   varying float vStar;
 
@@ -115,7 +117,17 @@ const VERTEX = /* glsl */`
     spark *= fade;
     glow = min(glow, 1.1) * fade;
 
-    vCol = (uSunCol * sun + uMoonCol * moon) / max(sun + moon, 1e-4) * spark + uGlowCol * glow;
+    // v44 (Psalm 150:6): as the ring of the garden's praise crosses the
+    // river, every glint it passes flashes gold.
+    float praise = 0.0;
+    if (uPraise.w > 0.0) {
+      float pr = (length(xz - uPraise.xy) - uPraise.z) / 1.5;
+      praise = uPraise.w * exp(-pr * pr) * (0.55 + 0.45 * sin(ph * 40.0 + T * 9.0)) * fade;
+    }
+
+    vCol = (uSunCol * sun + uMoonCol * moon) / max(sun + moon, 1e-4) * spark + uGlowCol * glow
+      + uPraiseCol * praise * 1.4;
+    spark += praise;
     vStar = spark / (spark + glow + 1e-4);
 
     // A point sprite (a square that always faces the watcher, and only one
@@ -189,6 +201,8 @@ export function createLiving(scene) {
     uSunCol: { value: new THREE.Color(1.0, 0.93, 0.76) },
     uMoonCol: { value: new THREE.Color(0.72, 0.8, 1.0) },
     uGlowCol: { value: new THREE.Color(0.3, 0.8, 0.74) },
+    uPraise: { value: new THREE.Vector4(0, 0, 0, 0) },
+    uPraiseCol: { value: new THREE.Color(1.0, 0.76, 0.3) },
   };
   const material = new THREE.ShaderMaterial({
     uniforms: u,
@@ -225,9 +239,12 @@ export function createLiving(scene) {
   let dryFor = 0;
 
   // hour: the sky's own state; moonDir: the moon's unit direction.
-  function update(dt, walker, hour, moonDir) {
+  // praise (v44): the ring of the garden's praise ({x, z, r, k, on}), or null.
+  function update(dt, walker, hour, moonDir, praise = null) {
     clock += dt;
     u.uTime.value = clock;
+    if (praise && praise.on) u.uPraise.value.set(praise.x, praise.z, praise.r, praise.k);
+    else u.uPraise.value.w = 0;
     const rain = hour.rain || 0;
     hourAz = hour.sunAz;
     const dry = 1 - 0.85 * rain;

@@ -1113,6 +1113,61 @@ test.describe('the garden\'s features', () => {
     expect(await frame.evaluate(() => window.__world.dance(true))).toBe(false);
   });
 
+  test('every thing that hath breath: stood still under the Tree of Life, its twelve fruits kindle, and a ring of light goes out from its root over the whole garden — the trees bow, the lambs leap, the creatures give voice and he lifts his hands — once for each time he comes under it (v44, Psalm 150:6; Isaiah 55:12)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    // Where every visit begins, the tree waits, and nothing is drawn for it.
+    const s0 = await getState(page);
+    expect(s0.praise.stage).toBe('idle');
+    expect(s0.praise.armed).toBe(true);
+    expect(s0.praise.drawn).toBe(false);
+    const leaps0 = s0.flock.leaps;
+
+    // Set down under its boughs, a few strides from the trunk, and left to
+    // stand: the fruit kindles, all twelve, one by one.
+    await frame.evaluate(() => window.__world.teleport(-3.2, -4.0, 0));
+    await expect.poll(async () => (await getState(page)).praise.stage, { timeout: 30000 }).not.toBe('idle');
+    await expect.poll(async () => (await getState(page)).praise.lit, { timeout: 30000 }).toBe(12);
+    // Then the ring sets out, and its word is given.
+    await expect.poll(async () => { const c = (await getState(page)).caption; return c && c.name; }, { timeout: 30000 })
+      .toBe('Kol hanneshamah');
+
+    // It goes out to the rim and on into the haze, its motes drawn (one draw
+    // call) only while it does, within the budget all the while; he stands
+    // with his hands lifted as it goes.
+    let most = { calls: 0, triangles: 0 };
+    let praying = false, drawn = false, farthest = 0;
+    await expect.poll(async () => {
+      const s = await getState(page);
+      most = { calls: Math.max(most.calls, s.render.calls), triangles: Math.max(most.triangles, s.render.triangles) };
+      praying = praying || s.praise.praying;
+      drawn = drawn || s.praise.drawn;
+      farthest = Math.max(farthest, s.praise.radius);
+      return s.praise.stage === 'idle';
+    }, { timeout: 150000, intervals: [250] }).toBe(true);
+    expectInBudget({ render: most }, 'while the garden praises');
+    expect(praying).toBe(true);
+    expect(drawn).toBe(true);
+    expect(farthest).toBeGreaterThan(50);
+    const done = await getState(page);
+    expect(done.praise.times).toBe(1);
+    expect(done.praise.drawn).toBe(false);
+    expect(done.praise.praying).toBe(false);
+    // Every planted tree has bowed to it, the creatures have answered one
+    // after another, and the flock's lamb has leapt as it passed.
+    expect(done.praise.trees).toBeGreaterThanOrEqual(30);
+    expect(done.praise.voices).toBeGreaterThanOrEqual(10);
+    expect(done.flock.leaps).toBeGreaterThan(leaps0);
+
+    // Standing on under the tree, it does not go out again; walked out from
+    // under it, the tree will answer him the next time he comes.
+    expect(done.praise.armed).toBe(false);
+    await frame.evaluate(() => window.__world.teleport(-3.2, -14, 0));
+    await expect.poll(async () => (await getState(page)).praise.armed, { timeout: 20000 }).toBe(true);
+    expect((await getState(page)).praise.stage).toBe('idle');
+  });
+
   test('a small figure in a large place: the camera stands well back, looks out level past him, and sees as much as the screen\'s shape allows (AB#127)', async ({ page }) => {
     await gotoWorldReady(page);
     const frame = appFrame(page);

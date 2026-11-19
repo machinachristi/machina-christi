@@ -1,5 +1,5 @@
 {
-  "version": 43,
+  "version": 44,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -554,13 +554,30 @@
         { "text": "The first time he stands in heaven a few quiet words say that the sky may be tapped; once he has been shown the city on a device, they are not given there again.", "source": null },
         { "text": "The reed's line, its running light and the twelve pillars are one draw call between them: heaven's arrival is 30 draws, and the whole city seen from on high 32, of the 200 allowed.", "source": null }
       ]
+    },
+    {
+      "version": 44,
+      "date": "2026-11-19",
+      "realm": "eden",
+      "focus": "every thing that hath breath",
+      "changes": [
+        { "text": "Come and stand under the boughs of the Tree of Life, and the whole garden praises. Its word is given: Kol hanneshamah, every thing that hath breath.", "source": "Psalm 150:6" },
+        { "text": "First the tree itself: its twelve fruits kindle one by one round the crown, a harp note for each, climbing, while light gathers at its root.", "source": "Psalm 150:3" },
+        { "text": "Then its lamp flares, and a ring of gold light goes out from the root across the whole garden to its rim; wherever it passes, motes of light rise up off the grass and the water.", "source": "Psalm 19:4" },
+        { "text": "The trees planted over the meadow, and the Tree of Knowledge, bow outward as the ring reaches each one, nearest first, and shiver back to stillness.", "source": "Isaiah 55:12" },
+        { "text": "As the ring crosses the river every glint on the water flashes gold.", "source": "Psalm 98:8" },
+        { "text": "The garden gives its voices one after another as the ring goes out, softer and softer the farther it has gone: lambs and ewes, birds, the dove, the cattle, and the trees clapping, over a held swell of breath on the garden's own chord. The flock's lamb leaps as the ring passes it, wherever it is.", "source": "Psalm 148:10" },
+        { "text": "He lifts up his hands under the tree while the garden praises, if they are empty; and his companion, if she is near, stops, turns to the tree and lifts hers too until the ring has gone out.", "source": "Psalm 134:2" },
+        { "text": "The tree answers him once each time he comes under it: he walks out from under its boughs again, and it will answer him the next time.", "source": null },
+        { "text": "The motes are one draw call, drawn only while the ring is out; the ring on the ground, the fruit, the trees, the river and the lamb cost nothing more to draw. The garden's opening shot stays at 190 of the 200 allowed.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
     "Dancing before the glory: in heaven, tap him on the sea of glass and he dances before the light with all his might, and the multitude's lights sway with him (2 Samuel 6:14)",
-    "A leaf carried home: take a leaf of the Tree of Life down the ladder, and in the garden lay it at the foot of Eden's own Tree of Life, which answers it with light (Revelation 22:2; Genesis 2:9)",
-    "The kings of the earth: seen from on high, roads of light run in across the glass to all twelve gates from far off, and now and then a greater light comes in along one of them, bringing its glory into the city (Revelation 21:24)"
+    "A leaf carried home: take a leaf of heaven's Tree of Life down the ladder and lay it at the foot of Eden's own, and the garden's praise goes out from it at once, brighter than ever (Revelation 22:2; Psalm 150:6)",
+    "Praise him, all ye stars of light: under the Tree of Life by night, the ring of the garden's praise climbs on up into the sky as it goes out, and each star it passes rings and brightens (Psalm 148:3)"
   ]
 }

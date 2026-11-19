@@ -706,6 +706,19 @@ export function createFlock(scene, solids = [], trees = []) {
         }
       }
     }
+    // v44 (Psalm 148:10; 150:6): as the ring of the garden's praise passes
+    // each lamb, wherever it is, it leaps up — out of its rest too.
+    const ring = o.praise;
+    if (ring && ring.on) {
+      for (const S of sheep) {
+        if (!S.lamb || S.mode === 'carried') continue;
+        const d = Math.hypot(S.pos.x - ring.x, S.pos.z - ring.z);
+        if (d < ring.r && d > ring.r - 1.6) {
+          if (S.frisk === 0) leaps++;
+          if (S.frisk < JOY_AGAIN) S.frisk = JOY_FRISK;
+        }
+      }
+    }
     if (still === 0) restAnnounced = false;
     const holding = stage !== 'none';
 

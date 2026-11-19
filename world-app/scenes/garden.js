@@ -87,6 +87,7 @@ import { createGather } from './gather.js';
 import { createFlock } from './flock.js';
 import { createHost } from './host.js';
 import { createLadder } from './ladder.js';
+import { createPraise } from './praise.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
 
@@ -386,6 +387,13 @@ export async function createGarden(scene, rng) {
   // to look up. It rides the sky's own firmament and reads its signs; its
   // own seeded streams, drawn only here.
   const host = createHost(sky.celestial, sky.signs);
+  // v44 (Psalm 150:6; Isaiah 55:12): stand under the Tree of Life and the
+  // whole garden praises — its fruit kindles, and a ring of light goes out
+  // from its root to the rim, the trees bowing, the river flashing and the
+  // lambs leaping as it passes. It draws on the ground's own material (after
+  // tender's lines), and counts the planted trees it reaches. Its own seeded
+  // stream, drawn only here.
+  const praise = createPraise(scene, terrain.mesh.material, vegetation.treeSpots);
 
   // Where the establishing shot gazes: between the two sacred trees.
   const sacredMidpoint = new THREE.Vector3()
@@ -408,15 +416,22 @@ export async function createGarden(scene, rng) {
   // where his eyes are — or null.
   // dancing (v38): whether he dances for joy just now — no fruit falls into
   // his hands meanwhile, he takes up no lamb, and the lambs leap with him.
-  function update(dt, playerPos, lure = null, facing = 0, gaze = null, arms = null, dancing = false) {
+  // speed, free (v44): how fast he goes, m/s, and whether he stands on his
+  // feet as himself (not lying back, nor on the ladder) — what the Tree of
+  // Life asks before the garden's praise goes out from it.
+  function update(dt, playerPos, lure = null, facing = 0, gaze = null, arms = null, dancing = false,
+    speed = 0, free = true) {
     sky.setGaze(gaze ? gaze.k : 0);
     const hour = sky.update(dt, playerPos);   // the rain's drum rides with the walker
     // On the seventh day (v11, Genesis 2:2-3) the wind holds still and every
     // creature keeps a deeper rest — threaded through from the sky's own
     // day count rather than each module guessing at it independently.
     windNow = windOf(hour.t, hour.sabbath);
+    // The praise first (v44): the tree, the trees, the river and the flock
+    // below each answer where its ring stands this frame.
+    praise.update(dt, playerPos, speed, free && !dancing, hour.night);
     water.update(dt, hour.night);
-    reverence = vegetation.update(dt, hour.night, playerPos, hour.t, hour.sabbath);
+    reverence = vegetation.update(dt, hour.night, playerPos, hour.t, hour.sabbath, praise);
     creatures.update(dt, hour.night, playerPos, lure, hour.sabbath, hour.t);
     reeds.update(dt, playerPos, hour.t);
     gate.update(dt, hour.night, hour.t);
@@ -475,10 +490,11 @@ export async function createGarden(scene, rng) {
     watering.update(dt, playerPos, flock.cradling || dancing);
     blossom.update(dt, playerPos, hour.night);
     murmuration.update(dt, hour.t, playerPos, facing, hour.sunAz, !!(gaze && gaze.lying));
-    living.update(dt, playerPos, hour, hour.moonDir);
+    living.update(dt, playerPos, hour, hour.moonDir, praise.ring);
     gather.update(dt, playerPos, facing, flock.cradling || dancing);
     flock.update(dt, playerPos, hour.t, hour.night, {
       arms, facing, resting: !!lure, handsFull: watering.carrying || gather.busy || dancing, joy: dancing,
+      praise: praise.ring,
     });
     host.update(dt, hour, gaze);
     ladder.update(dt);
@@ -586,11 +602,19 @@ export async function createGarden(scene, rng) {
     doves: doves.state,
     watering: watering.state,
     // A word for the work just done has the line first (the watering, then
-    // the fruit given, v30); then the living water's name (v30); then the
-    // sheep's, as they fall in behind him or lie down round him (v31); then
-    // the great flock of birds' own name, the moment it comes to him (v29).
-    tending: () => watering.caption() || gather.caption() || living.caption()
+    // the fruit given, v30); then the garden's praise, as it goes out (v44);
+    // then the living water's name (v30); then the sheep's, as they fall in
+    // behind him or lie down round him (v31); then the great flock of birds'
+    // own name, the moment it comes to him (v29).
+    tending: () => watering.caption() || gather.caption() || praise.caption() || living.caption()
       || flock.caption() || murmuration.caption(),
+    // v44: the garden's praise — its state, its notes and voices, whether he
+    // lifts up his hands in it, and a way to call it now (tests, the curious).
+    praise: praise.state,
+    praiseSong: praise.song,
+    praiseNow: praise.start,
+    get praising() { return praise.praying; },
+    get praiseRising() { return praise.rising; },
     flock: flock.state,
     ladder: ladder.state,
     flockSong: flock.song,

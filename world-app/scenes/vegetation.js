@@ -90,6 +90,10 @@ export function createVegetation(scene, rng) {
   // Kept in scope for the night: after dark the Tree of Life's lamp and
   // golden canopy brighten, and the motes turn firefly (see update()).
   let lifeLamp, lifeGold;
+  // Its twelve fruits (v44, Psalm 150:6): kindled one by one when the
+  // garden praises (praise.js), and set back as they were after.
+  let lifeFruit;
+  let fruitsKindled = false;
   // Kept in scope for the cool of the day (v10): each sacred tree's own
   // group, so the whole tree can bow from its root as the gust passes.
   let lifeTreeGroup, knowledgeTreeGroup;
@@ -144,6 +148,7 @@ export function createVegetation(scene, rng) {
     group.add(t);
     lifeLamp = lamp;
     lifeGold = gold;
+    lifeFruit = fruitMesh;
     lifeTreeGroup = t;
     lifeFruitSpot = {
       pos: { x: t.position.x, y: t.position.y + 3.6, z: t.position.z },
@@ -376,19 +381,41 @@ export function createVegetation(scene, rng) {
   const windP = new THREE.Vector3();
   const windS = new THREE.Vector3();
   const Y_AXIS = new THREE.Vector3(0, 1, 0);
+  // v44: the bow as the garden's praise passes a tree — about a level axis
+  // square to the way out from the Tree of Life, so the crown goes outward.
+  const bowAxis = new THREE.Vector3();
+  const bowQ = new THREE.Quaternion();
+  let bowing = false;
+  const fruitM = new THREE.Matrix4();
+  const fruitC = new THREE.Color();
+  const WHITE = new THREE.Color(1, 1, 1);
+  // Which way out from the Tree of Life the Tree of Knowledge stands.
+  const KNOW_OUT = new THREE.Vector2(
+    TREE_OF_KNOWLEDGE_POS.x - TREE_OF_LIFE_POS.x, TREE_OF_KNOWLEDGE_POS.z - TREE_OF_LIFE_POS.z,
+  ).normalize();
 
   // The cool of the day (Genesis 3:8, foreshadowed): re-lean every canopy
   // instance from its own ground point as the evening gust's leading edge
   // reaches it, then settle it back as the edge moves on. Skipped entirely
   // outside the gust's window — by the time it fully fades every instance
   // has already been written back to its resting lean of zero.
-  function swayCanopies(cycleT, sabbath) {
+  // `praise` (v44): while the garden's praise goes out (praise.js), each
+  // crown also bows outward as the ring reaches it, and shivers back — "all
+  // the trees of the field shall clap their hands" (Isaiah 55:12).
+  function swayCanopies(cycleT, sabbath, praise = null) {
     for (const { mesh, bases } of canopySway) {
       for (let i = 0; i < bases.length; i++) {
         const b = bases[i];
         const g = gustAt(cycleT, b.x, sabbath);
         const clap = Math.sin(t * CLAP_RATE + b.yaw * 5) * Math.sin(t * 2.1 + b.x) * CLAP_TILT;
         windQ.setFromAxisAngle(WIND_AXIS, g * (CANOPY_TILT + clap));
+        const bow = praise ? praise.bow(b.x, b.z) : 0;
+        if (bow !== 0) {
+          const ox = b.x - TREE_OF_LIFE_POS.x, oz = b.z - TREE_OF_LIFE_POS.z;
+          const ol = Math.hypot(ox, oz) || 1;
+          bowAxis.set(oz / ol, 0, -ox / ol);
+          windQ.premultiply(bowQ.setFromAxisAngle(bowAxis, bow));
+        }
         yawQ.setFromAxisAngle(Y_AXIS, b.yaw);
         mixQ.multiplyQuaternions(windQ, yawQ);
         liftVec.set(0, b.lift, 0).applyQuaternion(windQ);
@@ -412,14 +439,45 @@ export function createVegetation(scene, rng) {
   // needs to know when and where the evening gust presently stands.
   // `sabbath` (v11): the seventh day's deeper rest — passed straight through
   // to wind.js, which holds the gust still when it's true.
-  function update(dt, night = 0, playerPos = null, cycleT = 0.1, sabbath = false) {
+  // `praise` (v44, praise.js): the garden's praise, when it goes out from
+  // the Tree of Life — its twelve fruits kindle, its lamp flares, and every
+  // tree bows as the ring passes. Null, or idle, the rest of the time.
+  function update(dt, night = 0, playerPos = null, cycleT = 0.1, sabbath = false, praise = null) {
     t += dt;
+    const passing = praise && praise.ring.on ? praise : null;   // the praise, while its ring is out
 
     // The two sacred trees bow together from the root as the gust passes —
     // each at its own place, so the one it reaches first bows first.
     lifeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_LIFE_POS.x, sabbath) * TREE_TILT;
-    knowledgeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_KNOWLEDGE_POS.x, sabbath) * TREE_TILT;
-    if (windOf(cycleT, sabbath) > 0.001) swayCanopies(cycleT, sabbath);
+    // …and the Tree of Knowledge bows outward too as the praise reaches it.
+    const kBow = passing ? passing.bow(TREE_OF_KNOWLEDGE_POS.x, TREE_OF_KNOWLEDGE_POS.z) * 0.6 : 0;
+    knowledgeTreeGroup.rotation.z = -gustAt(cycleT, TREE_OF_KNOWLEDGE_POS.x, sabbath) * TREE_TILT - kBow * KNOW_OUT.x;
+    knowledgeTreeGroup.rotation.x = kBow * KNOW_OUT.y;
+    // While the ring is out, and once more after it has gone (to set every
+    // crown back as the wind alone would have it).
+    if (windOf(cycleT, sabbath) > 0.001 || passing || bowing) {
+      swayCanopies(cycleT, sabbath, passing);
+      bowing = !!passing;
+    }
+
+    // The twelve fruits kindled, each as brightly as the praise says — more
+    // than its own colour, so where the light pass runs it blooms into the
+    // air round it; put back as they were the frame it ends.
+    const kindling = !!(praise && praise.active);
+    if (kindling || fruitsKindled) {
+      for (let i = 0; i < LIFE_FRUITS.length; i++) {
+        const f = LIFE_FRUITS[i];
+        const g = kindling ? praise.fruitGlow(i) : 0;
+        const s = 1 + 0.9 * Math.min(g, 1.3);
+        fruitM.makeScale(s, s, s).setPosition(f.x, f.y, f.z);
+        lifeFruit.setMatrixAt(i, fruitM);
+        fruitC.set(f.hue).lerp(WHITE, 0.4 * Math.min(g, 1)).multiplyScalar(1 + 1.4 * g);
+        lifeFruit.setColorAt(i, fruitC);
+      }
+      lifeFruit.instanceMatrix.needsUpdate = true;
+      lifeFruit.instanceColor.needsUpdate = true;
+      fruitsKindled = kindling;
+    }
     const arr = moteGeo.attributes.position.array;
     for (let i = 0; i < MOTES; i++) {
       const s2 = moteSeed[i];
@@ -449,8 +507,9 @@ export function createVegetation(scene, rng) {
       reverence = 1 - smoothstep(3.5, 8.5, Math.min(dL, dK));
     }
 
-    lifeLamp.intensity = 26 + night * 30 + reverence * 16;
-    lifeGold.emissiveIntensity = LIFE_GLOW + night * 0.22 + reverence * 0.12;
+    const flare = praise ? praise.lamp : 0;   // v44: the lamp's flare as the praise goes out
+    lifeLamp.intensity = 26 + night * 30 + reverence * 16 + flare * 70;
+    lifeGold.emissiveIntensity = LIFE_GLOW + night * 0.22 + reverence * 0.12 + flare * 0.35;
     motes.material.opacity = Math.min(1, 0.8 + night * 0.2 + reverence * 0.15);
     motes.material.size = 0.16 + night * 0.06 + reverence * 0.03;
 

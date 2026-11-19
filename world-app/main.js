@@ -240,6 +240,24 @@ function updateCompanion(dt) {
     companion.update(dt, { x: 0, z: 0 }, null, garden.heightAt, garden.radius, footing.keepOut);
     return;
   }
+  // When the garden praises (v44 — "both young men, and maidens... let them
+  // praise the name of the LORD", Psalm 148:12-13), she stops where she is
+  // if she is near enough to see it, turns to the Tree of Life, and lifts up
+  // her hands too until the ring has gone out; then she goes on her way.
+  const q = companion.group.position;
+  if (garden.praiseRising && !companion.wading
+    && Math.hypot(q.x - TREE_OF_LIFE_POS.x, q.z - TREE_OF_LIFE_POS.z) < 16) {
+    const yaw = Math.atan2(TREE_OF_LIFE_POS.x - q.x, TREE_OF_LIFE_POS.z - q.z);
+    companion.group.rotation.y += shortestAngle(companion.group.rotation.y, yaw) * (1 - Math.exp(-5 * dt));
+    companion.setPraying(true);
+    companion.update(dt, { x: 0, z: 0 }, null, garden.heightAt, garden.radius, footing.keepOut);
+    // Stopped mid-walk, what was left of that walk's time is not kept as a
+    // pause: a short one, and then a new way.
+    companionWander.until = companionWander.mode === 'walk' ? 1.5 : Math.max(companionWander.until, 1.5);
+    companionWander.mode = 'pause';
+    return;
+  }
+  companion.setPraying(false);
   const w = companionWander;
   w.until -= dt;
   let move = { x: 0, z: 0 };
@@ -329,6 +347,12 @@ let heardLeaps = 0;
 // v43: the harp as the golden reed passes each gate, and the city measured.
 let heardReed = 0;
 let heardMeasured = 0;
+// v44: the garden's praise — a harp note as each of the Tree of Life's
+// fruits kindles, the lamp's flare as the ring sets out, and the creatures'
+// voices as it reaches them.
+let heardKindle = 0;
+let heardFlares = 0;
+let heardVoices = 0;
 
 // Stillness (Genesis 2:19, the creatures drawn to the man): stand quiet by
 // the water a moment and the walker settles down to sit, and the shyer
@@ -657,15 +681,22 @@ function heavenSong() {
 
 // Everything the garden does in a frame while he is in it.
 function edenFrame(dt) {
-  character.setPraying(false);
   // Sitting by the water, or lying back in the grass (v34), he is still
   // enough for the shyer creatures to come near.
   const lure = seated || consider.lying
     ? { x: character.group.position.x, z: character.group.position.z }
     : null;
   // While the realm has him (the ladder) his arms are not his own.
+  // v44: the Tree of Life answers him only standing on his own feet — not
+  // lying back, nor on the ladder.
+  const free = realm.idle && !realm.drive() && !consider.lying && character.lie === 0;
   const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze,
-    realm.drive() ? null : character.cradleAt(cradleSpot), dance.dancing);
+    realm.drive() ? null : character.cradleAt(cradleSpot), dance.dancing, character.speed, free);
+  // "Lift up your hands in the sanctuary, and bless the LORD" (v44, Psalm
+  // 134:2): he lifts his hands while the garden's praise goes out from the
+  // tree he stands under — if they are empty.
+  character.setPraying(garden.praising && !garden.carrying && !garden.gathering && !garden.cradling);
+  praiseSong();
   // v38 (Psalm 149:3): the dance keeps its own time; the timbrel sounds each
   // step, the harp plays its tune, and the phone gives a little leap too.
   dance.update(dt, hour.night);
@@ -745,6 +776,28 @@ function edenFrame(dt) {
   if (sung.notes !== heardStars) {
     heardStars = sung.notes;
     ambience.star(sung.note);
+  }
+}
+
+// The garden's praise (v44, Psalm 150:6): a harp note climbing as each of
+// the Tree of Life's twelve fruits kindles; as its lamp flares and the ring
+// sets out, a chime, the swell of breath on the garden's chord, and a small
+// stir in the phone; then each creature's voice as the ring reaches it.
+function praiseSong() {
+  const ps = garden.praiseSong();
+  if (ps.notes !== heardKindle) {
+    heardKindle = ps.notes;
+    ambience.harp(ps.note);
+  }
+  if (ps.flares !== heardFlares) {
+    heardFlares = ps.flares;
+    ambience.chime();
+    ambience.praise();
+    try { if (navigator.vibrate) navigator.vibrate([14, 70, 10]); } catch (_) { /* not every phone */ }
+  }
+  if (ps.voices !== heardVoices) {
+    heardVoices = ps.voices;
+    ambience.voice(ps.voice, ps.level);
   }
 }
 
@@ -1052,6 +1105,15 @@ window.__world = {
       // height's word while it is given, `times` this visit. What heaven
       // does meanwhile rides on `heaven.reed`.
       behold: behold.state(),
+      // v44: every thing that hath breath (Psalm 150:6) — `stage` idle |
+      // kindling (the Tree of Life's fruit lighting one by one) | going (the
+      // ring out over the garden) | settling; `t` seconds into it, `radius`
+      // how far out the ring is, `lit` fruits kindled, `trees` planted trees
+      // it has reached, `voices` creatures that have answered, `praying`
+      // whether his hands are lifted, `armed` whether the tree will answer
+      // him the next time he stands under it, `times` this visit, `drawn`
+      // whether the motes are drawn just now (one draw call, only then).
+      praise: garden.praise(),
       // Live render cost, so the smoke suite can hold every future
       // refinement to the performance budget.
       // (AB#130: the garden's own cost, taken before the light pass's
@@ -1117,6 +1179,12 @@ window.__world = {
     if (!on) dance.stop();
     else if (!dance.dancing) beginDance();
     return dance.dancing;
+  },
+  // The garden praises now (v44), as it does when he stands under the Tree
+  // of Life — wherever he is. Returns whether it began (not if it already
+  // goes out).
+  praise() {
+    return garden.praiseNow();
   },
   // Carry the view up to show him the city (true), as a tap on heaven's sky
   // does, or bring it down again (false) — for tests and the curious (v43).
