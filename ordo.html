@@ -132,6 +132,10 @@
       font-size: clamp(15px, 4vw, 17px);
       transition: border-color 0.25s ease, color 0.25s ease;
     }
+    /* The circles stay small; an invisible ring around each makes the tap
+       area 44px for a thumb (AB#145). */
+    #prev-day, #next-day { position: relative; }
+    #prev-day::before, #next-day::before { content: ""; position: absolute; inset: -8px; }
     .daterail a:hover, .daterail a:focus-visible { border-color: rgba(201, 162, 39, 0.7); color: #fff; outline: none; }
     .daterail a.today {
       width: auto;
@@ -221,7 +225,7 @@
       cursor: pointer;
     }
     .gospel .more:hover, .gospel .more:focus-visible { color: #fff; outline: none; text-decoration-color: rgba(201, 162, 39, 0.9); }
-    .gospel .attribution { font-size: 13px; color: rgba(232, 213, 163, 0.5); margin: 4px 0 0; }
+    .gospel .attribution { font-size: 13px; color: rgba(232, 213, 163, 0.6); margin: 4px 0 0; }
     .gospel .attribution a { color: inherit; }
 
     #prayer:not(:empty) { margin-top: 34px; }
@@ -262,7 +266,7 @@
     }
     .saint .attribution {
       font-size: 13px;
-      color: rgba(232, 213, 163, 0.5);
+      color: rgba(232, 213, 163, 0.6);
       margin-bottom: 0;
     }
     .saint .attribution a { color: inherit; }
@@ -273,7 +277,7 @@
       color: rgba(232, 213, 163, 0.66);
       margin: 0.9em 0 0;
     }
-    .saint .facts a { color: rgba(232, 213, 163, 0.5); }
+    .saint .facts a { color: rgba(232, 213, 163, 0.6); }
 
     .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
 

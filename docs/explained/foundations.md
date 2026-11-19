@@ -18,6 +18,20 @@ painting itself, so it costs no extra download.
 *Here:* the homepage gates' gold edge, the glow around each emblem, and the
 light filling the gate you're on are all CSS rules in `index.html`.
 
+**Contrast ratio.** A number for how clearly words stand out from what's behind
+them: 1 to 1 is grey on the same grey, 21 to 1 is black on white. Like reading
+a sign at dusk: faint gold on near-black fades first for tired or older eyes.
+The usual line for easy reading is 4.5 to 1.
+*Here:* the site's quiet notes ("literally, …", the sources) were gold at half
+strength, about 4 to 1; they are now at 0.6, about 5.3 to 1, and
+`tests/kind-to-eyes.spec.js` measures every reading page.
+
+**Tap target (hit area).** The patch of screen that answers a finger, which
+can be bigger than the shape you see, like a doorbell set in a wide brass
+plate. Phone makers recommend about 44 pixels square, roughly a fingertip.
+*Here:* Ordo's small day arrows keep their look, but an invisible ring around
+each makes the tap area 44 pixels; the test taps 21 pixels off-centre to prove it.
+
 **Server.** A computer somewhere else that is always on, waiting for questions.
 Unlike a leaflet, it can work out a fresh answer each time it's asked.
 *Here:* the Azure Function app, which wakes up when someone asks it something.

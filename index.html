@@ -335,13 +335,16 @@
     }
     .waymarks button {
       position: relative;
-      width: 40px;
+      width: 44px;
       height: 38px;
       background: none;
       border: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
+    /* An invisible pad makes each dot a full 44px tall for a thumb (AB#145);
+       the row itself keeps its height, so nothing on the page moves. */
+    .waymarks button::before { content: ""; position: absolute; inset: -3px 0; }
     .waymarks button::after {
       content: "";
       position: absolute;
