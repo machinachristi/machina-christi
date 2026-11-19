@@ -217,7 +217,8 @@ export function createAmbience() {
   }
 
   // One short birdcall: a few quick rising notes, softly panned somewhere.
-  function chirp() {
+  // `k` (v44): how loud, 1 as it always was — softer when it is far off.
+  function chirp(k = 1) {
     const t0 = ctx.currentTime + 0.02;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
@@ -230,7 +231,7 @@ export function createAmbience() {
       const f = base * (1 + (Math.random() - 0.5) * 0.18);
       osc.frequency.setValueAtTime(f, tt);
       osc.frequency.exponentialRampToValueAtTime(f * (1.12 + Math.random() * 0.2), tt + 0.055);
-      g.gain.linearRampToValueAtTime(0.032, tt + 0.014);
+      g.gain.linearRampToValueAtTime(0.032 * k, tt + 0.014);
       g.gain.exponentialRampToValueAtTime(0.0008, tt + 0.1);
       tt += 0.1 + Math.random() * 0.08;
     }
@@ -282,8 +283,8 @@ export function createAmbience() {
 
   // A flock begun (Genesis 1:24): the cattle low softly to one another —
   // one breathy, low-pitched tone that swells and settles, panned softly
-  // somewhere in the western meadow they keep to.
-  function low() {
+  // somewhere in the western meadow they keep to. (`k`: how loud, as chirp.)
+  function low(k = 1) {
     const t0 = ctx.currentTime + 0.02;
     const osc = ctx.createOscillator();
     osc.type = 'sine';
@@ -297,8 +298,8 @@ export function createAmbience() {
     const g = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(0.05, t0 + 0.18);
-    g.gain.linearRampToValueAtTime(0.035, t0 + 0.55);
+    g.gain.linearRampToValueAtTime(0.05 * k, t0 + 0.18);
+    g.gain.linearRampToValueAtTime(0.035 * k, t0 + 0.55);
     g.gain.exponentialRampToValueAtTime(0.0004, t0 + 1.1);
     osc.connect(lp);
     lp.connect(g);
@@ -317,7 +318,8 @@ export function createAmbience() {
   // flowers appear on the earth... the time of the singing of birds is
   // come, and the voice of the turtle is heard in our land") — three soft,
   // low coos, only called up while the evening gust is really moving.
-  function coo() {
+  // (`k`: how loud, as chirp.)
+  function coo(k = 1) {
     const t0 = ctx.currentTime + 0.02;
     const osc = ctx.createOscillator();
     osc.type = 'sine';
@@ -333,7 +335,7 @@ export function createAmbience() {
     let tt = t0;
     for (const mult of notes) {
       osc.frequency.setValueAtTime(base * mult, tt);
-      g.gain.linearRampToValueAtTime(0.024, tt + 0.09);
+      g.gain.linearRampToValueAtTime(0.024 * k, tt + 0.09);
       g.gain.exponentialRampToValueAtTime(0.0006, tt + 0.34);
       tt += 0.42;
     }
@@ -568,7 +570,8 @@ export function createAmbience() {
   // bleat in it, through a nasal formant, the lamb's high and short, the
   // ewe's lower and longer. Both kept quiet, under the pipe.
   let lastBleat = 0;
-  function bleat(young = true) {
+  // (`k`, v44: how loud, 1 as it always was — softer when it is far off.)
+  function bleat(young = true, k = 1) {
     if (!ctx || ctx.state !== 'running' || muted || !master) return;
     if (ctx.currentTime - lastBleat < 0.3) return;
     lastBleat = ctx.currentTime;
@@ -600,8 +603,8 @@ export function createAmbience() {
     lp.frequency.value = 2600;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(young ? 0.07 : 0.06, t0 + 0.06);
-    g.gain.setValueAtTime(young ? 0.063 : 0.054, t0 + len * 0.55);
+    g.gain.linearRampToValueAtTime((young ? 0.07 : 0.06) * k, t0 + 0.06);
+    g.gain.setValueAtTime((young ? 0.063 : 0.054) * k, t0 + len * 0.55);
     g.gain.exponentialRampToValueAtTime(0.0004, t0 + len);
     osc.connect(amp).connect(formant).connect(lp).connect(g).connect(master);
     for (const n of [osc, lfo]) { n.start(t0); n.stop(t0 + len + 0.05); }
@@ -826,6 +829,87 @@ export function createAmbience() {
     vib.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 
+  // "Let every thing that hath breath praise the LORD" (Psalm 150:6): as the
+  // garden's praise goes out from the Tree of Life (v44, praise.js), a swell
+  // of breath held on the garden's own chord, E major — each voice a breath
+  // of wind tuned to its note, with a soft pure tone inside it, coming in
+  // from the lowest up as the ring goes farther out, held, and let go as it
+  // reaches the rim. No words; the breath itself is the praise.
+  const PRAISE_CHORD = [
+    { f: 164.81, at: 0.0 }, { f: 246.94, at: 0.6 }, { f: 329.63, at: 1.3 },
+    { f: 415.3, at: 2.1 }, { f: 493.88, at: 2.9 }, { f: 659.25, at: 3.8 },
+  ];
+  let lastPraise = -1e6;
+  function praise() {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    if (ctx.currentTime - lastPraise < 10) return;
+    lastPraise = ctx.currentTime;
+    const t0 = ctx.currentTime + 0.05;
+    const hold = t0 + 6.4, end = t0 + 10.5;
+    const out = ctx.createGain();
+    out.gain.value = 1;
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 3200;
+    soft.Q.value = 0.3;
+    out.connect(soft).connect(master);
+    const nodes = [out, soft];
+    let first = null;
+    PRAISE_CHORD.forEach(({ f, at }, i) => {
+      const v = ctx.createGain();
+      v.gain.setValueAtTime(0.0001, t0 + at);
+      v.gain.linearRampToValueAtTime(1, t0 + at + 1.6);
+      v.gain.setValueAtTime(1, hold);
+      v.gain.exponentialRampToValueAtTime(0.0004, end);
+      v.connect(out);
+      // The breath: noise drawn through a narrow band at the note.
+      const breath = ctx.createBufferSource();
+      breath.buffer = refs.rustleBuf;
+      breath.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = f;
+      bp.Q.value = 22;
+      // (The noise is thinner the higher the band, so the higher breaths
+      // are given more of it, to stand level with the low.)
+      const bg = ctx.createGain();
+      bg.gain.value = 0.12 * Math.pow(f / 164.81, 1.2) / (1 + i * 0.1);
+      breath.connect(bp).connect(bg).connect(v);
+      // The tone inside it, with a slow waver of its own.
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      const og = ctx.createGain();
+      og.gain.value = 0.006 / (1 + i * 0.25);
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.21 + i * 0.07;
+      const depth = ctx.createGain();
+      depth.gain.value = f * 0.003;
+      lfo.connect(depth).connect(osc.frequency);
+      osc.connect(og).connect(v);
+      breath.start(t0 + at, Math.random() * 1.5);
+      for (const n of [osc, lfo]) n.start(t0 + at);
+      for (const n of [breath, osc, lfo]) n.stop(end + 0.05);
+      nodes.push(v, breath, bp, bg, osc, og, lfo, depth);
+      if (!first) first = osc;
+    });
+    first.onended = () => { for (const n of nodes) n.disconnect(); };
+  }
+
+  // The garden's voices as the praise goes out (v44), each its own: the
+  // lamb's and the ewe's bleat, a bird's call, the dove's coo, the cattle
+  // lowing, and the trees clapping their hands — `k` softer the farther out
+  // the ring has gone when it is given (praise.js voiceLevel).
+  function voice(kind, k = 1) {
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
+    const level = clamp(k, 0, 1);
+    if (kind === 'lamb' || kind === 'ewe') bleat(kind === 'lamb', level);
+    else if (kind === 'dove') coo(level);
+    else if (kind === 'ox') low(level);
+    else if (kind === 'clap') clap(0.8 * level);
+    else chirp(level);
+  }
+
   function ensureStarted() {
     if (!supported || muted) return;
     if (!ctx) {
@@ -1036,5 +1120,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, rest, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, state };
+  return { update, setMuted, rest, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, praise, voice, state };
 }
