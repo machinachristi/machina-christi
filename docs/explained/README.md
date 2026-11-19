@@ -19,6 +19,7 @@ afterthought: every phase of work adds to them.
   - [Ordo — a daily page: the Gospel itself, and a prayer for the day](ordo-daily-page.md)
   - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
   - [The homepage gates — three look tests, and the light they left behind](homepage-gates-look-tests.md)
+  - [The front door — what this place is, today's prayer, and the gates beside Eden](front-door.md)
   - [The morning walk — a robot checks the live site every day](live-site-check.md)
   - [The waiting room at Azure's door — why the API sometimes took a minute](api-waiting-room.md)
   - [The letterbox that cost money — trimming the API's storage bill](storage-bill.md)
