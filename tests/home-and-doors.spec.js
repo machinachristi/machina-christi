@@ -73,6 +73,52 @@ test.describe('home page', () => {
     expect(errors).toEqual([]);
   });
 
+  test('the front door says what this place is (AB#143)', async ({ page }) => {
+    await page.goto('/index.html');
+    await expect(page.locator('.hero .tagline')).toHaveText('A little place to pray, to learn, and to wander');
+  });
+
+  // Each weekday's "Pray today" opens a prayer that really exists, by its
+  // own name. 2026-11-15 was a Sunday; the clock is set to noon each day.
+  const WEEK = ['mass', 'glory-be', 'angel-of-god', 'our-father', 'lord-i-am-not-worthy', 'o-blood-and-water', 'hail-mary'];
+  for (const [day, id] of WEEK.entries()) {
+    test(`Pray today on weekday ${day} opens ${id}`, async ({ page, request }) => {
+      await page.clock.setFixedTime(new Date(2026, 10, 15 + day, 12));
+      await page.goto('/index.html');
+      const link = page.locator('[data-pray-today]');
+      await expect(link).toHaveAttribute('href', `prayer.html?p=${id}`);
+      const prayers = await (await request.get('/pray/prayers.json')).json();
+      const list = Array.isArray(prayers) ? prayers : prayers.prayers;
+      const prayer = list.find(p => p.id === id);
+      expect(prayer, `${id} is in pray/prayers.json`).toBeTruthy();
+      await expect(link).toContainText(prayer.title);
+      const box = await link.boundingBox();
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    });
+  }
+
+  test('Pray today walks into the prayer', async ({ page }) => {
+    await page.clock.setFixedTime(new Date(2026, 10, 21, 12));   // a Saturday
+    await page.goto('/index.html');
+    await page.locator('[data-pray-today]').click();
+    await page.waitForURL('**/prayer.html?p=hail-mary');
+  });
+
+  test('a small phone (375×667) still sees the whole front door without scrolling', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/index.html');
+    await expect(page.locator('body')).toHaveClass(/lit/);
+    const fit = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollHeight - innerHeight,
+      today: document.querySelector('.today a').getBoundingClientRect().bottom,
+      dots: document.querySelector('.waymarks').getBoundingClientRect().bottom,
+      card: document.querySelector('.portal.is-active').offsetWidth,   // its size, not mid-glow scale
+    }));
+    expect(fit.scroll).toBeLessThanOrEqual(0);
+    expect(fit.dots).toBeLessThanOrEqual(667);
+    expect(fit.card).toBe(195);   // the gate keeps its full size
+  });
+
   test('portals are keyboard-focusable', async ({ page }) => {
     await page.goto('/index.html');
     const focused = await page.evaluate(() => {

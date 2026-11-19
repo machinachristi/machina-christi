@@ -275,18 +275,53 @@
       transition: color 0.35s ease;
     }
 
-    /* One shared cue beneath the gates, in place of the word "enter" once
-       repeated on every arch. A single line reads cleaner and larger; the
-       JS below swaps "Tap" for "Click" on a mouse pointer. */
-    .hint {
-      text-align: center;
+    /* What this place is, in one line under the name (AB#143; the owner's
+       words). Quiet italic, like the season line beneath it. */
+    .hero .tagline {
       font-style: italic;
-      font-size: clamp(15px, 4.2vw, 18px);
-      letter-spacing: 0.16em;
-      text-indent: 0.16em;
-      color: rgba(232, 213, 163, 0.62);
+      font-size: 15.5px;
+      letter-spacing: 0.03em;
+      line-height: 1.45;
+      color: rgba(232, 213, 163, 0.86);
+      max-width: 30ch;
+      margin-top: -4px;
+      text-wrap: balance;   /* two even lines, never one word left alone */
+    }
+
+    /* "Pray today", beneath the gates: one prayer for the day of the week
+       (AB#143), standing where the "Tap a gate to enter" cue once stood. A
+       quiet framed line, not a banner; the weekday table is in the script. */
+    .today {
+      text-align: center;
       padding: 0 20px;
       margin-top: 6px;
+    }
+    .today a {
+      display: inline-block;
+      padding: 9px 18px;
+      border: 1px solid rgba(222, 190, 112, 0.38);
+      border-radius: 14px;
+      background: rgba(138, 170, 222, 0.07);
+      color: rgba(232, 213, 163, 0.92);
+      font-style: italic;
+      font-size: 15px;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+    .today a:hover, .today a:focus-visible {
+      border-color: rgba(222, 190, 112, 0.7);
+      background: rgba(201, 162, 39, 0.1);
+      outline: none;
+    }
+    .today__label {
+      display: block;
+      margin-bottom: 3px;
+      font-style: normal;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(232, 213, 163, 0.66);
     }
 
     /* With JS, gates away from the center rest dimmer and a step back;
@@ -447,6 +482,7 @@
   </a>
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
+    <p class="tagline">A little place to pray, to learn, and to wander</p>
     <div class="rule" aria-hidden="true"></div>
     <!-- The Church's season, filled in by assets/season.js; stays hidden if
          the season can't be fetched. -->
@@ -550,7 +586,9 @@
       </a>
     </div>
 
-    <p class="hint">Tap a gate to enter</p>
+    <!-- One prayer for the day of the week, chosen by the script below; without
+         the script it still opens the Our Father. -->
+    <p class="today"><a href="prayer.html?p=our-father" data-pray-today><span class="today__label">Pray today</span><span data-pray-today-name>The Our Father</span> &rsaquo;</a></p>
     <div class="waymarks"></div>
   </nav>
 
@@ -653,10 +691,6 @@
 
       /* ── Desktop: arrows and drag-to-scroll ─────────────────── */
       if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-        // On a mouse, the gesture is a click, not a tap.
-        const hint = document.querySelector('.hint');
-        if (hint) hint.textContent = 'Click a gate to enter';
-
         const makeArrow = (dir, label, glyph) => {
           const b = document.createElement('button');
           b.type = 'button';
@@ -837,6 +871,27 @@
         portals.forEach(p => p.classList.remove('opening'));
         setActive(nearest());
       });
+
+      /* ── Pray today ─────────────────────────────────────────
+         One prayer for each day of the week, after the old weekday
+         devotions (approved by the owner, AB#143). The visitor's own
+         calendar day; no server is asked. B2 may later follow the
+         Church's day instead. */
+      const PRAY_TODAY = [
+        ['mass', 'The Mass'],                          // Sunday, the Lord's day
+        ['glory-be', 'Glory Be'],                      // Monday, the Holy Trinity
+        ['angel-of-god', 'Angel of God'],              // Tuesday, the angels
+        ['our-father', 'The Our Father'],              // Wednesday
+        ['lord-i-am-not-worthy', 'Lord, I Am Not Worthy'], // Thursday, the Eucharist
+        ['o-blood-and-water', 'O Blood and Water'],    // Friday, the Passion
+        ['hail-mary', 'The Hail Mary'],                // Saturday, Our Lady
+      ];
+      const todayLink = document.querySelector('[data-pray-today]');
+      if (todayLink) {
+        const [id, name] = PRAY_TODAY[new Date().getDay()];
+        todayLink.href = 'prayer.html?p=' + id;
+        todayLink.querySelector('[data-pray-today-name]').textContent = name;
+      }
 
       // Open on Eden, the heart of the way, with gates on either side. Found
       // by name, so adding a gate on either side never moves the opening.
