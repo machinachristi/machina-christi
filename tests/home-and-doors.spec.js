@@ -47,15 +47,16 @@ test.describe('home page', () => {
     await expect(page.locator('.portal--pray .portal__title')).toContainText('Pray');
     await expect(page.locator('.portal--logos .portal__title')).toContainText('Logos');
 
-    // Gate order: one gate left of Eden, four to its right; Logos, for
-    // learning Thai, stands beside Pray, the prayers in Thai.
+    // Gate order (AB#144): Eden stands third, so Ordo (today in the Church)
+    // and Pray are each one swipe from the opening gate; Logos, for learning
+    // Thai, stands beside Pray, the prayers in Thai; the Workshop closes the row.
     const order = await page.$$eval('.portal', ps => ps.map(p => p.className.match(/portal--(\w+)/)[1]));
-    expect(order).toEqual(['workshop', 'eden', 'about', 'ordo', 'pray', 'logos']);
+    expect(order).toEqual(['about', 'ordo', 'eden', 'pray', 'logos', 'workshop']);
 
     // One waymark dot per portal; Eden stands centered on arrival, so its
-    // (second) dot is the current one.
+    // (third) dot is the current one.
     await expect(page.locator('.waymarks button')).toHaveCount(6);
-    await expect(page.locator('.waymarks button').nth(1)).toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('.waymarks button').nth(2)).toHaveAttribute('aria-current', 'true');
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
 
     // The strip itself must be swipeable (its content overflows it)…
@@ -91,17 +92,17 @@ test.describe('home page', () => {
 
   test('tapping a side portal centers it instead of entering', async ({ page }) => {
     await page.goto('/index.html');
-    // About peeks in at the right edge (Eden is centered). Tap its sliver with
+    // Pray peeks in at the right edge (Eden is centered). Tap its sliver with
     // raw coordinates — locator.click() would auto-scroll it into view first
     // and defeat the very behavior under test.
-    const box = await page.locator('.portal--about').boundingBox();
+    const box = await page.locator('.portal--pray').boundingBox();
     const vw = page.viewportSize().width;
     await page.mouse.click(Math.min(vw - 12, box.x + 24), box.y + box.height / 2);
-    await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
+    await expect(page.locator('.portal--pray')).toHaveClass(/is-active/);
     expect(page.url()).toContain('index.html');
     // A second tap, now that it is centered, walks through.
-    await page.locator('.portal--about').click();
-    await page.waitForURL('**/about.html');
+    await page.locator('.portal--pray').click();
+    await page.waitForURL('**/pray.html');
   });
 
   test('a tap on the gate you just swiped toward enters it, even mid-settle', async ({ page }) => {
@@ -109,7 +110,7 @@ test.describe('home page', () => {
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
 
     // Reproduce the beat right after a swipe: the strip is still coasting from
-    // Eden toward About and has covered only ~40% of the gap, so About is not yet
+    // Eden toward Pray and has covered only ~40% of the gap, so Pray is not yet
     // the strict-nearest gate — Eden still is. `scroll-snap-type: x mandatory`
     // snaps a programmatic scrollLeft straight back, so hold the in-between spot
     // by turning snapping off for the beat, exactly the un-snapped state the strip
@@ -118,8 +119,8 @@ test.describe('home page', () => {
       const strip = document.querySelector('.strip');
       const c = el => el.offsetLeft + el.offsetWidth / 2;
       const eden  = document.querySelector('.portal--eden');
-      const about = document.querySelector('.portal--about');
-      const spacing = c(about) - c(eden);
+      const pray  = document.querySelector('.portal--pray');
+      const spacing = c(pray) - c(eden);
       strip.style.scrollSnapType = 'none';
       strip.scrollLeft = c(eden) - strip.clientWidth / 2 + 0.4 * spacing;
     });
@@ -128,8 +129,8 @@ test.describe('home page', () => {
     // gate being settled onto must walk through. Under the old nearest()-only
     // check this first tap was eaten by center() until the strip crossed the 50%
     // mark — the "swipe, tap does nothing; wait, then tap works" bug.
-    await page.locator('.portal--about').dispatchEvent('click', { detail: 1, bubbles: true, cancelable: true });
-    await page.waitForURL('**/about.html');
+    await page.locator('.portal--pray').dispatchEvent('click', { detail: 1, bubbles: true, cancelable: true });
+    await page.waitForURL('**/pray.html');
   });
 
   test('keyboard: Enter on a focused portal navigates', async ({ page }) => {
@@ -183,23 +184,25 @@ test.describe('home page on a desktop pointer', () => {
     // than assume exactly two clicks. ('commit': only the visit's start is
     // needed; a full load can outlast the timeout.)
     await expect.poll(async () => {
-      if (!/workshop\.html/.test(page.url())) await page.locator('.portal--workshop').click({ timeout: 3000 }).catch(() => {});
+      if (!/ordo\.html/.test(page.url())) await page.locator('.portal--ordo').click({ timeout: 3000 }).catch(() => {});
       return page.url();
-    }, { timeout: 30000, intervals: [600] }).toContain('workshop.html');
+    }, { timeout: 30000, intervals: [600] }).toContain('ordo.html');
   });
 
   test('the arrows walk between gates', async ({ page }) => {
     await page.goto('/index.html');
     await page.locator('.arrow--next').click();
-    await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
+    await expect(page.locator('.portal--pray')).toHaveClass(/is-active/);
     await page.locator('.arrow--prev').click();
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
-    // One step back reaches the Workshop, the first gate; one more loops to
-    // Logos, the last.
+    // Two steps back reach About, the first gate; one more loops to the
+    // Workshop, the last.
+    await page.locator('.arrow--prev').click();
+    await expect(page.locator('.portal--ordo')).toHaveClass(/is-active/);
+    await page.locator('.arrow--prev').click();
+    await expect(page.locator('.portal--about')).toHaveClass(/is-active/);
     await page.locator('.arrow--prev').click();
     await expect(page.locator('.portal--workshop')).toHaveClass(/is-active/);
-    await page.locator('.arrow--prev').click();
-    await expect(page.locator('.portal--logos')).toHaveClass(/is-active/);
   });
 
   test('dragging the strip scrolls without walking through a gate', async ({ page }) => {
