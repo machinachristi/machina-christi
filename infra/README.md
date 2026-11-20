@@ -94,7 +94,9 @@ the Function app:
 | Where | Setting |
 |---|---|
 | DNS | `api` CNAME → the Function app's `azurewebsites.net` name, proxied; `asuid.api` TXT = the app's domain-verification ID (proves ownership) |
-| Azure | `hostNameBindings` in `main.bicep` (no certificate binding: Cloudflare in Full mode accepts Azure's default one) |
+| Azure | `hostNameBindings` in `main.bicep` (no certificate binding: Azure answers with its default `*.azurewebsites.net` certificate, which only Full mode accepts) |
+| SSL/TLS mode | Zone: **Full (strict)** since 2026-11-20, so Cloudflare checks the Static Web Apps certificates for `machinachristi.com` and `www` on every trip |
+| Configuration Rule | "API stays on Full SSL": `api` host → SSL Full. **Don't remove it** while the API has no certificate of its own, or every API call fails with a 526. To make the API strict too, first bind an Azure certificate for `api.machinachristi.com`, then delete the rule |
 | Cache Rule | `api` host + GET → eligible for cache, honoring the origin's `Cache-Control` (bypass if absent). `/api/health` is `no-store`, so it is never cached; `/api/season?date=…` is `public, max-age=86400`, so each date is cached at the edge for a day (the query string is part of the cache key) |
 | Rate limiting rule | `api` host: more than 20 requests per 10 s from one IP → block (429) for 10 s. The free plan allows one rule |
 | Browser Cache TTL | Respect Existing Headers, so Cloudflare doesn't stretch the site's short cache times |
