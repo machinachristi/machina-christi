@@ -313,7 +313,11 @@ between them (HTTPS), so no one on the way can read or change it. Certificates
 run out on purpose, so a stolen one is soon useless, and an expired one makes
 browsers show a full-page warning instead of the site.
 *Here:* Cloudflare renews the site's certificates by itself; the daily
-live-site check makes sure it has, with two weeks to spare.
+live-site check makes sure it has, with two weeks to spare. There are two
+trips, and each has its own check: your phone checks Cloudflare's card, and
+Cloudflare checks Azure's ("Full (strict)"). The API is the one exception:
+Azure has no card made out to `api.machinachristi.com`, so for the API alone
+Cloudflare still encrypts the trip but doesn't ask for the name on the card.
 
 **Bot protection.** A doorman who turns away visitors that look like
 machines rather than people: too fast, too regular, or coming from a computer

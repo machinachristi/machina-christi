@@ -36,7 +36,7 @@
 
     { "id": "cloudflare", "tier": "door", "name": "Cloudflare", "status": "live",
       "what": "A global network that stands in front of the site.",
-      "here": "Encrypts every connection, caches what it can, counts visits without cookies, and turns away floods: more than 20 requests to the API in 10 seconds from one address is refused.",
+      "here": "Encrypts every connection and checks the website's certificate on the way to Azure, caches what it can, counts visits without cookies, and turns away floods: more than 20 requests to the API in 10 seconds from one address is refused.",
       "touches": ["swa", "functions"] },
     { "id": "headers", "tier": "door", "name": "Security headers", "status": "live",
       "what": "Rules sent with every page that tell your browser what is allowed.",
