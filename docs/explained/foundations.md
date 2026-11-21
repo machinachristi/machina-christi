@@ -210,6 +210,38 @@ never reach our server at all; it's faster for them and costs us nothing.
 answer comes from somewhere near you rather than from one faraway computer.
 *Here:* Cloudflare.
 
+**Round trip (latency).** The time for one question to travel to a server and
+its answer to travel back, before any of the answer's size counts. Like
+posting a letter: even a one-line reply takes days if the post office is far
+away. Many small files asked for *one after another* pay that wait each time;
+asked for *together*, they pay it about once. On a phone in Thailand a round
+trip to the site is often a tenth of a second or more.
+*Here:* Eden's garden is about 120 small files, so how many round trips its
+start takes matters more than how big they are.
+
+**Import graph (a family tree of files).** A program split into many files
+says at the top of each one which others it needs ("import …"). Following
+those lines from the first file gives the whole family: everything the
+program will load. Reading the lines is enough; nothing has to run. Like
+working out a recipe's shopping list by reading the recipe, not by cooking it.
+*Here:* `tests/world-start.spec.js` follows the garden's imports from
+`main.js` and checks the list in `world-app/index.html` against them (AB#169).
+
+**Preload vs prefetch (two kinds of head start).** Both ask the browser to
+fetch a file before it would find it alone, but they mean different things.
+*Preload* (for script files, `modulepreload`) means "this page needs this
+now: fetch it at full speed, alongside everything else". It is a shopping
+list handed over at the door, so the shop collects everything at once instead
+of you coming back for each forgotten item. *Prefetch* means "the visitor may
+need this next: fetch it quietly, only if there's nothing better to do".
+That's buying tomorrow's bread on the way home, just in case. Preload a file
+that isn't used and it's wasted; prefetch something the page is about to ask
+for anyway and the same file may be fetched twice.
+*Here:* the garden's page preloads all its modules (eight were missing until
+AB#169, so they were found late). `world.html` prefetches the heaviest
+four while a visitor reads the intro. It no longer does when the visitor
+came through the gate (`#enter`), because the garden is already loading.
+
 **CORS (the permission slip).** Browsers are careful: a page from one website
 may only read answers from another web address if that address hands back a
 note saying "this website is allowed to read me". Without the note, the browser
