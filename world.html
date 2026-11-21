@@ -451,11 +451,14 @@
 
       function showTiming(s) {
         const n = k => (k in s ? s[k].toFixed(1) : '?');
+        // Each step's words and number stay on one line (no-break spaces);
+        // a narrow screen wraps only between steps.
+        const step = (label, k) => (label + ' ' + n(k)).replace(/ /g, ' ');
         const steps = [
-          'pageSeconds' in s ? 'page ' + n('pageSeconds') : null,
-          'scripts ' + n('scriptsSeconds'),
-          'build ' + n('buildSeconds'),
-          'first picture ' + n('pictureSeconds'),
+          'pageSeconds' in s ? step('page', 'pageSeconds') : null,
+          step('scripts', 'scriptsSeconds'),
+          step('build', 'buildSeconds'),
+          step('first picture', 'pictureSeconds'),
         ].filter(Boolean).join(' · ');
         const el = document.createElement('div');
         el.className = 'timing';
