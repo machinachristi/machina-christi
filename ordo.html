@@ -13,10 +13,10 @@
   <meta property="og:url" content="https://machinachristi.com/ordo.html" />
   <meta property="og:title" content="Ordo · Machina Christi" />
   <meta property="og:description" content="Today in the Church: the feast, the day's Gospel to read, the saint of the day, and a prayer for today." />
-  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image" content="https://machinachristi.com/assets/share/machina-christi.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta property="og:image:alt" content="The gold Machina Christi sprig above the words MACHINA CHRISTI and “A little place to pray, to learn, and to wander”." />
   <meta name="twitter:card" content="summary_large_image" />
   <title>Ordo · Machina Christi</title>
   <style>
@@ -562,7 +562,7 @@
           const label = toDateKey(d) === toDateKey(today) ? 'A prayer for today' : 'A prayer for the day';
           prayerEl.innerHTML =
             `<p class="label prayer-label">${label}</p>` +
-            `<a class="prayer-card" href="prayer.html?p=${encodeURIComponent(p.id)}">` +
+            `<a class="prayer-card" href="/pray/${encodeURIComponent(p.id)}.html">` +
               `<span class="prayer-title">${escapeHtml(p.title)}</span>` +
               `<span class="prayer-th" lang="th">${escapeHtml(p.title_th)}</span>` +
               `<span class="prayer-why">${escapeHtml(p.why)} &middot; listen in Thai or English &rsaquo;</span>` +

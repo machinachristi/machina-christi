@@ -46,6 +46,7 @@ const PAGES = [
   '/ordo.html',
   '/pray.html',
   '/prayer.html',
+  '/pray/hail-mary.html',
   '/search.html',
   '/workshop.html',
 ];

@@ -20,6 +20,7 @@ afterthought: every phase of work adds to them.
   - [Heaven — Jacob's ladder from Eden to a first heaven](heaven-foundation.md)
   - [The homepage gates — three look tests, and the light they left behind](homepage-gates-look-tests.md)
   - [The front door — what this place is, today's prayer, and the gates beside Eden](front-door.md)
+  - [A card for every prayer — what a shared link shows, and how search engines find each prayer](prayer-share-cards.md)
   - [The morning walk — a robot checks the live site every day](live-site-check.md)
   - [The waiting room at Azure's door — why the API sometimes took a minute](api-waiting-room.md)
   - [The letterbox that cost money — trimming the API's storage bill](storage-bill.md)

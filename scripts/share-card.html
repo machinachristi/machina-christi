@@ -1,0 +1,25 @@
+<!doctype html>
+<!-- The picture a chat app shows when a Machina Christi link is shared
+     (1200x630, the size those previews use). Drawn by
+     scripts/build-share-cards.mjs: ?k=home is the site's card; ?k=prayer with
+     t (title) and th (Thai title) is a prayer's card. (The prayer's short line
+     is left to the preview's text: in a phone's small preview it can't be read.) -->
+<meta charset=utf-8><style>
+*{margin:0;box-sizing:border-box}
+body{width:1200px;height:630px;background:radial-gradient(ellipse at 50% 42%,#1d1810 0%,#0b0a08 70%);color:#e8d5a3;font-family:"Iowan Old Style",Palatino,Georgia,serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.logo{filter:drop-shadow(0 0 28px rgba(201,162,39,.45))}
+h1{font-weight:400;letter-spacing:.32em;font-size:64px;color:#c9a227;margin-top:34px;padding-left:.32em}
+.tag{font-size:32px;font-style:italic;margin-top:18px;opacity:.9}
+.rule{width:120px;height:1px;background:#c9a227;opacity:.6;margin:30px auto}
+.t{font-size:84px;color:#e8d5a3;margin-top:20px}
+.th{font-family:Thonburi,"Noto Sans Thai Looped",sans-serif;font-size:58px;color:#c9a227}
+.foot{position:absolute;bottom:44px;font-size:26px;letter-spacing:.28em;color:#c9a227;opacity:.85}
+.corner{position:absolute;top:44px}
+</style><body></body>
+<script>
+const svg=s=>`<svg class=logo width="${s}" height="${s}" viewBox="0 0 32 32"><g fill="none" stroke="#c9a227" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M16 29V15"/><path d="M16 20C10 18 7.5 14 6.5 9"/><path d="M16 20c6-2 8.5-6 9.5-11"/></g><g fill="#c9a227"><circle cx="6.5" cy="7" r="2.3"/><circle cx="25.5" cy="7" r="2.3"/><circle cx="16" cy="4.6" r="2.3"/></g></svg>`;
+const q=new URLSearchParams(location.search),k=q.get('k');
+const esc=x=>String(x||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+if(k==='home')document.body.innerHTML=svg(190)+`<h1>MACHINA CHRISTI</h1><p class=tag>A little place to pray, to learn, and to wander</p>`;
+if(k==='prayer')document.body.innerHTML=`<div class=corner>${svg(84)}</div><p class=t>${esc(q.get('t'))}</p><div class=rule></div><p class=th>${esc(q.get('th'))}</p><p class=foot>MACHINA CHRISTI · PRAY</p>`;
+</script>

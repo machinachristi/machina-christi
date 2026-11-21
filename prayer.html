@@ -13,10 +13,10 @@
   <meta property="og:url" content="https://machinachristi.com/prayer.html" />
   <meta property="og:title" content="Pray · Machina Christi" />
   <meta property="og:description" content="A classic Catholic prayer in Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
-  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image" content="https://machinachristi.com/assets/share/machina-christi.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta property="og:image:alt" content="The gold Machina Christi sprig above the words MACHINA CHRISTI and “A little place to pray, to learn, and to wander”." />
   <meta name="twitter:card" content="summary_large_image" />
   <title>Pray · Machina Christi</title>
   <style>
@@ -396,8 +396,8 @@
 </head>
 <body>
   <div class="wrap">
-    <a class="back" href="pray.html">&lsaquo; prayers</a>
-    <a class="find" href="search.html">search &rsaquo;</a>
+    <a class="back" href="/pray.html">&lsaquo; prayers</a>
+    <a class="find" href="/search.html">search &rsaquo;</a>
     <h1 id="title">&hellip;</h1>
     <span class="subtitle" id="title-th" lang="th"></span>
 
@@ -801,7 +801,7 @@
 
       function notFound() {
         $('title').textContent = 'Prayer not found';
-        linesEl.innerHTML = '<p class="notice">That prayer isn&rsquo;t here. <a href="pray.html">Back to the prayers</a>.</p>';
+        linesEl.innerHTML = '<p class="notice">That prayer isn&rsquo;t here. <a href="/pray.html">Back to the prayers</a>.</p>';
       }
 
       // prayer.html?p=mass#part-lamb-of-god opens at that part. The parts are
@@ -866,10 +866,23 @@
       // live site the API's copy follows, with the recordings: if its words
       // are the same, the recordings are simply added (a reading already under
       // way carries on in the device's voice); if not, the prayer is redrawn.
-      const id = new URLSearchParams(location.search).get('p');
-      let shown = null;
+      // Each prayer has a page of its own, pray/<id>.html, made from this
+      // file by scripts/build-prayer-pages.mjs with the prayer's id on <html>
+      // (so a link preview shows that prayer's name and picture). This file
+      // still answers the older links, prayer.html?p=<id>, by sending the
+      // visitor on to that prayer's own page.
+      const ownPage = document.documentElement.dataset.prayer;
+      const id = ownPage || new URLSearchParams(location.search).get('p');
+      let shown = null, leaving = false;
+      const moveOn = prayer => {
+        if (ownPage) return false;
+        leaving = true;
+        location.replace('/pray/' + encodeURIComponent(prayer.id) + '.html' + location.hash);
+        return true;
+      };
       const sameWords = (a, b) => JSON.stringify([a.title, a.title_th, a.lines, a.parts]) === JSON.stringify([b.title, b.title_th, b.lines, b.parts]);
       function newer(prayer) {
+        if (leaving || (!shown && moveOn(prayer))) return;
         if (shown && sameWords(prayer, shown) && (canListen() || !prayer.audio)) {
           rec = prayer.audio || null;
           showSource(prayer);
@@ -880,7 +893,7 @@
         shown = prayer;
       }
       window.mcPray.get(id, newer)
-        .then(prayer => { if (shown) return; if (prayer) { shown = prayer; render(prayer); jumpToPart(); } else notFound(); })
+        .then(prayer => { if (shown || leaving) return; if (prayer && moveOn(prayer)) return; if (prayer) { shown = prayer; render(prayer); jumpToPart(); } else notFound(); })
         .catch(() => {
           linesEl.innerHTML = '<p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p>';
         });

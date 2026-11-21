@@ -13,10 +13,10 @@
   <meta property="og:url" content="https://machinachristi.com/pray.html" />
   <meta property="og:title" content="Pray · Machina Christi" />
   <meta property="og:description" content="Classic Catholic prayers in Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
-  <meta property="og:image" content="https://machinachristi.com/assets/og.png" />
+  <meta property="og:image" content="https://machinachristi.com/assets/share/machina-christi.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Adam and Eve on a low-poly meadow in Eden, before the golden Tree of Life and the river." />
+  <meta property="og:image:alt" content="The gold Machina Christi sprig above the words MACHINA CHRISTI and “A little place to pray, to learn, and to wander”." />
   <meta name="twitter:card" content="summary_large_image" />
   <title>Pray · Machina Christi</title>
   <style>
@@ -198,7 +198,7 @@
       const draw = prayers => {
         list.innerHTML = prayers.filter(p => p.listed !== false).map(p => `
           <li>
-            <a class="card" href="prayer.html?p=${encodeURIComponent(p.id)}">
+            <a class="card" href="/pray/${encodeURIComponent(p.id)}.html">
               <h2>${escapeHtml(p.title)}</h2>
               <span class="th" lang="th">${escapeHtml(p.title_th)}</span>
               ${p.about ? `<p>${escapeHtml(p.about)}</p>` : ''}

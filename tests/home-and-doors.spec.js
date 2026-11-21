@@ -86,7 +86,7 @@ test.describe('home page', () => {
       await page.clock.setFixedTime(new Date(2026, 10, 15 + day, 12));
       await page.goto('/index.html');
       const link = page.locator('[data-pray-today]');
-      await expect(link).toHaveAttribute('href', `prayer.html?p=${id}`);
+      await expect(link).toHaveAttribute('href', `/pray/${id}.html`);
       const prayers = await (await request.get('/pray/prayers.json')).json();
       const list = Array.isArray(prayers) ? prayers : prayers.prayers;
       const prayer = list.find(p => p.id === id);
@@ -101,7 +101,7 @@ test.describe('home page', () => {
     await page.clock.setFixedTime(new Date(2026, 10, 21, 12));   // a Saturday
     await page.goto('/index.html');
     await page.locator('[data-pray-today]').click();
-    await page.waitForURL('**/prayer.html?p=hail-mary');
+    await page.waitForURL('**/pray/hail-mary.html');
   });
 
   test('a small phone (375×667) still sees the whole front door without scrolling', async ({ page }) => {

@@ -193,11 +193,12 @@ test.describe('ways in', () => {
     expect(await page.locator('.portal.search-link, .portal a.search-link').count()).toBe(0);
   });
 
-  for (const p of ['/ordo.html', '/pray.html', '/prayer.html?p=hail-mary']) {
+  for (const p of ['/ordo.html', '/pray.html', '/pray/hail-mary.html']) {
     test(`${p} links to search`, async ({ page }) => {
       await liveSite(page, { api: 'down' });
       await page.goto(LIVE + p);
-      await expect(page.locator('a.find')).toHaveAttribute('href', 'search.html');
+      // A prayer's page lives in pray/, so its links start from the top: /search.html.
+      await expect(page.locator('a.find')).toHaveAttribute('href', /^\/?search\.html$/);
     });
   }
 });
