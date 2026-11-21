@@ -265,9 +265,12 @@
        scenes, then three.module, then three.core (the biggest file, found
        last) — a serial waterfall of round trips before the garden can boot.
        Preloading lets everything download in parallel from the first moment.
-       When adding a scene, add a line here too; forgetting one never breaks
-       anything — that file just loses its head start and is fetched on
-       discovery, as before. -->
+       When adding a module (a scene, a heaven piece, anything main.js reaches
+       through `import`), add a line here too. Forgetting one breaks nothing
+       on screen — that file just loses its head start and is fetched late,
+       on discovery — which is why it slipped eight times before;
+       tests/world-start.spec.js now fails until the line is here, and
+       prints the exact line to add. -->
   <link rel="modulepreload" href="vendor/three.module.min.js" />
   <link rel="modulepreload" href="vendor/three.core.min.js" />
   <link rel="modulepreload" href="main.js" />
@@ -350,6 +353,9 @@
   <link rel="modulepreload" href="scenes/hind.js" />
   <link rel="modulepreload" href="scenes/acacia.js" />
   <link rel="modulepreload" href="scenes/tender.js" />
+  <link rel="modulepreload" href="scenes/almond.js" />
+  <link rel="modulepreload" href="scenes/frankincense.js" />
+  <link rel="modulepreload" href="scenes/hyssop.js" />
   <link rel="modulepreload" href="wayfinding.js" />
   <link rel="modulepreload" href="footing.js" />
   <link rel="modulepreload" href="scenes/flags.js" />
@@ -363,7 +369,10 @@
   <link rel="modulepreload" href="scenes/flock.js" />
   <link rel="modulepreload" href="scenes/host.js" />
   <link rel="modulepreload" href="scenes/praise.js" />
+  <link rel="modulepreload" href="stations.js" />
+  <link rel="modulepreload" href="scenes/waymarker.js" />
   <link rel="modulepreload" href="consider.js" />
+  <link rel="modulepreload" href="dance.js" />
   <link rel="modulepreload" href="behold.js" />
   <link rel="modulepreload" href="scenes/ladder.js" />
   <link rel="modulepreload" href="realm.js" />
@@ -379,6 +388,8 @@
   <link rel="modulepreload" href="heaven/incense.js" />
   <link rel="modulepreload" href="heaven/leaves.js" />
   <link rel="modulepreload" href="heaven/song.js" />
+  <link rel="modulepreload" href="heaven/city.js" />
+  <link rel="modulepreload" href="heaven/healing.js" />
   <link rel="modulepreload" href="heaven/reed.js" />
   <script src="/assets/telemetry.js" async></script>
 </head>
