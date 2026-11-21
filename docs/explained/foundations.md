@@ -479,6 +479,30 @@ bookmark in a book.
 *Here:* `prayer.html?p=mass#part-lamb-of-god` opens The Mass at the Lamb of
 God, and the numbered list at the top of that page is made of these links.
 
+**Link preview (Open Graph tags).** The little card a chat app shows when you
+paste a link: a picture, a title, a line of description. The app fetches the
+page and reads a few labelled lines at the top of it, like reading the label
+on a jar without opening it. It never runs the page's code, so whatever the
+card says has to be written into the page itself.
+*Here:* every page carries these lines (`og:title`, `og:image`…). Each prayer
+now has its own page with its own card picture, and the rest of the site shows
+the gold sprig with the name and tagline; Eden's pages keep the garden.
+
+**Search engine crawler, sitemap and robots.txt.** A crawler is the search
+engine's robot reader, walking from page to page to learn what's there. Two
+small files greet it at the door. `robots.txt` is the sign on the gate saying
+where it may and may not go. `sitemap.xml` is the visitors' map listing every
+room worth seeing, so none is missed.
+*Here:* `robots.txt` already says "everything is welcome", so it needed no
+change; the sitemap now names all 14 prayers' pages (November 2026, AB#147).
+
+**Canonical address.** When the same page can be reached by more than one
+address, the page says which one is its real name, so a search engine files
+it once rather than as several look-alikes. Like a person who answers to a
+nickname but signs forms with one full name.
+*Here:* each prayer's page names `machinachristi.com/pray/<prayer>.html`
+as its own.
+
 ## Learning and remembering
 
 **Spaced repetition (the box system).** Reviewing what you're about to forget,
@@ -934,7 +958,9 @@ the big file whenever they change. A test can rerun the program and compare,
 so nobody quietly edits the big file by hand.
 *Here:* `ordo/gospel-2026.json` names the Gospel for all 365 days. It is made
 by `scripts/build-gospel-table.mjs` from the year's calendar and one file of
-rules, and a test fails if the two ever disagree (AB#152).
+rules, and a test fails if the two ever disagree (AB#152). The 14 prayers'
+own pages, `pray/<prayer>.html`, are made the same way from `prayer.html` by
+`scripts/build-prayer-pages.mjs` (AB#147).
 
 **Boundary case (edge case).** A mistake that only shows at the edge of a
 rule: the last day of a month, the first item in a list, the moment one season

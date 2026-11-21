@@ -52,7 +52,7 @@ for (const size of [{ width: 390, height: 844 }, { width: 375, height: 667 }]) {
 const READING = [
   '/about.html', '/about-eden.html', '/about-camino.html', '/about-ordo.html',
   '/about-pray.html', '/about-logos.html', '/about-workshop.html',
-  '/ordo.html?date=2026-11-19', '/prayer.html?p=our-father', '/search.html',
+  '/ordo.html?date=2026-11-19', '/pray/our-father.html', '/search.html',
 ];
 
 for (const url of READING) {

@@ -60,4 +60,48 @@
     <loc>https://machinachristi.com/about-logos.html</loc>
     <lastmod>2026-10-17</lastmod>
   </url>
+  <!-- Each prayer's own page: made by scripts/build-prayer-pages.mjs -->
+  <url>
+    <loc>https://machinachristi.com/pray/mass.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/sign-of-the-cross.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/our-father.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/hail-mary.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/glory-be.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/o-blood-and-water.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/apostles-creed.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/nicene-creed.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/i-confess.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/lamb-of-god.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/lord-i-am-not-worthy.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/hail-holy-queen.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/memorare.html</loc>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/pray/angel-of-god.html</loc>
+  </url>
+  <!-- end of the prayers' pages -->
 </urlset>

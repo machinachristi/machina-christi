@@ -125,7 +125,7 @@ test.describe('the page', () => {
     await page.goto('/ordo.html?date=2026-09-15');
     await expect(page.locator('.gospel-ref')).toHaveText('The Gospel · John 19:25–27');
     await expect(page.locator('#gospel blockquote')).toContainText('Woman, behold thy son');
-    await expect(page.locator('.prayer-card')).toHaveAttribute('href', 'prayer.html?p=hail-holy-queen');
+    await expect(page.locator('.prayer-card')).toHaveAttribute('href', '/pray/hail-holy-queen.html');
     await expect(page.locator('.prayer-why')).toContainText('A day of Our Lady');
   });
 
@@ -133,7 +133,7 @@ test.describe('the page', () => {
     await page.goto('/ordo.html?date=2026-11-14');
     const card = page.locator('.prayer-card');
     await expect(page.locator('.prayer-label')).toHaveText('A prayer for the day');
-    await expect(card).toHaveAttribute('href', 'prayer.html?p=hail-mary');
+    await expect(card).toHaveAttribute('href', '/pray/hail-mary.html');
     await expect(card.locator('.prayer-title')).toHaveText('The Hail Mary');
     await expect(card.locator('.prayer-th')).toHaveText('บทวันทามารีย์');
     await expect(card.locator('.prayer-why')).toContainText('Saturday is Our Lady’s day');
@@ -141,10 +141,10 @@ test.describe('the page', () => {
     // Stepping a day changes all three: the day, its Gospel, its prayer.
     await page.locator('#next-day').click();
     await expect(page.locator('.gospel-ref')).toHaveText('The Gospel · Matthew 25:14–30');
-    await expect(card).toHaveAttribute('href', 'prayer.html?p=glory-be');
+    await expect(card).toHaveAttribute('href', '/pray/glory-be.html');
 
     await card.click();
-    await expect(page).toHaveURL(/prayer\.html\?p=glory-be$/);
+    await expect(page).toHaveURL(/\/pray\/glory-be\.html$/);
     await expect(page.locator('h1')).toContainText('Glory Be');
   });
 

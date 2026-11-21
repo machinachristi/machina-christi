@@ -115,7 +115,7 @@ test.describe('prayer list', () => {
     const cards = page.locator('.card');
     await expect(cards).toHaveCount(LISTED.length);
     for (const [i, p] of LISTED.entries()) {
-      await expect(cards.nth(i)).toHaveAttribute('href', `prayer.html?p=${p.id}`);
+      await expect(cards.nth(i)).toHaveAttribute('href', `/pray/${p.id}.html`);
       await expect(cards.nth(i).locator('.th')).toHaveText(p.title_th);
     }
     expect(errors).toEqual([]);
@@ -123,9 +123,9 @@ test.describe('prayer list', () => {
 
   test('The Mass has a card; the parts said only at Mass do not', async ({ page }) => {
     await page.goto('/pray.html');
-    await expect(page.locator('.card[href="prayer.html?p=mass"]')).toHaveCount(1);
+    await expect(page.locator('.card[href="/pray/mass.html"]')).toHaveCount(1);
     for (const p of DATA.prayers.filter(p => p.listed === false)) {
-      await expect(page.locator(`.card[href="prayer.html?p=${p.id}"]`)).toHaveCount(0);
+      await expect(page.locator(`.card[href="/pray/${p.id}.html"]`)).toHaveCount(0);
     }
   });
 
@@ -133,7 +133,7 @@ test.describe('prayer list', () => {
     await stubSpeech(page);
     await page.goto('/pray.html');
     await page.locator('.card', { hasText: 'Our Father' }).click();
-    await page.waitForURL('**/prayer.html?p=our-father');
+    await page.waitForURL('**/pray/our-father.html');
     await expect(page.locator('h1')).toHaveText('The Our Father');
     await page.locator('.back').click();
     await page.waitForURL('**/pray.html');
@@ -211,7 +211,7 @@ test.describe('the bundled prayers answer first on the live site', () => {
   test('a prayer\'s words show at once, and its recordings follow from the API', async ({ page }) => {
     await stubSpeech(page);
     const { release } = await heldApi(page);
-    await page.goto(`${LIVE}/prayer.html?p=glory-be`);
+    await page.goto(`${LIVE}/pray/glory-be.html`);
     await expect(page.locator('h1')).toHaveText(byId('glory-be').title, { timeout: 1000 });
     await expect(page.locator('.line')).toHaveCount(byId('glory-be').lines.length);
     await expect(page.locator('#source')).not.toContainText('Recorded voices');
@@ -227,7 +227,7 @@ test.describe('prayer page', () => {
     const errors = watchErrors(page);
     await stubSpeech(page);
     for (const p of DATA.prayers) {
-      await page.goto(`/prayer.html?p=${p.id}`);
+      await page.goto(`/pray/${p.id}.html`);
       await expect(page.locator('#title-th')).toHaveText(p.title_th);
       await expect(page.locator('.line')).toHaveCount(p.lines.length);
       await expect(page.locator('.line .th[lang="th"]')).toHaveCount(p.lines.length);
@@ -250,7 +250,7 @@ test.describe('prayer page', () => {
 
   test('Listen in Thai reads every line in a Thai voice, lighting each line, and Stop silences it', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     const th = page.locator('.listen[data-lang="th"]');
     await th.click();
 
@@ -273,7 +273,7 @@ test.describe('prayer page', () => {
     // iOS sometimes skips the start event of queued lines; the highlight
     // used to wait for it and stay stuck while the voice read on.
     await stubSpeech(page, { beat: 300, dropStart: [1, 2] });
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     // The lines arrive after the page loads; watch them only once they're there.
     await expect(page.locator('.line')).toHaveCount(byId('our-father').lines.length);
     // Record every line the highlight lands on, in order.
@@ -294,7 +294,7 @@ test.describe('prayer page', () => {
 
   test('Listen in English reads the English lines and settles when it finishes', async ({ page }) => {
     await stubSpeech(page, { beat: 100 });
-    await page.goto('/prayer.html?p=sign-of-the-cross');
+    await page.goto('/pray/sign-of-the-cross.html');
     const en = page.locator('.listen[data-lang="en"]');
     await en.click();
     const said = await spoken(page);
@@ -307,7 +307,7 @@ test.describe('prayer page', () => {
 
   test('tapping a line reads just that line in Thai; tapping it again stops', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=hail-mary');
+    await page.goto('/pray/hail-mary.html');
     const line = page.locator('.line').nth(2);
     await line.click();
     const said = await spoken(page);
@@ -324,7 +324,7 @@ test.describe('prayer page', () => {
 
   test('Slow voice reads at a gentler rate and is remembered', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=o-blood-and-water');
+    await page.goto('/pray/o-blood-and-water.html');
     await page.locator('#slow').click();
     await expect(page.locator('#slow')).toHaveAttribute('aria-pressed', 'true');
     await page.locator('.listen[data-lang="th"]').click();
@@ -335,7 +335,7 @@ test.describe('prayer page', () => {
 
   test('the pronunciation switch hides and shows the romanization, and is remembered', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     const rom = page.locator('.line .rom').first();
     await expect(rom).toBeVisible();
     await page.locator('#rom').click();
@@ -349,7 +349,7 @@ test.describe('prayer page', () => {
 
   test('a device without a Thai voice is told how to add one', async ({ page }) => {
     await stubSpeech(page, { thai: false });
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     await expect(page.locator('#voice-note')).toBeVisible();
     await expect(page.locator('#voice-note')).toContainText('Thai voice');
   });
@@ -358,7 +358,7 @@ test.describe('prayer page', () => {
     // Seen for real with macOS's Kanya: listed, but with no sound files it
     // "finishes" each line almost instantly. A 5ms beat per line models that.
     await stubSpeech(page, { beat: 5 });
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     await expect(page.locator('#voice-note')).toBeHidden();
     await page.locator('.listen[data-lang="th"]').click();
     await expect(page.locator('#voice-note')).toBeVisible();
@@ -369,7 +369,7 @@ test.describe('prayer page', () => {
   test('a browser that cannot speak still shows the whole prayer, without listen controls', async ({ page }) => {
     const errors = watchErrors(page);
     await stubSpeech(page, { none: true });
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     await expect(page.locator('.line')).toHaveCount(byId('our-father').lines.length);
     await expect(page.locator('button.line')).toHaveCount(0);
     await expect(page.locator('#player')).toBeHidden();
@@ -379,9 +379,9 @@ test.describe('prayer page', () => {
 
   test('the English names its source: a credit where the text has one, the traditional wording elsewhere', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=nicene-creed');
+    await page.goto('/pray/nicene-creed.html');
     await expect(page.locator('#source')).toContainText(`English: ${byId('nicene-creed').source_en.notice}`);
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     await expect(page.locator('#source')).toContainText('English: the traditional wording.');
   });
 
@@ -389,7 +389,7 @@ test.describe('prayer page', () => {
     await stubSpeech(page);
     await page.goto('/prayer.html?p=no-such-prayer');
     await expect(page.locator('#lines')).toContainText('isn’t here');
-    await expect(page.locator('#lines a[href="pray.html"]')).toBeVisible();
+    await expect(page.locator('#lines a[href="/pray.html"]')).toBeVisible();
     await expect(page.locator('#player')).toBeHidden();
   });
 });
@@ -402,7 +402,7 @@ test.describe('The Mass', () => {
   test('each part has its own heading, in order, with its own lines; the Our Father has no Amen here', async ({ page }) => {
     const errors = watchErrors(page);
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     await expect(page.locator('h1')).toHaveText(MASS.title);
     const parts = page.locator('.part');
     await expect(parts).toHaveCount(MASS.parts.length);
@@ -417,14 +417,14 @@ test.describe('The Mass', () => {
     await expect(page.locator('#part-our-father .line')).toHaveCount(ourFather.length - 1);
     await expect(page.locator('#part-our-father .line .th').last()).toHaveText(ourFather.at(-2).th);
     // Its own page keeps the Amen.
-    await page.goto('/prayer.html?p=our-father');
+    await page.goto('/pray/our-father.html');
     await expect(page.locator('.line .th').last()).toHaveText(ourFather.at(-1).th);
     expect(errors).toEqual([]);
   });
 
   test('Listen reads the whole Mass, and the highlight walks on into each new part', async ({ page }) => {
     await stubSpeech(page, { beat: 80 });
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     await expect(page.locator('.line')).toHaveCount(MASS.lines.length);
     await page.evaluate(() => {
       window.__lit = [];
@@ -443,7 +443,7 @@ test.describe('The Mass', () => {
 
   test('each part has its own Listen, which reads just that prayer, in Thai or English', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     await expect(page.locator('.part__listen')).toHaveCount(MASS.parts.length);
     for (const h of await page.locator('.part__listen .listen').evaluateAll(bs => bs.map(b => b.getBoundingClientRect().height))) {
       expect(h).toBeGreaterThanOrEqual(44);
@@ -475,7 +475,7 @@ test.describe('The Mass', () => {
 
   test('a part read to its end settles on its own, and the highlight stays inside the part', async ({ page }) => {
     await stubSpeech(page, { beat: 80 });
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     await expect(page.locator('.line')).toHaveCount(MASS.lines.length);
     await page.evaluate(() => {
       window.__lit = [];
@@ -495,7 +495,7 @@ test.describe('The Mass', () => {
 
   test('tapping a line in a later part reads that very line', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     const line = page.locator('#part-lamb-of-god .line').nth(1);
     await line.click();
     expect((await spoken(page)).map(s => s.text)).toEqual([byId('lamb-of-god').lines[1].th]);
@@ -505,7 +505,7 @@ test.describe('The Mass', () => {
 
   test('the numbered list at the top names every part and goes straight to it', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     const links = page.locator('.parts-nav a');
     await expect(links).toHaveText(MASS.parts.map((p, n) => `${n + 1} · ${p.title}`));
     for (const [n, p] of MASS.parts.entries()) await expect(links.nth(n)).toHaveAttribute('href', `#part-${p.id}`);
@@ -517,7 +517,7 @@ test.describe('The Mass', () => {
 
   test('a link to a part opens The Mass at that part', async ({ page }) => {
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass#part-lamb-of-god');
+    await page.goto('/pray/mass.html#part-lamb-of-god');
     await expect(page.locator('#part-lamb-of-god h2')).toBeInViewport();
     expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
   });
@@ -531,7 +531,7 @@ test.describe('The Mass', () => {
   test('readable on a small phone: no sideways scroll, every word 14px or more', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await stubSpeech(page);
-    await page.goto('/prayer.html?p=mass');
+    await page.goto('/pray/mass.html');
     await expect(page.locator('.part')).toHaveCount(MASS.parts.length);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     const size = sel => page.locator(sel).first().evaluate(n => parseFloat(getComputedStyle(n).fontSize));

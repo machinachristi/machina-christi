@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en" data-prayer="our-father">
+<head>
+  <!-- Made by scripts/build-prayer-pages.mjs from prayer.html: edit that file, then run the script. -->
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="The Our Father · บทข้าแต่พระบิดา — the prayer Jesus taught us. In Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/pray/our-father.html" />
+  <meta property="og:title" content="The Our Father · Pray · Machina Christi" />
+  <meta property="og:description" content="The Our Father · บทข้าแต่พระบิดา — the prayer Jesus taught us. In Thai and English, line by line, with a pronunciation guide and read-aloud in both languages." />
+  <meta property="og:image" content="https://machinachristi.com/assets/share/our-father.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Our Father and บทข้าแต่พระบิดา in gold on a dark background, under the Machina Christi sprig." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>The Our Father · Pray · Machina Christi</title>
+  <link rel="canonical" href="https://machinachristi.com/pray/our-father.html" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --marian:    138, 170, 222;  /* Pray — Marian blue */
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      /* The serif above has no Thai glyphs; these are system Thai faces on
+         iPhone/Mac, Android, and Windows — nothing to download. Looped faces
+         come first: the small loops on letters like บ ข ภ are how Thai is
+         taught, and the loopless modern style makes look-alikes harder to
+         tell apart for a learner. */
+      --thai:      Thonburi, "Noto Sans Thai Looped", "Noto Serif Thai", Tahoma, "Leelawadee UI", "Noto Sans Thai", sans-serif;
+      /* Room kept clear at the foot of the page for the listen bar. */
+      --bar:       calc(84px + env(safe-area-inset-bottom));
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(var(--marian), 0.13), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.75;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    :lang(th) { font-family: var(--thai); }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+    }
+    body.has-player .wrap { padding-bottom: calc(var(--bar) + 40px); }
+
+    .back, .find {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      margin-bottom: 2.6em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible, .find:hover, .find:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    /* A bigger, invisible tap area (~44px tall) for thumbs; the link looks the same. */
+    .back, .find { position: relative; }
+    .back::before, .find::before { content: ''; position: absolute; inset: -9px -12px; }
+    /* Search, opposite the way back. */
+    .find { float: right; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(22px, 6vw, 32px);
+      line-height: 1.4;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    /* The prayer's Thai name, quietly beneath the English one. */
+    .subtitle {
+      display: block;
+      font-size: clamp(19px, 5.2vw, 23px);
+      line-height: 1.7;
+      color: rgba(var(--marian), 0.92);
+      margin-top: 0.2em;
+    }
+    /* A thin gold rule beneath the heading, like a line ruled in an old book. */
+    .subtitle::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 0.8em 0 1.1em;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+
+    p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
+    a { color: inherit; }
+    .notice { font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    /* The `hidden` attribute must win over the display rules below
+       (.toggles is flex, .chip inline-flex), or hidden controls still show. */
+    [hidden] { display: none !important; }
+
+    /* ── Settings: two quiet switches ─────────────────────────── */
+    .toggles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1em; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 40px;
+      padding: 6px 16px;
+      font-family: var(--serif);
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: rgba(232, 213, 163, 0.66);
+      background: none;
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+    /* A small lamp: hollow when off, lit when on. */
+    .chip::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(232, 213, 163, 0.5);
+      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .chip[aria-pressed="true"] {
+      color: var(--gold-soft);
+      border-color: rgba(var(--marian), 0.7);
+      background: rgba(var(--marian), 0.1);
+    }
+    .chip[aria-pressed="true"]::before {
+      background: rgb(var(--marian));
+      border-color: rgb(var(--marian));
+      box-shadow: 0 0 8px rgba(var(--marian), 0.6);
+    }
+    .chip:focus-visible { outline: 1px solid rgba(var(--marian), 0.8); outline-offset: 3px; }
+
+    /* ── How to read the pronunciation ────────────────────────── */
+    .guide { margin-bottom: 1.2em; }
+    .guide summary {
+      display: inline-block;
+      cursor: pointer;
+      list-style: none;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: rgba(232, 213, 163, 0.62);
+      border-bottom: 1px solid rgba(232, 213, 163, 0.25);
+    }
+    .guide summary::-webkit-details-marker { display: none; }
+    .guide summary::after { content: "\203A"; display: inline-block; margin-left: 0.4em; transition: transform 0.2s ease; }
+    .guide[open] summary::after { transform: rotate(90deg); }
+    .guide summary:focus-visible { outline: 1px solid rgba(var(--marian), 0.8); outline-offset: 3px; }
+    .guide__body {
+      margin-top: 0.9em;
+      padding: 14px 18px;
+      border-left: 2px solid rgba(var(--marian), 0.35);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .guide__body p { color: rgba(232, 213, 163, 0.74); margin-bottom: 0.8em; }
+    .guide__body p:last-child { margin-bottom: 0; }
+    .tones { display: grid; grid-template-columns: auto 1fr; gap: 2px 16px; margin: 0 0 0.9em; }
+    .tones dt { color: rgb(var(--marian)); font-size: 16px; }
+    .tones dd { color: rgba(232, 213, 163, 0.74); }
+    .guide .fine { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.6); }
+    body.no-rom .guide { display: none; }
+
+    .tap-hint { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.6); margin: 0.4em 0 0.6em; }
+
+    /* ── The prayer, phrase by phrase ─────────────────────────── */
+    .lines { list-style: none; }
+    .lines > li + li { border-top: 1px solid rgba(201, 162, 39, 0.1); }
+    /* A new stanza, as the Missal sets its texts out: a little more room and
+       no rule, like the blank line between the verses of a hymn. */
+    .lines > li.stanza { margin-top: 18px; border-top-color: transparent; }
+    .line {
+      position: relative;
+      display: block;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 10px 16px 32px;
+      cursor: pointer;
+      /* Keep a line that's being read clear of the listen bar when it scrolls into view. */
+      scroll-margin: 24px 0 calc(var(--bar) + 16px);
+      transition: background 0.3s ease;
+    }
+    div.line { cursor: default; }
+    /* A small play mark in the margin of each line. */
+    button.line::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 29px;
+      border-left: 8px solid rgba(201, 162, 39, 0.42);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+    button.line:hover, button.line:focus-visible { background: rgba(201, 162, 39, 0.05); outline: none; }
+    button.line:focus-visible { box-shadow: inset 0 0 0 1px rgba(var(--marian), 0.6); }
+    button.line:hover::before { border-left-color: rgba(232, 213, 163, 0.75); }
+    .line.is-speaking { background: rgba(var(--marian), 0.1); }
+    .line.is-speaking::before { border-left-color: rgb(var(--marian)); }
+
+    .line .th {
+      display: block;
+      font-size: clamp(21px, 5.8vw, 25px);
+      /* Thai stacks vowels and tone marks above and below the line. */
+      line-height: 1.85;
+      color: var(--gold-soft);
+      overflow-wrap: anywhere;
+    }
+    .line .rom {
+      display: block;
+      /* Tagged th-Latn (Thai, in Latin letters), which :lang(th) would
+         otherwise hand to the Thai font stack. */
+      font-family: var(--serif);
+      font-size: 16px;
+      line-height: 1.55;
+      letter-spacing: 0.02em;
+      color: rgba(var(--marian), 0.95);
+      margin-top: 1px;
+      overflow-wrap: anywhere;
+    }
+    body.no-rom .line .rom { display: none; }
+    .line .en {
+      display: block;
+      font-size: 16px;
+      font-style: italic;
+      line-height: 1.55;
+      color: rgba(232, 213, 163, 0.74);
+      margin-top: 7px;
+      /* One English part may hold several of the Missal's lines; each keeps
+         its own line, as the Missal prints it. */
+      white-space: pre-line;
+    }
+    .line .lit {
+      display: block;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(232, 213, 163, 0.6);
+      margin-top: 3px;
+    }
+
+    .source {
+      margin-top: 2.2em;
+      padding-top: 1.2em;
+      border-top: 1px solid rgba(201, 162, 39, 0.2);
+      font-size: 14px;
+      color: rgba(232, 213, 163, 0.6);
+    }
+
+    /* ── The Mass: a heading where each part begins ─────────────
+       The Mass is a prayer made of other prayers; each part keeps its own
+       name, a note on when it's said, and where its words come from. */
+    /* At the top, the parts in order, numbered, each a link to its place:
+       at Mass, a tap goes straight to the part being said. */
+    .parts-nav__label { font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(201, 162, 39, 0.85); margin: 0 0 6px; }
+    .parts-nav ol { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 1.6em; }
+    .parts-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid rgba(201, 162, 39, 0.32);
+      border-radius: 22px;
+      background: rgba(201, 162, 39, 0.04);
+      color: rgba(232, 213, 163, 0.9);
+      text-decoration: none;
+      font-size: 15px;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+    .parts-nav a:hover, .parts-nav a:focus-visible { border-color: rgba(201, 162, 39, 0.7); background: rgba(201, 162, 39, 0.08); outline: none; }
+    /* Each part begins under a numbered band, its number the same as in the list. */
+    .part { scroll-margin-top: 20px; counter-increment: part; }
+    .part + .part { margin-top: 2.6em; }
+    .part__title {
+      font-weight: normal;
+      font-size: 15px;
+      line-height: 1.5;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(var(--marian), 0.10);
+      border-left: 2px solid rgba(var(--marian), 0.7);
+      border-radius: 0 10px 10px 0;
+      padding: 8px 12px;
+      margin-left: -14px;
+    }
+    .part__title::before { content: counter(part) " · "; color: rgba(var(--marian), 0.95); }
+    .part__th {
+      display: block;
+      font-size: 19px;
+      line-height: 1.7;
+      color: rgba(var(--marian), 0.92);
+    }
+    .part__when { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); margin: 0.15em 0 0.5em; }
+    .part__source { font-size: 14px; color: rgba(232, 213, 163, 0.6); margin: 0.7em 0 0; }
+    /* Each part's own Listen buttons: just that prayer, in Thai or English. */
+    .part__listen { display: flex; flex-wrap: wrap; gap: 10px; margin: 0.5em 0 0.9em; }
+    .part__listen .listen { flex: 0 1 auto; min-height: 44px; padding: 0 16px; }
+    /* Compact, so both fit on one row on a phone: the triangle and the
+       language say it; "Stop" shows while one plays. */
+    .part__listen .listen:not(.is-playing) .label,
+    .part__listen .listen:not(.is-playing) .lang::before { display: none; }
+
+    /* ── The listen bar ───────────────────────────────────────── */
+    .player {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 5;
+      padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(11, 10, 8, 0.97) 65%, rgba(11, 10, 8, 0.88));
+      border-top: 1px solid rgba(201, 162, 39, 0.18);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    .player__inner { max-width: 620px; margin: 0 auto; display: flex; gap: 12px; }
+    .listen {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 50px;
+      padding: 0 12px;
+      font-family: var(--serif);
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.06);
+      border: 1px solid rgba(201, 162, 39, 0.45);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .listen:hover, .listen:focus-visible {
+      border-color: rgba(201, 162, 39, 0.85);
+      background: rgba(201, 162, 39, 0.12);
+      outline: none;
+    }
+    .listen.is-playing {
+      border-color: rgba(var(--marian), 0.85);
+      background: rgba(var(--marian), 0.14);
+      box-shadow: 0 0 26px -8px rgba(var(--marian), 0.6);
+    }
+    .listen svg { width: 12px; height: 12px; fill: currentColor; flex: none; }
+    .listen .i-stop { display: none; }
+    .listen.is-playing .i-stop { display: inline; }
+    .listen.is-playing .i-play { display: none; }
+    .listen .lang::before { content: "\00B7"; margin-right: 9px; opacity: 0.6; }
+
+    @media (prefers-reduced-motion: reduce) {
+      body::before { animation: none; }
+      .line, .listen, .chip { transition: none; }
+    }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/pray.html">&lsaquo; prayers</a>
+    <a class="find" href="/search.html">search &rsaquo;</a>
+    <h1 id="title">&hellip;</h1>
+    <span class="subtitle" id="title-th" lang="th"></span>
+
+    <div class="toggles" id="toggles" hidden>
+      <button type="button" class="chip" id="slow" aria-pressed="false">Slow voice</button>
+      <button type="button" class="chip" id="rom" aria-pressed="true">Pronunciation</button>
+    </div>
+
+    <details class="guide" id="guide" hidden>
+      <summary>How to read the pronunciation</summary>
+      <div class="guide__body">
+        <p>Thai is tonal: the same syllable at a different pitch is a different word. The mark over each vowel gives its tone.</p>
+        <dl class="tones">
+          <dt>naa</dt><dd>no mark &mdash; mid, level and even</dd>
+          <dt>n&agrave;a</dt><dd>low &mdash; flat and low</dd>
+          <dt>n&acirc;a</dt><dd>falling &mdash; starts high, then drops</dd>
+          <dt>n&aacute;a</dt><dd>high &mdash; pitched up</dd>
+          <dt>n&#x1CE;a</dt><dd>rising &mdash; dips, then climbs, like a question</dd>
+        </dl>
+        <p>Doubled vowels (<i>aa, ii, uu, ee, oo</i>) are held longer. <i>ph, th, kh</i> are p, t, k with a puff of air, as in <i>Phuket</i> or <i>Thai</i> &mdash; never English &ldquo;f&rdquo; or &ldquo;th&rdquo;. <i>bp</i> and <i>dt</i> are a crisp p and t with no puff at all. <i>ae</i> as in &ldquo;cat&rdquo;, <i>aw</i> as in &ldquo;law&rdquo;, <i>oe</i> as in &ldquo;her&rdquo;, and <i>ue</i> like &ldquo;oo&rdquo; said with the lips spread.</p>
+        <p class="fine">A learner&rsquo;s guide, checked word by word against standard dictionary readings.</p>
+      </div>
+    </details>
+
+    <p class="tap-hint" id="tap-hint" hidden>Tap any line to hear it in Thai.</p>
+
+    <div id="lines">
+      <p class="notice">Loading&hellip;</p>
+    </div>
+
+    <p class="notice" id="voice-note" hidden></p>
+    <p class="source" id="source" hidden></p>
+  </div>
+
+  <div class="player" id="player" hidden>
+    <div class="player__inner">
+      <button type="button" class="listen" data-lang="th" aria-label="Listen in Thai">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-play" d="M2.5 1.2 L10.8 6 L2.5 10.8 Z" /><rect class="i-stop" x="1.8" y="1.8" width="8.4" height="8.4" rx="1.2" /></svg>
+        <span class="label">Listen</span><span class="lang" lang="th">ไทย</span>
+      </button>
+      <button type="button" class="listen" data-lang="en" aria-label="Listen in English">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-play" d="M2.5 1.2 L10.8 6 L2.5 10.8 Z" /><rect class="i-stop" x="1.8" y="1.8" width="8.4" height="8.4" rx="1.2" /></svg>
+        <span class="label">Listen</span><span class="lang">English</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="/assets/pray-data.js?v=3"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = id => document.getElementById(id);
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      // The two switches are remembered between visits. Storage can be
+      // unavailable (private mode, blocked site data), so every touch is
+      // guarded and the page simply falls back to the defaults.
+      const store = {
+        get(key, fallback) {
+          try { const v = localStorage.getItem(key); return v === null ? fallback : v === '1'; }
+          catch (e) { return fallback; }
+        },
+        set(key, on) { try { localStorage.setItem(key, on ? '1' : '0'); } catch (e) {} },
+      };
+
+      const linesEl  = $('lines');
+      const player   = $('player');
+      const voiceNote = $('voice-note');
+
+      let lines = [];      // the prayer's lines once loaded: { th, rom, en, lit? }
+      let lineEls = [];
+      let ranges = new Map(); // The Mass: each part's id → its lines' indices
+      let slow = store.get('pray.slow', false);
+      let showRom = store.get('pray.rom', true);
+
+      /* ── Reading aloud ─────────────────────────────────────────
+         Two ways to read a prayer aloud. When the prayer comes with
+         recordings (published to Cosmos DB, reached through the API), those
+         play: one MP3 per language and speed, with each line's start time, so
+         the highlight follows the recording exactly. Otherwise, or if a
+         recording won't play, the device's own text-to-speech voice reads it
+         (iPhones ship a Thai one). Everything about sound lives in this
+         block. */
+      const synth = ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) ? window.speechSynthesis : null;
+      const LANG = { th: 'th-TH', en: 'en-US' };
+      const RATE = { normal: 1, slow: 0.7 };
+      // Prefer natural-sounding English voices; steer clear of the novelty
+      // and robotic ones some systems list under en-US.
+      const PREFERRED = /Samantha|Alex|Daniel|Karen|Moira|Tessa|Ava|Allison|Susan|Google US English|Google UK English|Microsoft (Aria|Jenny|Guy|Zira|David)/i;
+      const ODDITIES  = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Junior|Ralph|Fred|Kathy|Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley)\b/;
+
+      let voices = [];
+      function pickVoice(lang) {
+        const norm = v => (v.lang || '').replace('_', '-').toLowerCase();
+        const pool = voices.filter(v => norm(v).startsWith(lang.slice(0, 2)));
+        if (!pool.length) return null;
+        const score = v =>
+          (norm(v) === lang.toLowerCase() ? 4 : 0) +
+          (PREFERRED.test(v.name) ? 3 : 0) +
+          (v.default ? 2 : 0) +
+          (v.localService ? 1 : 0) -
+          (ODDITIES.test(v.name) ? 10 : 0);
+        return pool.slice().sort((a, b) => score(b) - score(a))[0];
+      }
+
+      // Where to add a Thai voice, for either kind of trouble below.
+      const GET_THAI = 'On iPhone: Settings &rsaquo; Accessibility &rsaquo; Spoken Content &rsaquo; Voices &rsaquo; Thai, and download a voice. On a Mac: System Settings &rsaquo; Accessibility &rsaquo; Spoken Content &rsaquo; System Voice &rsaquo; Manage Voices, and add Thai. On Android: add Thai in your phone&rsquo;s text-to-speech settings.';
+      function voiceTrouble(what) {
+        voiceNote.innerHTML = what + ' ' + GET_THAI;
+        voiceNote.hidden = false;
+      }
+
+      // Voices arrive asynchronously on most browsers. Once the list is in,
+      // say so plainly if there's no Thai voice — otherwise the Thai button
+      // would just stay silent (or read it in an English voice).
+      let silentThai = false;
+      function refreshVoices() {
+        voices = synth.getVoices();
+        // With recordings, the device's voices are only a fallback: no warnings.
+        if (!voices.length || silentThai || rec) return;
+        if (pickVoice(LANG.th)) { voiceNote.hidden = true; return; }
+        voiceTrouble('This device doesn&rsquo;t seem to have a Thai voice, so the Thai may not be read aloud.');
+      }
+
+      // A voice can be listed without its sound files ever having been
+      // downloaded (seen with macOS's Kanya): it then "finishes" a line almost
+      // instantly and says nothing. Real Thai speech takes well over 20ms per
+      // character, so a line that ends faster than that was never heard.
+      const SILENT_MS_PER_CHAR = 20;
+      function checkHeard(text, ms) {
+        const chars = Array.from(text).length;
+        if (silentThai || chars < 10 || ms >= chars * SILENT_MS_PER_CHAR) return;
+        silentThai = true;
+        voiceTrouble('The Thai voice on this device finished reading almost instantly, which usually means it hasn&rsquo;t been downloaded yet.');
+      }
+
+      // `run` changes on every start and stop, so events from utterances
+      // that were cancelled (they still fire end/error afterwards) stand down.
+      let run = 0;
+      // { lang, only, part } while something plays: only = line index for a
+      // single line, part = a part's id when one part of The Mass plays.
+      let now = null;
+
+      // The utterances of the run that's playing. Holding them here matters:
+      // once queued, nothing else in the page refers to them, and mobile
+      // browsers may then throw away their JavaScript side while the speech
+      // itself carries on, so their start/end events never arrive and the
+      // highlight stops following the voice.
+      let queued = [];
+
+      // Recordings: prayer.audio, when the prayer has them; `failed` remembers
+      // a language whose recording wouldn't play, so it falls back for good.
+      let rec = null;
+      const failed = {};
+      let audio = null;          // one <audio> element, made on first use
+      const recording = lang => (rec && !failed[lang] && rec[lang] && rec[lang][slow ? 'slow' : 'normal']) || null;
+      const canListen = () => !!synth || !!rec;
+
+      let marked = -1;
+      function mark(i) {
+        if (i === marked) return;
+        marked = i;
+        lineEls.forEach((el, j) => el.classList.toggle('is-speaking', j === i));
+        if (i >= 0 && now && now.only === null) {
+          lineEls[i].scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+        }
+      }
+
+      // A Listen button is on while its own run plays: the bar's for the
+      // whole prayer, a part's for that part.
+      function paint() {
+        document.querySelectorAll('.listen').forEach(b => {
+          const lang = b.dataset.lang;
+          const part = b.dataset.part || null;
+          const on = !!now && now.lang === lang && now.only === null && (now.part || null) === part;
+          b.classList.toggle('is-playing', on);
+          b.querySelector('.label').textContent = on ? 'Stop' : 'Listen';
+          b.setAttribute('aria-label', on ? 'Stop' : b.dataset.say || 'Listen in ' + (lang === 'th' ? 'Thai' : 'English'));
+        });
+      }
+
+      function stop() {
+        run++;
+        now = null;
+        queued = [];
+        if (audio && !audio.paused) audio.pause();
+        if (synth && (synth.speaking || synth.pending)) synth.cancel();
+        mark(-1);
+        paint();
+      }
+
+      // Play a recording: the whole prayer, one part of The Mass, or one
+      // line: a stretch from its first line's start to the start of the line
+      // after its last. The highlight follows the playing position, checked
+      // every frame while the page is visible and on every timeupdate (a few
+      // times a second) when it isn't.
+      function playRecording(indices, lang, r, part = null) {
+        stop();
+        const mine = ++run;
+        const only = indices.length === 1 ? indices[0] : null;
+        now = { lang, only, part };
+        const from = r.starts[indices[0]] || 0;
+        const to = r.starts[indices[indices.length - 1] + 1] ?? Infinity;
+
+        if (!audio) audio = new Audio();
+        audio.preload = 'none';
+        const url = window.mcPray.audioUrl(r.file);
+        if (audio.dataset.src !== url) { audio.src = url; audio.dataset.src = url; }
+        // Safari ignores a position set before the file's length is known,
+        // so it's set again once it is.
+        const seek = () => { if (Math.abs(audio.currentTime - from) > 0.25) audio.currentTime = from; };
+        try { seek(); } catch (e) { /* set again on loadedmetadata */ }
+
+        // The end (of the prayer, or of a single line's stretch) is a full
+        // stop: it also ends this run, so the frame loop below stands down
+        // instead of lighting the last line again.
+        const finish = () => { if (mine === run) stop(); };
+        const place = () => {
+          if (mine !== run) return;
+          const t = audio.currentTime;
+          if (t >= to) { finish(); return; }
+          let i = indices[0];
+          for (const j of indices) if (r.starts[j] <= t + 0.05) i = j;
+          mark(i);
+        };
+        const frame = () => { if (mine === run) { place(); requestAnimationFrame(frame); } };
+        const fallBack = () => {
+          if (mine !== run) return;
+          failed[lang] = true;
+          stop();
+          if (synth) speak(indices, lang, part);
+        };
+        audio.onloadedmetadata = () => { if (mine === run) seek(); };
+        audio.ontimeupdate = place;
+        audio.onended = finish;
+        audio.onerror = fallBack;
+
+        const playing = audio.play();
+        if (playing && playing.catch) playing.catch(err => { if (err && err.name !== 'AbortError') fallBack(); });
+        mark(indices[0]);
+        requestAnimationFrame(frame);
+        paint();
+      }
+
+      function speak(indices, lang, part = null) {
+        const r = recording(lang);
+        if (r) { playRecording(indices, lang, r, part); return; }
+        stop();
+        const mine = ++run;
+        now = { lang, only: indices.length === 1 ? indices[0] : null, part };
+        const voice = pickVoice(LANG[lang]);
+        // One utterance per line, all queued right here inside the tap:
+        // iOS only lets speech start from a user gesture, separate lines let
+        // each one light up as it's read, and short utterances sidestep
+        // Chrome's habit of cutting off long ones partway.
+        indices.forEach((i, n) => {
+          const u = new SpeechSynthesisUtterance(lines[i][lang]);
+          u.lang = LANG[lang];           // set even with no matching voice, so the system can pick one
+          if (voice) u.voice = voice;
+          u.rate = slow ? RATE.slow : RATE.normal;
+          const done = () => {
+            if (mine !== run || n !== indices.length - 1) return;
+            now = null;
+            queued = [];
+            mark(-1);
+            paint();
+          };
+          let began = 0;
+          u.onstart = () => { began = performance.now(); if (mine === run) mark(i); };
+          u.onend = () => {
+            if (lang === 'th' && began && mine === run) checkHeard(u.text, performance.now() - began);
+            // The highlight moves on when a line ends, not only when the next
+            // one starts: iOS sometimes never reports the start of a queued
+            // line. (When the start does arrive, it marks the same line again.)
+            if (mine === run && n < indices.length - 1) mark(indices[n + 1]);
+            done();
+          };
+          u.onerror = done;
+          queued.push(u);
+          synth.speak(u);
+        });
+        paint();
+      }
+
+      /* ── Drawing the prayer ───────────────────────────────────── */
+      // Where the English comes from: the traditional wording, or a credit
+      // to its source (`source_en.notice`).
+      const credit = en => escapeHtml(en.notice);
+      const englishFrom = prayer => (prayer.parts ? (prayer.parts.find(p => p.source_en) || {}).source_en : prayer.source_en);
+
+      // The foot of the page names the text's source and, once the
+      // recordings are known, the voices that read it. The Mass names each
+      // part's sources under that part, so its foot carries only the English
+      // credit, once.
+      function showSource(prayer) {
+        if (!prayer.source && !prayer.parts) return;
+        const s = $('source');
+        const voiceName = v => String(v || '').replace(/^[a-z]{2}-[A-Z]{2}-/, '').replace(/Neural$/, '');
+        const voices = rec && rec.th && rec.en
+          ? ` Recorded voices: ${escapeHtml(voiceName(rec.th.voice))} (Thai) and ${escapeHtml(voiceName(rec.en.voice))} (English), synthetic neural voices made with Azure AI Speech.`
+          : '';
+        const thai = prayer.source
+          ? `Thai text: <a href="${escapeHtml(prayer.source.url)}" target="_blank" rel="noopener">${escapeHtml(prayer.source.name)}</a>. `
+          : '';
+        const en = englishFrom(prayer);
+        s.innerHTML = `${thai}English: ${en ? credit(en) : 'the traditional wording.'}${voices}`;
+        s.hidden = false;
+      }
+
+      // Under each part of The Mass: where its Thai and its English come from.
+      function partSource(p) {
+        const thai = p.source ? `Thai: <a href="${escapeHtml(p.source.url)}" target="_blank" rel="noopener">${escapeHtml(p.source.name)}</a>. ` : '';
+        return `${thai}English: ${p.source_en ? escapeHtml(p.source_en.name) : 'the traditional wording'}.`;
+      }
+
+      let listening = false; // the voiceschanged listener is added once
+
+      function render(prayer) {
+        document.title = prayer.title + ' · Pray · Machina Christi';
+        $('title').textContent = prayer.title;
+        $('title-th').textContent = prayer.title_th;
+        lines = prayer.lines;
+        rec = prayer.audio || null;
+        marked = -1;
+
+        // Each line is a button when the prayer can be heard (tap to hear it
+        // in Thai), and plain text when it can't. A line's number (data-i) is
+        // its place in the whole prayer, so in The Mass a tap on any part's
+        // line plays that line of the one long recording.
+        const listen = canListen();
+        const tag = listen ? 'button' : 'div';
+        const row = (l, i) => `
+          <li${l.stanza ? ' class="stanza"' : ''}>
+            <${tag} ${listen ? 'type="button" ' : ''}class="line" data-i="${i}">
+              <span class="th" lang="th">${escapeHtml(l.th)}</span>
+              <span class="rom" lang="th-Latn">${escapeHtml(l.rom)}</span>
+              <span class="en">${escapeHtml(l.en)}</span>
+              ${l.lit ? `<span class="lit">literally, &ldquo;${escapeHtml(l.lit)}&rdquo;</span>` : ''}
+            </${tag}>
+          </li>`;
+        const list = (from, to) => `<ol class="lines">${lines.slice(from, to).map((l, k) => row(l, from + k)).join('')}</ol>`;
+        const parts = Array.isArray(prayer.parts) ? prayer.parts : [];
+        const endOf = n => (n + 1 < parts.length ? parts[n + 1].start : lines.length);
+        ranges = new Map(parts.map((p, n) => [p.id, lines.slice(p.start, endOf(n)).map((_, k) => p.start + k)]));
+        const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path class="i-play" d="M2.5 1.2 L10.8 6 L2.5 10.8 Z" /><rect class="i-stop" x="1.8" y="1.8" width="8.4" height="8.4" rx="1.2" /></svg>';
+        const partListen = p => `
+            <div class="part__listen">${['th', 'en'].map(lang => {
+              const say = `Listen to ${escapeHtml(p.title)} in ${lang === 'th' ? 'Thai' : 'English'}`;
+              return `<button type="button" class="listen" data-lang="${lang}" data-part="${escapeHtml(p.id)}" data-say="${say}" aria-label="${say}">${PLAY}<span class="label">Listen</span><span class="lang"${lang === 'th' ? ' lang="th"' : ''}>${lang === 'th' ? 'ไทย' : 'English'}</span></button>`;
+            }).join('')}</div>`;
+        const nav = () => `
+          <nav class="parts-nav" aria-labelledby="parts-nav-label">
+            <p class="parts-nav__label" id="parts-nav-label">In this order</p>
+            <ol>${parts.map((p, n) => `<li><a href="#part-${escapeHtml(p.id)}">${n + 1}&nbsp;·&nbsp;${escapeHtml(p.title)}</a></li>`).join('')}</ol>
+          </nav>`;
+        linesEl.innerHTML = parts.length
+          ? nav() + parts.map((p, n) => {
+              const id = `part-${escapeHtml(p.id)}`;
+              const end = endOf(n);
+              return `
+          <section class="part" id="${id}" aria-labelledby="${id}-title">
+            <h2 class="part__title" id="${id}-title">${escapeHtml(p.title)}</h2>
+            <span class="part__th" lang="th">${escapeHtml(p.title_th)}</span>
+            ${p.about ? `<p class="part__when">${escapeHtml(p.about)}</p>` : ''}
+            ${listen ? partListen(p) : ''}
+            ${list(p.start, end)}
+            <p class="part__source">${partSource(p)}</p>
+          </section>`;
+            }).join('')
+          : list(0, lines.length);
+        lineEls = Array.from(linesEl.querySelectorAll('.line'));
+
+        showSource(prayer);
+
+        $('toggles').hidden = false;
+        $('guide').hidden = false;
+
+        if (listen) {
+          player.hidden = false;
+          document.body.classList.add('has-player');
+          const hint = $('tap-hint');
+          if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) hint.textContent = 'Click any line to hear it in Thai.';
+          hint.hidden = false;
+          if (synth && !listening) {
+            listening = true;
+            refreshVoices();
+            if (synth.addEventListener) synth.addEventListener('voiceschanged', refreshVoices);
+            else synth.onvoiceschanged = refreshVoices;
+          }
+        } else {
+          $('slow').hidden = true;
+          voiceNote.textContent = 'This browser can’t read prayers aloud, but every line is here to read.';
+          voiceNote.hidden = false;
+        }
+      }
+
+      function notFound() {
+        $('title').textContent = 'Prayer not found';
+        linesEl.innerHTML = '<p class="notice">That prayer isn&rsquo;t here. <a href="/pray.html">Back to the prayers</a>.</p>';
+      }
+
+      // prayer.html?p=mass#part-lamb-of-god opens at that part. The parts are
+      // drawn after the page loads, too late for the browser's own jump, so
+      // it's made once they're there.
+      function jumpToPart() {
+        const at = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (at && at.classList.contains('part')) at.scrollIntoView({ block: 'start' });
+      }
+
+      /* ── Switches ─────────────────────────────────────────────── */
+      function applySwitches() {
+        $('slow').setAttribute('aria-pressed', String(slow));
+        $('rom').setAttribute('aria-pressed', String(showRom));
+        document.body.classList.toggle('no-rom', !showRom);
+      }
+      $('slow').addEventListener('click', () => { slow = !slow; store.set('pray.slow', slow); applySwitches(); });
+      $('rom').addEventListener('click', () => { showRom = !showRom; store.set('pray.rom', showRom); applySwitches(); });
+      applySwitches();
+
+      /* ── Listening ────────────────────────────────────────────── */
+      player.addEventListener('click', e => {
+        const b = e.target.closest('.listen');
+        if (!b || !canListen() || !lines.length) return;
+        const lang = b.dataset.lang;
+        if (now && now.lang === lang && now.only === null && !now.part) { stop(); return; }
+        speak(lines.map((_, i) => i), lang);
+      });
+
+      // In The Mass, a part's own Listen plays just that part; again, stops.
+      // Tap a line to hear just that line in Thai; tap it again to stop.
+      linesEl.addEventListener('click', e => {
+        const p = e.target.closest('.listen[data-part]');
+        if (p) {
+          if (!canListen() || !ranges.has(p.dataset.part)) return;
+          const { part, lang } = p.dataset;
+          if (now && now.part === part && now.lang === lang) { stop(); return; }
+          speak(ranges.get(part), lang, part);
+          return;
+        }
+        const b = e.target.closest('button.line');
+        if (!b || !canListen()) return;
+        const i = Number(b.dataset.i);
+        if (now && now.only === i) { stop(); return; }
+        speak([i], 'th');
+      });
+
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && now) stop(); });
+
+      // Leaving the page must silence it — some browsers keep reading after
+      // navigation — and a return from the back/forward cache starts quiet.
+      window.addEventListener('pagehide', () => {
+        run++;
+        now = null;
+        if (audio) audio.pause();
+        if (synth) synth.cancel();
+      });
+      window.addEventListener('pageshow', e => { if (e.persisted) { now = null; mark(-1); paint(); } });
+
+      /* ── Load ─────────────────────────────────────────────────── */
+      // The words come at once from the copy that ships with the site. On the
+      // live site the API's copy follows, with the recordings: if its words
+      // are the same, the recordings are simply added (a reading already under
+      // way carries on in the device's voice); if not, the prayer is redrawn.
+      // Each prayer has a page of its own, pray/<id>.html, made from this
+      // file by scripts/build-prayer-pages.mjs with the prayer's id on <html>
+      // (so a link preview shows that prayer's name and picture). This file
+      // still answers the older links, prayer.html?p=<id>, by sending the
+      // visitor on to that prayer's own page.
+      const ownPage = document.documentElement.dataset.prayer;
+      const id = ownPage || new URLSearchParams(location.search).get('p');
+      let shown = null, leaving = false;
+      const moveOn = prayer => {
+        if (ownPage) return false;
+        leaving = true;
+        location.replace('/pray/' + encodeURIComponent(prayer.id) + '.html' + location.hash);
+        return true;
+      };
+      const sameWords = (a, b) => JSON.stringify([a.title, a.title_th, a.lines, a.parts]) === JSON.stringify([b.title, b.title_th, b.lines, b.parts]);
+      function newer(prayer) {
+        if (leaving || (!shown && moveOn(prayer))) return;
+        if (shown && sameWords(prayer, shown) && (canListen() || !prayer.audio)) {
+          rec = prayer.audio || null;
+          showSource(prayer);
+        } else {
+          if (now) stop();
+          render(prayer);
+        }
+        shown = prayer;
+      }
+      window.mcPray.get(id, newer)
+        .then(prayer => { if (shown || leaving) return; if (prayer && moveOn(prayer)) return; if (prayer) { shown = prayer; render(prayer); jumpToPart(); } else notFound(); })
+        .catch(() => {
+          linesEl.innerHTML = '<p class="notice">The prayer couldn&rsquo;t be loaded just now &mdash; please try again in a moment.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>

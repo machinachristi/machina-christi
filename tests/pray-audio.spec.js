@@ -50,7 +50,7 @@ async function liveSite(page, { api = true } = {}) {
 
 // Open a prayer and wait until its recordings have arrived from the API.
 async function openRecorded(page, id) {
-  await page.goto(`${LIVE}/prayer.html?p=${id}`);
+  await page.goto(`${LIVE}/pray/${id}.html`);
   await expect(page.locator('#source')).toContainText('Recorded voices');
 }
 
@@ -90,7 +90,7 @@ test.describe('recorded voices on the live site', () => {
 
   test('the prayer comes from the API, and the voices are named as synthetic', async ({ page }) => {
     const { asked, errors } = await liveSite(page);
-    await page.goto(`${LIVE}/prayer.html?p=our-father`);
+    await page.goto(`${LIVE}/pray/our-father.html`);
     await expect(page.locator('h1')).toHaveText('The Our Father');
     expect(asked).toContain('/api/prayers/our-father');
     await expect(page.locator('#source')).toContainText('Recorded voices: Niwat (Thai) and Andrew (English), synthetic neural voices made with Azure AI Speech.');
@@ -192,7 +192,7 @@ test.describe('recorded voices on the live site', () => {
     const { asked, errors } = await liveSite(page, { api: false });
     await page.goto(`${LIVE}/pray.html`);
     await expect(page.locator('.card')).toHaveCount(LISTED.length);
-    await page.goto(`${LIVE}/prayer.html?p=memorare`);
+    await page.goto(`${LIVE}/pray/memorare.html`);
     await expect(page.locator('h1')).toHaveText('The Memorare');
     await expect(page.locator('#source')).not.toContainText('Recorded voices');
     await page.locator('.listen[data-lang="th"]').click();

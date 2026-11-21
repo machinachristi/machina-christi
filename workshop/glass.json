@@ -117,7 +117,7 @@
       "touches": ["actions", "functions", "blob", "identity", "appi", "logs", "budget"] },
     { "id": "playwright", "tier": "bench", "name": "Playwright", "status": "live",
       "what": "A robot that uses web pages the way you do.",
-      "here": "Before anything merges, more than 150 tests walk every page: Eden must grow, Camino must play, search must find the saints, no security rule may break, and this map must match what is built. Each morning it walks the live site too, to catch anything that broke on its own.",
+      "here": "Before anything merges, more than 150 tests walk every page: Eden must grow, Camino must play, search must find the saints, no security rule may break, and this map must match what is built. Each morning it walks the live site too, to catch anything that broke on its own. Its browser also draws each prayer's share picture, the card a chat app shows when a prayer's link is sent.",
       "touches": ["actions", "claude"] },
     { "id": "devops", "tier": "bench", "name": "Azure DevOps", "status": "live",
       "what": "Boards for planning work.",
