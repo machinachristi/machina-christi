@@ -325,6 +325,31 @@ It saves space, and a fix made to the copy reaches everyone at once.
 *Here:* when two Logos buttons say exactly the same words (จ จาน's name and its
 Mid row), the recipe records them once: 184 sounds come from 158 files.
 
+**Stopwatch marks (`performance.mark`).** Every page in a browser has its own
+stopwatch, started the moment that page began to load. `performance.mark`
+writes down what the stopwatch reads at that moment, under a name, like a race
+official calling out the time at each lap. The difference between two marks
+is how long the part between them took. Because each page has its own
+stopwatch, comparing a page with the page inside it (an iframe) first means
+putting both on one clock: `performance.timeOrigin` says when each stopwatch
+was started. The marks also show up in the browser's own developer tools.
+*Here:* Eden's garden marks five moments as it opens, and `world.html` turns
+them into steps. With `?timing=1` on the address it shows them in a corner
+(AB#168, [a ruler for Eden's opening](eden-timing-readout.md)).
+
+**Waiting versus working.** There are two different reasons something can be
+slow. It can be *waiting* for things to arrive over the network, like a cook
+waiting for the groceries to be delivered. Or the device can be *working* on
+what has arrived, like the cooking itself. They need different fixes. Fewer,
+nearer or smaller deliveries (caching, fetching ahead, packing files
+together) shorten the waiting. A faster road does nothing for the cooking:
+only less work, or a quicker cook, shortens that. Measure which one it is
+before fixing anything.
+*Here:* in Eden's readout, "scripts" is mostly waiting, while "build" and
+"first picture" are the phone working. A test computer can fake a slow
+network well, but not a slow phone, which is why the numbers that count come
+from real phones.
+
 ## Networks and security
 
 **Firewall.** A list at the door saying who may even knock. It works alongside
@@ -680,6 +705,17 @@ chip, and the main cost of a frame on a phone. A thousand identical things
 drawn one by one are a thousand draw calls; drawn together as one batch
 (*instancing*), they're one. *Here:* Eden's budget is under 200 draw calls,
 and all 194 saint figures in heaven are a single one.
+
+**Shader (and why the first picture is slow).** A small program that runs on
+the graphics chip itself and decides the colour of each point on the screen:
+how grass catches the light, how water shimmers. The chip can't read it as
+written. The phone must first translate (compile) each one into the chip's
+own language, which happens the first time it is needed. So the first picture
+of a 3D scene takes much longer than every picture after it, like a
+translator reading a play before the first performance.
+*Here:* Eden has about 38 of them. It draws one hidden "warm-up" picture
+behind the veil so the translating is done before you see anything, and the
+readout's "first picture" step is mostly that.
 
 **Pointer events (touch input).** How a web page learns about fingers: the
 browser reports "a finger came down here", "it moved to there", "it lifted".

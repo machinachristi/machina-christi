@@ -182,7 +182,7 @@ test.describe('security headers', () => {
     });
   }
 
-  test('Eden (world.html and its garden frame) runs with no CSP violations', async ({ page }) => {
+  test('Eden (world.html and its garden frame) runs with no CSP violations, and counts its opening time once', async ({ page }) => {
     const seen = await asLiveSite(page);
     await page.addInitScript(() => localStorage.setItem('camino_sound', 'off'));
     await page.goto(LIVE + '/world.html');
@@ -191,6 +191,18 @@ test.describe('security headers', () => {
     await expect.poll(() => seen.pageViews().length, { timeout: 20000 }).toBe(1);
     expect([...seen.violations, ...(await seen.cspFromPage())]).toEqual([]);
     expect(seen.offsite).toEqual([]);
+
+    // AB#168: how long the garden took to open, as a handful of rounded
+    // seconds and how the visitor came in. Nothing else: no address, no query.
+    await leave(page);
+    await expect.poll(() => seen.events('eden-open').length, { timeout: 15000 }).toBe(1);
+    const open = seen.events('eden-open')[0].data.baseData;
+    expect(open.properties).toEqual({ entry: 'button' });
+    expect(Object.keys(open.measurements).sort()).toEqual(['buildSeconds', 'pictureSeconds', 'scriptsSeconds', 'seconds']);
+    for (const s of Object.values(open.measurements)) {
+      expect(s).toBeGreaterThanOrEqual(0);
+      expect(Math.round(s * 10) / 10).toBe(s); // tenths of a second, no finer
+    }
   });
 });
 
@@ -257,10 +269,15 @@ test.describe('telemetry is private', () => {
     // Run "when idle" work at once, so a short wait is a real test.
     await page.addInitScript(() => { window.requestIdleCallback = cb => setTimeout(cb, 0); });
 
+    // The door a page counts its own event through (Eden's opening time,
+    // AB#168) is never even there, so that event is silent in the same places.
+    const door = () => page.evaluate(() => 'mcTelemetry' in window);
+
     // Local server: silent.
     await page.goto('/about.html');
     await page.waitForLoadState('load');
     await page.waitForTimeout(1000); // idle work runs at once (stubbed above)
+    expect(await door()).toBe(false);
 
     // Live site with Global Privacy Control on: silent.
     const seen = await asLiveSite(page);
@@ -268,6 +285,7 @@ test.describe('telemetry is private', () => {
     await page.goto(LIVE + '/about.html');
     await page.waitForLoadState('load');
     await page.waitForTimeout(1000); // idle work runs at once (stubbed above)
+    expect(await door()).toBe(false);
 
     expect(sdkRequests).toEqual([]);
     expect(seen.sent).toEqual([]);

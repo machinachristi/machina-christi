@@ -257,6 +257,29 @@
       outline: none;
     }
 
+    /* ── ?timing=1: how long the garden took to open (AB#168) ──
+       Bottom left, clear of the sound button; the top is taken by "return
+       home" and the garden's first words of help. It takes no touch. */
+    .timing {
+      position: fixed;
+      left: max(14px, env(safe-area-inset-left));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 10;
+      max-width: min(300px, calc(100vw - 90px));
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(11, 10, 8, 0.66);
+      border: 1px solid rgba(201, 162, 39, 0.3);
+      color: var(--gold-soft);
+      font: 14px/1.45 system-ui, -apple-system, sans-serif;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
+    .timing strong { display: block; font-size: 16px; font-weight: 600; color: #fff; }
+    /* With ?fps=1 too, the garden's own line sits in this corner: go above it. */
+    .timing--above { bottom: max(52px, calc(env(safe-area-inset-bottom) + 40px)); }
+    body[data-station="open"] .timing { visibility: hidden; }
+
     @media (prefers-reduced-motion: reduce) {
       .veil::after, .veil .status { animation: none; }
       .veil, body[data-world-state="ready"] .veil { transition-duration: 0.15s; }
@@ -308,12 +331,22 @@
       // meets the intro first. The mark is a #hash, so it never reaches the
       // server or the garden's own frame (which is handed location.search).
       let entered = false;
-      document.querySelector('.intro__enter').addEventListener('click', enterGarden, { once: true });
-      if (location.hash === '#enter') enterGarden();
+      // AB#168: when the visitor asked to go in, on this page's stopwatch
+      // (ms since it began loading). Via #enter the tap was on the page
+      // before, so it is this page's start, 0.
+      let viaLink = false;
+      let tapAt = 0;
+      let enteredAt = 0;
+      let hiddenWhileOpening = false;
+      document.querySelector('.intro__enter').addEventListener('click', () => enterGarden(performance.now()), { once: true });
+      if (location.hash === '#enter') { viaLink = true; enterGarden(0); }
 
-      function enterGarden() {
+      function enterGarden(at) {
         if (entered) return;
         entered = true;
+        tapAt = at;
+        enteredAt = performance.now();
+        hiddenWhileOpening = document.hidden;
         body.dataset.worldState = 'loading';
 
         // The world lives in its own document. Its sandbox permits scripts
@@ -340,7 +373,7 @@
           if (e.source !== iframe.contentWindow) return;
           const msg = e.data;
           if (!msg || typeof msg.type !== 'string') return;
-          if (msg.type === 'world:ready') ready();
+          if (msg.type === 'world:ready') ready(msg.timing);
           else if (msg.type === 'world:error') fail(msg.message);
           // AB#165: a station's game is open over the garden, and has its
           // own way back to it — this page's "return home" steps aside so it
@@ -348,7 +381,7 @@
           else if (msg.type === 'world:station') body.dataset.station = msg.open ? 'open' : 'closed';
         });
 
-        function ready() {
+        function ready(timing) {
           if (settled) return;
           settled = true;
           clearTimeout(networkTimer);
@@ -357,6 +390,7 @@
           // Hand keyboard focus to the world so desktop arrows/WASD work
           // immediately, without needing a click first.
           iframe.focus();
+          opened(timing, performance.now());
         }
 
         function fail(reason) {
@@ -369,6 +403,71 @@
           body.dataset.worldState = 'failed';
           console.warn('world failed:', reason);
         }
+      }
+
+      // ── How long the garden took to open (AB#168) ───────────────────
+      // The garden marks each step on the browser's stopwatch and sends the
+      // marks with world:ready. Each document's stopwatch starts when that
+      // document begins to load, so the frame's marks are moved onto this
+      // page's first (performance.timeOrigin is when each one started).
+      // The steps follow one another, so they add up to the whole:
+      //   page     the gate tapped → this page loaded (via #enter only)
+      //   scripts  → all the garden's scripts arrived: mostly the network
+      //   build    → the garden built: the phone working
+      //   picture  → the first picture drawn and shown (this page told):
+      //              the graphics chip
+      // With ?timing=1 they are shown in a corner. Every visit also counts
+      // them once, rounded, through telemetry, which is silent wherever it
+      // always is (off the live site, or when the browser asks not to be
+      // tracked). A visit that was hidden part of the way is not counted:
+      // a hidden page is paused, so its numbers mean nothing.
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && body.dataset.worldState === 'loading') hiddenWhileOpening = true;
+      });
+
+      function opened(t, readyAt) {
+        const shift = t && typeof t.origin === 'number' ? t.origin - performance.timeOrigin : NaN;
+        const at = name => (t && typeof t[name] === 'number' ? t[name] + shift : NaN);
+        const ms = {
+          seconds: readyAt - tapAt,
+          pageSeconds: viaLink ? enteredAt : NaN,
+          scriptsSeconds: at('scripts') - enteredAt,
+          buildSeconds: at('warm') - at('scripts'),
+          // …until this page heard "ready", when the veil begins to lift.
+          pictureSeconds: readyAt - at('warm'),
+        };
+        const s = {};
+        for (const k in ms) if (isFinite(ms[k]) && ms[k] >= 0) s[k] = Math.round(ms[k] / 100) / 10;
+
+        if (new URLSearchParams(location.search).get('timing') === '1') showTiming(s);
+        if (hiddenWhileOpening) return;
+        const send = () => {
+          if (window.mcTelemetry) window.mcTelemetry.event('eden-open', { entry: viaLink ? 'link' : 'button' }, s);
+        };
+        // telemetry.js loads async: by the page's load it has surely run.
+        if (document.readyState === 'complete') send();
+        else addEventListener('load', send, { once: true });
+      }
+
+      function showTiming(s) {
+        const n = k => (k in s ? s[k].toFixed(1) : '?');
+        // Each step's words and number stay on one line (no-break spaces);
+        // a narrow screen wraps only between steps.
+        const step = (label, k) => (label + ' ' + n(k)).replace(/ /g, ' ');
+        const steps = [
+          'pageSeconds' in s ? step('page', 'pageSeconds') : null,
+          step('scripts', 'scriptsSeconds'),
+          step('build', 'buildSeconds'),
+          step('first picture', 'pictureSeconds'),
+        ].filter(Boolean).join(' · ');
+        const el = document.createElement('div');
+        el.className = 'timing';
+        if (new URLSearchParams(location.search).has('fps')) el.classList.add('timing--above');
+        const total = document.createElement('strong');
+        total.textContent = 'tap → garden ' + n('seconds') + ' s';
+        el.append(total, steps);
+        if (hiddenWhileOpening) el.append(document.createElement('br'), 'hidden part of the way: not counted');
+        body.appendChild(el);
       }
     })();
   </script>

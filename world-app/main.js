@@ -22,6 +22,12 @@ import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './scenes/vegetation.js'
 import { LADDER_FOOT } from './scenes/ladder.js';
 import { mulberry32, breathe, shortestAngle } from './util.js';
 
+// AB#168: each step of opening is marked on the browser's own stopwatch and
+// sent with world:ready; world.html shows the steps with ?timing=1. A module
+// starts only once every script it imports has arrived and run, so this
+// first line is also the moment the scripts are all here.
+performance.mark('eden:scripts');
+
 const params = new URLSearchParams(location.search);
 
 // Test hook: the smoke suite loads world.html?debug=forceError to prove that
@@ -50,6 +56,16 @@ function post(msg) {
   } catch (_) { /* standalone visit — no parent to tell */ }
 }
 
+// The eden: marks as ms since this frame began, and when it began, so
+// world.html can set them on its own clock (AB#168).
+function marks() {
+  const t = { origin: performance.timeOrigin };
+  for (const m of performance.getEntriesByType('mark')) {
+    if (m.name.startsWith('eden:')) t[m.name.slice(5)] = Math.round(m.startTime);
+  }
+  return t;
+}
+
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -71,6 +87,7 @@ const camera = new THREE.PerspectiveCamera(fovFor(aspect), aspect, 0.1, 900);
 // loading animation stays alive; a failure here surfaces as an unhandled
 // rejection, which index.html relays to the shell as world:error.)
 const garden = await createGarden(scene, mulberry32(20260703));
+performance.mark('eden:garden');
 
 // The light pass (AB#130): the garden drawn off-screen, then finished like
 // a graded film. It steps aside by itself where it cannot run or keep up,
@@ -312,8 +329,10 @@ fetch('./manifest.json')
 // Warm-up frame: the first render compiles every shader and uploads every
 // buffer — a one-time stall. Take it here, while the parent's veil still
 // fully covers the stage, so the reveal that follows never stutters.
+performance.mark('eden:warm');
 lightPass.render(scene, camera, garden.hour);
 await breathe();
+performance.mark('eden:picture');
 
 // The reverence chime is struck once per approach to the sacred trees,
 // re-armed only after the walker has properly drawn away again.
@@ -585,7 +604,8 @@ function frame() {
   if (!ready) {
     ready = true;
     document.body.dataset.worldReady = '1';
-    post({ type: 'world:ready' });
+    performance.mark('eden:ready');
+    post({ type: 'world:ready', timing: marks() });
     showHowTo();
   }
 }

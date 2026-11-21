@@ -28,6 +28,7 @@ afterthought: every phase of work adds to them.
   - [A game inside the garden — the waymarker at the gate, and Camino behind it](eden-camino-station.md)
   - [Eden revamp — a large place, a great tree, new light, the ladder by night, and verses](eden-revamp.md) (built in stages; grows with each one)
   - [Eden's first seconds — a full shopping list, no double asking, and the title card that stays](eden-first-seconds.md)
+  - [A ruler for Eden's opening — how long the garden takes, step by step](eden-timing-readout.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.

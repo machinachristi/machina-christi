@@ -1,5 +1,6 @@
 // Site telemetry → Azure Application Insights: page views (with referrer),
-// time on page, script errors, and Content Security Policy reports.
+// time on page, script errors, Content Security Policy reports, and how long
+// Eden took to open (a few rounded seconds, once per visit).
 //
 // Privacy by design:
 //   - no cookies and no browser storage. The SDK's user and session IDs are
@@ -50,6 +51,11 @@
     if (ai) ai.trackEvent(event);
     else waiting.push(event);
   }
+
+  // A page may count an event of its own: Eden's opening time (AB#168). It
+  // exists only past the checks above, so it is silent wherever the rest of
+  // telemetry is; a page calls it only if it is there.
+  window.mcTelemetry = { event: track };
 
   // The CSP ships report-only first. Every would-be block is recorded so the
   // policy can be enforced once the reports are clean.
