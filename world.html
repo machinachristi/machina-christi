@@ -156,22 +156,27 @@
     .veil .verse {
       max-width: 36ch;
       line-height: 1.8;
-      font-size: clamp(13px, 3.6vw, 16px);
+      font-size: clamp(14px, 3.6vw, 16px);
       font-style: italic;
       color: rgba(232, 213, 163, 0.6);
     }
     .veil .verse small {
       display: block;
       margin-top: 6px;
-      font-size: 0.8em;
+      font-size: max(14px, 0.8em);
       font-style: normal;
       letter-spacing: 0.22em;
       color: rgba(232, 213, 163, 0.35);
     }
 
-    /* Entering: everything falls away but one quiet, breathing line. */
+    /* Entering (AB#169): the title card stays — the tree, EDEN and the verse
+       keep the visitor company while the garden downloads — and one quiet,
+       breathing line beneath them says it is on its way. Only the intro's
+       words and button step aside (the line takes their place, below). Once
+       they all faded out here, which left a phone showing an almost empty
+       screen for the seconds the garden takes to arrive. */
     .veil .status {
-      font-size: clamp(13px, 3.4vw, 15px);
+      font-size: clamp(14px, 3.6vw, 15px);
       font-style: italic;
       letter-spacing: 0.32em;
       text-indent: 0.32em;
@@ -179,11 +184,6 @@
       animation: breathe 2.6s ease-in-out infinite;
     }
     @keyframes breathe { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
-
-    .veil .glyph, .veil h1, .veil .verse { transition: opacity 0.6s ease; }
-    body[data-world-state="loading"] .veil .glyph,
-    body[data-world-state="loading"] .veil h1,
-    body[data-world-state="loading"] .veil .verse { opacity: 0; }
 
     /* The intro / entering / failed panels occupy the same grid cell so
        that whichever one is showing never changes this box's height. Before,
@@ -213,7 +213,7 @@
     .intro__copy {
       max-width: 36ch;
       line-height: 1.8;
-      font-size: clamp(13px, 3.8vw, 15px);
+      font-size: clamp(14px, 3.8vw, 15px);
       color: rgba(232, 213, 163, 0.7);
     }
 
@@ -230,7 +230,7 @@
     .fallback p {
       max-width: 32ch;
       line-height: 1.8;
-      font-size: clamp(13px, 3.8vw, 15px);
+      font-size: clamp(14px, 3.8vw, 15px);
       font-style: italic;
       color: rgba(232, 213, 163, 0.65);
     }
@@ -483,9 +483,16 @@
     // opt-in above still governs when the world *boots*; this only means
     // that, by then, it is already downloaded. Skipped for visitors who
     // have asked their browser to save data.
+    //
+    // Skipped too once the garden is already on its way (AB#169): arriving at
+    // world.html#enter (the homepage's Eden gate, the About Eden page) starts
+    // it straight away, and so does a quick tap on "enter the garden" before
+    // the idle moment below. The garden's own page then asks for these same
+    // files at full speed, and a head start would only ask for them twice.
     (function () {
       const conn = navigator.connection;
       if (conn && conn.saveData) return;
+      if (location.hash === '#enter') return;
 
       // three.js is the bulk (and separately long-cached); main.js is the
       // entry that pulls the rest. The scene modules are small and ride the
@@ -499,6 +506,7 @@
       ];
 
       function warm() {
+        if (document.body.dataset.worldState !== 'intro') return;
         for (const href of core) {
           const link = document.createElement('link');
           link.rel = 'prefetch';
