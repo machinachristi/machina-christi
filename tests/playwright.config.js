@@ -29,12 +29,16 @@ module.exports = defineConfig({
   // rest of the site's tests still share the second worker. (If a core check
   // fails, the feature checks are skipped rather than run on a broken garden.)
   //
+  // The timing readout's checks (AB#168) draw a garden too, so they wait for
+  // the feature checks in turn.
+  //
   // tests/live/ is the daily check of the real site, with its own config: it
   // never runs here, against the copy this config serves.
   projects: [
-    { name: 'site', testIgnore: [/world-(core|features)\.spec\.js$/, /[\\/]live[\\/]/] },
+    { name: 'site', testIgnore: [/world-(core|features|timing)\.spec\.js$/, /[\\/]live[\\/]/] },
     { name: 'world-core', testMatch: /world-core\.spec\.js$/ },
     { name: 'world-features', testMatch: /world-features\.spec\.js$/, dependencies: ['world-core'] },
+    { name: 'world-timing', testMatch: /world-timing\.spec\.js$/, dependencies: ['world-features'] },
   ],
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',

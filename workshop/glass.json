@@ -92,8 +92,8 @@
 
     { "id": "appi", "tier": "watch", "name": "Application Insights", "status": "live",
       "what": "Azure's monitoring for apps and pages.",
-      "here": "Counts page views, time on page and errors, with no cookies and nothing that follows you, and watches every API request.",
-      "touches": ["functions", "identity", "headers", "logs"] },
+      "here": "Counts page views, time on page, errors and how long Eden takes to open (a few rounded seconds per visit), with no cookies and nothing that follows you, and watches every API request.",
+      "touches": ["functions", "identity", "headers", "logs", "threejs"] },
     { "id": "logs", "tier": "watch", "name": "Log Analytics", "status": "live",
       "what": "Where telemetry is kept and questioned, in a language called KQL.",
       "here": "Two stores, each with a hard daily limit, so the site stays inside its free allowance.",
