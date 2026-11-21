@@ -299,11 +299,21 @@
       const body = document.body;
       const stage = document.querySelector('.stage');
 
-      // Nothing loads until the visitor opts in from the intro screen —
-      // only then does the iframe (and its 25s/8s handshake timers) start.
+      // Nothing loads until the visitor opts in — only then does the iframe
+      // (and its 25s/8s handshake timers) start. Opting in is either the
+      // intro's own "enter the garden" button, or (AB#167) arriving at
+      // world.html#enter: the homepage's Eden gate and the About Eden page's
+      // link carry that mark, because tapping them already said "take me in".
+      // Anyone arriving another way (a shared link, a search result) still
+      // meets the intro first. The mark is a #hash, so it never reaches the
+      // server or the garden's own frame (which is handed location.search).
+      let entered = false;
       document.querySelector('.intro__enter').addEventListener('click', enterGarden, { once: true });
+      if (location.hash === '#enter') enterGarden();
 
       function enterGarden() {
+        if (entered) return;
+        entered = true;
         body.dataset.worldState = 'loading';
 
         // The world lives in its own document. Its sandbox permits scripts

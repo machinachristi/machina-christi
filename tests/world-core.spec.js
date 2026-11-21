@@ -244,15 +244,28 @@ test.describe('isolation: a broken world cannot break the site', () => {
 });
 
 test.describe('arrival and layout', () => {
-  test('the Eden portal on the home page leads here', async ({ page }) => {
+  test('the Eden portal on the home page leads straight into the garden', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/index.html');
     // Keyboard entry is deterministic regardless of which portal stands
     // centered; pointer entry on side portals is covered in home-and-doors.
     await page.locator('.portal--eden').focus();
     await page.keyboard.press('Enter');
-    await page.waitForURL('**/world.html');
-    await page.click('.intro__enter');
+    await page.waitForURL('**/world.html#enter');
+    // AB#167: the gate was the visitor's "take me in" — no second button.
+    // The intro is never shown, and the garden comes alive on its own.
+    await expect(page.locator('.intro')).toBeHidden();
+    await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
+    expect(errors).toEqual([]);
+  });
+
+  test('the About Eden page leads straight into the garden too', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/about-eden.html');
+    await page.locator('a.enter').click();
+    await page.waitForURL('**/world.html#enter');
+    await expect(page.locator('.intro')).toBeHidden();
+    await expect(page.locator('.stage iframe')).toHaveCount(1);
     await page.waitForSelector('body[data-world-state="ready"]', { timeout: 20000 });
     expect(errors).toEqual([]);
   });

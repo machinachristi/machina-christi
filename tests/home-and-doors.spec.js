@@ -35,7 +35,7 @@ test.describe('home page', () => {
     // inside Eden, at the waymarker by the garden's gate.
     await expect(page.locator('.portal--camino')).toHaveCount(0);
     await expect(page.locator('.portal--workshop')).toHaveAttribute('href', 'workshop.html');
-    await expect(page.locator('.portal--eden')).toHaveAttribute('href', 'world.html');
+    await expect(page.locator('.portal--eden')).toHaveAttribute('href', 'world.html#enter');
     await expect(page.locator('.portal--about')).toHaveAttribute('href', 'about.html');
     await expect(page.locator('.portal--ordo')).toHaveAttribute('href', 'ordo.html');
     await expect(page.locator('.portal--pray')).toHaveAttribute('href', 'pray.html');
@@ -133,7 +133,7 @@ test.describe('home page', () => {
     // Eden stands centered on arrival, so a tap walks straight through.
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
     await page.locator('.portal--eden').click();
-    await page.waitForURL('**/world.html');
+    await page.waitForURL('**/world.html#enter');
   });
 
   test('tapping a side portal centers it instead of entering', async ({ page }) => {
@@ -192,7 +192,7 @@ test.describe('home page', () => {
     // is centered — deterministic across the back-button round trip.
     await page.locator('.portal--eden').focus();
     await page.keyboard.press('Enter');
-    await page.waitForURL('**/world.html');
+    await page.waitForURL('**/world.html#enter');
     await page.goBack();
     await page.waitForURL('**/index.html');
 
@@ -203,7 +203,7 @@ test.describe('home page', () => {
     // Prove the gate isn't just visually reset but still actually works.
     await page.locator('.portal--eden').focus();
     await page.keyboard.press('Enter');
-    await page.waitForURL('**/world.html');
+    await page.waitForURL('**/world.html#enter');
   });
 });
 
@@ -218,7 +218,7 @@ test.describe('home page on a desktop pointer', () => {
     await page.goto('/index.html');
     await expect(page.locator('.portal--eden')).toHaveClass(/is-active/);
     await page.locator('.portal--eden').click();
-    await page.waitForURL('**/world.html', { waitUntil: 'commit' });
+    await page.waitForURL('**/world.html#enter', { waitUntil: 'commit' });
   });
 
   test('a plain click on a side gate centers it, then enters', async ({ page }) => {
