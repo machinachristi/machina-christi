@@ -163,6 +163,18 @@ when Adam walks into the waymarker the Camino game is shown over the garden
 through another one. Camino is still its own page, which is why it also
 opens by itself at `/game.html`.
 
+**The parts of a web address (`?` and `#`).** After the page's name, an
+address can carry two kinds of extra note. A `?` note (`world.html?controls=old`)
+travels to the server with the request, like writing on the outside of an
+envelope. A `#` note (`world.html#enter`) stays in your own browser and is
+read only by the page once it arrives, like a sticky note on the letter
+inside. Either way it is still the same page; the note just tells it how to
+greet you.
+*Here:* the homepage's Eden gate and the About Eden page link to
+`world.html#enter`. The page sees the note and goes straight into the garden,
+skipping its own "enter the garden" button. A plain `world.html` (a shared
+link, a search result) still shows that welcome first.
+
 **Messages between pages (postMessage).** Because a page in an iframe cannot
 reach into the page around it, the two pass notes instead. One says "here is
 a note for you"; the other listens, checks who sent it, and decides what to

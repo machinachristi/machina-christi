@@ -48,7 +48,7 @@ test.describe('about sub-pages', () => {
     const errors = watchErrors(page);
     await page.goto('/about-eden.html');
     await expect(page.locator('h1')).toContainText('Eden');
-    await expect(page.locator('a[href="world.html"]')).toBeVisible();
+    await expect(page.locator('a[href="world.html#enter"]')).toBeVisible();
     expect(errors).toEqual([]);
   });
 
