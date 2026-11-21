@@ -414,7 +414,8 @@
       //   page     the gate tapped → this page loaded (via #enter only)
       //   scripts  → all the garden's scripts arrived: mostly the network
       //   build    → the garden built: the phone working
-      //   picture  → the first picture drawn and shown: the graphics chip
+      //   picture  → the first picture drawn and shown (this page told):
+      //              the graphics chip
       // With ?timing=1 they are shown in a corner. Every visit also counts
       // them once, rounded, through telemetry, which is silent wherever it
       // always is (off the live site, or when the browser asks not to be
@@ -432,7 +433,8 @@
           pageSeconds: viaLink ? enteredAt : NaN,
           scriptsSeconds: at('scripts') - enteredAt,
           buildSeconds: at('warm') - at('scripts'),
-          pictureSeconds: at('ready') - at('warm'),
+          // …until this page heard "ready", when the veil begins to lift.
+          pictureSeconds: readyAt - at('warm'),
         };
         const s = {};
         for (const k in ms) if (isFinite(ms[k]) && ms[k] >= 0) s[k] = Math.round(ms[k] / 100) / 10;

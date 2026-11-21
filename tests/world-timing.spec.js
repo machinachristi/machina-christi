@@ -26,12 +26,22 @@ test.describe('the timing readout', () => {
     const m = text.match(/tap → garden (\d+\.\d) s page (\d+\.\d) · scripts (\d+\.\d) · build (\d+\.\d) · first picture (\d+\.\d)/);
     expect(m, `readout says: ${text}`).not.toBeNull();
 
-    // The steps follow one another, so together they make the whole: only
-    // rounding and the hop of the message between the two pages are left over.
+    // The steps follow one another, so together they make the whole, give or
+    // take rounding. (Every step being a number, never "?", also shows the
+    // garden's marks were set on this page's clock: set wrongly, a step would
+    // come out below zero and be left blank.)
     const [total, ...steps] = m.slice(1).map(Number);
     const sum = steps.reduce((a, b) => a + b, 0);
     expect(total).toBeGreaterThan(0);
-    expect(Math.abs(total - sum), `total ${total} vs steps ${steps.join(' + ')}`).toBeLessThan(0.5);
+    // (Five numbers, each rounded to a tenth: at most 0.25 s apart.)
+    expect(Math.abs(total - sum), `total ${total} vs steps ${steps.join(' + ')}`).toBeLessThan(0.26);
+    // …and they agree with the garden's own stopwatch, read directly.
+    const frameReady = await appFrame(page).evaluate(() =>
+      performance.timeOrigin + performance.getEntriesByName('eden:ready')[0].startTime);
+    const pageReady = await page.evaluate(() => performance.timeOrigin);
+    const readySeconds = (frameReady - pageReady) / 1000;
+    expect(readySeconds).toBeGreaterThan(0);
+    expect(readySeconds).toBeLessThanOrEqual(total + 0.06);
 
     // Readable on a phone (never under 14px), inside the screen, and it takes
     // no touch: walking works through it.
