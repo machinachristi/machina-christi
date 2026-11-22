@@ -138,4 +138,78 @@
     // A link to #hall (from the tour) finds it even though it arrived late.
     if (location.hash === '#hall') addEventListener('load', () => hall.scrollIntoView({ block: 'end' }));
   }
+
+  // ── X9: rooms that point to their neighbours ────────────────────────
+  // Letters lead to prayers, a prayer leads to its letters, and the
+  // Church's day leads to the day's prayer. One quiet "next door" card at
+  // the end of the room, just before the hallway.
+  const nextDoor = ({ label, title, desc, href, glow }) => {
+    const a = make('a', { class: 'house-next', href, style: `--next: var(${glow})` });
+    a.append(make('span', { class: 'house-next__label' }), make('span', { class: 'house-next__title' }), make('span', { class: 'house-next__desc' }));
+    a.children[0].textContent = label;
+    a.children[1].textContent = title;
+    a.children[2].textContent = desc;
+    return a;
+  };
+  const beforeHall = (el, anchor) => {
+    if (anchor) anchor.before(el);
+    else if (document.getElementById('hall')) document.getElementById('hall').before(el);
+    else if (wrap) wrap.append(el);
+  };
+  // The same weekday prayers as "Pray today" on the front door (AB#143).
+  const PRAY_TODAY = [
+    ['mass', 'The Mass'], ['glory-be', 'Glory Be'], ['angel-of-god', 'Angel of God'],
+    ['our-father', 'The Our Father'], ['lord-i-am-not-worthy', 'Lord, I Am Not Worthy'],
+    ['o-blood-and-water', 'O Blood and Water'], ['hail-mary', 'The Hail Mary'],
+  ];
+
+  if (PAGE === '/logos.html') {
+    beforeHall(nextDoor({
+      label: 'Next door', title: 'The prayers, in Thai',
+      desc: 'read them with the letters you learn here', href: '/pray.html', glow: '--marian',
+    }), document.querySelector('.wrap .foot'));
+  }
+
+  if (PAGE === '/ordo.html') {
+    const [id, name] = PRAY_TODAY[new Date().getDay()];
+    beforeHall(nextDoor({
+      label: 'Next door', title: 'Pray today: ' + name,
+      desc: 'one prayer for each day of the week', href: '/pray/' + id + '.html', glow: '--marian',
+    }));
+  }
+
+  // A prayer's own page: its first letter, with that letter's key word from
+  // Logos (only Thai already on the site), leading to the alphabet.
+  if (/^\/pray\/[a-z-]+\.html$/.test(PAGE)) {
+    const card = nextDoor({
+      label: 'Next door', title: 'Its letters',
+      desc: 'learn to read this prayer, letter by letter, in Logos', href: '/logos.html#alphabet', glow: '--lacquer',
+    });
+    beforeHall(card, null);
+    const lines = document.getElementById('lines');
+    const firstLetter = () => {
+      const th = lines && lines.querySelector('.line [lang="th"]');
+      const m = th && th.textContent.match(/[ก-ฮ]/);   // skip vowels written before it
+      return m && m[0];
+    };
+    const name = letter => fetch('/logos/thai.json')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        const c = data && data.consonants.find(x => x.letter === letter);
+        if (!c) return;
+        const desc = card.querySelector('.house-next__desc');
+        desc.textContent = '';
+        desc.append('It begins with ', make('span', { lang: 'th' }), ', as in ', make('span', { lang: 'th' }),
+          ` (${c.meaning}): learn its letters in Logos`);
+        desc.children[0].textContent = c.letter;
+        desc.children[1].textContent = c.word;
+      })
+      .catch(() => { /* the plain words stay */ });
+    // The prayer's lines are drawn by the page a moment after it opens.
+    const tryNow = () => { const l = firstLetter(); if (l) { name(l); return true; } return false; };
+    if (lines && !tryNow()) {
+      const watch = new MutationObserver(() => { if (tryNow()) watch.disconnect(); });
+      watch.observe(lines, { childList: true, subtree: true });
+    }
+  }
 })();

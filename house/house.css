@@ -278,6 +278,28 @@ p.hall__more {
 .hall__more a { display: inline-block; padding: 12px 6px; line-height: 1.5; color: inherit; text-decoration: none; border: 0; }
 .hall__more a:hover, .hall__more a:focus-visible { color: var(--gold-soft); outline: none; }
 
+/* ── X9: a "next door" card at the end of a room ─────────────────── */
+a.house-next {
+  --next: var(--marian);
+  display: block;
+  clear: both;
+  margin: 2.2em 0 0.6em;
+  padding: 16px 20px;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 14px;
+  background: rgba(var(--next), 0.07);
+  text-decoration: none;
+  color: inherit;
+  font-family: var(--serif);
+  max-width: 620px;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+a.house-next:hover, a.house-next:focus-visible { border-color: rgba(201, 162, 39, 0.7); background: rgba(var(--next), 0.12); outline: none; }
+.house-next__label { display: block; font-size: 14px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(var(--next), 0.95); margin-bottom: 4px; }
+.house-next__title { display: block; font-size: 18px; line-height: 1.5; color: var(--gold-soft); }
+.house-next__desc { display: block; font-style: italic; font-size: 15px; line-height: 1.55; color: rgba(232, 213, 163, 0.7); }
+.house-next__desc [lang="th"] { font-style: normal; font-family: var(--thai); color: var(--gold-soft); }
+
 /* ── The "show home" sign: only in previews, never on the live site ── */
 .house-pill {
   position: absolute;
