@@ -988,6 +988,31 @@ roll. Measurements go with it, so "too small" or "brighter" become numbers.
 *Here:* the homepage's 3D gate rooms (AB#115). Three were tried; none was
 built, and the three touches people liked came to today's page as CSS.
 
+**Show home (a whole-site prototype).** A spike for many ideas at once: a
+complete copy of the site with every proposal built in, walked through on a
+real phone, then thrown away, keeping only the ideas that earned it. Like a
+builder's show home, furnished so buyers can choose, that nobody moves into.
+*Here:* pull request #144 built ideas X1 to X25 into one preview, one commit
+per idea, so each can be kept or dropped on its own.
+
+**Draft pull request.** A pull request marked "not ready": GitHub shows it,
+runs its checks and builds its preview, but refuses to merge it. Like a
+document stamped DRAFT across every page.
+*Here:* the show home is a draft titled "Experiment — do not merge".
+
+**Placeholder (example data, marked blank).** Made-up content standing where
+real content will go, clearly labelled so nobody takes it for real, like
+"Your Name" printed on a sample business card. Unlabelled examples are
+dangerous: someone might go to a meeting at a time that was invented.
+*Here:* the Chiang Mai list's entries all say "example, not real", and dashed
+gold boxes mark where a contact or a name would go.
+
+**Time zone.** The same moment has a different clock time in different places;
+a phone shows its owner's own. A page that must act at a place's time (noon
+in Chiang Mai) asks for that place's clock by name, whatever the phone says.
+*Here:* the show home's Angelus rings by Chiang Mai time ("Asia/Bangkok"),
+even on a phone set to London.
+
 **Verification (check the result, not the report).** "Succeeded" means the
 steps ran, not that the outcome is right. After a change, look at the thing
 itself: is the role really there, does the live search really find Agnes?
