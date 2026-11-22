@@ -386,6 +386,8 @@
     ['angelus', 'The Angelus', '/house/angelus.html', /^\/house\/angelus\.html$/],
     ['seasons', 'The seasons', '/house/seasons.html', /^\/house\/seasons\.html$/],
     ['invitations', 'Invitations', '/house/invitations.html', /^\/house\/invitations\.html$/],
+    ['take-a-section', 'Take a section', '/house/take-a-section.html', /^\/house\/take-a-section\.html$/],
+    ['builders', 'Builders', '/house/builders.html', /^\/house\/builders\.html$/],
   ];
   const stamp = id => {
     const book = store.get('passport', {});

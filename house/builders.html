@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Builders: who built what in Machina Christi, as Nehemiah 3 names each family beside its stretch of wall." />
+  <title>Builders · Build · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .wall { list-style: none; margin: 1em 0 0; display: grid; gap: 0; }
+    .wall li {
+      position: relative;
+      padding: 12px 0 12px 22px;
+      border-left: 2px solid rgba(var(--timber), 0.55);
+    }
+    /* Each entry a stone in the wall. */
+    .wall li::before {
+      content: ""; position: absolute; left: -6px; top: 20px;
+      width: 10px; height: 8px; border-radius: 2px;
+      background: rgba(222, 190, 112, 0.85);
+    }
+    .wall .next { display: block; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(232, 213, 163, 0.7); }
+    .wall .part { display: block; font-size: 17px; color: var(--gold-soft); }
+    .wall .who { display: block; font-size: 15.5px; font-style: italic; color: rgba(232, 213, 163, 0.8); }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--timber)">
+  <div class="wrap">
+    <a class="back" href="/house/build.html">&lsaquo; Build</a>
+    <h1>Builders</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>Unless the Lord build the house, they labour in vain that build it.</blockquote>
+      <figcaption>&mdash; Psalm 126:1 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Who built what, the way Nehemiah 3 names each family beside the stretch of wall it rebuilt. Machines are named as machines.</p>
+
+    <ol class="wall">
+      <li><span class="next">First</span><span class="part">The house: its rooms, its gates, its look</span><span class="who">built by <span class="blank">your name, or none: you decide</span></span></li>
+      <li><span class="next">Next to it</span><span class="part">The prayers in Thai</span><span class="who">the Catholic Commission for Liturgy, Thailand (2010 revision)</span></li>
+      <li><span class="next">Next to it</span><span class="part">The verses over the doors, and Ordo&rsquo;s Gospel</span><span class="who">the Douay-Rheims Bible (Challoner revision)</span></li>
+      <li><span class="next">Next to it</span><span class="part">The saints of Ordo</span><span class="who">Butler&rsquo;s Lives of the Saints, with the Vatican&rsquo;s own pages, and Wikipedia where Butler is silent</span></li>
+      <li><span class="next">Next to it</span><span class="part">The letters of Logos</span><span class="who">a Thai learner&rsquo;s workbook, copied letter for letter</span></li>
+      <li><span class="next">Next to it</span><span class="part">The voices</span><span class="who">computer voices from Microsoft Azure (Niwat and Andrew in Pray, Premwadee in Logos), always named as machine voices</span></li>
+      <li><span class="next">Next to it</span><span class="part">Eden&rsquo;s garden</span><span class="who">grown week by week by an AI under a written rule, with three.js</span></li>
+      <li><span class="next">Next to it</span><span class="part">Much of the code</span><span class="who">written with Claude, an AI made by Anthropic, under the builder&rsquo;s direction. It never wrote a prayer.</span></li>
+      <li><span class="next">Next to it</span><span class="part">The idea of the machine</span><span class="who">St Ignatius of Antioch, about AD 108; today&rsquo;s version after Pope Leo XIV&rsquo;s Magnifica Humanitas (2026)</span></li>
+      <li><span class="next">And next</span><span class="part">Whoever takes a section</span><span class="who"><span class="blank">names added only with their yes</span></span></li>
+    </ol>
+
+    <p class="fine" style="margin-top: 1.6em">Nehemiah 3 names everyone; some prefer to build unnamed. Whose names appear here is the owner&rsquo;s choice, and each person&rsquo;s own.</p>
+  </div>
+</body>
+</html>
