@@ -262,4 +262,8 @@
     showSeason(choice);
   };
   if (!LIVE) showSeason(store.get('season'));
+
+  // ── X12: "what's new in the house", one step from every room ────────
+  const hallMore = document.querySelector('.hall__more');
+  if (hallMore) hallMore.insertAdjacentHTML('beforeend', ' &middot; <a href="/house/new.html">what&rsquo;s new</a>');
 })();
