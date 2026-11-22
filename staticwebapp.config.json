@@ -25,6 +25,12 @@
       }
     },
     {
+      "route": "/house/*",
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
       "route": "/assets/telemetry.js",
       "headers": {
         "Cache-Control": "public, max-age=3600"
