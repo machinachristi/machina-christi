@@ -309,6 +309,59 @@ a.house-next:hover, a.house-next:focus-visible { border-color: rgba(201, 162, 39
 .house-next__desc { display: block; font-style: italic; font-size: 15px; line-height: 1.55; color: rgba(232, 213, 163, 0.7); }
 .house-next__desc [lang="th"] { font-style: normal; font-family: var(--thai); color: var(--gold-soft); }
 
+/* ── X11: the Church's season through the whole house ───────────── */
+/* The glow and the season line, as assets/season.js draws them on the live
+   site (repeated here because season.js never runs on a preview). */
+.mc-season-glow {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px;
+  pointer-events: none; z-index: 2147483000;
+  background: linear-gradient(90deg, transparent, rgba(var(--season), 0.85) 30%, rgba(var(--season), 0.85) 70%, transparent);
+  box-shadow: 0 0 14px 1px rgba(var(--season), 0.4);
+}
+[data-season-line] { font-size: 14px; letter-spacing: 0.08em; line-height: 1.5; color: rgba(var(--season), 0.92); }
+[data-season-line] .mc-season-feast { display: block; color: rgba(232, 213, 163, 0.72); }
+/* Further than today: every gold rule under a title takes the season's
+   colour, as do the verse bars, the hallway's line, and the light under
+   the front door's name. Gold stays the house's own colour. */
+html[data-season] .hero .rule {
+  background: linear-gradient(90deg, transparent, rgba(var(--season), 0.95), transparent);
+  box-shadow: 0 0 12px rgba(var(--season), 0.45);
+}
+html[data-season] .house-page .rule,
+html[data-season] .wrap > h1::after,
+html[data-season] .wrap .subtitle::after {
+  background: linear-gradient(90deg, rgba(var(--season), 0.95), transparent);
+  box-shadow: 0 0 10px rgba(var(--season), 0.35);
+}
+html[data-season] figure.house-verse blockquote,
+html[data-season] figure.verse blockquote { border-left-color: rgba(var(--season), 0.8); }
+html[data-season] footer.hall { border-top-color: rgba(var(--season), 0.5); }
+html[data-season] .hall__wings a[aria-current] {
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--season), 0.95);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+html[data-season] .waymarks button[aria-current="true"]::after { box-shadow: 0 0 12px rgba(var(--season), 0.75); }
+
+/* Buttons for the preview's switches (and the candles' choices). */
+.house-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 0.4em 0 1em; }
+.house-chip {
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid rgba(201, 162, 39, 0.42);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gold-soft);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.house-chip:hover, .house-chip:focus-visible { border-color: rgba(201, 162, 39, 0.8); outline: none; }
+.house-chip[aria-pressed="true"] { background: rgba(201, 162, 39, 0.18); border-color: rgba(222, 190, 112, 0.85); }
+
 /* ── The "show home" sign: only in previews, never on the live site ── */
 .house-pill {
   position: absolute;

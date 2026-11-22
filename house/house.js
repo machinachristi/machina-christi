@@ -212,4 +212,54 @@
       watch.observe(lines, { childList: true, subtree: true });
     }
   }
+
+  // ── X11: the Church's season through the whole house ────────────────
+  // On machinachristi.com, assets/season.js asks the season service and
+  // colours the house (the thin glow at the top, the season line). house.css
+  // carries that colour further: the gold rules under every title, the
+  // verse bars and the hallway. Previews can't ask the service, so the tour
+  // has a switch; the choice stays on this phone while you walk room to room.
+  const SEASON_RGB = {
+    green: '120, 178, 116', violet: '156, 118, 206', rose: '226, 150, 178',
+    white: '238, 232, 214', red: '206, 74, 64',
+  };
+  const PREVIEW_SEASONS = {
+    advent:    { key: 'advent', name: 'Advent', week: 1, feast: 'First Sunday of Advent', color: 'violet' },
+    gaudete:   { key: 'advent', name: 'Advent', week: 3, feast: 'Gaudete Sunday', color: 'rose' },
+    christmas: { key: 'christmas', name: 'Christmas', feast: 'The Nativity of the Lord', color: 'white' },
+    lent:      { key: 'lent', name: 'Lent', week: 1, feast: 'First Sunday of Lent', color: 'violet' },
+    easter:    { key: 'easter', name: 'Easter', week: 1, feast: 'Easter Sunday', color: 'white' },
+    pentecost: { key: 'easter', name: 'Easter', week: 8, feast: 'Pentecost Sunday', color: 'red' },
+    ordinary:  { key: 'ordinary', name: 'Ordinary Time', week: 33, color: 'green' },
+  };
+  const root = document.documentElement;
+  const showSeason = choice => {
+    const s = PREVIEW_SEASONS[choice];
+    for (const el of document.querySelectorAll('.mc-season-glow')) el.remove();
+    if (!s) {
+      delete root.dataset.season; delete root.dataset.seasonColor;
+      root.style.removeProperty('--season');
+      for (const el of document.querySelectorAll('[data-season-line]')) el.hidden = true;
+      return;
+    }
+    root.style.setProperty('--season', SEASON_RGB[s.color]);
+    root.dataset.season = s.key;
+    root.dataset.seasonColor = s.color;
+    document.body.append(make('div', { class: 'mc-season-glow', 'aria-hidden': 'true' }));
+    for (const el of document.querySelectorAll('[data-season-line]')) {
+      el.textContent = s.week ? `${s.name} · Week ${s.week}` : s.name;
+      if (s.feast) {
+        const f = make('span', { class: 'mc-season-feast' });
+        f.textContent = s.feast;
+        el.append(f);
+      }
+      el.hidden = false;
+    }
+  };
+  window.mcHouse.seasons = Object.keys(PREVIEW_SEASONS);
+  window.mcHouse.setSeason = choice => {
+    if (choice) store.set('season', choice); else store.clear('season');
+    showSeason(choice);
+  };
+  if (!LIVE) showSeason(store.get('season'));
 })();
