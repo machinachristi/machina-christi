@@ -11,6 +11,13 @@
     .stage { font-size: 15px; font-style: italic; color: rgba(var(--amber), 0.95); }
     .group .notice { margin-top: 0.4em; }
     .card .tag { color: rgba(var(--amber), 0.95); }
+    /* A card that leads to several rooms: a row of thumb-sized links. */
+    .card p.go { margin: 0.5em 0 -6px -8px; font-style: normal; display: flex; flex-wrap: wrap; }
+    .card p.go a {
+      display: inline-block; padding: 10px 8px; min-height: 44px;
+      color: var(--gold-soft); text-decoration: underline;
+      text-decoration-color: rgba(201, 162, 39, 0.55); text-underline-offset: 3px;
+    }
   </style>
   <script src="/house/house.js" defer></script>
 </head>
@@ -30,6 +37,8 @@
       <ul class="cards">
         <li><a class="card" href="/about.html#the-name"><span class="tag">X1</span><h2>The name</h2><p>On About: Ignatius&rsquo;s machine, then today&rsquo;s (tower, signal, receiver, city, network), and the stretch of wall in front of my house.</p></a></li>
         <li><a class="card" href="/house/rule.html"><span class="tag">X2</span><h2>The rule of the machine</h2><p>Seven promises on a page of their own, each tied to the Gospel or to Magnifica Humanitas. Also linked from About.</p></a></li>
+        <li><div class="card"><span class="tag">X3</span><h2>A verse over every door</h2><p>And a &ldquo;why&rdquo; line under each room&rsquo;s title. Eden itself stays untouched, so Wander&rsquo;s verse hangs on Eden&rsquo;s About page. Wing pages carry their own.</p>
+          <p class="go"><a href="/ordo.html">Ordo</a><a href="/pray.html">Prayers</a><a href="/pray/mass.html">The Mass</a><a href="/logos.html">Logos</a><a href="/about-eden.html">Eden&rsquo;s About</a></p></div></li>
         <!-- words -->
       </ul>
     </section>
