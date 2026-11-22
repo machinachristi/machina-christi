@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Pray, the chapel of Machina Christi: the Church's day, and her prayers in Thai and English." />
+  <title>Pray · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--marian)">
+  <div class="wrap">
+    <a class="back" href="/index.html">&lsaquo; home</a>
+    <a class="find" href="/search.html">search &rsaquo;</a>
+    <h1>Pray</h1>
+    <span class="subtitle" lang="th">ภาวนา</span>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>And I, if I be lifted up from the earth, will draw all things to myself.</blockquote>
+      <figcaption>&mdash; John 12:32 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">The chapel, where the tower stands: the Church&rsquo;s day, and her prayers in Thai and English.</p>
+
+    <ul class="cards">
+      <li>
+        <a class="card" href="/ordo.html" style="--wing: var(--violet)">
+          <h2>Ordo</h2>
+          <span class="tag" data-today-label>Today</span>
+          <p data-today-feast>the feast, the Gospel, and a prayer for the day</p>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="/pray.html">
+          <h2>Prayers</h2>
+          <p>the classic prayers, line by line, with a voice to read them</p>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="/pray/mass.html">
+          <h2>The Mass</h2>
+          <span class="th" lang="th">พิธีบูชาขอบพระคุณ</span>
+          <p>the people&rsquo;s prayers, in the order they come</p>
+        </a>
+      </li>
+      <li>
+        <div class="card card--building">
+          <h2>The Rosary</h2>
+          <p>being built</p>
+        </div>
+      </li>
+      <li>
+        <div class="card card--building">
+          <h2>The Stations of the Cross</h2>
+          <p>being built: for the Fridays of Lent</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    // Today's feast from the calendar file the site already ships
+    // (ordo/calendar-YYYY.json), so it shows even where the season service
+    // doesn't answer, as in a preview.
+    (() => {
+      'use strict';
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      fetch(`/ordo/calendar-${d.getFullYear()}.json`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(cal => {
+          const day = cal && cal[key];
+          if (!day || !day.name) return;
+          document.querySelector('[data-today-feast]').textContent = day.name;
+        })
+        .catch(() => { /* the card keeps its plain words */ });
+    })();
+  </script>
+</body>
+</html>
