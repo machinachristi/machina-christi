@@ -8,6 +8,14 @@
   <meta name="description" content="Build, the workshop of Machina Christi: how the house is built, and how to help build it." />
   <title>Build · Machina Christi</title>
   <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .help {
+      margin-top: 2.2em; padding: 18px 20px 6px;
+      border: 1px solid rgba(var(--amber), 0.55); border-radius: 16px;
+      background: radial-gradient(120% 90% at 0% 0%, rgba(var(--amber), 0.1), transparent 70%);
+    }
+    .help h2 { font-weight: normal; font-size: 21px; color: var(--gold); margin-bottom: 0.4em; }
+  </style>
   <script src="/assets/telemetry.js" async></script>
   <script src="/assets/season.js?v=2" defer></script>
   <script src="/house/house.js" defer></script>
@@ -30,7 +38,13 @@
       <li><a class="card" href="/house/rule.html"><h2>The rule of the machine</h2><p>seven promises for how it is built and run</p></a></li>
       <li><a class="card" href="/house/new.html"><h2>What&rsquo;s new</h2><p>what changed in the house lately</p></a></li>
     </ul>
-    <!-- help -->
+    <!-- Show home X25: one question, asked of every visitor. -->
+    <section class="help" id="help" aria-labelledby="help-title">
+      <h2 id="help-title">What would help you?</h2>
+      <p>What would help you pray, learn or gather? A prayer you&rsquo;d like in Thai, a meeting that&rsquo;s missing, something hard to read or tap on your phone: tell the builder.</p>
+      <p><span class="blank">how to reach you: your choice of email, LINE or a form</span></p>
+      <p class="fine">Read by a person, never counted, and used for nothing else. (Draft words: a promise for the owner to keep.)</p>
+    </section>
   </div>
 </body>
 </html>
