@@ -30,7 +30,7 @@
 
     <p>A builder furnishes one house completely so you can walk through it. This is that house for Machina Christi. Walk through on your phone, then mark each idea <em>keep</em>, <em>change</em> or <em>drop</em> in the pull request.</p>
     <p>Anything that would need a server is pretend and says so: meetings and Mass times are marked <span class="example">example, not real</span>, candles stay on this phone, and dashed boxes like <span class="blank">this</span> mark where a contact or a name would go.</p>
-    <p class="stage" id="stage">Built so far: stage 2 of 4.</p>
+    <p class="stage" id="stage">Built so far: stage 3 of 4.</p>
 
     <section class="group" id="switches">
       <h2 class="sect">Switches (preview only)</h2>
@@ -48,6 +48,8 @@
       </div>
       <p style="margin-top: 1.2em">The Angelus rings by itself at six, noon and six, Chiang Mai time (X18). To hear it now, and see its banner on every page for the next ten minutes:</p>
       <div class="house-chips"><button type="button" class="house-chip" data-ring-now>Ring the Angelus now</button></div>
+      <p style="margin-top: 1.2em">The show home keeps a few things on this phone only: the season you chose, your candle, your passport&rsquo;s stamps. To start again:</p>
+      <div class="house-chips"><button type="button" class="house-chip" data-forget>Forget all of it</button></div>
       <!-- switches -->
     </section>
 
@@ -99,6 +101,7 @@
         <li><a class="card" href="/house/angelus.html"><span class="tag">X18</span><h2>The Angelus bell</h2><p>At six, noon and six, Chiang Mai time, a slim banner on every page for a quarter of an hour; the bell, drawn from a real bell&rsquo;s overtones, rings when you tap. The prayer in English. Ring it any time with the switch at the top of this page.</p></a></li>
         <li><a class="card" href="/house/seasons.html"><span class="tag">X19</span><h2>The seasons together</h2><p>Advent from 29 November, the Christmas novena, Christmas, Fridays in Lent at the Stations, Holy Thursday, Easter and Pentecost: one thing to do together in each. The next one is marked, and each can show the house in its colour.</p></a></li>
         <li><a class="card" href="/house/invitations.html"><span class="tag">X20</span><h2>Invitations</h2><p>The table: a meal after Sunday Mass on the first Sunday of each month (next: 6 December). The Holy Thursday walk to seven churches, 25 March 2027. Every time, place, host and contact is a blank for you to fill.</p></a></li>
+        <li><a class="card" href="/house/passport.html"><span class="tag">X21</span><h2>A pilgrim passport</h2><p>Each room you visit gets a stamp with the day, like a Camino credencial, kept only on your phone. Walk around, then open it. The Chiang Mai list never stamps.</p></a></li>
         <!-- gather -->
       </ul>
     </section>
@@ -132,6 +135,19 @@
       if (ring && H.ringNow) ring.addEventListener('click', () => {
         H.ringNow();
         ring.textContent = 'Ringing: walk to any page to see the banner';
+      });
+      // Forget everything the show home kept on this phone (X21 and before).
+      const forget = document.querySelector('[data-forget]');
+      if (forget) forget.addEventListener('click', () => {
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('house_')) localStorage.removeItem(k);
+          }
+        } catch { /* nothing kept */ }
+        H.setSeason(null);
+        mark('');
+        forget.textContent = 'Forgotten';
       });
     });
   </script>

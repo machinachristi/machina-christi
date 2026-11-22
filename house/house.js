@@ -364,4 +364,44 @@
     store.clear('angelus_closed');
     return window.mcHouse.ringBell();
   };
+
+  // ── X21: a pilgrim passport, a stamp in each room ───────────────────
+  // Like the credencial pilgrims carry on the Camino: visiting a room
+  // stamps it, with the day. Kept only on this phone, never sent anywhere.
+  // Eden itself is left alone, so its stamp is given on the way in. The
+  // Chiang Mai list never stamps: a visit there is nobody's business.
+  const ROOMS = [
+    ['ordo', 'Ordo', '/ordo.html', /^\/ordo\.html$/],
+    ['prayers', 'Prayers', '/pray.html', /^\/pray\.html$/],
+    ['mass', 'The Mass', '/pray/mass.html', /^\/pray\/mass\.html$/],
+    ['a-prayer', 'A prayer', '/pray/our-father.html', /^\/pray\/(?!mass\.html)[a-z-]+\.html$/],
+    ['logos', 'Logos', '/logos.html', /^\/logos\.html$/],
+    ['hornbook', 'The hornbook', '/house/hornbook.html', /^\/house\/hornbook\.html$/],
+    ['eden', 'Eden', '/world.html#enter', null],
+    ['workshop', 'Workshop', '/workshop.html', /^\/workshop\.html$/],
+    ['about', 'About', '/about.html', /^\/about\.html$/],
+    ['rule', 'The rule', '/house/rule.html', /^\/house\/rule\.html$/],
+    ['hall', 'The hall', '/house/gather.html', /^\/house\/gather\.html$/],
+    ['candles', 'Candles', '/house/candles.html', /^\/house\/candles\.html$/],
+    ['angelus', 'The Angelus', '/house/angelus.html', /^\/house\/angelus\.html$/],
+    ['seasons', 'The seasons', '/house/seasons.html', /^\/house\/seasons\.html$/],
+    ['invitations', 'Invitations', '/house/invitations.html', /^\/house\/invitations\.html$/],
+  ];
+  const stamp = id => {
+    const book = store.get('passport', {});
+    if (book[id]) return;
+    book[id] = chiangMai().date;
+    store.set('passport', book);
+  };
+  const roomHere = ROOMS.find(r => r[3] && r[3].test(PAGE));
+  if (roomHere) stamp(roomHere[0]);
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href*="world.html"]');
+    if (a) stamp('eden');
+  }, true);
+  window.mcHouse.passport = {
+    rooms: ROOMS.map(([id, name, href]) => ({ id, name, href })),
+    read: () => store.get('passport', {}),
+    clear: () => store.clear('passport'),
+  };
 })();
