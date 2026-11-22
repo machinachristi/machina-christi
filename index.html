@@ -205,6 +205,7 @@
     .portal--about  { --glow: var(--parchment); }
     .portal--workshop { --glow: var(--timber); }
     .portal--logos  { --glow: var(--lacquer); }
+    .portal--gather { --glow: var(--amber); }   /* show home X6: lamplight in the hall */
 
     /* The light waiting past each threshold. */
     .portal__halo {
@@ -268,7 +269,7 @@
       position: relative;
       text-align: center;
       font-style: italic;
-      font-size: clamp(13px, 3.6vw, 15px);
+      font-size: clamp(14px, 3.6vw, 15px);   /* show home X6: never under 14 px, even on a small phone */
       line-height: 1.5;
       color: rgba(232, 213, 163, 0.55);
       padding: 8px 12% clamp(20px, 8%, 30px);
@@ -458,6 +459,24 @@
     }
     .search-link:hover, .search-link:focus-visible { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); outline: none; }
 
+    /* Show home X6: About is a signpost, not a room, so it leaves the row of
+       gates for the corner opposite Search: a small open book, 44px for a thumb. */
+    .about-link {
+      position: absolute;
+      top: max(8px, env(safe-area-inset-top));
+      left: max(8px, env(safe-area-inset-left));
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: rgba(232, 213, 163, 0.55);
+      z-index: 5;
+      transition: color 0.25s ease, background 0.25s ease, opacity 1.1s ease;
+    }
+    .about-link:hover, .about-link:focus-visible { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); outline: none; }
+    .js body:not(.lit) .about-link { opacity: 0; }
+
     /* Very short screens (landscape phones): let the page scroll
        vertically rather than crush the gates. */
     @media (max-height: 480px) {
@@ -468,7 +487,7 @@
     /* Respect reduced-motion: the room is simply there, already lit. */
     @media (prefers-reduced-motion: reduce) {
       body::before { animation: none; }
-      .hero, .gallery, .strip, .search-link { transition: none; }
+      .hero, .gallery, .strip, .search-link, .about-link { transition: none; }
       .portal { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
       body { transition: opacity 0.15s ease 0s; }
     }
@@ -482,6 +501,9 @@
   <a class="search-link" href="search.html" aria-label="Search the site">
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
   </a>
+  <a class="about-link" href="about.html" aria-label="About Machina Christi, the story behind it all">
+    <svg width="22" height="22" viewBox="6 13 36 39" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 18 V50" /><path d="M24 20 C19 15.5 13 15 8 17 V47 C13 45 19 45.5 24 50" /><path d="M24 20 C29 15.5 35 15 40 17 V47 C35 45 29 45.5 24 50" /></svg>
+  </a>
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
     <p class="tagline">A little place to pray, to learn, to wander, and to gather</p>
@@ -491,57 +513,27 @@
     <p class="season" data-season-line hidden></p>
   </header>
 
-  <nav class="gallery" aria-label="Experiences">
+  <nav class="gallery" aria-label="The wings of the house">
     <div class="strip">
-      <!-- To add a new experience: copy one .portal block below and set its
-           href, glyph, title, and description. The waymark dots, centered-card
-           activation, and entry transition are all wired up from the DOM. -->
-      <a class="portal portal--about" href="about.html" aria-label="About Machina Christi, the story behind it all">
+      <!-- Show home X6: one gate per wing of the house, never more than five.
+           A wing with one room opens that room directly (Learn: Logos;
+           Wander: Eden); the others open a wing page listing their rooms.
+           Wander keeps the portal--eden class, so the door still opens on it. -->
+      <a class="portal portal--logos" href="logos.html" aria-label="Learn: the schoolroom, learning Thai in Logos">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
-            <!-- an open book -->
-            <path d="M24 18 V50" />
-            <path d="M24 20 C19 15.5 13 15 8 17 V47 C13 45 19 45.5 24 50" />
-            <path d="M24 20 C29 15.5 35 15 40 17 V47 C35 45 29 45.5 24 50" />
+            <!-- ก, the first letter: "in the beginning was the Word" -->
+            <path d="M15 51 V28 C15 19.5 19.5 15 25 15 C30.5 15 34 19.5 34 28 V51" />
+            <path d="M15 27.5 L11.5 24.5" />
+            <path d="M10 56 H38" />
           </svg>
         </span>
-        <span class="portal__title">About</span>
-        <span class="portal__desc">the story behind it all</span>
+        <span class="portal__title">Learn</span>
+        <span class="portal__desc">the schoolroom</span>
       </a>
 
-      <a class="portal portal--ordo" href="ordo.html" aria-label="Enter Ordo, today in the Church">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- a candle burning before an open page -->
-            <path d="M24 10 C20 16 18 20 18 24 C18 28.4 20.7 31 24 31 C27.3 31 30 28.4 30 24 C30 20 28 16 24 10 Z" />
-            <path d="M20 31 V50 H28 V31" />
-            <path d="M11 50 H37" />
-          </svg>
-        </span>
-        <span class="portal__title">Ordo</span>
-        <span class="portal__desc">today in the Church</span>
-      </a>
-
-      <a class="portal portal--eden" href="world.html#enter" aria-label="Enter Eden, the digital garden">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- the tree of life, bearing fruit -->
-            <path d="M24 56 V20" />
-            <path d="M24 38 C16 36 11 30 10 22" />
-            <path d="M24 38 C32 36 37 30 38 22" />
-            <circle cx="10" cy="17.5" r="2.8" />
-            <circle cx="38" cy="17.5" r="2.8" />
-            <circle cx="24" cy="14.5" r="2.8" />
-          </svg>
-        </span>
-        <span class="portal__title">Eden</span>
-        <span class="portal__desc">the digital garden</span>
-      </a>
-
-      <a class="portal portal--pray" href="pray.html" aria-label="Enter Pray, prayers in Thai and English">
+      <a class="portal portal--pray" href="pray.html" aria-label="Pray: the chapel, the Church's day and her prayers">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
@@ -555,24 +547,43 @@
           </svg>
         </span>
         <span class="portal__title">Pray</span>
-        <span class="portal__desc">prayers in Thai &amp; English</span>
+        <span class="portal__desc">the chapel</span>
       </a>
 
-      <a class="portal portal--logos" href="logos.html" aria-label="Enter Logos, learning Thai">
+      <a class="portal portal--eden" href="world.html#enter" aria-label="Wander: the garden, Eden">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
-            <!-- ก, the first letter: "in the beginning was the Word" -->
-            <path d="M15 51 V28 C15 19.5 19.5 15 25 15 C30.5 15 34 19.5 34 28 V51" />
-            <path d="M15 27.5 L11.5 24.5" />
-            <path d="M10 56 H38" />
+            <!-- the tree of life, bearing fruit -->
+            <path d="M24 56 V20" />
+            <path d="M24 38 C16 36 11 30 10 22" />
+            <path d="M24 38 C32 36 37 30 38 22" />
+            <circle cx="10" cy="17.5" r="2.8" />
+            <circle cx="38" cy="17.5" r="2.8" />
+            <circle cx="24" cy="14.5" r="2.8" />
           </svg>
         </span>
-        <span class="portal__title">Logos</span>
-        <span class="portal__desc">learning Thai</span>
+        <span class="portal__title">Wander</span>
+        <span class="portal__desc">the garden</span>
       </a>
 
-      <a class="portal portal--workshop" href="workshop.html" aria-label="Enter the Workshop, how it's built">
+      <a class="portal portal--gather" href="/house/tour.html#gather" aria-label="Gather: the hall, being built">
+        <span class="portal__halo" aria-hidden="true"></span>
+        <span class="portal__vignette" aria-hidden="true">
+          <svg viewBox="0 0 48 64">
+            <!-- a bell, which calls people together -->
+            <circle cx="24" cy="12.5" r="2.4" />
+            <path d="M24 15 V18.5" />
+            <path d="M14.5 44 C15 32 17 18.5 24 18.5 C31 18.5 33 32 33.5 44" />
+            <path d="M11 44 H37" />
+            <circle cx="24" cy="49.5" r="2.6" />
+          </svg>
+        </span>
+        <span class="portal__title">Gather</span>
+        <span class="portal__desc">the hall, being built</span>
+      </a>
+
+      <a class="portal portal--workshop" href="workshop.html" aria-label="Build: the workshop, how it's built">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
@@ -583,8 +594,8 @@
             <path d="M31 14 L38 37" />
           </svg>
         </span>
-        <span class="portal__title">Workshop</span>
-        <span class="portal__desc">how it&rsquo;s built</span>
+        <span class="portal__title">Build</span>
+        <span class="portal__desc">the workshop</span>
       </a>
     </div>
 
