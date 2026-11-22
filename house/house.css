@@ -243,6 +243,41 @@ a.house-go { display: inline-block; padding: 11px 0; }
   white-space: nowrap;
 }
 
+/* ── X8: the hallway, the same at the foot of every room ─────────── */
+footer.hall {
+  clear: both;
+  margin-top: 3.2em;
+  padding-top: 1.1em;
+  border-top: 1px solid rgba(201, 162, 39, 0.22);
+  text-align: center;
+  font-family: var(--serif);
+}
+.hall__wings { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 4px; }
+.hall__wings a {
+  display: inline-block;
+  padding: 12px 9px;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: rgba(232, 213, 163, 0.72);
+  text-decoration: none;
+  border: 0;
+}
+.hall__wings a:hover, .hall__wings a:focus-visible { color: var(--gold-soft); outline: none; }
+.hall__wings a[aria-current] { color: var(--gold); }
+.hall__br { flex-basis: 100%; height: 0; }
+p.hall__more {
+  margin: 0 auto;
+  max-width: none;
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(232, 213, 163, 0.62);
+}
+.hall__more a { display: inline-block; padding: 12px 6px; line-height: 1.5; color: inherit; text-decoration: none; border: 0; }
+.hall__more a:hover, .hall__more a:focus-visible { color: var(--gold-soft); outline: none; }
+
 /* ── The "show home" sign: only in previews, never on the live site ── */
 .house-pill {
   position: absolute;
