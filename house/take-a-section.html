@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Take a section: real jobs on the house, each small enough for one person." />
+  <title>Take a section · Build · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .jobs { list-style: none; display: grid; gap: 12px; margin: 0.6em 0 0; }
+    .job {
+      padding: 14px 18px 8px;
+      border: 1px solid rgba(201, 162, 39, 0.28); border-radius: 14px;
+      background: rgba(var(--timber), 0.05);
+    }
+    .job h3 { font-weight: normal; font-size: 18px; line-height: 1.45; color: var(--gold-soft); }
+    .job p { margin: 0.15em 0; font-size: 15.5px; }
+    .job .fits { font-style: italic; color: rgba(232, 213, 163, 0.72); }
+    .job button {
+      min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer;
+      font-family: var(--serif); font-size: 15.5px; font-style: italic;
+      color: var(--gold-soft); text-decoration: underline;
+      text-decoration-color: rgba(var(--timber), 0.8); text-underline-offset: 4px;
+    }
+    .job .taken { margin: 0.2em 0 0.6em; }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--timber)">
+  <div class="wrap">
+    <a class="back" href="/house/build.html">&lsaquo; Build</a>
+    <h1>Take a section</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>And upward from the horse gate the priests built, every man over against his house.</blockquote>
+      <figcaption>&mdash; Nehemiah 3:28 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Real jobs on the house, each small enough for one person. Take one, the way each family in Nehemiah&rsquo;s Jerusalem took the stretch of wall by its own door (Magnifica Humanitas &para;13).</p>
+
+    <h2 class="sect">Pray</h2>
+    <ol class="jobs">
+      <li class="job"><h3>Check a prayer&rsquo;s Thai against the book</h3><p class="fits">For a Thai reader · about an hour, once</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Lend your voice to the prayers</h3><p class="fits">For a native Thai speaker, with your consent and your name if you wish · one afternoon</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Pray for the people who visit</h3><p class="fits">For anyone · a minute a day</p><button type="button">Take this section</button></li>
+    </ol>
+
+    <h2 class="sect">Learn</h2>
+    <ol class="jobs">
+      <li class="job"><h3>Put the rooms&rsquo; names and &ldquo;why&rdquo; lines into Thai</h3><p class="fits">For a Thai speaker · an evening</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Try Logos as a beginner, and say where you got stuck</h3><p class="fits">For anyone learning Thai · half an hour</p><button type="button">Take this section</button></li>
+    </ol>
+
+    <h2 class="sect">Gather</h2>
+    <ol class="jobs">
+      <li class="job"><h3>Confirm one meeting&rsquo;s time each month</h3><p class="fits">For someone in Chiang Mai who knows the group · ten minutes a month</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Host the table, once</h3><p class="fits">For anyone with a kitchen or a hall · one Sunday</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Walk the Holy Thursday route ahead of time</h3><p class="fits">For someone in Chiang Mai · an afternoon in March</p><button type="button">Take this section</button></li>
+    </ol>
+
+    <h2 class="sect">Build</h2>
+    <ol class="jobs">
+      <li class="job"><h3>Try the site on your phone, and say what is hard to read or tap</h3><p class="fits">For anyone · ten minutes</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Write the life of one of Thailand&rsquo;s own saints for Ordo</h3><p class="fits">For a careful writer, from good sources · a few evenings</p><button type="button">Take this section</button></li>
+      <li class="job"><h3>Draw an emblem for a new room</h3><p class="fits">For someone who draws in line · an evening</p><button type="button">Take this section</button></li>
+    </ol>
+
+    <p class="fine" style="margin-top: 1.6em">These are real jobs. Only the last step is missing: the site has no way yet for someone to say &ldquo;I&rsquo;ll take it&rdquo;.</p>
+  </div>
+
+  <script>
+    // "Take this section" shows where to say so: a marked blank until the
+    // owner chooses how people reach them.
+    for (const b of document.querySelectorAll('.job button')) {
+      b.addEventListener('click', () => {
+        if (b.nextElementSibling) return;
+        const p = document.createElement('p');
+        p.className = 'taken';
+        p.innerHTML = 'Thank you. Tell me: <span class="blank">how to reach you: your choice of email, LINE or a form</span>';
+        b.after(p);
+      });
+    }
+  </script>
+</body>
+</html>
