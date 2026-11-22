@@ -46,6 +46,8 @@
         <button type="button" class="house-chip" data-choice="pentecost">Pentecost</button>
         <button type="button" class="house-chip" data-choice="ordinary">Ordinary Time</button>
       </div>
+      <p style="margin-top: 1.2em">The Angelus rings by itself at six, noon and six, Chiang Mai time (X18). To hear it now, and see its banner on every page for the next ten minutes:</p>
+      <div class="house-chips"><button type="button" class="house-chip" data-ring-now>Ring the Angelus now</button></div>
       <!-- switches -->
     </section>
 
@@ -94,6 +96,7 @@
         <li><a class="card" href="/house/gather.html"><span class="tag">X15</span><h2>The Gather wing</h2><p>The hall, where the house meets its neighbours (Matthew 18:20), in Nehemiah&rsquo;s order: pray together, meet in person, then build. Its rooms turn from dashed to solid as each is built.</p></a></li>
         <li><a class="card" href="/house/chiang-mai.html"><span class="tag">X16</span><h2>Gather: Chiang Mai</h2><p>Mass, recovery meetings, the Rosary, Adoration and a way to serve, each with &ldquo;last confirmed&rdquo; (one is flagged as three months old), the next one today, and a filter. Every entry is an example, and the page never counts visits.</p></a></li>
         <li><a class="card" href="/house/candles.html"><span class="tag">X17</span><h2>Candles for strangers</h2><p>Choose who it is for from a fixed list, light it, and be handed a stranger&rsquo;s candle to pray for. Pretend: yours stays on your phone for a day; theirs is made up.</p></a></li>
+        <li><a class="card" href="/house/angelus.html"><span class="tag">X18</span><h2>The Angelus bell</h2><p>At six, noon and six, Chiang Mai time, a slim banner on every page for a quarter of an hour; the bell, drawn from a real bell&rsquo;s overtones, rings when you tap. The prayer in English. Ring it any time with the switch at the top of this page.</p></a></li>
         <!-- gather -->
       </ul>
     </section>
@@ -122,6 +125,12 @@
         H.setSeason(c.dataset.choice || null);
         mark(c.dataset.choice);
       }));
+      // The Angelus switch (X18).
+      const ring = document.querySelector('[data-ring-now]');
+      if (ring && H.ringNow) ring.addEventListener('click', () => {
+        H.ringNow();
+        ring.textContent = 'Ringing: walk to any page to see the banner';
+      });
     });
   </script>
 </body>

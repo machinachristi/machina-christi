@@ -274,4 +274,94 @@
       '<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 1.5 V16.5 M2.5 6 H11.5" /></svg> The hornbook: from the cross to the Our Father &rsaquo;');
     if (why) why.after(link);
   }
+
+  // ── X18: the Angelus bell, at six, noon and six in Chiang Mai ────────
+  // For a quarter of an hour after each, a slim banner on every page
+  // invites a minute's prayer. The bell itself sounds only when tapped
+  // (phones never let a page make sound on its own), drawn in the browser
+  // from a bell's own overtones, so there is no sound file to download.
+  // Robots driving a browser (navigator.webdriver: the tests) never see it.
+  const ANGELUS = [[360, 'six in the morning', '06:00'], [720, 'noon', '12:00'], [1080, 'six in the evening', '18:00']];
+  const chiangMai = () => {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date()).map(x => [x.type, x.value]));
+    return { min: +p.hour * 60 + +p.minute, date: `${p.year}-${p.month}-${p.day}` };
+  };
+  window.mcHouse.nextAngelus = () => {
+    const t = chiangMai();
+    const next = ANGELUS.find(([at]) => at > t.min) || ANGELUS[0];
+    let wait = next[0] - t.min;
+    if (wait <= 0) wait += 1440;
+    const h = Math.floor(wait / 60), m = wait % 60;
+    const inText = 'in ' + [h && `${h} hour${h > 1 ? 's' : ''}`, m && `${m} minute${m > 1 ? 's' : ''}`].filter(Boolean).join(' and ');
+    return { time: next[2], inText };
+  };
+
+  // The bell: the Angelus pattern, three strokes three times, then nine.
+  let bell = null;
+  window.mcHouse.stopBell = () => {
+    if (bell) { bell.close().catch(() => {}); bell = null; }
+    if (window.mcHouse.onBellStop) window.mcHouse.onBellStop();
+  };
+  window.mcHouse.ringBell = () => {
+    window.mcHouse.stopBell();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return 0;
+    bell = new AC();
+    const ctx = bell;
+    const out = ctx.createGain();
+    out.gain.value = 0.2;
+    out.connect(ctx.destination);
+    // A church bell's partials: hum, prime, tierce, quint, nominal and above.
+    const PARTIALS = [[0.5, 0.5, 4.5], [1, 0.8, 3.2], [1.2, 0.45, 2.6], [1.5, 0.3, 2.2], [2, 0.55, 2.4], [2.5, 0.22, 1.6], [3, 0.18, 1.3], [4, 0.1, 1]];
+    const strike = (at, f) => {
+      for (const [ratio, gain, decay] of PARTIALS) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = f * ratio;
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(gain, at + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+        o.connect(g); g.connect(out);
+        o.start(at); o.stop(at + decay + 0.05);
+      }
+    };
+    let t = ctx.currentTime + 0.1;
+    [3, 3, 3, 9].forEach((n, group) => {
+      for (let i = 0; i < n; i++) { strike(t, 392); t += group === 3 ? 1.25 : 1.5; }
+      if (group < 3) t += 2.2;
+    });
+    const seconds = t - ctx.currentTime + 2;
+    setTimeout(() => { if (bell === ctx) window.mcHouse.stopBell(); }, seconds * 1000);
+    return seconds;
+  };
+
+  const angelusNow = () => {
+    if (navigator.webdriver) return null;
+    if (!LIVE && store.get('angelus_until', 0) > Date.now()) return { key: 'switch', label: 'rung from the show home’s switch' };
+    const t = chiangMai();
+    const hit = ANGELUS.find(([at]) => t.min >= at && t.min < at + 15);
+    return hit && { key: `${t.date}-${hit[0]}`, label: `${hit[1]} in Chiang Mai` };
+  };
+  const ringing = PAGE !== '/house/angelus.html' && angelusNow();
+  if (ringing && store.get('angelus_closed') !== ringing.key) {
+    const bar = make('div', { class: 'house-angelus', role: 'region', 'aria-label': 'The Angelus' });
+    bar.innerHTML = '<svg viewBox="0 0 48 64" aria-hidden="true"><circle cx="24" cy="12.5" r="2.4" /><path d="M24 15 V18.5" /><path d="M14.5 44 C15 32 17 18.5 24 18.5 C31 18.5 33 32 33.5 44" /><path d="M11 44 H37" /><circle cx="24" cy="49.5" r="2.6" /></svg>';
+    const text = make('span', { class: 'house-angelus__text' });
+    text.textContent = 'The Angelus · ' + ringing.label;
+    const pray = make('a', { href: '/house/angelus.html' }, 'Pray it &rsaquo;');
+    const close = make('button', { type: 'button', 'aria-label': 'Close the Angelus banner' }, '&times;');
+    close.addEventListener('click', () => { store.set('angelus_closed', ringing.key); bar.remove(); });
+    bar.append(text, pray, close);
+    document.body.append(bar);
+  }
+  // The preview's switch (on the tour): ring now, and show the banner on
+  // every page for ten minutes.
+  window.mcHouse.ringNow = () => {
+    store.set('angelus_until', Date.now() + 10 * 60e3);
+    store.clear('angelus_closed');
+    return window.mcHouse.ringBell();
+  };
 })();
