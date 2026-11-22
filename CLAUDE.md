@@ -18,3 +18,11 @@ The user is learning software through this project, so explaining the work is pa
 - **In the repo:** `docs/explained/` holds the lasting record — one "explained like you're 5" write-up per phase or big feature, plus `foundations.md`, a plain-language glossary of software basics that grows as new ideas come up. Add to both when work introduces something new.
 - **On the site:** the Workshop page's map (`workshop/glass.json`) shows every technology the site uses. Any PR that puts a technology to work, retires one, or changes what it does updates its pane in the same PR (`status`, `here`, `touches`). `tests/workshop.spec.js` fails if an Azure pane's status disagrees with what `infra/` builds, but only a person can keep the descriptions true.
 - Prefer the big picture: tie each change back to a foundation of software development rather than just listing what changed.
+
+# The builder's rule (show home X5 — a proposal, not in force)
+
+This section exists only on the `experiment/machine-of-christ` branch, to show how the rule would read. It guides nothing until the owner keeps it.
+
+- **Prayer before building.** The owner begins a building session in prayer. Claude may remind them once at the start, pointing to a prayer already on the site (for example the Sign of the Cross), and never writes a prayer of its own.
+- **No building on Sundays.** No new work, pushes or merges on a Sunday, Chiang Mai time, and no scheduled AI routine runs on a Sunday. The one exception is a fix for something that stops people praying. Jobs that only refresh data (the Sunday saints snapshot) are the machine tending, not the builders building.
+- **Judge by fruit.** Weigh a change by whether it helps someone pray, learn, gather or serve, never by visits, clicks or time on page: "By their fruits you shall know them" (Matthew 7:16). Count the cost before building (Luke 14:28), in money, energy and attention.
