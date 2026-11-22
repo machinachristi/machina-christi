@@ -208,6 +208,8 @@ h2.house-sect {
 ul.house-parts { list-style: none; margin: 0 0 1.3em; padding: 0; display: grid; gap: 0.75em; max-width: 62ch; }
 ul.house-parts li { padding-left: 1.1em; border-left: 1px solid rgba(201, 162, 39, 0.4); color: rgba(232, 213, 163, 0.8); }
 ul.house-parts b { font-weight: normal; color: var(--gold-soft); }
+/* A link standing on its own line: a full 44px for a thumb. */
+a.house-go { display: inline-block; padding: 11px 0; }
 /* A link inside running text: its tap area reaches above and below the line. */
 .house-name p a { padding: 11px 0; }
 .house-name a, a.house-link {
