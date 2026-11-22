@@ -278,6 +278,15 @@ p.hall__more {
 .hall__more a { display: inline-block; padding: 12px 6px; line-height: 1.5; color: inherit; text-decoration: none; border: 0; }
 .hall__more a:hover, .hall__more a:focus-visible { color: var(--gold-soft); outline: none; }
 
+/* ── X10: rooms still being built: dashed gold, like a sketch ────── */
+.house-page .card.card--building {
+  border-style: dashed;
+  border-color: rgba(222, 190, 112, 0.5);
+  background: transparent;
+}
+.house-page .card.card--building h2 { color: rgba(232, 213, 163, 0.74); }
+.house-page .card.card--building p { color: rgba(232, 213, 163, 0.64); }
+
 /* ── X9: a "next door" card at the end of a room ─────────────────── */
 a.house-next {
   --next: var(--marian);

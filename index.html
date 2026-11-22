@@ -206,6 +206,14 @@
     .portal--workshop { --glow: var(--timber); }
     .portal--logos  { --glow: var(--lacquer); }
     .portal--gather { --glow: var(--amber); }   /* show home X6: lamplight in the hall */
+    /* Show home X10: a wing still being built is drawn like an architect's
+       sketch: dashed gold mouldings, a dotted emblem, a little of its light.
+       When it opens for real, the gate just loses the class and turns solid. */
+    .portal--building { border-style: dashed; border-color: rgba(222, 190, 112, 0.55); }
+    .portal--building::before { border-style: dashed; border-color: rgba(222, 190, 112, 0.26); }
+    .portal--building .portal__vignette svg { stroke-dasharray: 2.2 2.8; }
+    .portal--building .portal__halo { background: radial-gradient(95% 62% at 50% 100%, rgba(var(--glow), 0.16), transparent 78%); }
+    .portal--building .portal__halo::after { background: radial-gradient(90% 72% at 50% 50%, rgba(var(--glow), 0.1), transparent 100%); }
 
     /* The light waiting past each threshold. */
     .portal__halo {
@@ -567,7 +575,7 @@
         <span class="portal__desc">the garden</span>
       </a>
 
-      <a class="portal portal--gather" href="/house/gather.html" aria-label="Gather: the hall, being built">
+      <a class="portal portal--gather portal--building" href="/house/gather.html" aria-label="Gather: the hall, being built">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
