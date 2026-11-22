@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="The hornbook: Thai letters, then words, then a prayer, from the cross to the Our Father." />
+  <title>The hornbook · Logos · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    /* A hornbook: one sheet on a wooden paddle under a thin layer of horn,
+       with a handle below. Wood is the Workshop's timber; horn a soft sheen. */
+    .board {
+      margin: 1.4em auto 0;
+      max-width: 440px;
+      padding: 14px;
+      border: 1.5px solid rgba(201, 162, 39, 0.6);
+      border-radius: 28px 28px 12px 12px;
+      background:
+        radial-gradient(circle at 12px 12px, rgba(222, 190, 112, 0.8) 0 2px, transparent 3px),
+        radial-gradient(circle at calc(100% - 12px) 12px, rgba(222, 190, 112, 0.8) 0 2px, transparent 3px),
+        radial-gradient(circle at 12px calc(100% - 12px), rgba(222, 190, 112, 0.8) 0 2px, transparent 3px),
+        radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), rgba(222, 190, 112, 0.8) 0 2px, transparent 3px),
+        linear-gradient(180deg, rgba(var(--timber), 0.16), rgba(var(--timber), 0.06));
+    }
+    .sheet {
+      padding: 16px 12px 18px;
+      border: 1px solid rgba(232, 213, 163, 0.28);
+      border-radius: 16px 16px 8px 8px;
+      background: linear-gradient(135deg, rgba(232, 213, 163, 0.07), rgba(232, 213, 163, 0.02) 40%, rgba(232, 213, 163, 0.05));
+    }
+    .handle {
+      width: 70px; height: 74px; margin: -1.5px auto 0;
+      border: 1.5px solid rgba(201, 162, 39, 0.6); border-top: 0;
+      border-radius: 0 0 26px 26px;
+      background: linear-gradient(180deg, rgba(var(--timber), 0.12), rgba(var(--timber), 0.04));
+    }
+    .sheet h2 {
+      font-weight: normal; font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase;
+      color: var(--gold); text-align: center; margin: 1.3em 0 0.7em;
+    }
+    .sheet h2:first-child { margin-top: 0; }
+    /* The Christ-cross row: a cross, then the letters, four to a row. */
+    .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .row .cross { display: grid; place-items: center; }
+    .row .cross svg { width: 30px; height: 40px; stroke: var(--gold); stroke-width: 2.4; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 4px rgba(var(--amber), 0.5)); }
+    .letter {
+      min-height: 92px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      border: 1px solid rgba(201, 162, 39, 0.3); border-radius: 12px;
+      background: transparent; color: var(--gold-soft); cursor: pointer;
+      font-family: var(--serif);
+    }
+    .letter:hover, .letter:focus-visible, .letter.is-playing { border-color: rgba(var(--lacquer), 0.8); outline: none; }
+    .letter .l { font-family: var(--thai); font-size: 32px; line-height: 1.2; color: var(--gold-soft); }
+    .letter .w { font-family: var(--thai); font-size: 16px; line-height: 1.3; color: rgba(232, 213, 163, 0.85); }
+    .letter .m { font-size: 14px; font-style: italic; line-height: 1.3; color: rgba(232, 213, 163, 0.66); }
+    .letter.is-first { border-color: rgba(var(--lacquer), 0.75); background: rgba(var(--lacquer), 0.08); }
+    .tap { text-align: center; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.64); margin: 0.6em 0 0; }
+    /* Words that lead to prayers: each prayer's first line. */
+    .firsts { list-style: none; display: grid; gap: 8px; }
+    .firsts a {
+      display: block; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid rgba(201, 162, 39, 0.22); text-decoration: none; color: inherit;
+    }
+    .firsts a:hover, .firsts a:focus-visible { border-color: rgba(201, 162, 39, 0.6); outline: none; }
+    .firsts .th { display: block; font-family: var(--thai); font-size: 19px; line-height: 1.5; color: var(--gold-soft); }
+    .firsts .th b { font-weight: normal; color: rgb(var(--lacquer)); }
+    .firsts .en { display: block; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.7); }
+    /* The Our Father, to end the sheet. */
+    .of .title { display: block; text-align: center; font-family: var(--thai); font-size: 20px; color: var(--gold-soft); margin-bottom: 0.5em; }
+    .of p { margin: 0 0 0.55em; max-width: none; text-align: center; }
+    .of .th { display: block; font-family: var(--thai); font-size: 18px; line-height: 1.55; color: var(--gold-soft); }
+    .of .en { display: block; font-size: 14px; font-style: italic; line-height: 1.45; color: rgba(232, 213, 163, 0.68); }
+    .pray-it { text-align: center; margin: 0.8em 0 0; }
+    .pray-it a { display: inline-block; padding: 11px 6px; color: var(--gold-soft); font-style: italic; }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--lacquer)">
+  <div class="wrap">
+    <a class="back" href="/logos.html">&lsaquo; Logos</a>
+    <a class="find" href="/search.html">search &rsaquo;</a>
+    <h1>The hornbook</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>Suffer the little children to come unto me&hellip;</blockquote>
+      <figcaption>&mdash; Mark 10:14 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Letters, then words, then a prayer: Thai the way children once learned to read, from the cross to the Our Father.</p>
+
+    <div class="board" role="group" aria-label="A hornbook">
+      <div class="sheet">
+        <h2>The Christ-cross row</h2>
+        <div class="row" data-row>
+          <span class="cross" aria-hidden="true"><svg viewBox="0 0 30 40"><path d="M15 3 V37 M5 13 H25" /></svg></span>
+        </div>
+        <p class="tap">Tap a letter to hear it. The first of the Our Father is marked.</p>
+
+        <h2>Words that lead to prayers</h2>
+        <ol class="firsts" data-firsts><li><p class="notice">Loading&hellip;</p></li></ol>
+
+        <h2>The Our Father</h2>
+        <div class="of" data-of><p class="notice">Loading&hellip;</p></div>
+        <p class="pray-it"><a href="/pray/our-father.html">Pray it, with a voice &rsaquo;</a></p>
+      </div>
+    </div>
+    <div class="handle" aria-hidden="true"></div>
+
+    <p class="fine" style="margin-top: 1.6em">For about three hundred years, children learned to read from a hornbook: one printed sheet on a wooden paddle, under a thin, clear layer of horn. It began with a cross, the &ldquo;Christ-cross row&rdquo; (where &ldquo;criss-cross&rdquo; comes from), then the alphabet, and ended with the Lord&rsquo;s Prayer. This one is a sample: the first seven letters only. Every Thai word here is already on the site, in Logos and in Pray.</p>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const $ = s => document.querySelector(s);
+      const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+      const FIRST_CONSONANT = /[ก-ฮ]/;
+
+      Promise.all([
+        fetch('/logos/thai.json').then(r => r.json()),
+        fetch('/pray/prayers.json').then(r => r.json()),
+      ]).then(([thai, pray]) => {
+        const byId = id => pray.prayers.find(p => p.id === id);
+        const ourFather = byId('our-father');
+        const firstOf = p => (p.lines[0].th.match(FIRST_CONSONANT) || [])[0];
+
+        // The Christ-cross row: the cross, then the first seven letters.
+        const row = $('[data-row]');
+        const ofLetter = firstOf(ourFather);
+        let playing = null;
+        for (const c of thai.consonants.slice(0, 7)) {
+          const b = el('button', 'letter' + (c.letter === ofLetter ? ' is-first' : ''));
+          b.type = 'button';
+          b.setAttribute('aria-label', `${c.letter}, as in ${c.word}, ${c.meaning}: hear it`);
+          const l = el('span', 'l', c.letter); l.lang = 'th';
+          const w = el('span', 'w', c.word); w.lang = 'th';
+          b.append(l, w, el('span', 'm', c.meaning));
+          b.addEventListener('click', () => {
+            if (!c.audio) return;
+            if (playing) playing.pause();
+            playing = new Audio('/logos/audio/' + c.audio.split('/').map(encodeURIComponent).join('/'));
+            b.classList.add('is-playing');
+            const done = () => b.classList.remove('is-playing');
+            playing.addEventListener('ended', done);
+            playing.play().catch(done);
+          });
+          row.append(b);
+        }
+
+        // Words that lead to prayers: the first line of three prayers, with
+        // its first letter marked.
+        const firsts = $('[data-firsts]');
+        firsts.textContent = '';
+        for (const id of ['sign-of-the-cross', 'hail-mary', 'glory-be']) {
+          const p = byId(id);
+          if (!p) continue;
+          const first = firstOf(p);
+          const a = el('a');
+          a.href = `/pray/${p.id}.html`;
+          const th = el('span', 'th'); th.lang = 'th';
+          const line = p.lines[0].th;
+          const at = line.indexOf(first);
+          th.append(line.slice(0, at), el('b', null, first), line.slice(at + 1));
+          a.append(th, el('span', 'en', `${p.title}: it begins with ${first} ›`));
+          const li = el('li'); li.append(a); firsts.append(li);
+        }
+
+        // And it ends with the Our Father.
+        const of = $('[data-of]');
+        of.textContent = '';
+        const t = el('span', 'title', ourFather.title_th); t.lang = 'th';
+        of.append(t);
+        for (const line of ourFather.lines) {
+          const p = el('p');
+          const th = el('span', 'th', line.th); th.lang = 'th';
+          p.append(th, el('span', 'en', line.en));
+          of.append(p);
+        }
+      }).catch(() => {
+        for (const s of ['[data-firsts]', '[data-of]']) $(s).innerHTML = '<p class="notice">The hornbook couldn&rsquo;t be loaded just now.</p>';
+      });
+    })();
+  </script>
+</body>
+</html>

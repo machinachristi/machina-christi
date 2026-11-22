@@ -266,4 +266,12 @@
   // ── X12: "what's new in the house", one step from every room ────────
   const hallMore = document.querySelector('.hall__more');
   if (hallMore) hallMore.insertAdjacentHTML('beforeend', ' &middot; <a href="/house/new.html">what&rsquo;s new</a>');
+
+  // ── X14: Logos as a hornbook, one tap from the schoolroom ───────────
+  if (PAGE === '/logos.html') {
+    const why = document.querySelector('.wrap .house-why');
+    const link = make('a', { class: 'house-go house-hornbook', href: '/house/hornbook.html' },
+      '<svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 1.5 V16.5 M2.5 6 H11.5" /></svg> The hornbook: from the cross to the Our Father &rsaquo;');
+    if (why) why.after(link);
+  }
 })();

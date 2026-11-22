@@ -264,6 +264,19 @@ ol.house-map__key { list-style: none; margin: 0 0 1.4em; padding: 0; max-width: 
   text-decoration: none;
 }
 
+/* ── X14: the way into the hornbook, on Logos ───────────────────── */
+a.house-hornbook {
+  margin: -0.6em 0 1.2em;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--lacquer), 0.6);
+  text-underline-offset: 4px;
+}
+a.house-hornbook svg { width: 12px; height: 16px; vertical-align: -2px; margin-right: 4px; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; fill: none; }
+
 /* ── Marked blanks and examples: nothing here is real yet ─────── */
 .blank {
   display: inline-block;
