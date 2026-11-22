@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Gather in Chiang Mai: Mass, recovery meetings, prayer and ways to serve. Show home: every entry is an example." />
+  <title>Chiang Mai · Gather · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <!-- This page never counts visits: no telemetry.js, and not even season.js
+       (it would ask the season service), because a visit to a list of
+       recovery meetings can say something about someone's health. -->
+  <style>
+    .notice-box {
+      margin: 0 0 1.4em; padding: 12px 16px;
+      border: 1px dashed rgba(var(--amber), 0.75); border-radius: 12px;
+      background: rgba(var(--amber), 0.07);
+      color: rgba(var(--amber), 0.98); font-style: italic; font-size: 15px;
+    }
+    .notice-box p { margin: 0; color: inherit; }
+    .next {
+      margin: 0 0 1.2em; padding: 14px 18px;
+      border: 1px solid rgba(201, 162, 39, 0.4); border-radius: 14px;
+      background: rgba(201, 162, 39, 0.06);
+    }
+    .next .label { display: block; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+    .next .what { display: block; font-size: 18px; color: var(--gold-soft); }
+    .next .where { display: block; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.7); }
+    .filters { margin-bottom: 0.4em; }
+    .entries { list-style: none; display: grid; gap: 14px; margin-top: 0.6em; }
+    .entry {
+      padding: 16px 18px 12px;
+      border: 1px solid rgba(201, 162, 39, 0.28); border-radius: 14px;
+      background: rgba(201, 162, 39, 0.035);
+    }
+    .entry .kind { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .entry .kind span:first-child { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(var(--amber), 0.95); }
+    .entry h2 { font-weight: normal; font-size: 18px; line-height: 1.45; color: var(--gold-soft); margin: 0.3em 0 0.1em; }
+    .entry .when { font-size: 16px; color: var(--gold-soft); }
+    .entry .where, .entry .about { font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.72); }
+    .entry p { margin: 0.1em 0; }
+    .entry .checked { margin-top: 0.5em; font-size: 14px; color: rgba(232, 213, 163, 0.7); }
+    .entry .checked::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: rgb(120, 178, 116); vertical-align: 1px; }
+    .entry.is-stale { border-color: rgba(206, 74, 64, 0.6); }
+    .entry.is-stale .checked { color: rgb(236, 150, 140); }
+    .entry.is-stale .checked::before { background: rgb(206, 74, 64); }
+    .entry .acts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+    .entry .acts button {
+      min-height: 44px; min-width: 44px; padding: 0 4px; background: none; border: 0; cursor: pointer;
+      font-family: var(--serif); font-size: 15px; font-style: italic;
+      color: rgba(232, 213, 163, 0.72); text-decoration: underline;
+      text-decoration-color: rgba(201, 162, 39, 0.45); text-underline-offset: 3px;
+    }
+    .entry .acts .said { font-size: 14px; font-style: italic; color: rgba(var(--amber), 0.95); align-self: center; }
+    .entry[hidden] { display: none; }
+  </style>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--amber)">
+  <div class="wrap">
+    <a class="back" href="/house/gather.html">&lsaquo; Gather</a>
+    <h1>Chiang Mai</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>&hellip;seek the peace of the city&hellip;</blockquote>
+      <figcaption>&mdash; Jeremiah 29:7 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Where to find Mass, a meeting, prayer, or a way to serve in Chiang Mai: one plain list, each entry with the day it was last confirmed.</p>
+
+    <div class="notice-box"><p>Show home: every entry below is an example, not real. Please don&rsquo;t go by these times or places.</p></div>
+
+    <div class="next" aria-live="polite">
+      <span class="label">Next, today in Chiang Mai</span>
+      <span class="what" data-next-what>&hellip;</span>
+      <span class="where" data-next-where></span>
+    </div>
+
+    <div class="house-chips filters" role="group" aria-label="Show">
+      <button type="button" class="house-chip" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" class="house-chip" data-filter="mass" aria-pressed="false">Mass</button>
+      <button type="button" class="house-chip" data-filter="recovery" aria-pressed="false">Recovery</button>
+      <button type="button" class="house-chip" data-filter="prayer" aria-pressed="false">Prayer</button>
+      <button type="button" class="house-chip" data-filter="serve" aria-pressed="false">Serve</button>
+    </div>
+
+    <ol class="entries" data-entries></ol>
+
+    <h2 class="sect">About this list</h2>
+    <p>It is an independent list, kept by one person, and it is not run by AA, NA or any parish. Recovery meetings are listed only as each group describes itself, and only after talking to the group.</p>
+    <p>Every entry is checked once a month. One not confirmed for three months is marked in red until someone checks it again.</p>
+    <p>Know of a change? Tell me: <span class="blank">how to reach you: your choice of email, LINE or a form</span></p>
+    <p class="fine">This page never counts visits. It has no visitor counter at all, because a visit to a list like this can say something about someone&rsquo;s health. It doesn&rsquo;t stamp the pilgrim passport either.</p>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      // Every entry is an EXAMPLE, made up for the show home. Days: 0 = Sunday.
+      // "checked" is the day someone last confirmed it (example dates too).
+      const ENTRIES = [
+        { kind: 'mass', tag: 'Mass', name: 'Sunday Mass in English', days: [0], time: '10:00', where: 'A parish church, city centre', about: 'English', checked: '2026-11-01' },
+        { kind: 'mass', tag: 'Mass', name: 'Sunday Mass in Thai', days: [0], time: '07:00', where: 'A parish church, city centre', about: 'Thai', checked: '2026-11-01' },
+        { kind: 'mass', tag: 'Mass', name: 'Weekday Mass', days: [1, 2, 3, 4, 5, 6], time: '07:00', where: 'A chapel, old city', about: 'Thai', checked: '2026-10-28' },
+        { kind: 'recovery', tag: 'Recovery meeting', name: 'An open twelve-step meeting', days: [2], time: '19:00', where: 'A church hall', about: 'English · open: anyone may come', checked: '2026-10-30' },
+        { kind: 'recovery', tag: 'Recovery meeting', name: 'A meeting online and in person', days: [4], time: '18:30', where: 'A community room, and online', about: 'English · open', checked: '2026-11-05' },
+        { kind: 'recovery', tag: 'Recovery meeting', name: 'A closed meeting', days: [6], time: '10:00', where: 'A church hall', about: 'English · closed: for those who want to stop', checked: '2026-08-02' },
+        { kind: 'prayer', tag: 'Rosary', name: 'The Rosary together', days: [3], time: '18:00', where: 'A chapel, old city', about: 'Thai and English', checked: '2026-11-04' },
+        { kind: 'prayer', tag: 'Adoration', name: 'An hour of Adoration', days: [5], time: '19:00', where: 'A parish church', about: 'silent prayer before the Blessed Sacrament', checked: '2026-10-31' },
+        { kind: 'serve', tag: 'Serve', name: 'Cooking and serving a meal', days: [6], time: '11:00', where: 'A shelter', about: 'last Saturday of the month · ways to help', checked: '2026-10-25' },
+      ];
+      const DAY = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+      const daysText = d => d.length === 6 && !d.includes(0) ? 'Monday to Saturday' : d.map(x => DAY[x]).join(', ');
+      // Chiang Mai time, whatever the phone's own clock says.
+      const now = () => {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit' })
+          .formatToParts(new Date()).map(x => [x.type, x.value]));
+        return { day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday), minutes: +p.hour * 60 + +p.minute, date: `${p.year}-${p.month}-${p.day}` };
+      };
+      const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+      const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+      const fmtDate = s => new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      const t = now();
+      const list = document.querySelector('[data-entries]');
+      for (const e of ENTRIES) {
+        const ageDays = (new Date(t.date) - new Date(e.checked)) / 86400000;
+        const li = el('li', 'entry' + (ageDays > 90 ? ' is-stale' : ''));
+        li.dataset.kind = e.kind;
+        const kind = el('div', 'kind');
+        kind.append(el('span', null, e.tag), el('span', 'example', 'example, not real'));
+        const acts = el('div', 'acts');
+        for (const label of ['Map', 'Add to calendar']) {
+          const b = el('button', null, label);
+          b.type = 'button';
+          b.addEventListener('click', () => {
+            if (acts.querySelector('.said')) return;
+            acts.append(el('span', 'said', 'In the real list this would open ' + (label === 'Map' ? 'the map.' : 'your calendar.')));
+          });
+          acts.append(b);
+        }
+        li.append(kind, el('h2', null, e.name), el('p', 'when', `${daysText(e.days)} · ${e.time}`),
+          el('p', 'where', e.where + ' (example)'), el('p', 'about', e.about),
+          el('p', 'checked', (ageDays > 90 ? 'Not confirmed for three months: please check · ' : 'Last confirmed ') + fmtDate(e.checked) + ' (example)'),
+          acts);
+        list.append(li);
+      }
+
+      // The next one today, by Chiang Mai time.
+      const later = ENTRIES.filter(e => e.days.includes(t.day) && mins(e.time) > t.minutes)
+        .sort((a, b) => mins(a.time) - mins(b.time))[0];
+      const what = document.querySelector('[data-next-what]');
+      const where = document.querySelector('[data-next-where]');
+      if (later) { what.textContent = `${later.name} at ${later.time}`; where.textContent = later.where + ' (example)'; }
+      else { what.textContent = 'Nothing more today.'; where.textContent = 'Tomorrow’s list starts early: see below (examples).'; }
+
+      // Show one kind at a time.
+      const chips = [...document.querySelectorAll('[data-filter]')];
+      chips.forEach(c => c.addEventListener('click', () => {
+        chips.forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+        for (const li of list.children) li.hidden = c.dataset.filter !== 'all' && li.dataset.kind !== c.dataset.filter;
+      }));
+    })();
+  </script>
+</body>
+</html>
