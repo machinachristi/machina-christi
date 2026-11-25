@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="The seasons together: the Church's year kept as one house, from Advent to Pentecost." />
+  <title>The seasons together · Gather · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .year { list-style: none; display: grid; gap: 14px; margin-top: 1.2em; }
+    .season-card {
+      --c: 201, 162, 39;
+      padding: 16px 18px 12px;
+      border: 1px solid rgba(201, 162, 39, 0.28);
+      border-left: 3px solid rgba(var(--c), 0.9);
+      border-radius: 14px;
+      background: rgba(var(--c), 0.05);
+    }
+    .season-card .when { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(232, 213, 163, 0.75); }
+    .season-card .soon { letter-spacing: 0.08em; text-transform: none; font-style: italic; color: rgb(var(--c)); filter: brightness(1.25); }
+    .season-card h2 { font-weight: normal; font-size: 19px; color: var(--gold-soft); margin: 0.25em 0 0.15em; }
+    .season-card p { margin: 0 0 0.3em; font-size: 16px; }
+    .season-card .look {
+      min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer;
+      font-family: var(--serif); font-size: 15px; font-style: italic;
+      color: rgba(232, 213, 163, 0.8); text-decoration: underline;
+      text-decoration-color: rgba(var(--c), 0.8); text-underline-offset: 4px;
+    }
+    .season-card.is-next { border-color: rgba(var(--c), 0.75); box-shadow: 0 0 30px -14px rgba(var(--c), 0.8); }
+    .violet { --c: 156, 118, 206; }
+    .rose { --c: 226, 150, 178; }
+    .white { --c: 238, 232, 214; }
+    .red { --c: 206, 74, 64; }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--amber)">
+  <div class="wrap">
+    <a class="back" href="/house/gather.html">&lsaquo; Gather</a>
+    <h1>The seasons together</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>All things have their season, and in their times all things pass under heaven.</blockquote>
+      <figcaption>&mdash; Ecclesiastes 3:1 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">The Church&rsquo;s year, kept as one house: each season with one thing to do together, at home or in person.</p>
+
+    <ol class="year">
+      <li class="season-card violet" data-from="2026-11-29" data-look="advent">
+        <span class="when"><span>From Sunday 29 November</span><span class="soon"></span></span>
+        <h2>Advent</h2>
+        <p>One more candle on the front door each Sunday, and the whole house turns violet. On Gaudete Sunday, 13 December, it turns rose.</p>
+        <button type="button" class="look">See the house in Advent violet</button>
+      </li>
+      <li class="season-card violet" data-from="2026-12-16">
+        <span class="when"><span>16 to 24 December</span><span class="soon"></span></span>
+        <h2>The Christmas novena</h2>
+        <p>Nine evenings of prayer before Christmas, each night at home and, once in the week, together.</p>
+      </li>
+      <li class="season-card white" data-from="2026-12-25" data-look="christmas">
+        <span class="when"><span>Friday 25 December</span><span class="soon"></span></span>
+        <h2>Christmas</h2>
+        <p>Mass in Thai or in English, and then the table: nobody eats alone on Christmas Day.</p>
+        <button type="button" class="look">See the house in Christmas white</button>
+      </li>
+      <li class="season-card violet" data-from="2027-02-10" data-look="lent">
+        <span class="when"><span>From Ash Wednesday, 10 February 2027</span><span class="soon"></span></span>
+        <h2>Lent: Fridays at the Stations</h2>
+        <p>The Stations of the Cross together each Friday, 12 February to 19 March, and on Good Friday, 26 March.</p>
+        <button type="button" class="look">See the house in Lent</button>
+      </li>
+      <li class="season-card white" data-from="2027-03-25">
+        <span class="when"><span>Holy Thursday, 25 March 2027</span><span class="soon"></span></span>
+        <h2>The walk to seven churches</h2>
+        <p>After the evening Mass, a quiet walk to pray at seven churches. <a class="house-link house-go" href="/house/invitations.html">The invitation &rsaquo;</a></p>
+      </li>
+      <li class="season-card white" data-from="2027-03-28" data-look="easter">
+        <span class="when"><span>Easter Sunday, 28 March 2027</span><span class="soon"></span></span>
+        <h2>Easter</h2>
+        <p>Alleluia. Until Pentecost the Regina Caeli takes the place of the Angelus.</p>
+        <button type="button" class="look">See the house at Easter</button>
+      </li>
+      <li class="season-card red" data-from="2027-05-16" data-look="pentecost">
+        <span class="when"><span>Pentecost, 16 May 2027</span><span class="soon"></span></span>
+        <h2>Every tongue</h2>
+        <p>The Our Father prayed together in Thai and English, each person in the language they didn&rsquo;t grow up with (Acts 2).</p>
+        <button type="button" class="look">See the house in Pentecost red</button>
+      </li>
+    </ol>
+    <p class="fine" style="margin-top: 1.4em">The &ldquo;see the house&rdquo; buttons use the show home&rsquo;s season switch; on the real site the season would change by itself.</p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      'use strict';
+      const H = window.mcHouse;
+      const pad = n => String(n).padStart(2, '0');
+      const d = new Date();
+      const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const cards = [...document.querySelectorAll('.season-card')];
+      // Mark the next one to come, and how soon.
+      const next = cards.find(c => c.dataset.from >= today);
+      if (next) {
+        next.classList.add('is-next');
+        const days = Math.round((new Date(next.dataset.from) - new Date(today)) / 86400000);
+        next.querySelector('.soon').textContent = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+      }
+      for (const c of cards) {
+        const b = c.querySelector('.look');
+        if (!b) continue;
+        if (!H || !H.setSeason || H.LIVE) { b.hidden = true; continue; }
+        b.addEventListener('click', () => { H.setSeason(c.dataset.look); location.href = '/index.html'; });
+      }
+    });
+  </script>
+</body>
+</html>

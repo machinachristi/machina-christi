@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <title>Show home tour · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .stage { font-size: 15px; font-style: italic; color: rgba(var(--amber), 0.95); }
+    .group .notice { margin-top: 0.4em; }
+    .card .tag { color: rgba(var(--amber), 0.95); }
+    .chosen { margin: 0 0 1em; padding: 12px 16px; border: 1px solid rgba(222, 190, 112, 0.6); border-radius: 12px; background: rgba(201, 162, 39, 0.08); }
+    .chosen p { margin: 0; color: var(--gold-soft); }
+    .chosen b { font-weight: normal; color: var(--gold); }
+    /* A card that leads to several rooms: a row of thumb-sized links. */
+    .card p.go { margin: 0.5em 0 -6px -8px; font-style: normal; display: flex; flex-wrap: wrap; }
+    .card p.go a {
+      display: inline-block; padding: 10px 8px; min-height: 44px;
+      color: var(--gold-soft); text-decoration: underline;
+      text-decoration-color: rgba(201, 162, 39, 0.55); text-underline-offset: 3px;
+    }
+  </style>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--amber)">
+  <div class="wrap">
+    <a class="back" href="/index.html">&lsaquo; home</a>
+    <h1>Show home</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <p class="house-why">Every idea from the 22 November review, built into a copy of the site at once. Nobody moves in: it is taken down when the pull request closes.</p>
+
+    <p>A builder furnishes one house completely so you can walk through it. This is that house for Machina Christi. Walk through on your phone, then mark each idea <em>keep</em>, <em>change</em> or <em>drop</em> in the pull request.</p>
+    <p>Anything that would need a server is pretend and says so: meetings and Mass times are marked <span class="example">example, not real</span>, candles stay on this phone, and dashed boxes like <span class="blank">this</span> mark where a contact or a name would go.</p>
+    <div class="chosen"><p><b>Your choice, 25 November:</b> three gates, Pray, Wander and Build, and a site that is simply useful, fun and organized. Pray leads to Ordo and the Thai prayers. Logos is found in the garden, like Camino. Gather is set aside for now: gathering can grow inside each gate later.</p></div>
+    <p class="stage" id="stage">All four stages are built. Mark each idea keep, change or drop in <a class="house-link house-go" href="https://github.com/machinachristi/machina-christi/pull/144">the pull request&rsquo;s checklist &rsaquo;</a></p>
+
+    <section class="group" id="switches">
+      <h2 class="sect">Switches (preview only)</h2>
+      <p>On machinachristi.com the Church&rsquo;s calendar sets the season by itself. Here you choose it, and the choice stays on this phone as you walk through the house (X11).</p>
+      <p class="season-demo" data-season-line hidden></p>
+      <div class="house-chips" role="group" aria-label="Season">
+        <button type="button" class="house-chip" data-choice="">None</button>
+        <button type="button" class="house-chip" data-choice="advent">Advent</button>
+        <button type="button" class="house-chip" data-choice="gaudete">Gaudete</button>
+        <button type="button" class="house-chip" data-choice="christmas">Christmas</button>
+        <button type="button" class="house-chip" data-choice="lent">Lent</button>
+        <button type="button" class="house-chip" data-choice="easter">Easter</button>
+        <button type="button" class="house-chip" data-choice="pentecost">Pentecost</button>
+        <button type="button" class="house-chip" data-choice="ordinary">Ordinary Time</button>
+      </div>
+      <p style="margin-top: 1.2em">The Angelus rings by itself at six, noon and six, Chiang Mai time (X18). To hear it now, and see its banner on every page for the next ten minutes:</p>
+      <div class="house-chips"><button type="button" class="house-chip" data-ring-now>Ring the Angelus now</button></div>
+      <p style="margin-top: 1.2em">The show home keeps a few things on this phone only: the season you chose, your candle, your passport&rsquo;s stamps. To start again:</p>
+      <div class="house-chips"><button type="button" class="house-chip" data-forget>Forget all of it</button></div>
+      <!-- switches -->
+    </section>
+
+    <section class="group" id="words">
+      <h2 class="sect">Words</h2>
+      <ul class="cards">
+        <li><a class="card" href="/about.html#the-name"><span class="tag">X1</span><h2>The name</h2><p>On About: Ignatius&rsquo;s machine, then today&rsquo;s (tower, signal, receiver, city, network), and the stretch of wall in front of my house.</p></a></li>
+        <li><a class="card" href="/house/rule.html"><span class="tag">X2</span><h2>The rule of the machine</h2><p>Seven promises on a page of their own, each tied to the Gospel or to Magnifica Humanitas. Also linked from About.</p></a></li>
+        <li><div class="card"><span class="tag">X3</span><h2>A verse over every door</h2><p>And a &ldquo;why&rdquo; line under each room&rsquo;s title. Eden itself stays untouched, so Wander&rsquo;s verse hangs on Eden&rsquo;s About page. Wing pages carry their own.</p>
+          <p class="go"><a href="/ordo.html">Ordo</a><a href="/pray.html">Prayers</a><a href="/pray/mass.html">The Mass</a><a href="/logos.html">Logos</a><a href="/about-eden.html">Eden&rsquo;s About</a></p></div></li>
+        <li><a class="card" href="/index.html"><span class="tag">X4</span><h2>The tagline</h2><p>&ldquo;A little place to pray, to learn, to wander, and to gather&rdquo;: the front door&rsquo;s line becomes the house&rsquo;s table of contents.</p></a></li>
+        <li><div class="card"><span class="tag">X5</span><h2>The builder&rsquo;s rule</h2><p>In the project&rsquo;s instructions for AI (<code>CLAUDE.md</code>): prayer before building, no building on Sundays, judge by fruit. It isn&rsquo;t a page, so there is nothing to see here: read it in the pull request&rsquo;s changes.</p></div></li>
+        <!-- words -->
+      </ul>
+    </section>
+
+    <section class="group" id="house">
+      <h2 class="sect">The house</h2>
+      <ul class="cards">
+        <li><a class="card" href="/index.html"><span class="tag">X6, changed</span><h2>The front door: three gates</h2><p>Pray, Wander, Build, as you chose on 25 November (it began with five). About is the small book in the top corner, opposite Search.</p></a></li>
+        <li><div class="card"><span class="tag">X7</span><h2>Wing pages</h2><p>Pray lists its rooms: Ordo with today&rsquo;s feast, Prayers, The Mass, and the Rosary and the Stations still being built. Gather and Build have pages too (filled in at stages 3 and 4). Learn opens Logos directly; Wander opens Eden.</p>
+          <p class="go"><a href="/house/pray.html">Pray</a><a href="/house/gather.html">Gather</a><a href="/house/build.html">Build</a></p></div></li>
+        <li><a class="card" href="/pray.html#hall"><span class="tag">X8</span><h2>The hallway</h2><p>The same footer at the foot of every room: the five wings (the one you&rsquo;re in is lit), then home, about and search. Scroll to the bottom of any page.</p></a></li>
+        <li><div class="card"><span class="tag">X9</span><h2>Rooms that point to their neighbours</h2><p>A &ldquo;next door&rdquo; card at the end of a room: Logos leads to the Thai prayers, each prayer to its letters (&ldquo;It begins with ข, as in ไข่&rdquo;), and Ordo to today&rsquo;s prayer.</p>
+          <p class="go"><a href="/logos.html#hall">Logos</a><a href="/pray/our-father.html#hall">The Our Father</a><a href="/ordo.html#hall">Ordo</a></p></div></li>
+        <li><div class="card"><span class="tag">X10</span><h2>Dashed gold for rooms still being built</h2><p>Like an architect&rsquo;s sketch: the Gather gate on the front door, and the Rosary and the Stations in the Pray wing. When a room opens for real it turns solid.</p>
+          <p class="go"><a href="/index.html">The front door</a><a href="/house/pray.html">The Pray wing</a></p></div></li>
+        <li><a class="card" href="#switches"><span class="tag">X11</span><h2>The season through the whole house</h2><p>Choose a season with the switch at the top of this page, then walk around: the gold rules under every title, the verse bars, the hallway and the front door take its colour.</p></a></li>
+        <li><a class="card" href="/house/new.html"><span class="tag">X12</span><h2>What&rsquo;s new in the house</h2><p>Recent changes across the whole site, newest first, in plain words. One step from every room, at the end of the hallway.</p></a></li>
+        <li><a class="card" href="/about.html#the-map"><span class="tag">X13</span><h2>A map of the machine</h2><p>On About, under the name: a gold line drawing of how the parts fit together, the Cross as tower and crane, the signal, the receivers, the city, the network and the building site, each leading to its wing.</p></a></li>
+        <!-- house -->
+      </ul>
+    </section>
+
+    <section class="group" id="learn">
+      <h2 class="sect">Learn</h2>
+      <p class="notice">Off the front door since 25 November: Logos would be found in the garden, like Camino. In the show home Eden is left untouched, so for now Logos is reached from the prayers&rsquo; &ldquo;its letters&rdquo; cards and from About.</p>
+      <ul class="cards">
+        <li><a class="card" href="/house/hornbook.html"><span class="tag">X14</span><h2>Logos as a hornbook</h2><p>A sheet on a wooden paddle, as children learned to read for three centuries: a cross, a sample row of letters (tap to hear them), the first lines of three prayers, and the Our Father to end. Only Thai already on the site. Linked from the top of Logos.</p></a></li>
+        <!-- learn -->
+      </ul>
+    </section>
+
+    <section class="group" id="gather">
+      <h2 class="sect">Gather</h2>
+      <p class="notice">Set aside on 25 November: no Gather gate. These rooms stay here to look at; any of them could come back later inside a gate.</p>
+      <ul class="cards">
+        <li><a class="card" href="/house/gather.html"><span class="tag">X15</span><h2>The Gather wing</h2><p>The hall, where the house meets its neighbours (Matthew 18:20), in Nehemiah&rsquo;s order: pray together, meet in person, then build. Its rooms turn from dashed to solid as each is built.</p></a></li>
+        <li><a class="card" href="/house/chiang-mai.html"><span class="tag">X16</span><h2>Gather: Chiang Mai</h2><p>Mass, recovery meetings, the Rosary, Adoration and a way to serve, each with &ldquo;last confirmed&rdquo; (one is flagged as three months old), the next one today, and a filter. Every entry is an example, and the page never counts visits.</p></a></li>
+        <li><a class="card" href="/house/candles.html"><span class="tag">X17</span><h2>Candles for strangers</h2><p>Choose who it is for from a fixed list, light it, and be handed a stranger&rsquo;s candle to pray for. Pretend: yours stays on your phone for a day; theirs is made up.</p></a></li>
+        <li><a class="card" href="/house/angelus.html"><span class="tag">X18</span><h2>The Angelus bell</h2><p>At six, noon and six, Chiang Mai time, a slim banner on every page for a quarter of an hour; the bell, drawn from a real bell&rsquo;s overtones, rings when you tap. The prayer in English. Ring it any time with the switch at the top of this page.</p></a></li>
+        <li><a class="card" href="/house/seasons.html"><span class="tag">X19</span><h2>The seasons together</h2><p>Advent from 29 November, the Christmas novena, Christmas, Fridays in Lent at the Stations, Holy Thursday, Easter and Pentecost: one thing to do together in each. The next one is marked, and each can show the house in its colour.</p></a></li>
+        <li><a class="card" href="/house/invitations.html"><span class="tag">X20</span><h2>Invitations</h2><p>The table: a meal after Sunday Mass on the first Sunday of each month (next: 6 December). The Holy Thursday walk to seven churches, 25 March 2027. Every time, place, host and contact is a blank for you to fill.</p></a></li>
+        <li><a class="card" href="/house/passport.html"><span class="tag">X21</span><h2>A pilgrim passport</h2><p>Each room you visit gets a stamp with the day, like a Camino credencial, kept only on your phone. Walk around, then open it. The Chiang Mai list never stamps.</p></a></li>
+        <!-- gather -->
+      </ul>
+    </section>
+
+    <section class="group" id="build">
+      <h2 class="sect">Build</h2>
+      <ul class="cards">
+        <li><a class="card" href="/house/build.html"><span class="tag">X22</span><h2>The Build wing</h2><p>The workshop out back and the building site (Nehemiah 2:18): the Workshop, Take a section, Builders, the rule and what&rsquo;s new.</p></a></li>
+        <li><a class="card" href="/house/take-a-section.html"><span class="tag">X23</span><h2>Take a section</h2><p>Real jobs on the house, by wing, each small enough for one person, with who it suits and how long it takes. &ldquo;Take this section&rdquo; leads to a marked blank: the site has no contact yet.</p></a></li>
+        <li><a class="card" href="/house/builders.html"><span class="tag">X24</span><h2>Builders</h2><p>Who built what, stone by stone, as Nehemiah 3 names each family: the Thai prayers&rsquo; source, the Bible, the saints&rsquo; lives, the voices, Eden&rsquo;s AI, the code&rsquo;s AI. Your own name is a blank: you decide whose names appear.</p></a></li>
+        <li><a class="card" href="/house/build.html#help"><span class="tag">X25</span><h2>&ldquo;What would help you?&rdquo;</h2><p>One question at the foot of the Build wing, asked of every visitor: what would help you pray, learn or gather? The answer goes to a marked blank until you choose how people reach you.</p></a></li>
+        <!-- build -->
+      </ul>
+    </section>
+
+    <p class="fine" style="margin-top: 2.4em">Show home for board item AB#171. Built on 22 November 2026, Christ the King.</p>
+  </div>
+
+  <script>
+    // The season switch (X11). house.js loads after this page's own script
+    // (it is deferred), so wait for it.
+    document.addEventListener('DOMContentLoaded', () => {
+      const H = window.mcHouse;
+      if (!H || !H.setSeason) return;
+      const chips = [...document.querySelectorAll('[data-choice]')];
+      const mark = v => chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.choice === v)));
+      mark(H.store.get('season', '') || '');
+      chips.forEach(c => c.addEventListener('click', () => {
+        H.setSeason(c.dataset.choice || null);
+        mark(c.dataset.choice);
+      }));
+      // The Angelus switch (X18).
+      const ring = document.querySelector('[data-ring-now]');
+      if (ring && H.ringNow) ring.addEventListener('click', () => {
+        H.ringNow();
+        ring.textContent = 'Ringing: walk to any page to see the banner';
+      });
+      // Forget everything the show home kept on this phone (X21 and before).
+      const forget = document.querySelector('[data-forget]');
+      if (forget) forget.addEventListener('click', () => {
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('house_')) localStorage.removeItem(k);
+          }
+        } catch { /* nothing kept */ }
+        H.setSeason(null);
+        mark('');
+        forget.textContent = 'Forgotten';
+      });
+    });
+  </script>
+</body>
+</html>

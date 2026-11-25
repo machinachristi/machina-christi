@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Candles for strangers: light one for someone, and be handed a stranger's candle to pray for. Show home: pretend." />
+  <title>Candles · Gather · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .notice-box {
+      margin: 0 0 1.4em; padding: 12px 16px;
+      border: 1px dashed rgba(var(--amber), 0.75); border-radius: 12px;
+      background: rgba(var(--amber), 0.07); color: rgba(var(--amber), 0.98);
+      font-style: italic; font-size: 15px;
+    }
+    .notice-box p { margin: 0; color: inherit; }
+    .step { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin: 1.6em 0 0.4em; }
+    .altar { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0.6em; }
+    .candle-card {
+      padding: 16px 12px 14px; text-align: center;
+      border: 1px solid rgba(201, 162, 39, 0.3); border-radius: 14px;
+      background: rgba(201, 162, 39, 0.035);
+    }
+    .candle-card .who { display: block; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(232, 213, 163, 0.72); margin-bottom: 6px; }
+    .candle-card .for { display: block; font-size: 16px; line-height: 1.4; color: var(--gold-soft); min-height: 2.8em; }
+    .candle-card .since { display: block; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.66); }
+    .candle-card .example { margin-top: 6px; }
+    /* A candle, drawn in CSS: a flame that flickers, a gold stem, a dish. */
+    .candle { position: relative; width: 40px; height: 108px; margin: 4px auto 10px; }
+    .candle .stem { position: absolute; left: 13px; bottom: 10px; width: 14px; height: 58px; border-radius: 3px 3px 2px 2px; background: linear-gradient(90deg, rgba(232, 213, 163, 0.85), rgba(232, 213, 163, 0.55)); }
+    .candle .dish { position: absolute; left: 0; bottom: 4px; width: 40px; height: 7px; border-radius: 50%; border: 1px solid rgba(201, 162, 39, 0.8); }
+    .candle .wick { position: absolute; left: 19px; bottom: 68px; width: 2px; height: 7px; background: rgba(60, 40, 20, 0.9); }
+    .candle .flame {
+      position: absolute; left: 10px; bottom: 73px; width: 20px; height: 32px;
+      border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+      background: radial-gradient(60% 55% at 50% 72%, #fff6d6 0%, rgb(var(--amber)) 45%, rgba(var(--amber), 0) 72%);
+      box-shadow: 0 0 22px 6px rgba(var(--amber), 0.4);
+      transform-origin: 50% 90%;
+      animation: flicker 2.6s ease-in-out infinite alternate;
+    }
+    .candle.is-out .flame { display: none; }
+    .candle.is-out .stem { background: linear-gradient(90deg, rgba(232, 213, 163, 0.4), rgba(232, 213, 163, 0.25)); }
+    @keyframes flicker {
+      0% { transform: scale(1) rotate(-1.5deg); opacity: 0.95; }
+      30% { transform: scale(1.04, 0.97) rotate(1deg); opacity: 1; }
+      60% { transform: scale(0.97, 1.03) rotate(-0.5deg); opacity: 0.9; }
+      100% { transform: scale(1.02) rotate(1.5deg); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) { .candle .flame { animation: none; } }
+    .light {
+      display: block; width: 100%; min-height: 48px; margin-top: 1em;
+      border: 1px solid rgba(222, 190, 112, 0.7); border-radius: 14px;
+      background: rgba(var(--amber), 0.1); color: var(--gold-soft);
+      font-family: var(--serif); font-size: 17px; cursor: pointer;
+    }
+    .light:disabled { opacity: 0.5; cursor: default; }
+    .after { margin-top: 1.2em; text-align: center; }
+    .after a, .after button { display: inline-block; min-height: 44px; padding: 11px 8px; background: none; border: 0; cursor: pointer; font-family: var(--serif); font-size: 15px; font-style: italic; color: var(--gold-soft); text-decoration: underline; text-decoration-color: rgba(201, 162, 39, 0.5); text-underline-offset: 3px; }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--amber)">
+  <div class="wrap">
+    <a class="back" href="/house/gather.html">&lsaquo; Gather</a>
+    <h1>Candles</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>Bear ye one another&rsquo;s burdens; and so you shall fulfill the law of Christ.</blockquote>
+      <figcaption>&mdash; Galatians 6:2 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Light a candle for someone, and you are handed a stranger&rsquo;s candle to pray for in return. Nobody prays alone.</p>
+
+    <div class="notice-box"><p>Pretend, for the show home: your candle stays on this phone, and the stranger&rsquo;s candle is made up. Real shared candles would need a small server: your decision for later.</p></div>
+
+    <p class="step">1 · Who is it for?</p>
+    <p class="fine">Chosen from a fixed list, so nothing private is ever typed in, and there is nothing to watch over.</p>
+    <div class="house-chips" role="group" aria-label="Who the candle is for" data-intentions></div>
+
+    <button type="button" class="light" data-light disabled>Choose who it is for, then light it</button>
+
+    <div class="altar" aria-live="polite">
+      <div class="candle-card">
+        <span class="who">Your candle</span>
+        <div class="candle is-out" data-mine-candle aria-hidden="true"><span class="flame"></span><span class="wick"></span><span class="stem"></span><span class="dish"></span></div>
+        <span class="for" data-mine-for>not lit yet</span>
+        <span class="since" data-mine-since></span>
+      </div>
+      <div class="candle-card">
+        <span class="who">A stranger&rsquo;s</span>
+        <div class="candle is-out" data-theirs-candle aria-hidden="true"><span class="flame"></span><span class="wick"></span><span class="stem"></span><span class="dish"></span></div>
+        <span class="for" data-theirs-for>handed to you when you light yours</span>
+        <span class="since" data-theirs-since></span>
+        <span class="example" data-theirs-tag hidden>made up</span>
+      </div>
+    </div>
+
+    <div class="after" data-after hidden>
+      <a href="/pray/hail-mary.html">Pray for them: the Hail Mary &rsaquo;</a><br />
+      <button type="button" data-out>Put out my candle</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const INTENTIONS = [
+        'for the sick', 'for someone who has died', 'for peace', 'for my family',
+        'for someone fighting an addiction', 'for a safe journey', 'in thanksgiving',
+        'for someone with no one to pray for them',
+      ];
+      const $ = s => document.querySelector(s);
+      const hours = 24;
+      // This phone's own notebook; if it refuses (private mode), nothing is kept.
+      const KEY = 'house_candle';
+      const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
+      const write = v => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch { /* forgets */ } };
+      const time = ms => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let chosen = null;
+      const box = $('[data-intentions]');
+      for (const text of INTENTIONS) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'house-chip'; b.textContent = text;
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', () => {
+          chosen = text;
+          for (const x of box.children) x.setAttribute('aria-pressed', String(x === b));
+          const light = $('[data-light]');
+          light.disabled = false;
+          light.textContent = 'Light a candle ' + text;
+        });
+        box.append(b);
+      }
+
+      function show() {
+        const c = read();
+        const lit = c && Date.now() - c.at < hours * 3600e3;
+        $('[data-mine-candle]').classList.toggle('is-out', !lit);
+        $('[data-theirs-candle]').classList.toggle('is-out', !lit);
+        $('[data-after]').hidden = !lit;
+        $('[data-theirs-tag]').hidden = !lit;
+        if (!lit) {
+          $('[data-mine-for]').textContent = 'not lit yet';
+          $('[data-mine-since]').textContent = '';
+          $('[data-theirs-for]').textContent = 'handed to you when you light yours';
+          $('[data-theirs-since]').textContent = '';
+          return;
+        }
+        $('[data-mine-for]').textContent = 'Lit ' + c.for;
+        $('[data-mine-since]').textContent = 'since ' + time(c.at) + ', for a day';
+        $('[data-theirs-for]').textContent = 'Someone lit one ' + c.theirs;
+        $('[data-theirs-since]').textContent = 'about an hour ago';
+      }
+
+      $('[data-light]').addEventListener('click', () => {
+        if (!chosen) return;
+        // The stranger's candle is made up: any other intention from the list.
+        const others = INTENTIONS.filter(x => x !== chosen);
+        write({ for: chosen, at: Date.now(), theirs: others[Math.floor(Math.random() * others.length)] });
+        show();
+      });
+      $('[data-out]').addEventListener('click', () => { write(null); show(); });
+      show();
+    })();
+  </script>
+</body>
+</html>

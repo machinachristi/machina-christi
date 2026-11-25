@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="The rule of the machine: seven promises for how Machina Christi is built and run." />
+  <title>The rule of the machine · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    /* Seven promises, numbered like the chapters of a monastic rule. */
+    ol.promises { list-style: none; counter-reset: promise; margin: 1.6em 0 0; display: grid; gap: 1.6em; }
+    ol.promises li { counter-increment: promise; position: relative; padding-left: 3.6em; }
+    ol.promises li::before {
+      content: counter(promise, upper-roman);
+      position: absolute; left: 0; top: -0.1em;
+      width: 2em; text-align: right;
+      font-size: 20px; letter-spacing: 0.04em;
+      color: var(--gold);
+    }
+    ol.promises h2 {
+      font-weight: normal; font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--gold-soft); margin-bottom: 0.35em; line-height: 1.5;
+    }
+    ol.promises p { margin-bottom: 0.4em; }
+    ol.promises .src { font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
+    .test {
+      margin: 2em 0 0; padding: 16px 20px;
+      border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 14px;
+      background: rgba(201, 162, 39, 0.05);
+    }
+    .test p { margin: 0; }
+    .test .label { display: block; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.3em; }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page">
+  <div class="wrap">
+    <a class="back" href="/index.html">&lsaquo; home</a>
+    <h1>The rule of the machine</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>Thou shalt love the Lord thy God with thy whole heart, and with thy whole soul, and with thy whole mind&hellip; Thou shalt love thy neighbour as thyself.</blockquote>
+      <figcaption>&mdash; Matthew 22:37, 39 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">Seven promises for how this machine is built and run, so that it serves the people who use it and never uses them.</p>
+
+    <p>Every design choice carries a picture of what a person is, Pope Leo XIV reminds the people who build technology (Magnifica Humanitas &para;111). These are this site&rsquo;s choices, written down so they can be kept and checked.</p>
+
+    <ol class="promises">
+      <li>
+        <h2>People, never parts</h2>
+        <p>Every visitor is a face, not a number to grow. No accounts, no profiles, no streaks, no scores.</p>
+        <p class="src">Magnifica Humanitas &para;114, &para;170</p>
+      </li>
+      <li>
+        <h2>Lift, don&rsquo;t hold</h2>
+        <p>Pages end. No feeds, no endless scroll, nothing built to keep you here. The best visit may be a short one that sends you off to pray.</p>
+        <p class="src">The attention economy: Magnifica Humanitas &para;170</p>
+      </li>
+      <li>
+        <h2>Signal, not noise</h2>
+        <p>Quiet by default: no pop-ups, no alerts to pull you back, room for silence. The only bell is the Angelus.</p>
+        <p class="src">Rhythms of silence: Magnifica Humanitas &para;146, &para;190</p>
+      </li>
+      <li>
+        <h2>Every tongue, truly</h2>
+        <p>Thai and English side by side, each checked by people who speak it. A machine&rsquo;s translation is never passed off as the Church&rsquo;s words.</p>
+        <p class="src">Acts 2:6; the &ldquo;Babel syndrome&rdquo;: Magnifica Humanitas &para;10</p>
+      </li>
+      <li>
+        <h2>Hand it on faithfully</h2>
+        <p>The prayers are the Church&rsquo;s own words, always with their source. AI helps build the house, but never writes a prayer and never pretends to be a person, and a machine voice always says that it is one.</p>
+        <p class="src">Magnifica Humanitas &para;99&ndash;100, &para;233</p>
+      </li>
+      <li>
+        <h2>Show the wiring</h2>
+        <p>How it is built is open to see in the Workshop. What is counted, and why, is said plainly, and a visitor who asks not to be counted is not counted.</p>
+        <p class="src">Magnifica Humanitas &para;164, &para;178</p>
+      </li>
+      <li>
+        <h2>Sabbath, and count the cost</h2>
+        <p>The builders rest on Sunday. The machine&rsquo;s cost in money, energy and water is kept small and known, and every tool is judged by its fruit, not its traffic.</p>
+        <p class="src">Luke 14:28; Matthew 7:16; Magnifica Humanitas &para;101, &para;169</p>
+      </li>
+    </ol>
+
+    <div class="test">
+      <span class="label">The test for anything new</span>
+      <p>Does it help someone love God or a neighbour, or show how the house is built? If it does, it gets a room.</p>
+    </div>
+
+    <p class="fine" style="margin-top: 2em">Draft words for the show home. Pope Leo XIV, <a class="house-link" href="https://www.vatican.va/content/leo-xiv/en/encyclicals/documents/20260515-magnifica-humanitas.html">Magnifica Humanitas</a> (2026): paragraphs named, not quoted.</p>
+  </div>
+</body>
+</html>

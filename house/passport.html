@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="A pilgrim passport: a stamp for each room you visit, kept only on your phone." />
+  <title>Pilgrim passport · Gather · Machina Christi</title>
+  <link rel="stylesheet" href="/house/house.css" />
+  <style>
+    .count { font-size: 16px; color: var(--gold-soft); margin: 0 0 0.4em; }
+    .stamps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; margin-top: 1em; }
+    .stamps a { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; padding: 4px 0; }
+    .seal {
+      width: 94px; height: 94px; border-radius: 50%;
+      display: grid; place-items: center; text-align: center;
+      border: 1px dashed rgba(201, 162, 39, 0.45);
+      color: rgba(232, 213, 163, 0.66);
+      font-size: 14px; line-height: 1.25; padding: 8px;
+    }
+    .stamped .seal {
+      border: 2px solid rgba(222, 190, 112, 0.9);
+      box-shadow: inset 0 0 0 4px rgba(11, 10, 8, 1), inset 0 0 0 5px rgba(222, 190, 112, 0.55), 0 0 18px -6px rgba(var(--amber), 0.7);
+      color: var(--gold-soft);
+      background: rgba(201, 162, 39, 0.08);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .stamps .date { margin-top: 6px; font-size: 14px; font-style: italic; color: rgba(232, 213, 163, 0.66); }
+    .clear {
+      min-height: 44px; margin-top: 1.4em; padding: 8px 18px;
+      border: 1px solid rgba(201, 162, 39, 0.42); border-radius: 999px;
+      background: transparent; color: var(--gold-soft);
+      font-family: var(--serif); font-size: 15px; cursor: pointer;
+    }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+  <script src="/house/house.js" defer></script>
+</head>
+<body class="house-page" style="--wing: var(--amber)">
+  <div class="wrap">
+    <a class="back" href="/house/gather.html">&lsaquo; Gather</a>
+    <h1>Pilgrim passport</h1>
+    <span class="rule" aria-hidden="true"></span>
+    <figure class="house-verse">
+      <blockquote>For we have not here a lasting city, but we seek one that is to come.</blockquote>
+      <figcaption>&mdash; Hebrews 13:14 (Douay-Rheims)</figcaption>
+    </figure>
+    <p class="house-why">A stamp for each room you visit, like the credencial pilgrims carry on the Camino. It stays on your phone and goes nowhere.</p>
+
+    <p class="count" data-count aria-live="polite"></p>
+    <ul class="stamps" data-stamps></ul>
+
+    <button type="button" class="clear" data-clear>Clear my passport</button>
+    <p class="fine" style="margin-top: 1.2em">Kept only in this phone&rsquo;s own storage; nobody else can see it, and clearing it is for good. Eden is stamped as you walk through its gate. The Chiang Mai list never stamps: a visit there is nobody&rsquo;s business.</p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      'use strict';
+      const H = window.mcHouse;
+      if (!H || !H.passport) return;
+      const list = document.querySelector('[data-stamps]');
+      const count = document.querySelector('[data-count]');
+      const draw = () => {
+        const book = H.passport.read();
+        const rooms = H.passport.rooms;
+        list.textContent = '';
+        let n = 0;
+        rooms.forEach((r, i) => {
+          const when = book[r.id];
+          if (when) n++;
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = r.href;
+          a.className = when ? 'stamped' : '';
+          const seal = document.createElement('span');
+          seal.className = 'seal';
+          seal.textContent = r.name;
+          // A stamp lands a little crooked, as stamps do.
+          if (when) seal.style.transform = `rotate(${((i * 37) % 17) - 8}deg)`;
+          const date = document.createElement('span');
+          date.className = 'date';
+          date.textContent = when ? new Date(when + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'not yet';
+          a.append(seal, date);
+          a.setAttribute('aria-label', `${r.name}: ${when ? 'stamped ' + date.textContent : 'not visited yet'}`);
+          li.append(a);
+          list.append(li);
+        });
+        count.textContent = `${n} of ${rooms.length} rooms stamped.`;
+      };
+      document.querySelector('[data-clear]').addEventListener('click', () => { H.passport.clear(); draw(); });
+      draw();
+    });
+  </script>
+</body>
+</html>
