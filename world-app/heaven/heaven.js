@@ -27,6 +27,10 @@
 // v43, a great and high mountain: the view carried up to show the whole city
 // (behold.js, at the world's root, moves the camera), and reed.js (the golden
 // reed's light measuring the wall and its gates while he looks).
+// v45, dancing before the glory: chorus.js (tap him and he dances; a ring of
+// the multitude's lights comes down to dance round him, fire kindles in the
+// glass at every stroke of the timbrel, the multitude sways with him, and
+// heaven answers when he bows).
 
 import * as THREE from 'three';
 import { breathe } from '../util.js';
@@ -43,6 +47,7 @@ import { createSong } from './song.js';
 import { createCity } from './city.js';
 import { createHealing } from './healing.js';
 import { createReed } from './reed.js';
+import { createChorus } from './chorus.js';
 
 // Near the head of the ladder the line under the screen names the way down
 // (realm.js), so the new song keeps its words for the rest of heaven.
@@ -87,6 +92,24 @@ export async function createHeaven(scene, saintsData) {
   const healing = createHealing(scene, city.ways, saints.places);
   await breathe();
   const reed = createReed(scene, city.wall, city.gateSpots);
+  const chorus = createChorus(scene, sea, glory);
+
+  // v45: how far into his dance he is (seconds, or −1), which way he turns,
+  // the timbrel's strokes so far, and how many dances he has danced right
+  // through to the bow — told by main.js every frame.
+  let danceT = -1;
+  let danceDir = 1;
+  let danceBeats = 0;
+  let danceBows = 0;
+  function dance(t, dir, beats, bows) {
+    danceT = typeof t === 'number' && t >= 0 ? t : -1;
+    danceDir = dir < 0 ? -1 : 1;
+    danceBeats = beats | 0;
+    danceBows = bows | 0;
+  }
+  // A dancer is not standing still: under the tree, his stillness for a
+  // leaf (healing.js) begins again only once he has bowed.
+  const DANCER_PACE = 99;
 
   // v43: how far up the view has been carried (0 with him, 1 on high), and
   // whether it is there and looking — told by main.js, every frame.
@@ -113,9 +136,13 @@ export async function createHeaven(scene, saintsData) {
   function update(dt, walker, pace = 0, facing = 0) {
     time += dt;
     lastWalker = walker || null;
+    // v45: the dance first, so that while he dances he neither prays nor
+    // has a leaf come down to him (his arms are flung up and wide).
+    if (chorus.update(dt, time, walker, danceT, danceDir, danceBeats, danceBows)) glory.answer(time);
+    const dancing = chorus.dancing();
     // (His prayer as it stood last frame: no leaf comes down into lifted hands.)
-    healing.update(dt, time, walker, pace, facing, !!song.prayerWord());
-    song.update(dt, time, walker, pace, facing, healing.busy());
+    healing.update(dt, time, walker, dancing ? DANCER_PACE : pace, facing, !!song.prayerWord() || dancing);
+    song.update(dt, time, walker, pace, facing, healing.busy() || dancing);
     sea.update(time);
     head.update(time);
     glory.update(time);
@@ -142,6 +169,9 @@ export async function createHeaven(scene, saintsData) {
     // Shown the city from on high (v43), the reed's word comes before all.
     const measure = reed.caption();
     if (measure) return measure;
+    // Dancing (v45), the dance's own word.
+    const danced = chorus.caption();
+    if (danced) return danced;
     const answer = byHead ? null : song.answerWord();
     if (answer) return answer;
     const leaf = byHead ? null : healing.caption();
@@ -167,6 +197,8 @@ export async function createHeaven(scene, saintsData) {
     namedThing: saints.namedThing,
     // v43: main.js says how far up the view is, and whether it looks.
     behold,
+    // v45: main.js says how far into his dance he is.
+    dance,
     // For main.js, every frame: the harps' notes and heaven's answers, and
     // (v37) whether a leaf of the tree is in his hand and how many he has
     // been given and has given.
@@ -182,6 +214,11 @@ export async function createHeaven(scene, saintsData) {
       sung.reedNotes = r.notes;
       sung.reedNote = r.note;
       sung.measured = r.rounds;
+      // v45: each time heaven has answered his dance; and whether a leaf of
+      // the tree is on its way down into his hand (he does not begin to
+      // dance then).
+      sung.danceAnswers = chorus.answers();
+      sung.leafComing = healing.busy() && !sung.leaf;
       return sung;
     },
     state() {
@@ -227,6 +264,12 @@ export async function createHeaven(scene, saintsData) {
         // `shown` how much of the gold is to be seen; and `air`, how far the
         // gold air has cleared for the view from on high (0..1).
         reed: { ...reed.state(), air: lifted },
+        // v45, dancing before the glory (2 Samuel 6:14): whether he is
+        // `dancing`, how far `out` of the multitude its lights have come to
+        // dance round him (0..1), how many `lights` are drawn, the dances
+        // `danced` here and `answers` heaven gave, the `center` he dances
+        // at, and how far the multitude `sway`s with him (0..1).
+        chorus: chorus.state(),
       };
     },
   };

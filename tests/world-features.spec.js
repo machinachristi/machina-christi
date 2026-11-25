@@ -1262,6 +1262,79 @@ test.describe('the garden\'s features', () => {
       return dist2d(s1.companion.pos, s0.companion.pos);
     }, { timeout: 15000 }).toBeGreaterThan(0.3);
   });
+
+  test('dancing before the glory: in heaven, tap him and he dances; a ring of the multitude\'s lights comes down to dance round him, fire kindles in the glass at every step, the multitude sways, and heaven answers when he bows (v45, 2 Samuel 6:14)', async ({ page }) => {
+    test.setTimeout(300000);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const box = await page.locator('iframe').boundingBox();
+    const tapHim = async () => {
+      const at = await frame.evaluate(() => window.__world.whereIsHe());
+      await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+
+    await enterHeaven(page);
+    let s = await getState(page);
+    expect(s.heaven.chorus).toMatchObject({ dancing: false, out: 0, lights: 0, danced: 0, answers: 0, sway: 0 });
+
+    // On the glass a little north of the ladder's head, facing the glory,
+    // with the camera settled in behind him: a tap on him sets him dancing
+    // (tapped again if the first touch was taken for the opening shot).
+    await frame.evaluate(() => window.__world.teleport(0, -16, 0));
+    await expect.poll(async () => (await getState(page)).camDist, { timeout: 60000 }).toBeLessThan(11.5);
+    await page.waitForTimeout(500);
+    await tapHim();
+    await page.waitForTimeout(800);
+    if (!(await getState(page)).dance.dancing) await tapHim();
+    await expect.poll(async () => (await getState(page)).dance.dancing, { timeout: 10000 }).toBe(true);
+    s = await getState(page);
+    expect(s.realm.now).toBe('heaven');
+    // The garden's petals stay in the garden.
+    expect(s.dance.petals).toBe(0);
+    await expect.poll(async () => { const c = (await getState(page)).caption; return c && c.name; }, { timeout: 10000 })
+      .toBe('Mekharker bekhol oz');
+
+    // The lights come down to dance round him, the multitude sways, the
+    // glass burns at his feet; then he bows, the lights go home, and heaven
+    // answers — all within the budget.
+    let most = { calls: 0, triangles: 0 };
+    let fullest = 0, swayed = 0, rings = 0, flare = 0;
+    await expect.poll(async () => {
+      const st = await getState(page);
+      most = { calls: Math.max(most.calls, st.render.calls), triangles: Math.max(most.triangles, st.render.triangles) };
+      const c = st.heaven.chorus;
+      fullest = Math.max(fullest, c.out);
+      swayed = Math.max(swayed, c.sway);
+      rings = Math.max(rings, st.heaven.song.rings || 0);
+      flare = Math.max(flare, st.heaven.song.flare || 0);
+      return c.answers === 1 && !c.dancing;
+    }, { timeout: 120000, intervals: [200] }).toBe(true);
+    expectInBudget({ render: most }, 'while he dances before the glory');
+    expect(fullest).toBeGreaterThan(0.9);
+    expect(swayed).toBeGreaterThan(0.5);
+    expect(rings).toBeGreaterThan(0);
+    s = await getState(page);
+    expect(s.heaven.chorus.danced).toBe(1);
+    expect(s.dance.leaps).toBe(1);
+    await expect.poll(async () => {
+      const st = await getState(page);
+      flare = Math.max(flare, st.heaven.song.flare || 0);
+      return st.heaven.chorus.lights === 0 && st.heaven.chorus.sway === 0;
+    }, { timeout: 60000, intervals: [200] }).toBe(true);
+    expect(flare).toBeGreaterThan(0.2);
+
+    // Danced again and let go part-way through (a tap on the glass away from
+    // him), the lights go home quietly, without another answer.
+    await tapHim();
+    await expect.poll(async () => (await getState(page)).heaven.chorus.dancing, { timeout: 10000 }).toBe(true);
+    await expect.poll(async () => (await getState(page)).heaven.chorus.out, { timeout: 30000 }).toBeGreaterThan(0.2);
+    const vp = page.viewportSize();
+    await page.mouse.click(vp.width / 2 + 60, vp.height - 40);
+    await expect.poll(async () => (await getState(page)).heaven.chorus.lights, { timeout: 60000 }).toBe(0);
+    s = await getState(page);
+    expect(s.heaven.chorus).toMatchObject({ dancing: false, danced: 2, answers: 1 });
+    expect(s.realm).toMatchObject({ now: 'heaven', passage: null, failed: false });
+  });
 });
 
 // AB#164: how the touches are read (the default since the owner tried it on

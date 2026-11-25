@@ -1,5 +1,5 @@
 {
-  "version": 44,
+  "version": 45,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -571,13 +571,28 @@
         { "text": "The tree answers him once each time he comes under it: he walks out from under its boughs again, and it will answer him the next time.", "source": null },
         { "text": "The motes are one draw call, drawn only while the ring is out; the ring on the ground, the fruit, the trees, the river and the lamb cost nothing more to draw. The garden's opening shot stays at 190 of the 200 allowed.", "source": null }
       ]
+    },
+    {
+      "version": 45,
+      "date": "2026-11-25",
+      "focus": "dancing before the glory",
+      "realm": "heaven",
+      "changes": [
+        { "text": "In heaven, tap him on the sea of glass and he dances before the glory with all his might, as he dances in the garden: skipping steps, two turns, a leap and a bow, to the timbrel and the harp. Its word is given: Mekharker bekhol oz, dancing with all his might.", "source": "2 Samuel 6:14" },
+        { "text": "A ring of the multitude's lights comes down to dance with him: one by one they leave their tiers round the glory and sweep down over the glass in long arcs, and dance round him in two rings, the inner turning against him and the outer with him, bobbing to the timbrel, and leaping when he leaps.", "source": "Psalm 87:7" },
+        { "text": "Every stroke of the timbrel kindles a ring of fire in the glass under his feet.", "source": "Revelation 15:2" },
+        { "text": "While he dances the whole multitude sways in time with him, side to side, each tier a moment behind the one nearer the glory.", "source": "2 Samuel 6:15" },
+        { "text": "When he bows, the lights go home up into the multitude and heaven answers him: the wave runs out through every tier, the glory brightens and the alleluia sounds (or a chime, if one has only just been sung). A dance cut short by a tap or a drag sends the lights home quietly, and if he dances again somewhere else before they are home, the rings glide across to him.", "source": "Revelation 19:6-7" },
+        { "text": "While he dances in heaven he does not lift his hands to pray, and no leaf of the tree comes down to him; with a leaf in his hand or on its way down to it, or while he is shown the city from on high, he does not dance. The garden's petals stay in the garden.", "source": null },
+        { "text": "The dancing lights are one draw call, drawn only while any of them is out of the multitude; heaven's arrival stays at 30 draws of the 200 allowed, and the garden is untouched.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
-    "Dancing before the glory: in heaven, tap him on the sea of glass and he dances before the light with all his might, and the multitude's lights sway with him (2 Samuel 6:14)",
     "A leaf carried home: take a leaf of heaven's Tree of Life down the ladder and lay it at the foot of Eden's own, and the garden's praise goes out from it at once, brighter than ever (Revelation 22:2; Psalm 150:6)",
-    "Praise him, all ye stars of light: under the Tree of Life by night, the ring of the garden's praise climbs on up into the sky as it goes out, and each star it passes rings and brightens (Psalm 148:3)"
+    "Praise him, all ye stars of light: under the Tree of Life by night, the ring of the garden's praise climbs on up into the sky as it goes out, and each star it passes rings and brightens (Psalm 148:3)",
+    "With the saints: dancing near the ranks in heaven, the saints nearest him turn toward him and their lights brighten in time with the timbrel (Psalm 149:5)"
   ]
 }

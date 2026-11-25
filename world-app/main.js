@@ -363,6 +363,8 @@ let heardStars = 0;
 let heardBeats = 0;
 let heardTune = 0;
 let heardLeaps = 0;
+// v45: heaven's alleluia when his dance before the glory is done.
+let heardDanceAnswers = 0;
 // v43: the harp as the golden reed passes each gate, and the city measured.
 let heardReed = 0;
 let heardMeasured = 0;
@@ -392,13 +394,14 @@ let forceSit = false;
 // a tap on the open sky (which finds no ground to walk to) lays him down.
 // v38: a tap on him sets him dancing (while he dances, another tap on him
 // lets him finish); a tap anywhere else, or any drag, stops the dance.
+// v45: in heaven too, where he dances before the glory.
 function readIntent(dt, kit) {
   const tap = controls.takeTap();
   if (tap) {
     rig.skipIntro();
     if (behold.on) behold.end();
     else if (consider.lying) consider.rise();
-    else if (kit.name === 'eden' && realm.idle && dance.onHim(tap.x, tap.y) && (dance.dancing || mayDance())) {
+    else if (realm.idle && dance.onHim(tap.x, tap.y) && (dance.dancing || mayDance())) {
       if (!dance.dancing) beginDance();
     } else {
       dance.stop();
@@ -485,6 +488,13 @@ function beginBeholding() {
 // asked of the ground itself (as character.js does each frame), so a jump
 // into the river a moment ago already counts.
 function mayDance() {
+  // v45: in heaven, on the sea of glass, while he is not being shown the
+  // city from on high, and no leaf of the tree is in his hand or on its way
+  // down into it.
+  if (realm.now === 'heaven') {
+    const sung = realm.song();
+    return realm.idle && !behold.on && !(sung && (sung.leaf || sung.leafComing));
+  }
   const p = character.group.position;
   const inWater = garden.heightAt(p.x, p.z) < -0.6 && riverEdgeDist(p.x, p.z) < 0.01;
   return realm.idle && realm.now === 'eden' && !consider.lying && character.lie === 0
@@ -494,8 +504,10 @@ function mayDance() {
 // He dances where he stands: any walk he was on is let go, and if he was
 // sitting by the water he gets up for it.
 function beginDance() {
-  // She joins in if she is near, and out of the water.
-  if (!mayDance() || !dance.start(companion.group.position, !companion.wading)) return false;
+  // She joins in if she is near, and out of the water. In heaven (v45) he
+  // dances alone, and the petals are the garden's: heaven has its own lights.
+  const inEden = realm.now === 'eden';
+  if (!mayDance() || !dance.start(inEden ? companion.group.position : null, inEden && !companion.wading, inEden)) return false;
   realm.kit().wayfinding.cancel();
   forceSit = false;
   return true;
@@ -581,8 +593,11 @@ function frame() {
     character.setCarrying(false);
     character.setHolding(null);
     character.setCradling(false);
-    dance.stop();
+    // v45: he may dance on the sea of glass; on the ladder he may not.
+    if (!realm.idle) dance.stop();
     dance.update(dt, 0);
+    danceSounds();
+    realm.dance(dance.dancing ? dance.t : -1, dance.dir, dance.beats, dance.bows);
     ambience.update(dt, 0, character.group.position, 0, 0, 0, 'heaven');
     heavenSong();
   }
@@ -697,6 +712,30 @@ function heavenSong() {
     heardAnswers = song.answers;
     ambience.alleluia();
   }
+  // v45: and when his dance before the glory is done, heaven's alleluia —
+  // or, if one has only just been sung (it never sounds over itself), a chime.
+  if (song.danceAnswers !== heardDanceAnswers) {
+    heardDanceAnswers = song.danceAnswers;
+    if (!ambience.alleluia()) ambience.chime();
+  }
+}
+
+// v38 (Psalm 149:3): the dance keeps its own time; the timbrel sounds each
+// step, the harp plays its tune, and the phone gives a little leap too —
+// in the garden, and (v45) in heaven.
+function danceSounds() {
+  if (dance.beats !== heardBeats) {
+    heardBeats = dance.beats;
+    ambience.timbrel(dance.accent);
+  }
+  if (dance.notes !== heardTune) {
+    heardTune = dance.notes;
+    ambience.harp(dance.note);
+  }
+  if (dance.leaps !== heardLeaps) {
+    heardLeaps = dance.leaps;
+    try { if (navigator.vibrate) navigator.vibrate(18); } catch (_) { /* not every phone */ }
+  }
 }
 
 // Everything the garden does in a frame while he is in it.
@@ -717,21 +756,9 @@ function edenFrame(dt) {
   // tree he stands under — if they are empty.
   character.setPraying(garden.praising && !garden.carrying && !garden.gathering && !garden.cradling);
   praiseSong();
-  // v38 (Psalm 149:3): the dance keeps its own time; the timbrel sounds each
-  // step, the harp plays its tune, and the phone gives a little leap too.
+  // v38: the dance keeps its own time, with its sounds (danceSounds).
   dance.update(dt, hour.night);
-  if (dance.beats !== heardBeats) {
-    heardBeats = dance.beats;
-    ambience.timbrel(dance.accent);
-  }
-  if (dance.notes !== heardTune) {
-    heardTune = dance.notes;
-    ambience.harp(dance.note);
-  }
-  if (dance.leaps !== heardLeaps) {
-    heardLeaps = dance.leaps;
-    try { if (navigator.vibrate) navigator.vibrate(18); } catch (_) { /* not every phone */ }
-  }
+  danceSounds();
   // Water taken up at the river is carried in his cupped hands (v27).
   character.setCarrying(garden.carrying);
   // …and a fruit given him under the tree, until it is eaten (v30).
