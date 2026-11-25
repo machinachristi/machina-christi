@@ -514,7 +514,7 @@
   </a>
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
-    <p class="tagline">A little place to pray, to learn, to wander, and to gather</p>
+    <p class="tagline">A little place to pray, to learn, and to wander</p>
     <div class="rule" aria-hidden="true"></div>
     <!-- The Church's season, filled in by assets/season.js; stays hidden if
          the season can't be fetched. -->
@@ -523,24 +523,11 @@
 
   <nav class="gallery" aria-label="The wings of the house">
     <div class="strip">
-      <!-- Show home X6: one gate per wing of the house, never more than five.
-           A wing with one room opens that room directly (Learn: Logos;
-           Wander: Eden); the others open a wing page listing their rooms.
-           Wander keeps the portal--eden class, so the door still opens on it. -->
-      <a class="portal portal--logos" href="logos.html" aria-label="Learn: the schoolroom, learning Thai in Logos">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- ก, the first letter: "in the beginning was the Word" -->
-            <path d="M15 51 V28 C15 19.5 19.5 15 25 15 C30.5 15 34 19.5 34 28 V51" />
-            <path d="M15 27.5 L11.5 24.5" />
-            <path d="M10 56 H38" />
-          </svg>
-        </span>
-        <span class="portal__title">Learn</span>
-        <span class="portal__desc">the schoolroom</span>
-      </a>
-
+      <!-- Show home, the owner's choice (25 Nov): three gates, Pray, Wander and
+           Build. Pray opens a page with Ordo and the Thai prayers; Wander opens
+           Eden, where Logos would be found like Camino; Build opens the
+           workshop. Gathering grows inside each gate later. Wander keeps the
+           portal--eden class, so the door still opens on it. -->
       <a class="portal portal--pray" href="/house/pray.html" aria-label="Pray: the chapel, the Church's day and her prayers">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
@@ -573,22 +560,6 @@
         </span>
         <span class="portal__title">Wander</span>
         <span class="portal__desc">the garden</span>
-      </a>
-
-      <a class="portal portal--gather portal--building" href="/house/gather.html" aria-label="Gather: the hall, being built">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- a bell, which calls people together -->
-            <circle cx="24" cy="12.5" r="2.4" />
-            <path d="M24 15 V18.5" />
-            <path d="M14.5 44 C15 32 17 18.5 24 18.5 C31 18.5 33 32 33.5 44" />
-            <path d="M11 44 H37" />
-            <circle cx="24" cy="49.5" r="2.6" />
-          </svg>
-        </span>
-        <span class="portal__title">Gather</span>
-        <span class="portal__desc">the hall, being built</span>
       </a>
 
       <a class="portal portal--workshop" href="/house/build.html" aria-label="Build: the workshop, how it's built">

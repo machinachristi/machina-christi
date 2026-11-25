@@ -106,30 +106,28 @@
   // about and search. The wing you are in is lit. (Not on the front door,
   // which is the hallway's own hub, nor on full-screen rooms without a
   // .wrap column, which keep their own way out.)
+  // The owner's choice (25 Nov): three wings. Logos belongs to Wander now,
+  // found in the garden like Camino; Gather's rooms are set aside for now,
+  // so they light no wing.
   const WINGS = [
     ['Pray', '/house/pray.html'],
-    ['Learn', '/logos.html'],
     ['Wander', '/world.html#enter'],
-    ['Gather', '/house/gather.html'],
     ['Build', '/house/build.html'],
   ];
   const WING_OF = [
     [/^\/(house\/pray|ordo|pray|prayer|about-ordo|about-pray)\.html$|^\/pray\//, 'Pray'],
-    [/^\/(logos|about-logos|house\/hornbook)\.html$/, 'Learn'],
-    [/^\/(about-eden|about-camino)\.html$/, 'Wander'],
-    [/^\/house\/(gather|chiang-mai|candles|angelus|seasons|invitations|passport)\.html$/, 'Gather'],
+    [/^\/(about-eden|about-camino|logos|about-logos|house\/hornbook)\.html$/, 'Wander'],
     [/^\/(house\/(build|take-a-section|builders|rule|new)|workshop|about-workshop)\.html$/, 'Build'],
   ];
   const wingHere = (WING_OF.find(([re]) => re.test(PAGE)) || [])[1];
   if (wrap && !DOOR) {
     const hall = make('footer', { class: 'hall', id: 'hall' });
     const nav = make('nav', { class: 'hall__wings', 'aria-label': 'The wings of the house' });
-    WINGS.forEach(([name, href], i) => {
+    WINGS.forEach(([name, href]) => {
       const a = make('a', { href });
       a.textContent = name;
       if (name === wingHere) a.setAttribute('aria-current', href === PAGE ? 'page' : 'true');
       nav.append(a);
-      if (i === 2) nav.append(make('span', { class: 'hall__br', 'aria-hidden': 'true' }));
     });
     const more = make('p', { class: 'hall__more' },
       '<a href="/index.html">home</a> &middot; <a href="/about.html">about</a> &middot; <a href="/search.html">search</a>');

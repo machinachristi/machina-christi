@@ -11,6 +11,9 @@
     .stage { font-size: 15px; font-style: italic; color: rgba(var(--amber), 0.95); }
     .group .notice { margin-top: 0.4em; }
     .card .tag { color: rgba(var(--amber), 0.95); }
+    .chosen { margin: 0 0 1em; padding: 12px 16px; border: 1px solid rgba(222, 190, 112, 0.6); border-radius: 12px; background: rgba(201, 162, 39, 0.08); }
+    .chosen p { margin: 0; color: var(--gold-soft); }
+    .chosen b { font-weight: normal; color: var(--gold); }
     /* A card that leads to several rooms: a row of thumb-sized links. */
     .card p.go { margin: 0.5em 0 -6px -8px; font-style: normal; display: flex; flex-wrap: wrap; }
     .card p.go a {
@@ -30,6 +33,7 @@
 
     <p>A builder furnishes one house completely so you can walk through it. This is that house for Machina Christi. Walk through on your phone, then mark each idea <em>keep</em>, <em>change</em> or <em>drop</em> in the pull request.</p>
     <p>Anything that would need a server is pretend and says so: meetings and Mass times are marked <span class="example">example, not real</span>, candles stay on this phone, and dashed boxes like <span class="blank">this</span> mark where a contact or a name would go.</p>
+    <div class="chosen"><p><b>Your choice, 25 November:</b> three gates, Pray, Wander and Build, and a site that is simply useful, fun and organized. Pray leads to Ordo and the Thai prayers. Logos is found in the garden, like Camino. Gather is set aside for now: gathering can grow inside each gate later.</p></div>
     <p class="stage" id="stage">All four stages are built. Mark each idea keep, change or drop in <a class="house-link house-go" href="https://github.com/machinachristi/machina-christi/pull/144">the pull request&rsquo;s checklist &rsaquo;</a></p>
 
     <section class="group" id="switches">
@@ -69,7 +73,7 @@
     <section class="group" id="house">
       <h2 class="sect">The house</h2>
       <ul class="cards">
-        <li><a class="card" href="/index.html"><span class="tag">X6</span><h2>The front door: five gates</h2><p>Learn, Pray, Wander, Gather, Build: one gate per wing, never more than five. About becomes the small book in the top corner, opposite Search.</p></a></li>
+        <li><a class="card" href="/index.html"><span class="tag">X6, changed</span><h2>The front door: three gates</h2><p>Pray, Wander, Build, as you chose on 25 November (it began with five). About is the small book in the top corner, opposite Search.</p></a></li>
         <li><div class="card"><span class="tag">X7</span><h2>Wing pages</h2><p>Pray lists its rooms: Ordo with today&rsquo;s feast, Prayers, The Mass, and the Rosary and the Stations still being built. Gather and Build have pages too (filled in at stages 3 and 4). Learn opens Logos directly; Wander opens Eden.</p>
           <p class="go"><a href="/house/pray.html">Pray</a><a href="/house/gather.html">Gather</a><a href="/house/build.html">Build</a></p></div></li>
         <li><a class="card" href="/pray.html#hall"><span class="tag">X8</span><h2>The hallway</h2><p>The same footer at the foot of every room: the five wings (the one you&rsquo;re in is lit), then home, about and search. Scroll to the bottom of any page.</p></a></li>
@@ -86,6 +90,7 @@
 
     <section class="group" id="learn">
       <h2 class="sect">Learn</h2>
+      <p class="notice">Off the front door since 25 November: Logos would be found in the garden, like Camino. In the show home Eden is left untouched, so for now Logos is reached from the prayers&rsquo; &ldquo;its letters&rdquo; cards and from About.</p>
       <ul class="cards">
         <li><a class="card" href="/house/hornbook.html"><span class="tag">X14</span><h2>Logos as a hornbook</h2><p>A sheet on a wooden paddle, as children learned to read for three centuries: a cross, a sample row of letters (tap to hear them), the first lines of three prayers, and the Our Father to end. Only Thai already on the site. Linked from the top of Logos.</p></a></li>
         <!-- learn -->
@@ -94,6 +99,7 @@
 
     <section class="group" id="gather">
       <h2 class="sect">Gather</h2>
+      <p class="notice">Set aside on 25 November: no Gather gate. These rooms stay here to look at; any of them could come back later inside a gate.</p>
       <ul class="cards">
         <li><a class="card" href="/house/gather.html"><span class="tag">X15</span><h2>The Gather wing</h2><p>The hall, where the house meets its neighbours (Matthew 18:20), in Nehemiah&rsquo;s order: pray together, meet in person, then build. Its rooms turn from dashed to solid as each is built.</p></a></li>
         <li><a class="card" href="/house/chiang-mai.html"><span class="tag">X16</span><h2>Gather: Chiang Mai</h2><p>Mass, recovery meetings, the Rosary, Adoration and a way to serve, each with &ldquo;last confirmed&rdquo; (one is flagged as three months old), the next one today, and a filter. Every entry is an example, and the page never counts visits.</p></a></li>
