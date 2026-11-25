@@ -343,6 +343,12 @@ export function createRealm({ camera, canvas, character, rig, eden, params }) {
     behold(k, settled) {
       if (heaven && now === 'heaven') guarded('beholding', () => heaven.behold(k, settled), null);
     },
+    // v45: how far into his dance he is (seconds, or −1), which way he turns,
+    // the timbrel's strokes so far and the dances danced through to the bow,
+    // told to heaven every frame while he is in it.
+    dance(t, dir, beats, bows) {
+      if (heaven && now === 'heaven') guarded('dance', () => heaven.dance(t, dir, beats, bows), null);
+    },
     // v33: the new song, read by main.js every frame while he is in heaven —
     // the harps' notes under his steps and the multitude's answers; null in
     // Eden, or once anything in heaven has failed.

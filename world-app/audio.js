@@ -726,9 +726,11 @@ export function createAmbience() {
     { chord: [0, 7, 12, 16, 24], f1: 780, f2: 1150, len: 2.6 },    // a  (ah), held
   ];
   let lastAlleluia = -1e6;
+  // Returns whether it sounded (v45): it never sounds over itself, so for
+  // 8 s after one it is quiet.
   function alleluia() {
-    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return;
-    if (ctx.currentTime - lastAlleluia < 8) return;
+    if (!ctx || ctx.state !== 'running' || muted || !master || !refs) return false;
+    if (ctx.currentTime - lastAlleluia < 8) return false;
     lastAlleluia = ctx.currentTime;
     const t0 = ctx.currentTime + 0.05;
     let total = 0;
@@ -827,6 +829,7 @@ export function createAmbience() {
     waters.start(t0, Math.random() * 1.5);
     waters.stop(end);
     vib.onended = () => { for (const n of nodes) n.disconnect(); };
+    return true;
   }
 
   // "Let every thing that hath breath praise the LORD" (Psalm 150:6): as the

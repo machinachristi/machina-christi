@@ -18,6 +18,10 @@
 // … saying, Alleluia" (Revelation 19:6): a wave of light rolls out from the
 // glory through every tier of the multitude, each light lifting and swelling
 // as it passes, and the glory itself brightens and slowly settles again.
+//
+// v45: and while he dances before the glory (chorus.js), the whole multitude
+// sways in time with him, side to side, each tier a moment behind the one
+// nearer the glory (2 Samuel 6:14-15).
 
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
@@ -121,6 +125,7 @@ export function createGlory(scene) {
     uHalfH: { value: 400 },
     uWaveAt: { value: -1e6 },
     uGlory: { value: new THREE.Vector2(GLORY.x, GLORY.z) },
+    uSway: { value: 0 },
   };
   const multitude = new THREE.Points(geo, new THREE.ShaderMaterial({
     uniforms: mu,
@@ -132,6 +137,7 @@ export function createGlory(scene) {
       uniform float uHalfH;
       uniform float uWaveAt;
       uniform vec2 uGlory;
+      uniform float uSway;
       varying vec3 vColor;
       varying float vBreath;
       void main() {
@@ -146,6 +152,15 @@ export function createGlory(scene) {
           after = smoothstep(0.0, 1.2, since) * (1.0 - smoothstep(3.5, 9.0, since));
         }
         vec3 p = position + vec3(0.0, wave * 0.9, 0.0);
+        // v45: swaying with him while he dances, one swing to every two of
+        // his skipping steps, each tier a little behind the one before it.
+        if (uSway > 0.0) {
+          vec2 off = position.xz - uGlory;
+          float ph = uTime * ${(Math.PI * 1.9).toFixed(4)} - length(off) * 0.16 + aSeed * 0.6;
+          vec2 side = normalize(vec2(off.y, -off.x) + 1e-4);
+          p.xz += side * sin(ph) * 0.55 * uSway;
+          p.y += abs(cos(ph)) * 0.35 * uSway;
+        }
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         vBreath = (0.72 + 0.28 * sin(uTime * (0.5 + aSeed * 0.9) + aSeed * 40.0)) * (1.0 + 0.5 * after) + 1.6 * wave;
@@ -173,6 +188,7 @@ export function createGlory(scene) {
   scene.add(multitude);
 
   let answeredAt = -1e6;
+  let sway = 0;
   return {
     count: seeds.length,
     update(time) {
@@ -191,5 +207,13 @@ export function createGlory(scene) {
     },
     // How brightly the glory answers now, 0..1.
     flare: () => gu.uFlare.value,
+    // v45: sway with him (1) or be still (0), easing there over a second.
+    sway(target, dt) {
+      const k = 1 - Math.exp(-2.2 * Math.max(0, dt || 0));
+      sway += ((target ? 1 : 0) - sway) * k;
+      if (!target && sway < 0.002) sway = 0;
+      mu.uSway.value = sway;
+    },
+    swaying: () => Math.round(sway * 1000) / 1000,
   };
 }

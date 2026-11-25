@@ -168,6 +168,7 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   let strokeAt = 0;      // the next stroke of this dance…
   let noteAt = 0;        // …and the next note
   let leaps = 0;
+  let bows = 0;          // dances danced right through to the bow (v45)
   let leapt = false;     // whether this dance's leap has been taken
   let captionLeft = 0;
   let companionDances = false;
@@ -228,7 +229,9 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
 
   // Begin the dance where he stands (main.js decides whether he may).
   // companionFree: whether she is out of the water, free to dance too.
-  function start(companionPos, companionFree = true) {
+  // petals: whether the meadow's petals are flung up (v45: not in heaven,
+  // which is another scene and has its own lights for him).
+  function start(companionPos, companionFree = true, petals = true) {
     if (t >= 0) return false;
     t = 0;
     dir = times % 2 === 0 ? 1 : -1;
@@ -238,7 +241,7 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
     leapt = false;
     captionLeft = CAPTION_FOR;
     const p = character.group.position;
-    fling(p);
+    if (petals) fling(p);
     companionDances = !!companionPos && companionFree
       && Math.hypot(companionPos.x - p.x, companionPos.z - p.z) < COMPANION_NEAR;
     companionT = -COMPANION_LAG;
@@ -272,6 +275,7 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
       if (t >= DANCE_LEN) {
         // Bowed: the dance is done. She finishes hers a moment after.
         t = -1;
+        bows++;
         character.setDance(null);
       } else {
         character.setDance(t, dir);
@@ -316,11 +320,13 @@ export function createDance({ scene, camera, canvas, character, seed = 20260865 
   return {
     onHim, start, stop, update, companion, caption, state,
     get dancing() { return t >= 0; },
+    get t() { return Math.max(0, t); },
     get dir() { return dir; },
     get note() { return note; },
     get beats() { return beats; },
     get accent() { return accent; },
     get notes() { return notes; },
     get leaps() { return leaps; },
+    get bows() { return bows; },
   };
 }
