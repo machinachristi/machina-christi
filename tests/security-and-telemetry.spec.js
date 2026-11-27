@@ -41,6 +41,7 @@ const PAGES = [
   '/about-pray.html',
   '/about-logos.html',
   '/about-workshop.html',
+  '/build.html',
   '/game.html',
   '/logos.html',
   '/ordo.html',
