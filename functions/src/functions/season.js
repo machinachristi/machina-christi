@@ -4,6 +4,7 @@ const { app } = require('@azure/functions');
 const { seasonFor } = require('../lib/season');
 const { saintFor } = require('../lib/snapshot');
 const { readSnapshot } = require('../lib/snapshot-store');
+const { DATA_DIR } = require('../lib/data-dir');
 
 // GET /api/season?date=YYYY-MM-DD: the liturgical season, the day's
 // celebration (when the Ordo calendar covers that year) and the day's colour.
@@ -16,10 +17,10 @@ const { readSnapshot } = require('../lib/snapshot-store');
 // (publish-saints.js), never from the database itself. If the snapshot can't
 // be read, the site's own bios (ordo/saints.json, bundled) answer instead.
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
 const calendars = new Map();
 
-// The Ordo page's own calendar files, copied in by scripts/copy-calendar.js.
+// The Ordo page's own calendar files, copied in by scripts/copy-calendar.js
+// (see lib/data-dir.js for where they're read from).
 // Read once per year and kept in memory; a missing year is not an error,
 // it just means no celebration (the season is still worked out).
 function calendarFor(year) {

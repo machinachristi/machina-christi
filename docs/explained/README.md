@@ -30,6 +30,7 @@ afterthought: every phase of work adds to them.
   - [Eden's first seconds — a full shopping list, no double asking, and the title card that stays](eden-first-seconds.md)
   - [A ruler for Eden's opening — how long the garden takes, step by step](eden-timing-readout.md)
   - [Three gates — Pray, Wander, Build: moving the rooms without losing a door](three-gates.md) (built in steps; grows with each one)
+  - [The photocopy that wasn't there — why five API tests seemed to blame Node 26](api-tests-fresh-checkout.md)
 
 How to read them: you don't need to read code. Where a file is named, it's only
 so you can find it later; the explanation never depends on it.

@@ -8,8 +8,7 @@
 // passing of time and next year's calendar need no reindex.
 const fs = require('node:fs');
 const path = require('node:path');
-
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const { DATA_DIR } = require('./data-dir');
 
 // { "<celebration name>": ["2026-01-21", "2027-01-21", …] } from calendar
 // files shaped { "YYYY-MM-DD": { name, … } }.

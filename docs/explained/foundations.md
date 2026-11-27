@@ -973,6 +973,35 @@ hand ("now it's 4.2 seconds in"), so anything time-based can be checked at exact
 moments without waiting. *Here:* the Pray tests swap the audio player for one
 whose clock the test controls.
 
+**Setup step (a "pre" script).** A chore that has to happen before a job can
+start, written down so it's never forgotten, like a dishwasher that always
+rinses before it washes. npm, the tool that runs the API's recipes, has a
+rule: a recipe called `pretest` runs by itself just before the one called
+`test`. The catch is that it only happens if you start the job through that
+recipe; start the dishwasher by its back panel and the rinse is skipped.
+*Here:* `npm test` first runs `npm run copy-data`, which copies the Ordo
+calendars into the API's folder. Running `node --test` by hand skips that.
+
+**Made, not kept (generated files).** Some files in a project are written by
+hand and saved in its history; others are *made* from those by a script, every
+time, and deliberately left out of the history (listed in `.gitignore`), like
+photocopies made fresh from an original instead of filed beside it. Only the
+original can then drift out of date, never the copy. But a brand-new folder
+(a fresh worktree) has no copies until the script runs.
+*Here:* the API's `functions/src/data/` is a copy of `ordo/`'s calendar files.
+It ships with the live API; a fresh checkout doesn't have it yet, so the API
+then reads `ordo/` itself (`functions/src/lib/data-dir.js`).
+
+**Change one thing at a time (finding the real cause).** When something
+breaks, the first difference you notice isn't always the reason. Two things
+that change together can look like cause and effect: the rooster crows and the
+sun rises. The way to tell is to change just one thing and watch whether the
+breakage follows it, like swapping one bulb at a time to find the dead one in
+a string of lights.
+*Here:* five API tests failed on a Mac with a newer Node (26) than the test
+robot's (24), so Node looked guilty. Keeping Node 26 and changing only whether
+the calendar copy was there showed the copy was the cause (AB#175).
+
 **Blue-green deployment.** Replacing a live system by building the new one
 next to the old, switching visitors over, and only then removing the old one,
 like moving house by living in both for a day. There's never a moment without
