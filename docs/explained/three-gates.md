@@ -253,7 +253,48 @@ Search keeps its own list of pages in `functions/`, the API's folder, which
 this plan never touches. So, for now, the search page's card for the homepage
 still names the six old rooms, and the Build page isn't in search. Fixing both
 means redeploying the API and rebuilding the search index, a separate change
-for another day, with the owner's OK.
+for another day, with the owner's OK. (The owner gave it the same day: see
+"Search learns the new door" below.)
+
+## After step 2: search learns the new door (AB#174)
+
+### What changed
+
+Search keeps its own list of the site's pages, separate from the pages
+themselves: `functions/src/lib/site-pages.js`, in the **API**'s folder. Each
+entry becomes a card in the **search index**, so typing "garden" finds Eden.
+Two entries were out of date after the door changed:
+
+- **The homepage's card** still named the six old rooms. It now says the site
+  is "a gathering place of experiences, behind three gates: Pray (Ordo and the
+  prayers), Wander (Eden, the garden) and Build (the Workshop and projects)".
+- **The Build page had no card,** so search couldn't find it. It has one now,
+  with the words people might type: "build", "projects", "workshop", "Camino",
+  "Logos".
+
+### The story, like you're five
+
+A library has books on shelves and, separately, a card catalogue that says
+what's on them. Moving the books doesn't change the catalogue. Someone has to
+go and rewrite the cards. Search's list is that catalogue. When the front door
+changed, the pages were right at once, but the catalogue still described the
+old door until this change rewrote two of its cards.
+
+### How it reaches the live site
+
+Changes to the API's folder take a different road from page changes. Merging
+runs the **Azure platform** workflow: it checks the API's own tests, publishes
+the new API, and then posts a "please rebuild" message for the API, which
+re-makes every search card from the list. The weekly jobs also rebuild the
+cards every Sunday, so even a missed message is put right within a week.
+
+### What it teaches about software
+
+- **Two copies of the truth drift apart.** The pages describe themselves, and
+  search keeps its own description. Change one and the other goes stale unless
+  something checks them together. Here, an API test checks that every search
+  card points at a real page in the sitemap; nothing yet checks the words
+  match, so a person still has to.
 
 ### How the owner checks it, on a phone
 

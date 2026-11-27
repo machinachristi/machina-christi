@@ -6,8 +6,9 @@
 const SITE_PAGES = [
   {
     name: 'home', url: '/', title: 'Machina Christi',
-    description: 'A gathering place of experiences: the Workshop, Camino, Eden, Ordo, Pray and Logos.',
-    keywords: ['home', 'start'],
+    // Since the three-gates change (AB#172): Pray, Wander and Build.
+    description: 'A gathering place of experiences, behind three gates: Pray (Ordo and the prayers), Wander (Eden, the garden) and Build (the Workshop and projects).',
+    keywords: ['home', 'start', 'gates'],
   },
   {
     name: 'camino', url: '/game.html', title: 'Camino: the runner',
@@ -38,6 +39,12 @@ const SITE_PAGES = [
     name: 'workshop', url: '/workshop.html', title: 'The Workshop',
     description: 'Every tool that builds and keeps Machina Christi, set as columns of light in a square after St Peter\'s.',
     keywords: ['how it is built', 'technology', 'tools', 'azure', 'code'],
+  },
+  {
+    // The Build gate's page (AB#172): the Workshop, and the side projects.
+    name: 'build', url: '/build.html', title: 'Build: the Workshop and projects',
+    description: 'The Workshop, how Machina Christi is built, and the projects made along the way: Camino, the pilgrim road, and Logos, learning Thai letter by letter.',
+    keywords: ['build', 'projects', 'side projects', 'workshop', 'camino', 'logos', 'how it is built'],
   },
   {
     name: 'about', url: '/about.html', title: 'About Machina Christi',
