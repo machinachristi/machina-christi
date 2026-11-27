@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { feastDates, bundledFeastDates, ordoDayFor } = require('../src/lib/ordo-dates');
+const { DATA_DIR } = require('../src/lib/data-dir');
 
 const dates = feastDates([
   { '2026-10-04': { name: 'Twenty-seventh Sunday in Ordinary Time' }, '2026-01-21': { name: 'Saint Agnes, Virgin and Martyr' } },
@@ -23,14 +24,15 @@ test('when every date has passed, the latest one; an unknown feast, nothing', ()
   assert.equal(ordoDayFor('Saint Nobody', '2026-10-17', dates), null);
 });
 
-// With the real calendars the API ships (npm test copies them in first): every
-// saint the site has a bio for opens an Ordo day that actually shows them.
+// With the real calendars the API ships (npm test copies them in first; plain
+// `node --test` on a fresh checkout reads ordo/ itself, see lib/data-dir.js):
+// every saint the site has a bio for opens an Ordo day that actually shows them.
 test('every saint with a bio opens an Ordo day whose celebration is that feast', () => {
   const bundled = bundledFeastDates();
   const calendars = new Map();
   const dayOf = date => {
     const year = date.slice(0, 4);
-    if (!calendars.has(year)) calendars.set(year, JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'src', 'data', `calendar-${year}.json`), 'utf8')));
+    if (!calendars.has(year)) calendars.set(year, JSON.parse(fs.readFileSync(path.join(DATA_DIR, `calendar-${year}.json`), 'utf8')));
     return calendars.get(year)[date];
   };
   const saints = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'ordo', 'saints.json'), 'utf8')));
