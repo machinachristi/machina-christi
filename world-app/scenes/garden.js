@@ -4,20 +4,20 @@
 
 import * as THREE from 'three';
 import { createSky, HORIZON } from './sky.js';
-import { createTerrain, heightAt, riverZ, GARDEN_RADIUS, CROSSING } from './terrain.js';
+import { createTerrain, heightAt, riverZ, riverEdgeDist, GARDEN_RADIUS, CROSSING } from './terrain.js';
 import { createWater } from './water.js';
 import { createVegetation, TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './vegetation.js';
 import { createCreatures } from './creatures.js';
 import { createStones } from './stones.js';
 import { createMist } from './mist.js';
 import { createReeds } from './reeds.js';
-import { createGate } from './gate.js';
+import { createGate, GATE_POS } from './gate.js';
 import { createPresence } from './presence.js';
 import { createReflections } from './reflections.js';
 import { createWake } from './wake.js';
 import { createPetals } from './petals.js';
 import { createDew } from './dew.js';
-import { createSpring } from './spring.js';
+import { createSpring, SPRING_POS } from './spring.js';
 import { createFruit } from './fruit.js';
 import { createFootprints } from './footprints.js';
 import { createApron } from './apron.js';
@@ -86,10 +86,11 @@ import { createLiving } from './living.js';
 import { createGather } from './gather.js';
 import { createFlock } from './flock.js';
 import { createHost } from './host.js';
-import { createLadder } from './ladder.js';
+import { createLadder, LADDER_FOOT } from './ladder.js';
 import { createPraise } from './praise.js';
 import { windOf } from './wind.js';
 import { breathe } from '../util.js';
+import { gatherTroupes } from '../troupe.js';
 
 // Async, with a breath between the heavy build steps: the iframe shares the
 // parent page's main thread, so yielding here is what lets the veil's
@@ -256,7 +257,12 @@ export async function createGarden(scene, rng) {
     ...mustard.spots, ...manna.spots, ...hind.spots, ...acacia.spots,
     ...flags.spots, ...doves.spots,
   ];
+  const creaturesFrom = scene.children.length;
   const creatures = createCreatures(scene, rng, namables);
+  // v46: the creatures' many moving parts — bodies, heads, legs, wings —
+  // drawn by a few troupes instead of one draw call apiece (troupe.js).
+  // They still move exactly as before; only the drawing is gathered.
+  const troupe = gatherTroupes(scene, scene.children.slice(creaturesFrom));
   // v27: the fry swarming in the shallows of the slow reach (Genesis 1:20),
   // and the first of Adam's own work — the dry patches of ground he waters
   // from the river (Genesis 2:5-6, 2:15), laid clear of every tree and every
@@ -514,8 +520,63 @@ export async function createGarden(scene, rng) {
     return true;
   }
 
+  // v46 (Ezekiel 17:3): whether a great eagle could come down to the grass
+  // here — dry, nearly level, inside the garden, and a wingspan clear of
+  // every tree, every rock, every named thing and every landmark. Asked only
+  // when she is about to come (wings.js), never per frame.
+  // Each is held by its own place (`p`), read afresh each time it is asked:
+  // the ostrich, the hind and her fawn, the foxes, the doves go about. Of
+  // the named things, many are trees and bushes and some are big beasts;
+  // the small ones (a lily, an ant, a coney) she will not land on, but may
+  // fly low over.
+  const LOW_KINDS = new Set(['lily', 'hyssop', 'mandrake', 'spice', 'ant', 'honey', 'manna', 'sheaf',
+    'eggs', 'spring', 'deep', 'flag', 'coney', 'fox', 'dove', 'sparrow', 'swallow', 'spider', 'stump', 'rock']);
+  const tall = [
+    ...vegetation.treeSpots.map(t => ({ p: t, r: 3.6 })),
+    ...cedars.spots.map(c => ({ p: c, r: 3.6 })),
+    ...namables.map((n) => {
+      const p = n.group ? n.group.position : n.pos;
+      const low = LOW_KINDS.has(n.kind);
+      return p ? { p, r: low ? 2.4 : 3.6, low } : null;
+    }).filter(Boolean),
+    ...solids.map(s => ({ p: s, r: s.r + 2.5 })),
+    { p: TREE_OF_LIFE_POS, r: 8 },
+    { p: TREE_OF_KNOWLEDGE_POS, r: 8 },
+    { p: LADDER_FOOT, r: 8 },
+    { p: GATE_POS, r: 8 },
+    { p: SPRING_POS, r: 6 },
+  ];
+  function openGround(x, z) {
+    if (Math.hypot(x, z) > GARDEN_RADIUS - 7) return false;
+    // (The meadow lies low in places, below the water's own surface, and is
+    // dry grass there all the same: only the channels are water.)
+    if (riverEdgeDist(x, z) < 1.6) return false;
+    const h = heightAt(x, z);
+    for (const [dx, dz] of [[1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6]]) {
+      if (Math.abs(heightAt(x + dx, z + dz) - h) > 0.8) return false;
+    }
+    for (const t of tall) {
+      const dx = t.p.x - x, dz = t.p.z - z;
+      if (dx * dx + dz * dz < t.r * t.r) return false;
+    }
+    return true;
+  }
+  // …and, for her way down to the grass and up from it, whether (x, z) lies
+  // within the reach of anything tall: a tree, a bush, a big beast, a rock,
+  // a landmark.
+  function tallNear(x, z) {
+    for (const t of tall) {
+      if (t.low) continue;
+      const dx = t.p.x - x, dz = t.p.z - z;
+      if (dx * dx + dz * dz < t.r * t.r) return true;
+    }
+    return false;
+  }
+
   return {
-    update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint,
+    update, heightAt, riverZ, radius: GARDEN_RADIUS, sacredMidpoint, openGround, tallNear,
+    // v46: how the creatures are drawn — how many troupes, holding how many parts.
+    troupes: { count: troupe.count, parts: troupe.parts },
     setTime: sky.setTime,
     setRain: sky.setRain,
     setDay: sky.setDay,

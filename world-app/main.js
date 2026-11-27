@@ -17,6 +17,7 @@ import { createStations } from './stations.js';
 import { createConsider } from './consider.js';
 import { createDance } from './dance.js';
 import { createBehold } from './behold.js';
+import { createWings } from './wings.js';
 import { riverEdgeDist } from './scenes/terrain.js';
 import { TREE_OF_LIFE_POS, TREE_OF_KNOWLEDGE_POS } from './scenes/vegetation.js';
 import { LADDER_FOOT } from './scenes/ladder.js';
@@ -211,8 +212,11 @@ function updateNamingCaption() {
   const given = (realm.now === 'heaven' ? beholding(() => behold.caption()) : null)
     || realm.caption()
     || (realm.now === 'eden'
-      ? garden.tending() || dance.caption() || consider.caption(garden.signNamed())
-        || (consider.lying ? null : stations.caption() || garden.named())
+      // On the great eagle's back (v46) only her words are given: the
+      // things round the place he stands are not where he is.
+      ? (wings.riding ? wings.caption()
+        : garden.tending() || dance.caption() || consider.caption(garden.signNamed())
+          || (consider.lying ? null : stations.caption() || garden.named() || wings.caption()))
       : null);
   captionNow = given || null;
   const key = given ? given.name + '·' + given.label : '';
@@ -233,6 +237,25 @@ scene.add(companion.group);
 // The ground blossoms under the companion's feet too (v28, Isaiah 35:1), so
 // a first-time visitor sees it before they have moved at all.
 garden.alsoWalking(companion.group.position);
+
+// v46 (Isaiah 40:31; Exodus 19:4): the great eagle wheeling over the garden,
+// who comes down beside him when he waits, and carries him round it on her
+// back if he goes to her. She lands clear of his companion and the beasts.
+const wings = createWings({
+  scene, character, rig, garden, eve,
+  others: () => [
+    { x: companion.group.position.x, z: companion.group.position.z },
+    ...garden.fauna().grazers.map(g => ({ x: g.x, z: g.z })),
+  ],
+  note: text => showNote(text, 9000),
+});
+let heardCries = 0;
+let heardTakeoffs = 0;
+let heardLandings = 0;
+// Whether the stick has been let go since she took him up: only a pull made
+// after that asks her to turn for home (the drag that walked him into her,
+// still held as he climbs on, is not that).
+let stickLetGo = false;
 
 // A second seeded RNG, independent of the garden's own, so the companion's
 // path stays deterministic across reloads and screenshots without disturbing
@@ -405,7 +428,11 @@ function readIntent(dt, kit) {
       if (!dance.dancing) beginDance();
     } else {
       dance.stop();
-      const near = snapTap(tap.x, tap.y);
+      // v46: a tap on the great eagle waiting on the grass walks him to her,
+      // and once beside her he climbs up.
+      const toEagle = eagleTap(tap.x, tap.y);
+      const near = toEagle || snapTap(tap.x, tap.y);
+      wings.ask(!!toEagle);   // (a tap anywhere else: he has thought better of it)
       if (near) kit.wayfinding.walkTo(near.x, near.z, kit.namedThing());
       else if (!kit.wayfinding.tapAt(tap.x, tap.y, kit.namedThing())
         && realm.idle && consider.aimsAtSky(tap.x, tap.y)) {
@@ -420,12 +447,15 @@ function readIntent(dt, kit) {
   if (Math.hypot(v.x, v.z) > 0.001) {
     rig.skipIntro();
     kit.wayfinding.cancel();
+    wings.ask(false);
     dance.stop();
     behold.end();
     if (consider.lying) consider.rise();
     return { move: v, world: false };
   }
-  const step = kit.wayfinding.intent(character.group.position, kit.namedThing(), dt);
+  // (Sent to the eagle, he goes on to her side: a creature named as he
+  // passes does not stop him beside it, as it would on a walk elsewhere.)
+  const step = kit.wayfinding.intent(character.group.position, wings.asked ? null : kit.namedThing(), dt);
   return step ? { move: step, world: true } : { move: v, world: false };
 }
 
@@ -462,6 +492,29 @@ function snapTap(tx, ty) {
   const dx = me.x - best.x, dz = me.z - best.z, d = Math.hypot(dx, dz);
   if (d <= best.stand + 0.3) return null;   // already beside it
   return { x: best.x + (dx / d) * best.stand, z: best.z + (dz / d) * best.stand, what: best.what };
+}
+
+// v46: whether a tap fell on the great eagle while she waits for him (within
+// a generous thumb's width, she being the one thing he is meant to go to
+// then). Gives the place beside her to walk to, or null.
+function eagleTap(tx, ty) {
+  if (realm.now !== 'eden' || !realm.idle) return null;
+  const e = wings.target();
+  if (!e) return null;
+  const at = screenOf(e.x, e.z, 1.1);
+  if (!at || Math.hypot(at.x - tx, at.y - ty) > SNAP_PX * 1.6) return null;
+  const me = character.group.position;
+  const dx = me.x - e.x, dz = me.z - e.z;
+  const d = Math.hypot(dx, dz) || 1;
+  const stand = Math.min(d, 1.8);
+  return { x: e.x + (dx / d) * stand, z: e.z + (dz / d) * stand, what: 'eagle' };
+}
+
+// v46: whether the great eagle may come down to him, or take him up, now:
+// in the garden, on his own feet, his hands empty, nothing else under way.
+function eagleFree() {
+  return realm.idle && realm.now === 'eden' && stations.idle && !dance.dancing && !consider.lying
+    && character.lie === 0 && !garden.carrying && !garden.gathering && !garden.cradling && !behold.on;
 }
 
 // Down onto the grass where he stands: any walk he was on is let go, and
@@ -544,17 +597,24 @@ function frame() {
   // to the right.
   const turn = controls.takeLook();
   // (Shown the city from on high, the same drag swings that view instead.)
-  if (turn && realm.idle && !consider.lying) {
+  if (turn && realm.idle && !consider.lying && !wings.riding) {
     if (behold.on) beholding(() => behold.turn(-turn));
     else rig.look(-turn);
   }
   // On the ladder, or under the veil between the realms, the realm has him
   // (AB#106): any tap or drag meanwhile is let go.
   // …and under a station's veil, the station has him (AB#165).
-  const driven = realm.drive() || stations.drive();
+  // …and on the great eagle's back (v46) she has him; a tap or a drag then
+  // asks her to turn for home.
+  const driven = realm.drive() || stations.drive() || wings.drive();
+  if (!wings.riding) stickLetGo = false;
   let intent;
   if (driven) {
-    controls.takeTap();
+    const tapped = controls.takeTap();
+    const pull = controls.vector();
+    const pulling = Math.hypot(pull.x, pull.z) > 0.001;
+    if (wings.riding && !pulling) stickLetGo = true;
+    if (wings.riding && (tapped || (pulling && stickLetGo))) wings.hurry();
     kit.wayfinding.cancel();
     dance.stop();
     if (consider.lying) consider.rise();
@@ -575,7 +635,7 @@ function frame() {
   realm.update(dt);
   kit = realm.kit();
   // A station: walking into its landmark opens its game over the garden.
-  stations.update(dt, realm.idle && realm.now === 'eden' && !consider.lying && !dance.dancing);
+  stations.update(dt, realm.idle && realm.now === 'eden' && !consider.lying && !dance.dancing && !wings.riding);
   const inEden = kit.name === 'eden';
   if (inEden) updateCompanion(dt);
   if (!inEden && consider.lying) consider.rise();
@@ -585,6 +645,9 @@ function frame() {
   beholding(() => behold.update(dt, !inEden && realm.idle));
   if (!inEden) realm.behold(behold.k, behold.settled);
   heavenHowTo(!inEden);
+  // v46: the great eagle, in the garden (while he is in heaven she waits).
+  // Last before the camera, so that on her back the view is hers.
+  if (inEden) wings.update(dt, eagleFree());
   rig.update(dt);
   // In heaven the garden waits, its clock stilled — "there shall be no
   // night there" (Revelation 21:25) — and his companion with it.
@@ -748,7 +811,7 @@ function edenFrame(dt) {
   // While the realm has him (the ladder) his arms are not his own.
   // v44: the Tree of Life answers him only standing on his own feet — not
   // lying back, nor on the ladder.
-  const free = realm.idle && !realm.drive() && !consider.lying && character.lie === 0;
+  const free = realm.idle && !realm.drive() && !consider.lying && character.lie === 0 && !wings.riding;
   const hour = garden.update(dt, character.group.position, lure, character.group.rotation.y, consider.gaze,
     realm.drive() ? null : character.cradleAt(cradleSpot), dance.dancing, character.speed, free);
   // "Lift up your hands in the sanctuary, and bless the LORD" (v44, Psalm
@@ -765,7 +828,13 @@ function edenFrame(dt) {
   character.setHolding(garden.holding());
   // …and the flock's lamb, in his arms at his breast (v36, Isaiah 40:11).
   character.setCradling(garden.cradling, garden.stoop, garden.shoulder);
-  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, garden.rush, 'eden');
+  ambience.update(dt, hour.night, character.group.position, hour.rain, garden.wind, Math.max(garden.rush, wings.rush), 'eden');
+  // v46: the great eagle's cry as she comes down and as she goes, the cry
+  // again as she lifts him, and the chime as she sets him down.
+  const eagle = wings.sounds();
+  if (eagle.cries !== heardCries) { heardCries = eagle.cries; ambience.cry(); }
+  if (eagle.takeoffs !== heardTakeoffs) { heardTakeoffs = eagle.takeoffs; ambience.cry(0.8); }
+  if (eagle.landings !== heardLandings) { heardLandings = eagle.landings; ambience.chime(); }
   if (garden.reverence > 0.6 && !reverent) {
     reverent = true;
     ambience.chime();
@@ -875,6 +944,17 @@ window.__world = {
       controls: { ...controls.state(), camYaw: rig.getYaw() },
       // The garden's solid rock (v27, footing.js): how many circles of it.
       footing: { solids: footing.count },
+      // v46 (troupe.js): the creatures' moving parts drawn as a few troupes —
+      // how many troupes, holding how many parts.
+      troupes: garden.troupes,
+      // v46 (Isaiah 40:31): the great eagle. `mode` soar | coming | waiting |
+      // mounting | flying | dismounting | parting | leaving; `riding` whether
+      // he is up on her back (mounting, flying or coming down again);
+      // `hidden` whether his own figure is put by meanwhile and `rider`
+      // whether the one on her back is shown; `rides`/`comes`/`hurried`
+      // counts; `progress` 0..1 along her present way; `landing` where she
+      // stands or will stand on the grass.
+      eagle: wings.state(),
       companion: {
         character: eve ? 'adam' : 'eve',
         pos: { x: companion.group.position.x, y: companion.group.position.y, z: companion.group.position.z },
@@ -1243,6 +1323,21 @@ window.__world = {
   },
   // Where he presently stands on the screen, in client pixels — so a test
   // can tap him as a visitor would.
+  // v46: the great eagle. 'come': down beside him now (if there is open
+  // ground in his sight); 'ride': up onto her back, once she waits;
+  // 'home': turn for home, in the air; 'where': where she stands on the
+  // screen while she waits (client px), for tapping her. Otherwise, and
+  // after each of the first three, gives back her state.
+  eagle(cmd) {
+    if (cmd === 'where') {
+      const e = wings.target();
+      return e ? screenOf(e.x, e.z, 1.1) : null;
+    }
+    if (cmd === 'come') wings.come();
+    else if (cmd === 'ride') wings.ride();
+    else if (cmd === 'home') wings.hurry();
+    return wings.state();
+  },
   whereIsHe() {
     const p = character.group.position;
     const v = new THREE.Vector3(p.x, p.y + 1.0, p.z).project(camera);
@@ -1273,6 +1368,7 @@ window.__world = {
     const kit = realm.kit();
     kit.wayfinding.cancel();   // a walk begun from somewhere else no longer applies
     dance.stop();              // …nor a dance (v38)
+    wings.cancel();            // …nor the great eagle's flight (v46): he is set down at once
     character.group.position.set(x, kit.heightAt(x, z), z);
     if (typeof facing === 'number') {
       character.group.rotation.y = facing;

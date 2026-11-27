@@ -11,7 +11,7 @@
 // House rule for anything that moves or fades: assert with expect.poll windows,
 // never a single fixed-delay sample (CI's software renderer runs slow).
 const { test, expect } = require('@playwright/test');
-const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven, expectInBudget } = require('./world-helpers');
+const { gotoWorldReady, appFrame, getState, dist2d, enterHeaven, expectInBudget, watchPageErrors } = require('./world-helpers');
 
 test.describe('the garden\'s features', () => {
   test('the river parts into four heads east of the garden (Genesis 2:10)', async ({ page }) => {
@@ -1334,6 +1334,99 @@ test.describe('the garden\'s features', () => {
     s = await getState(page);
     expect(s.heaven.chorus).toMatchObject({ dancing: false, danced: 2, answers: 1 });
     expect(s.realm).toMatchObject({ now: 'heaven', passage: null, failed: false });
+  });
+
+  test('on eagles\' wings: stood still in the open, he sees a great eagle come down out of her wheel to the grass beside him; a tap on her and she bears him up over the garden, a tap in the air turns her for home, and she sets him down where he stood (v46, Exodus 19:4; Deuteronomy 32:11; Isaiah 40:31; Ezekiel 17:3)', async ({ page }) => {
+    test.setTimeout(420000);
+    const errors = watchPageErrors(page);
+    await gotoWorldReady(page);
+    const frame = appFrame(page);
+    const box = await page.locator('iframe').boundingBox();
+    const vp = page.viewportSize();
+
+    // From the first she is up, wheeling high over the garden, and she and
+    // the creatures are drawn by a handful of troupes, not part by part.
+    const s0 = await getState(page);
+    expect(s0.eagle).toMatchObject({ mode: 'soar', riding: false, hidden: false, rider: false, rides: 0 });
+    expect(s0.eagle.y).toBeGreaterThan(18);
+    expect(s0.troupes.parts).toBeGreaterThan(100);
+    expect(s0.troupes.count).toBeLessThan(8);
+
+    // The very first touch only skips the opening shot. Then, set down on
+    // the open south-western meadow (far from the flock), facing on across
+    // it, away from the Tree of Life, and left to stand, he sees her come
+    // down out of her wheel to the grass a few strides off; her name is
+    // given, and a word says what she is there for.
+    await page.mouse.click(12, vp.height - 12);
+    await frame.evaluate(() => window.__world.teleport(-12, -18, -2.4));
+    await expect.poll(async () => (await getState(page)).eagle.mode, { timeout: 150000, intervals: [500] }).toBe('waiting');
+    await expect(frame.locator('.howto', { hasText: 'great eagle' })).toHaveCount(1, { timeout: 5000 });
+    await expect.poll(async () => { const c = (await getState(page)).caption; return c && c.name; }, { timeout: 15000 })
+      .toBe('Hanesher hagadol');
+    const waiting = await getState(page);
+    const apart = dist2d(waiting.pos, waiting.eagle.landing);
+    expect(apart).toBeGreaterThan(4);
+    expect(apart).toBeLessThan(10);
+    expect(waiting.eagle.y).toBeLessThan(waiting.pos.y + 2);   // on the grass, not in the air
+    expect(await frame.evaluate(() => window.__world.eagle('where'))).not.toBe(null);
+
+    // A tap on her walks him to her side, and up onto her back he goes
+    // (tapped again if the tap was lost to a camera still settling).
+    const tapHer = async () => {
+      const at = await frame.evaluate(() => window.__world.eagle('where'));
+      if (at) await page.mouse.click(box.x + at.x, box.y + at.y);
+    };
+    await tapHer();
+    await page.waitForTimeout(800);
+    let stood = null;
+    await expect.poll(async () => {
+      const s = await getState(page);
+      if (s.eagle.riding) { stood = s.pos; return true; }
+      if (s.eagle.mode === 'waiting' && !s.walk.target) await tapHer();
+      return false;
+    }, { timeout: 60000, intervals: [1000] }).toBe(true);
+    const up = await getState(page);
+    expect(up.eagle).toMatchObject({ riding: true, hidden: true, rider: true, rides: 1 });
+    expect(await frame.evaluate(() => localStorage.getItem('camino_eagle'))).toBe('rode');
+
+    // She rises with him over the garden, within the budget all the while,
+    // and her word is given as she goes up.
+    let most = { calls: 0, triangles: 0 };
+    let height = 0;
+    const words = new Set();
+    const watch = async () => {
+      const s = await getState(page);
+      most = { calls: Math.max(most.calls, s.render.calls), triangles: Math.max(most.triangles, s.render.triangles) };
+      if (s.eagle.mode === 'flying') height = Math.max(height, s.eagle.y - stood.y);
+      if (s.caption) words.add(s.caption.name);
+      return s;
+    };
+    await expect.poll(async () => {
+      const s = await watch();
+      return s.eagle.mode === 'flying' && s.eagle.progress > 0.04;
+    }, { timeout: 60000, intervals: [250] }).toBe(true);
+
+    // A tap in the air asks her to turn for home, and once she is well up
+    // and away she does.
+    await page.mouse.click(box.x + vp.width / 2, box.y + vp.height * 0.4);
+    await expect.poll(async () => (await watch()).eagle.homeward, { timeout: 60000, intervals: [250] }).toBe(true);
+
+    // She comes in to the place she rose from and he is set down on his own
+    // feet exactly where he stood; then she goes up again, away to her wheel.
+    await expect.poll(async () => ['parting', 'leaving', 'soar'].includes((await watch()).eagle.mode),
+      { timeout: 150000, intervals: [250] }).toBe(true);
+    expectInBudget({ render: most }, 'while he rides');
+    expect(height).toBeGreaterThan(8);
+    expect([...words]).toContain('Al kanfei nesharim');
+    const down = await getState(page);
+    expect(down.eagle).toMatchObject({ riding: false, hidden: false, rider: false, rides: 1, hurried: 1 });
+    expect(dist2d(down.pos, stood)).toBeLessThan(0.3);
+    expect(down.walk.target).toBe(null);
+    await expect.poll(async () => {
+      const e = (await getState(page)).eagle;
+      return e.mode === 'soar' || (e.mode === 'leaving' && e.y > waiting.eagle.y + 4);
+    }, { timeout: 90000, intervals: [250] }).toBe(true);
+    expect(errors).toEqual([]);
   });
 });
 

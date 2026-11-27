@@ -424,6 +424,34 @@ export function createAmbience() {
     coo();
   }
 
+  // The great eagle's cry (v46, Job 39:27): two high, thin, falling whistles
+  // with a quick shiver in them — heard from far off, never shrill.
+  function cry(k = 1) {
+    if (!ctx || ctx.state !== 'running' || muted) return;
+    const t0 = ctx.currentTime + 0.03;
+    for (const [at, f0, f1, len] of [[0, 2250, 1650, 0.34], [0.42, 2050, 1350, 0.62]]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f0, t0 + at);
+      osc.frequency.exponentialRampToValueAtTime(f1, t0 + at + len);
+      const shiver = ctx.createOscillator();
+      shiver.frequency.value = 23;
+      const depth = ctx.createGain();
+      depth.gain.value = 38;
+      shiver.connect(depth).connect(osc.frequency);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0 + at);
+      g.gain.linearRampToValueAtTime(0.022 * k, t0 + at + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0004, t0 + at + len);
+      osc.connect(g).connect(master);
+      osc.start(t0 + at);
+      shiver.start(t0 + at);
+      osc.stop(t0 + at + len + 0.05);
+      shiver.stop(t0 + at + len + 0.05);
+      osc.onended = () => { osc.disconnect(); g.disconnect(); shiver.disconnect(); depth.disconnect(); };
+    }
+  }
+
   // The reverence chime: two soft bell tones, a fifth apart, when a walker
   // draws near the sacred trees — felt more than heard.
   function chime() {
@@ -1123,5 +1151,5 @@ export function createAmbience() {
     };
   }
 
-  return { update, setMuted, rest, chime, thunder, call, bloom, star, pipe, bleat, harp, timbrel, alleluia, praise, voice, state };
+  return { update, setMuted, rest, chime, thunder, call, cry, bloom, star, pipe, bleat, harp, timbrel, alleluia, praise, voice, state };
 }

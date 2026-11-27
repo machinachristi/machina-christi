@@ -1,5 +1,5 @@
 {
-  "version": 45,
+  "version": 46,
   "threeVersion": "0.185.1",
   "log": [
     {
@@ -586,13 +586,28 @@
         { "text": "While he dances in heaven he does not lift his hands to pray, and no leaf of the tree comes down to him; with a leaf in his hand or on its way down to it, or while he is shown the city from on high, he does not dance. The garden's petals stay in the garden.", "source": null },
         { "text": "The dancing lights are one draw call, drawn only while any of them is out of the multitude; heaven's arrival stays at 30 draws of the 200 allowed, and the garden is untouched.", "source": null }
       ]
+    },
+    {
+      "version": 46,
+      "date": "2026-11-27",
+      "realm": "eden",
+      "focus": "on eagles' wings",
+      "changes": [
+        { "text": "A great eagle wheels high over the garden, long-winged, gliding with a few deep beats now and then, inside the old eagle's wider round.", "source": "Ezekiel 17:3" },
+        { "text": "Stand still a while out in the open and she comes down out of her wheel to the grass a few strides off, where he can see her, and faces him. Her name is given: Hanesher hagadol, a great eagle. The first time, a word says what she has come for.", "source": "Ezekiel 17:3" },
+        { "text": "Walk to her, or tap her, and he climbs onto her back and she bears him up: Al kanfei nesharim, on eagles' wings. Once round the whole garden she carries him, over the river's four heads, past Jacob's ladder and its angels and round the eagle's crag, and down again to the very place he stood.", "source": "Exodus 19:4" },
+        { "text": "High over the garden he lifts up his hands, and the word is given: Ya'alu ever kanesharim, they shall mount up with wings as eagles.", "source": "Isaiah 40:31" },
+        { "text": "She bears him as an eagle bears her young on her wings: a tap, or a pull on the stick, while he is up asks her to turn for home, and once she is well up and away she wheels round and sets him down. Wherever she flies she turns as a great bird must, in wide sweeping curves, never sharply, and she comes in low only over open ground, clear of the trees.", "source": "Deuteronomy 32:11" },
+        { "text": "Her cry is two falling whistles; the air rushes past while he flies, and a chime sounds when she sets him down. On the way to her, a creature named as he passes no longer stops him beside it.", "source": null },
+        { "text": "Most of the garden's birds and beasts, its fish, butterflies and bees are now drawn together: their moving bodies, heads, legs, wings and tails are gathered into a few troupes and drawn at once instead of one by one. They look exactly as before, and the opening view drops from 190 draws to 139 of the 200 allowed, the great eagle and her rider included.", "source": null }
+      ]
     }
   ],
   "next": [
     "The ninety and nine: now and then the lamb strays off alone toward the hills, and when he goes after it and finds it he carries it home on his shoulders, and the flock comes running to meet them (Luke 15:4-6)",
     "Still waters: where he sits by the river with the flock lying round him, the water before them stills to a mirror with the sky and the sheep in it (Psalm 23:2)",
+    "Run, and not be weary: set down again by the eagle, for a while he runs light-footed and is not weary, and his companion runs with him (Isaiah 40:31; Psalm 103:5)",
     "A leaf carried home: take a leaf of heaven's Tree of Life down the ladder and lay it at the foot of Eden's own, and the garden's praise goes out from it at once, brighter than ever (Revelation 22:2; Psalm 150:6)",
-    "Praise him, all ye stars of light: under the Tree of Life by night, the ring of the garden's praise climbs on up into the sky as it goes out, and each star it passes rings and brightens (Psalm 148:3)",
     "With the saints: dancing near the ranks in heaven, the saints nearest him turn toward him and their lights brighten in time with the timbrel (Psalm 149:5)"
   ]
 }
