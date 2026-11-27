@@ -31,8 +31,16 @@ for (const size of [{ width: 390, height: 844 }, { width: 375, height: 667 }]) {
 
     test('the homepage dots', async ({ page }) => {
       await page.goto('/index.html');
-      await expect(page.locator('.waymarks button')).toHaveCount(6);
+      await expect(page.locator('.waymarks button')).toHaveCount(3);
       expect(await thumbMisses(page, '.waymarks button')).toEqual([]);
+    });
+
+    // The two signs in the door's top corners: About's book and Search's glass.
+    test('the homepage corner buttons', async ({ page }) => {
+      await page.goto('/index.html');
+      await expect(page.locator('body')).toHaveClass(/lit/);
+      await expect(page.locator('.about-link, .search-link')).toHaveCount(2);
+      expect(await thumbMisses(page, '.about-link, .search-link')).toEqual([]);
     });
 
     test("Ordo's day arrows", async ({ page }) => {

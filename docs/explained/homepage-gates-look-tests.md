@@ -2,6 +2,8 @@
 
 *AB#114 · Tasks AB#115 (the look tests) and AB#116 (the change) · October 2026*
 
+> **Since late November 2026 the front door has three gates: Pray, Wander and Build.** This page records how it was before; the move is told in [three-gates.md](three-gates.md).
+
 ## What changed, in one sentence
 
 After trying the homepage's gates as a 3D room in three different ways, the

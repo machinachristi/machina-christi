@@ -22,6 +22,21 @@ test.describe('about hub', () => {
     expect(errors).toEqual([]);
   });
 
+  // The one place the whole map shows (AB#172): each story under the gate its
+  // room stands behind on the front door.
+  test('groups the stories under the three gates', async ({ page }) => {
+    await page.goto('/about.html');
+    const groups = await page.$$eval('.gate', gs => gs.map(g => [
+      g.querySelector('.gate__name').textContent.trim(),
+      [...g.querySelectorAll('.card')].map(c => c.getAttribute('href')),
+    ]));
+    expect(groups).toEqual([
+      ['Pray', ['about-ordo.html', 'about-pray.html']],
+      ['Wander', ['about-eden.html']],
+      ['Build', ['about-workshop.html', 'about-camino.html', 'about-logos.html']],
+    ]);
+  });
+
   test('opens with John 15:12, naming its translation', async ({ page }) => {
     await page.goto('/about.html');
     await expect(page.locator('figure.verse blockquote')).toHaveText('This is my commandment, that you love one another, as I have loved you.');

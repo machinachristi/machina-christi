@@ -97,7 +97,17 @@
     }
     p { margin-bottom: 1em; max-width: 62ch; color: rgba(232, 213, 163, 0.78); }
 
-    .cards { display: flex; flex-direction: column; gap: 16px; margin-top: 2.2em; }
+    /* The stories, grouped under the three gates of the front door (the
+       three-gates plan, November 2026): the one place the whole map shows. */
+    .gate { margin-top: 2.2em; }
+    .gate__name {
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .cards { display: flex; flex-direction: column; gap: 16px; margin-top: 0.8em; }
     .card {
       position: relative;
       display: block;
@@ -126,7 +136,7 @@
       outline: none;
     }
     .card:hover::after, .card:focus-visible::after { color: var(--gold-soft); }
-    .card h2 {
+    .card h3 {
       font-weight: normal;
       font-size: 14px;
       letter-spacing: 0.26em;
@@ -167,32 +177,48 @@
       <figcaption>&mdash; John 15:12 (Douay-Rheims)</figcaption>
     </figure>
 
-    <div class="cards">
-      <a class="card" href="about-camino.html">
-        <h2>Camino</h2>
-        <p>An endless runner about walking the narrow way.</p>
-      </a>
-      <a class="card" href="about-eden.html">
-        <h2>Eden</h2>
-        <p>A living 3D garden, refined over time.</p>
-      </a>
-      <a class="card" href="about-ordo.html">
-        <h2>Ordo</h2>
-        <p>Today in the Church: the day&rsquo;s gospel, and the saint of the day from Butler&rsquo;s Lives of the Saints.</p>
-      </a>
-      <a class="card" href="about-pray.html">
-        <h2>Pray</h2>
-        <p>Classic prayers in Thai and English, side by side &mdash; because God can be honored in every language.</p>
-      </a>
-      <a class="card" href="about-logos.html">
-        <h2>Logos</h2>
-        <p>Learning Thai, letter by letter: consonants and vowels as flash cards, read aloud.</p>
-      </a>
-      <a class="card" href="about-workshop.html">
-        <h2>Workshop</h2>
-        <p>How it is built: every tool, a column of light in a square after St Peter&rsquo;s.</p>
-      </a>
-    </div>
+    <!-- One story per room, under the gate it stands behind on the front door. -->
+    <section class="gate" aria-labelledby="gate-pray">
+      <h2 class="gate__name" id="gate-pray">Pray</h2>
+      <div class="cards">
+        <a class="card" href="about-ordo.html">
+          <h3>Ordo</h3>
+          <p>Today in the Church: the day&rsquo;s gospel, and the saint of the day from Butler&rsquo;s Lives of the Saints.</p>
+        </a>
+        <a class="card" href="about-pray.html">
+          <h3>Pray</h3>
+          <p>Classic prayers in Thai and English, side by side &mdash; because God can be honored in every language.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="gate" aria-labelledby="gate-wander">
+      <h2 class="gate__name" id="gate-wander">Wander</h2>
+      <div class="cards">
+        <a class="card" href="about-eden.html">
+          <h3>Eden</h3>
+          <p>A living 3D garden, refined over time.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="gate" aria-labelledby="gate-build">
+      <h2 class="gate__name" id="gate-build">Build</h2>
+      <div class="cards">
+        <a class="card" href="about-workshop.html">
+          <h3>Workshop</h3>
+          <p>How it is built: every tool, a column of light in a square after St Peter&rsquo;s.</p>
+        </a>
+        <a class="card" href="about-camino.html">
+          <h3>Camino</h3>
+          <p>An endless runner about walking the narrow way.</p>
+        </a>
+        <a class="card" href="about-logos.html">
+          <h3>Logos</h3>
+          <p>Learning Thai, letter by letter: consonants and vowels as flash cards, read aloud.</p>
+        </a>
+      </div>
+    </section>
   </div>
 </body>
 </html>

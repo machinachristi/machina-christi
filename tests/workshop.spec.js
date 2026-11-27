@@ -353,10 +353,14 @@ test.describe('workshop square (3D)', () => {
   });
 });
 
-test('the home Workshop gate leads here', async ({ page }) => {
+// Since AB#172 the Workshop stands behind the Build gate: door → Build page →
+// the Workshop card → here.
+test('the Build gate leads to the Workshop', async ({ page }) => {
   await page.goto('/index.html');
-  await page.locator('.portal--workshop').focus();
+  await page.locator('.portal--build').focus();
   await page.keyboard.press('Enter');
+  await page.waitForURL('**/build.html');
+  await page.locator('.card[href="/workshop.html"]').click();
   await page.waitForURL('**/workshop.html');
   await expect(page.locator('h1')).toHaveText('Workshop');
 });
