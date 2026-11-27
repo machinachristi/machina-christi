@@ -112,7 +112,7 @@ test.describe('prayer list', () => {
     const errors = watchErrors(page);
     await page.goto('/pray.html');
     await expect(page.locator('h1')).toContainText('Pray');
-    const cards = page.locator('.card');
+    const cards = page.locator('#prayers .card');
     await expect(cards).toHaveCount(LISTED.length);
     for (const [i, p] of LISTED.entries()) {
       await expect(cards.nth(i)).toHaveAttribute('href', `/pray/${p.id}.html`);
@@ -132,13 +132,50 @@ test.describe('prayer list', () => {
   test('a card opens its prayer, and the back links walk home', async ({ page }) => {
     await stubSpeech(page);
     await page.goto('/pray.html');
-    await page.locator('.card', { hasText: 'Our Father' }).click();
+    await page.locator('#prayers .card', { hasText: 'Our Father' }).click();
     await page.waitForURL('**/pray/our-father.html');
     await expect(page.locator('h1')).toHaveText('The Our Father');
     await page.locator('.back').click();
     await page.waitForURL('**/pray.html');
     await page.locator('.back').click();
     await page.waitForURL('**/index.html');
+  });
+});
+
+// The Pray room's other door (three gates, step 1, AB#172): Ordo sits above
+// the prayers. It is written into the page, not drawn by its script, so it
+// is there before the prayers arrive, and even with scripts switched off.
+test.describe('the Ordo card', () => {
+  test('is there before the prayers load, and opens Ordo', async ({ page }) => {
+    const errors = watchErrors(page);
+    let release;
+    const held = new Promise(r => { release = r; });
+    await page.route('**/pray/prayers.json', async route => { await held; return route.continue(); });
+    await page.goto('/pray.html');
+    const ordo = page.locator('#rooms .card');
+    await expect(ordo).toHaveCount(1);
+    await expect(ordo).toHaveAttribute('href', '/ordo.html');
+    await expect(ordo.locator('h2')).toHaveText('Ordo');
+    await expect(ordo).toContainText('today in the Church');
+    await expect(page.locator('#prayers .notice')).toHaveText(/Loading/); // the prayers are still on their way
+    // Above the prayer list, and not one of the prayers.
+    const top = l => l.evaluate(el => el.getBoundingClientRect().top);
+    expect(await top(ordo)).toBeLessThan(await top(page.locator('#prayers')));
+    release();
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
+    await expect(page.locator('#prayers .card[href="/ordo.html"]')).toHaveCount(0);
+    await ordo.click();
+    await page.waitForURL('**/ordo.html');
+    await expect(page.locator('h1')).toHaveText('Ordo');
+    expect(errors).toEqual([]);
+  });
+
+  test.describe('with scripts switched off', () => {
+    test.use({ javaScriptEnabled: false });
+    test('is still there', async ({ page }) => {
+      await page.goto('/pray.html');
+      await expect(page.locator('#rooms .card[href="/ordo.html"]')).toBeVisible();
+    });
   });
 });
 
@@ -168,7 +205,7 @@ test.describe('the bundled prayers answer first on the live site', () => {
     const errors = watchErrors(page);
     const { release, asked } = await heldApi(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length, { timeout: 1000 });
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length, { timeout: 1000 });
     expect(asked).toContain('/api/prayers');
     release(null);
     expect(errors).toEqual([]);
@@ -177,20 +214,20 @@ test.describe('the bundled prayers answer first on the live site', () => {
   test('the same list from the API leaves the page alone; a different one replaces it', async ({ page }) => {
     const { release } = await heldApi(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
-    await page.locator('.card').first().evaluate(el => { el.dataset.first = 'kept'; });
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
+    await page.locator('#prayers .card').first().evaluate(el => { el.dataset.first = 'kept'; });
     const answered = page.waitForResponse(`${API}/api/prayers`);
     release(cardsOf(DATA.prayers));
     await answered;
     await page.waitForTimeout(200);
-    await expect(page.locator('.card').first()).toHaveAttribute('data-first', 'kept'); // not redrawn
+    await expect(page.locator('#prayers .card').first()).toHaveAttribute('data-first', 'kept'); // not redrawn
 
     const { release: releaseNew } = await heldApi(page);
     await page.reload();
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
     releaseNew([...cardsOf(DATA.prayers), { id: 'angelus', title: 'The Angelus', title_th: 'ทูตสวรรค์แจ้งข่าว', about: '', listed: true }]);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length + 1);
-    await expect(page.locator('.card').last()).toContainText('The Angelus');
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length + 1);
+    await expect(page.locator('#prayers .card').last()).toContainText('The Angelus');
   });
 
   test('an API from before the list could leave prayers off still never shows the parts said only at Mass', async ({ page }) => {
@@ -198,14 +235,14 @@ test.describe('the bundled prayers answer first on the live site', () => {
     // different days: an older API says nothing about `listed`.
     const { release } = await heldApi(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
-    await page.locator('.card').first().evaluate(el => { el.dataset.first = 'kept'; });
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
+    await page.locator('#prayers .card').first().evaluate(el => { el.dataset.first = 'kept'; });
     const answered = page.waitForResponse(`${API}/api/prayers`);
     release(DATA.prayers.map(({ id, title, title_th, about }) => ({ id, title, title_th, about })));
     await answered;
     await page.waitForTimeout(200);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
-    await expect(page.locator('.card').first()).toHaveAttribute('data-first', 'kept'); // the same list: not redrawn
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
+    await expect(page.locator('#prayers .card').first()).toHaveAttribute('data-first', 'kept'); // the same list: not redrawn
   });
 
   test('a prayer\'s words show at once, and its recordings follow from the API', async ({ page }) => {

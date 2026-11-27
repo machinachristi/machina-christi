@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhMjI3IiBzdHJva2Utd2lkdGg9IjIuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTYgMjlWMTUiLz48cGF0aCBkPSJNMTYgMjBDMTAgMTggNy41IDE0IDYuNSA5Ii8+PHBhdGggZD0iTTE2IDIwYzYtMiA4LjUtNiA5LjUtMTEiLz48L2c+PGcgZmlsbD0iI2M5YTIyNyI+PGNpcmNsZSBjeD0iNi41IiBjeT0iNyIgcj0iMi4zIi8+PGNpcmNsZSBjeD0iMjUuNSIgY3k9IjciIHI9IjIuMyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNC42IiByPSIyLjMiLz48L2c+PC9zdmc+" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <!-- The front door's viewport line, which keeps pinch-zoom off (the owner's
+       rule for every new page). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="description" content="Build — the Workshop, how Machina Christi is built, and the projects made along the way: Camino, the pilgrim road, and Logos, learning Thai letter by letter." />
+  <!-- Link previews (Discord, iMessage, X, Facebook…) -->
+  <meta property="og:site_name" content="Machina Christi" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://machinachristi.com/build.html" />
+  <meta property="og:title" content="Build · Machina Christi" />
+  <meta property="og:description" content="The Workshop, how it's built, and the projects made along the way: Camino, the pilgrim road, and Logos, learning Thai letter by letter." />
+  <meta property="og:image" content="https://machinachristi.com/assets/share/machina-christi.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The gold Machina Christi sprig above the words MACHINA CHRISTI and “A little place to pray, to learn, and to wander”." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>Build · Machina Christi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b0a08;
+      --gold:      #c9a227;
+      --gold-soft: #e8d5a3;
+      --timber:    214, 146, 92;   /* Build — the carpenter's bench */
+      --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    html, body { min-height: 100dvh; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(var(--timber), 0.12), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--gold-soft);
+      font-family: var(--serif);
+      line-height: 1.75;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(1.5px 1.5px at 20% 30%, rgba(232,213,163,0.28), transparent),
+        radial-gradient(1px 1px at 75% 25%, rgba(232,213,163,0.2), transparent),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(232,213,163,0.24), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(232,213,163,0.16), transparent);
+      opacity: 0.55;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: max(28px, env(safe-area-inset-top)) 24px max(56px, env(safe-area-inset-bottom));
+    }
+
+    .back, .find {
+      display: inline-block;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 213, 163, 0.62);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      margin-bottom: 3em;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .back:hover, .back:focus-visible, .find:hover, .find:focus-visible { color: var(--gold-soft); border-color: rgba(232,213,163,0.5); outline: none; }
+    /* A bigger, invisible tap area (~44px tall) for thumbs; the link looks the same. */
+    .back, .find { position: relative; }
+    .back::before, .find::before { content: ''; position: absolute; inset: -9px -12px; }
+    /* Search, opposite the way back. */
+    .find { float: right; }
+
+    h1 {
+      font-weight: normal;
+      font-size: clamp(28px, 7vw, 38px);
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    /* A thin gold rule beneath the heading, like a line ruled in an old book. */
+    h1::after {
+      content: "";
+      display: block;
+      width: 72px;
+      height: 1px;
+      margin: 10px 0 8px;
+      background: linear-gradient(90deg, rgba(201,162,39,0.8), transparent);
+    }
+
+    .cards { list-style: none; display: flex; flex-direction: column; gap: 16px; margin-top: 2.2em; }
+
+    /* The Workshop: one whole card is the link, as on the Pray page. */
+    .card {
+      position: relative;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      padding: 18px 52px 18px 24px;
+      border: 1px solid rgba(201, 162, 39, 0.28);
+      border-radius: 14px;
+      background: rgba(201, 162, 39, 0.04);
+      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card::after, .project::after {
+      content: "\203A";
+      position: absolute;
+      right: 22px;
+      top: 50%;
+      transform: translateY(-52%);
+      font-size: 22px;
+      color: rgba(201, 162, 39, 0.5);
+      transition: color 0.3s ease;
+    }
+    .card:hover, .card:focus-visible {
+      border-color: rgba(201, 162, 39, 0.7);
+      background: rgba(201, 162, 39, 0.08);
+      box-shadow: 0 0 34px -12px rgba(var(--timber), 0.45);
+      outline: none;
+    }
+    .card:hover::after, .card:focus-visible::after { color: var(--gold-soft); }
+    .card h2, .group h2 {
+      font-weight: normal;
+      font-size: 14px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+    }
+    .card p, .project__desc { margin: 0; font-size: 15px; font-style: italic; color: rgba(232, 213, 163, 0.62); }
+
+    /* Projects: a card that holds a list, one line per side project. Each
+       line is its own link, at least 44px tall for a thumb. A new project is
+       one more <li> here. */
+    .group {
+      padding: 18px 24px 6px;
+      border: 1px solid rgba(201, 162, 39, 0.28);
+      border-radius: 14px;
+      background: rgba(201, 162, 39, 0.04);
+    }
+    .group h2 { color: rgba(var(--timber), 0.95); margin-bottom: 4px; }
+    .projects { list-style: none; }
+    .projects li + li { border-top: 1px solid rgba(201, 162, 39, 0.16); }
+    .project {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 56px;
+      padding: 10px 28px 10px 0;
+      text-decoration: none;
+      color: inherit;
+      border-radius: 10px;
+      outline: none;
+    }
+    .project__name {
+      font-size: 17px;
+      letter-spacing: 0.08em;
+      line-height: 1.5;
+      color: var(--gold-soft);
+      transition: color 0.25s ease;
+    }
+    .project__desc { line-height: 1.5; }
+    /* Its › lines up with the Workshop card's (22px in from the border). */
+    .project::after { right: -2px; }
+    .project:hover .project__name, .project:focus-visible .project__name { color: var(--gold); }
+    .project:hover::after, .project:focus-visible::after { color: var(--gold-soft); }
+    .project:focus-visible { box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.7); }
+
+    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+  </style>
+  <script src="/assets/telemetry.js" async></script>
+  <script src="/assets/season.js?v=2" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">&lsaquo; home</a>
+    <a class="find" href="search.html">search &rsaquo;</a>
+    <h1>Build</h1>
+
+    <ul class="cards">
+      <li>
+        <a class="card" href="/workshop.html">
+          <h2>Workshop</h2>
+          <p>how it&rsquo;s built</p>
+        </a>
+      </li>
+      <li>
+        <section class="group" aria-labelledby="projects-title">
+          <h2 id="projects-title">Projects</h2>
+          <!-- The side projects built along the way. To add one, add a line
+               here (and an About story if it has one); see
+               docs/explained/three-gates.md. -->
+          <ul class="projects" id="projects">
+            <li>
+              <a class="project" href="/game.html">
+                <span class="project__name">Camino</span>
+                <span class="project__desc">the pilgrim road</span>
+              </a>
+            </li>
+            <li>
+              <a class="project" href="/logos.html">
+                <span class="project__name">Logos</span>
+                <span class="project__desc">learning Thai, letter by letter</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>

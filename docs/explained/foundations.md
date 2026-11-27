@@ -18,6 +18,16 @@ painting itself, so it costs no extra download.
 *Here:* the homepage gates' gold edge, the glow around each emblem, and the
 light filling the gate you're on are all CSS rules in `index.html`.
 
+**HTML and scripts (written, then drawn).** A page arrives as a written sheet,
+the HTML: its words, links and pictures, in order. Then its scripts (small
+programs in JavaScript, the browser's own language) can fetch more and add it
+to the sheet, which takes a moment and needs scripts switched on. What's
+written is there the instant the page arrives; what's drawn follows. Like a
+sign painted on a door versus one someone comes to hang up later.
+*Here:* the Pray page's prayer cards are drawn by a script from the prayer
+list; the Ordo card above them is written into the page, so it's there first
+(November 2026, AB#172).
+
 **Contrast ratio.** A number for how clearly words stand out from what's behind
 them: 1 to 1 is grey on the same grey, 21 to 1 is black on white. Like reading
 a sign at dusk: faint gold on near-black fades first for tired or older eyes.
@@ -565,6 +575,15 @@ room worth seeing, so none is missed.
 *Here:* `robots.txt` already says "everything is welcome", so it needed no
 change; the sitemap now names all 14 prayers' pages (November 2026, AB#147).
 
+**Orphan page (a room with no door).** A page no link points to. It exists
+and works, but only someone who already knows its address can find it, like a
+room whose doorway has been plastered over. Search engines may still list it
+from the sitemap, which makes it worse: a visitor arrives there and can't find
+the rest of the house. Reorganizing a site's menus is the usual way pages get
+orphaned, by accident.
+*Here:* `tests/site-map.spec.js` walks from the front door, following every
+link, and fails if any page in the sitemap is never reached (AB#172).
+
 **Canonical address.** When the same page can be reached by more than one
 address, the page says which one is its real name, so a search engine files
 it once rather than as several look-alikes. Like a person who answers to a
@@ -948,6 +967,17 @@ next to the old, switching visitors over, and only then removing the old one,
 like moving house by living in both for a day. There's never a moment without
 a working system, and if the new one misbehaves you switch back.
 *Here:* how the API moved from East US 2 to Central US.
+
+**Expand, then contract.** Changing something people rely on in two separate
+steps: first *expand* (add the new way alongside the old, and check it works),
+then *contract* (take the old way away). It's building the new road before
+closing the old one, so nobody is ever stranded. Each step is small and can be
+checked on its own, and if the second goes wrong the first still stands. It's
+the everyday cousin of blue-green deployment, used for links, data and
+settings as well as whole systems.
+*Here:* the three-gate front door. Step 1 gave Ordo, Camino and Logos their new
+doors (the Pray room and the Build page); step 2 removes their old gates
+(AB#172).
 
 **Deploy.** Putting the new version where the public can reach it — moving the
 finished dish from the kitchen to the table.

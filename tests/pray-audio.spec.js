@@ -191,7 +191,7 @@ test.describe('recorded voices on the live site', () => {
   test('with the API down, both pages use the bundled prayers and the device\'s voice', async ({ page }) => {
     const { asked, errors } = await liveSite(page, { api: false });
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
     await page.goto(`${LIVE}/pray/memorare.html`);
     await expect(page.locator('h1')).toHaveText('The Memorare');
     await expect(page.locator('#source')).not.toContainText('Recorded voices');
@@ -205,8 +205,8 @@ test.describe('recorded voices on the live site', () => {
   test('on the live site the list is also asked of the API', async ({ page }) => {
     const { asked } = await liveSite(page);
     await page.goto(`${LIVE}/pray.html`);
-    await expect(page.locator('.card')).toHaveCount(LISTED.length);
-    await expect(page.locator('.card').first()).toContainText(LISTED[0].title);
+    await expect(page.locator('#prayers .card')).toHaveCount(LISTED.length);
+    await expect(page.locator('#prayers .card').first()).toContainText(LISTED[0].title);
     expect(asked).toContain('/api/prayers');
   });
 });
