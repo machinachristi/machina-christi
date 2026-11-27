@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Machina Christi" />
-  <meta name="description" content="Machina Christi — a gathering place of experiences: the Workshop, how it is built; Eden, a living 3D garden, with the Camino pilgrim road at its gate; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
+  <meta name="description" content="Machina Christi — a gathering place of experiences, behind three gates. Pray: Ordo, today in the Church, and classic prayers in Thai and English. Wander: Eden, a living 3D garden, with the Camino pilgrim road at its gate. Build: the Workshop, how it is built, and projects such as Camino and Logos, learning Thai letter by letter." />
   <!-- Link previews (Discord, iMessage, X, Facebook…) -->
   <meta property="og:site_name" content="Machina Christi" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://machinachristi.com/" />
   <meta property="og:title" content="Machina Christi" />
-  <meta property="og:description" content="A gathering place of experiences: the Workshop, how it is built; Eden, a living 3D garden, with the Camino pilgrim road at its gate; Ordo, today in the Church; Pray, classic prayers in Thai and English; Logos, learning Thai letter by letter; and the story behind them." />
+  <meta property="og:description" content="A gathering place of experiences, behind three gates. Pray: Ordo, today in the Church, and classic prayers in Thai and English. Wander: Eden, a living 3D garden, with the Camino pilgrim road at its gate. Build: the Workshop, how it is built, and projects such as Camino and Logos, learning Thai letter by letter." />
   <meta property="og:image" content="https://machinachristi.com/assets/share/machina-christi.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -38,12 +38,9 @@
       --gold:      #c9a227;
       --gold-soft: #e8d5a3;
       --amber:     255, 196, 92;   /* warm lamplight (rgb parts) */
-      --leaf:      168, 205, 140;  /* Eden — living green */
-      --violet:    176, 150, 214;  /* Ordo — quiet, contemplative */
       --marian:    138, 170, 222;  /* Pray — Marian blue */
-      --parchment: 216, 198, 170;  /* About — the written word */
-      --timber:    214, 146, 92;   /* Workshop — the carpenter's bench */
-      --lacquer:   222, 112, 98;   /* Logos — Thai lacquer red */
+      --leaf:      168, 205, 140;  /* Wander (Eden) — living green */
+      --timber:    214, 146, 92;   /* Build — the carpenter's bench */
       --serif:     "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
       /* Portal width answers to both screen axes so the gallery always fits
          beneath the hero: never wider than the phone allows a neighbor to
@@ -155,7 +152,7 @@
     }
     .strip.dragging { scroll-snap-type: none; }
 
-    /* The way loops: swiping past the Workshop or Logos doesn't scroll through
+    /* The way loops: swiping past Pray or Build doesn't scroll through
        to a preview of the other end (that would spoil it, and looks like
        a stray duplicate card) — the strip fades out, jumps, and fades
        back in already standing at the far gate. */
@@ -199,12 +196,9 @@
       transition: border-color 0.35s ease;
     }
 
-    .portal--eden   { --glow: var(--leaf); }
-    .portal--ordo   { --glow: var(--violet); }
     .portal--pray   { --glow: var(--marian); }
-    .portal--about  { --glow: var(--parchment); }
-    .portal--workshop { --glow: var(--timber); }
-    .portal--logos  { --glow: var(--lacquer); }
+    .portal--eden   { --glow: var(--leaf); }     /* the Wander gate: Eden */
+    .portal--build  { --glow: var(--timber); }
 
     /* The light waiting past each threshold. */
     .portal__halo {
@@ -268,7 +262,7 @@
       position: relative;
       text-align: center;
       font-style: italic;
-      font-size: clamp(13px, 3.6vw, 15px);
+      font-size: clamp(14px, 3.6vw, 15px);   /* never under 14px, the site's floor */
       line-height: 1.5;
       color: rgba(232, 213, 163, 0.55);
       padding: 8px 12% clamp(20px, 8%, 30px);
@@ -318,7 +312,7 @@
       display: block;
       margin-bottom: 3px;
       font-style: normal;
-      font-size: 13px;
+      font-size: 14px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: rgba(232, 213, 163, 0.66);
@@ -437,8 +431,9 @@
        One gentle fade-up: the hero first, the gates a breath after. */
     .js body:not(.lit) .hero,
     .js body:not(.lit) .gallery { opacity: 0; transform: translateY(10px); }
-    /* The search glass comes in with the room, not before it. */
-    .js body:not(.lit) .search-link { opacity: 0; }
+    /* The search glass and the About book come in with the room, not before it. */
+    .js body:not(.lit) .search-link,
+    .js body:not(.lit) .about-link { opacity: 0; }
 
     /* Search: a quiet glass in the corner, over the room rather than in it,
        so the gates keep the whole screen (this page never scrolls). A 44px
@@ -458,6 +453,24 @@
     }
     .search-link:hover, .search-link:focus-visible { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); outline: none; }
 
+    /* About: the story behind the site is a signpost, not a room, so it stands
+       in the corner opposite Search as a small open book (the three-gates plan,
+       November 2026). 44px for a thumb, like the glass. */
+    .about-link {
+      position: absolute;
+      top: max(8px, env(safe-area-inset-top));
+      left: max(8px, env(safe-area-inset-left));
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: rgba(232, 213, 163, 0.55);
+      z-index: 5;
+      transition: color 0.25s ease, background 0.25s ease, opacity 1.1s ease;
+    }
+    .about-link:hover, .about-link:focus-visible { color: var(--gold-soft); background: rgba(201, 162, 39, 0.1); outline: none; }
+
     /* Very short screens (landscape phones): let the page scroll
        vertically rather than crush the gates. */
     @media (max-height: 480px) {
@@ -468,7 +481,7 @@
     /* Respect reduced-motion: the room is simply there, already lit. */
     @media (prefers-reduced-motion: reduce) {
       body::before { animation: none; }
-      .hero, .gallery, .strip, .search-link { transition: none; }
+      .hero, .gallery, .strip, .search-link, .about-link { transition: none; }
       .portal { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
       body { transition: opacity 0.15s ease 0s; }
     }
@@ -479,6 +492,11 @@
 <body>
   <a class="search-link" href="search.html" aria-label="Search the site">
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+  </a>
+  <!-- About, the way into the story behind each room: the open book the About
+       gate once carried, now in the corner. -->
+  <a class="about-link" href="about.html" aria-label="About Machina Christi, the story behind it all">
+    <svg width="22" height="22" viewBox="6 13 36 39" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 18 V50" /><path d="M24 20 C19 15.5 13 15 8 17 V47 C13 45 19 45.5 24 50" /><path d="M24 20 C29 15.5 35 15 40 17 V47 C35 45 29 45.5 24 50" /></svg>
   </a>
   <header class="hero">
     <h1><span class="line">MACHINA</span><span class="line">CHRISTI</span></h1>
@@ -491,55 +509,17 @@
 
   <nav class="gallery" aria-label="Experiences">
     <div class="strip">
-      <!-- To add a new experience: copy one .portal block below and set its
-           href, glyph, title, and description. The waymark dots, centered-card
-           activation, and entry transition are all wired up from the DOM. -->
-      <a class="portal portal--about" href="about.html" aria-label="About Machina Christi, the story behind it all">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- an open book -->
-            <path d="M24 18 V50" />
-            <path d="M24 20 C19 15.5 13 15 8 17 V47 C13 45 19 45.5 24 50" />
-            <path d="M24 20 C29 15.5 35 15 40 17 V47 C35 45 29 45.5 24 50" />
-          </svg>
-        </span>
-        <span class="portal__title">About</span>
-        <span class="portal__desc">the story behind it all</span>
-      </a>
-
-      <a class="portal portal--ordo" href="ordo.html" aria-label="Enter Ordo, today in the Church">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- a candle burning before an open page -->
-            <path d="M24 10 C20 16 18 20 18 24 C18 28.4 20.7 31 24 31 C27.3 31 30 28.4 30 24 C30 20 28 16 24 10 Z" />
-            <path d="M20 31 V50 H28 V31" />
-            <path d="M11 50 H37" />
-          </svg>
-        </span>
-        <span class="portal__title">Ordo</span>
-        <span class="portal__desc">today in the Church</span>
-      </a>
-
-      <a class="portal portal--eden" href="world.html#enter" aria-label="Enter Eden, the digital garden">
-        <span class="portal__halo" aria-hidden="true"></span>
-        <span class="portal__vignette" aria-hidden="true">
-          <svg viewBox="0 0 48 64">
-            <!-- the tree of life, bearing fruit -->
-            <path d="M24 56 V20" />
-            <path d="M24 38 C16 36 11 30 10 22" />
-            <path d="M24 38 C32 36 37 30 38 22" />
-            <circle cx="10" cy="17.5" r="2.8" />
-            <circle cx="38" cy="17.5" r="2.8" />
-            <circle cx="24" cy="14.5" r="2.8" />
-          </svg>
-        </span>
-        <span class="portal__title">Eden</span>
-        <span class="portal__desc">the digital garden</span>
-      </a>
-
-      <a class="portal portal--pray" href="pray.html" aria-label="Enter Pray, prayers in Thai and English">
+      <!-- Three gates (the owner's choice, November 2026): Pray, Wander, Build.
+           Every room stands behind one of them: Ordo inside Pray; Camino (and
+           soon Logos) inside the garden; the Workshop, Camino and Logos on the
+           Build page. About is the book in the corner.
+           The Wander gate keeps its old name tag, portal--eden: the door opens
+           on it by that tag (see the script), and Eden's tests find it by it.
+           To add a gate: copy one .portal block below and set its href, glyph,
+           title, and description. The waymark dots, centered-card activation,
+           and entry transition are all wired up from the DOM. But first ask
+           whether the room belongs behind one of these three. -->
+      <a class="portal portal--pray" href="pray.html" aria-label="Enter Pray: Ordo, and prayers in Thai and English">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
@@ -556,21 +536,24 @@
         <span class="portal__desc">prayers in Thai &amp; English</span>
       </a>
 
-      <a class="portal portal--logos" href="logos.html" aria-label="Enter Logos, learning Thai">
+      <a class="portal portal--eden" href="world.html#enter" aria-label="Enter Wander: Eden, the digital garden">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
-            <!-- ก, the first letter: "in the beginning was the Word" -->
-            <path d="M15 51 V28 C15 19.5 19.5 15 25 15 C30.5 15 34 19.5 34 28 V51" />
-            <path d="M15 27.5 L11.5 24.5" />
-            <path d="M10 56 H38" />
+            <!-- the tree of life, bearing fruit -->
+            <path d="M24 56 V20" />
+            <path d="M24 38 C16 36 11 30 10 22" />
+            <path d="M24 38 C32 36 37 30 38 22" />
+            <circle cx="10" cy="17.5" r="2.8" />
+            <circle cx="38" cy="17.5" r="2.8" />
+            <circle cx="24" cy="14.5" r="2.8" />
           </svg>
         </span>
-        <span class="portal__title">Logos</span>
-        <span class="portal__desc">learning Thai</span>
+        <span class="portal__title">Wander</span>
+        <span class="portal__desc">the digital garden</span>
       </a>
 
-      <a class="portal portal--workshop" href="workshop.html" aria-label="Enter the Workshop, how it's built">
+      <a class="portal portal--build" href="build.html" aria-label="Enter Build: the Workshop and projects">
         <span class="portal__halo" aria-hidden="true"></span>
         <span class="portal__vignette" aria-hidden="true">
           <svg viewBox="0 0 48 64">
@@ -581,8 +564,8 @@
             <path d="M31 14 L38 37" />
           </svg>
         </span>
-        <span class="portal__title">Workshop</span>
-        <span class="portal__desc">how it&rsquo;s built</span>
+        <span class="portal__title">Build</span>
+        <span class="portal__desc">the workshop &amp; projects</span>
       </a>
     </div>
 
@@ -650,7 +633,7 @@
       strip.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
 
-      // The way loops: past Logos is the Workshop again, and back the other way.
+      // The way loops: past Build is Pray again, and back the other way.
       // Rather than scroll through to a peek of the far gate first (which
       // would spoil it and briefly show what looks like a stray duplicate
       // card), a swipe past either end is a quick cut — fade out, jump,
@@ -893,8 +876,9 @@
         todayLink.querySelector('[data-pray-today-name]').textContent = name;
       }
 
-      // Open on Eden, the heart of the way, with gates on either side. Found
-      // by name, so adding a gate on either side never moves the opening.
+      // Open on Wander, Eden's gate, the heart of the way, with Pray and Build
+      // on either side. Found by its tag (portal--eden), so adding a gate on
+      // either side never moves the opening.
       const start = Math.max(0, portals.findIndex(p => p.classList.contains('portal--eden')));
       center(start, true);
       setActive(start);

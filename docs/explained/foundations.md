@@ -8,7 +8,8 @@ it shows up in Machina Christi. New ideas are added as the project meets them.
 **Website (the client side).** The pages you see on your phone. Your phone
 downloads them and shows them, like picking up a printed leaflet: once it's in
 your hand, everything on it is already decided.
-*Here:* the gates on machinachristi.com — Eden, Camino, Ordo, Pray.
+*Here:* the three gates on machinachristi.com (Pray, Wander and Build) and
+every room behind them: the prayers, Ordo, Eden, Camino, Logos, the Workshop.
 
 **CSS (the style sheet).** The rules that say how a page looks: colours,
 sizes, spacing, borders, glows. The page's words and links (HTML) are the
@@ -27,6 +28,16 @@ sign painted on a door versus one someone comes to hang up later.
 *Here:* the Pray page's prayer cards are drawn by a script from the prayer
 list; the Ordo card above them is written into the page, so it's there first
 (November 2026, AB#172).
+
+**Class name (a name tag for styles and tests).** A hidden label on a piece of
+a page, like `portal--eden`, that visitors never see. Style rules find pieces by
+their tags ("everything tagged `portal` gets a gold edge"), and so do scripts
+and tests ("open on the gate tagged `portal--eden`"). Because nobody sees it, a
+tag can outlive the words on the piece: a coat-check ticket still finds your
+coat after you've taken your hat off.
+*Here:* the front door's middle gate now says **Wander**, but keeps the tag
+`portal--eden`, because the door's script, a locked Eden test and the daily
+live check all find it by that tag (AB#172).
 
 **Contrast ratio.** A number for how clearly words stand out from what's behind
 them: 1 to 1 is grey on the same grey, 21 to 1 is black on white. Like reading
@@ -978,6 +989,14 @@ settings as well as whole systems.
 *Here:* the three-gate front door. Step 1 gave Ordo, Camino and Logos their new
 doors (the Pray room and the Build page); step 2 removes their old gates
 (AB#172).
+
+**Dead code.** Code still in a file that nothing uses any more: a colour no
+part of the page wears, a rule for a piece that's gone. It does no harm on the
+day, but it misleads the next reader, who has to wonder whether it matters,
+like a key on the ring whose door was bricked up years ago. So it's removed in
+the same change that makes it dead, while everyone still remembers why.
+*Here:* when the About, Ordo and Logos gates left the front door, their three
+colours and style rules went with them (AB#172).
 
 **Deploy.** Putting the new version where the public can reach it — moving the
 finished dish from the kitchen to the table.

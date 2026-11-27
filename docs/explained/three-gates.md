@@ -158,9 +158,112 @@ On the pull request's preview site:
   list below it (12 cards).
 - Open `/build.html`: tap Workshop, Camino and Logos in turn.
 
-## Step 2: the front door becomes three gates
+## Step 2: the front door becomes three gates (AB#172)
 
-*Not built yet.*
+### What changed
+
+- **The front door has three gates: Pray · Wander · Build.** It opens on
+  Wander, in the middle, so Pray and Build are each one swipe away, and a swipe
+  past either end loops round to the other.
+  - **Pray**, "prayers in Thai & English", opens the Pray room (with Ordo at
+    the top since step 1).
+  - **Wander**, "the digital garden", opens Eden. It is the old Eden gate with
+    a new name.
+  - **Build**, "the workshop & projects", opens the Build page. It is the old
+    Workshop gate, with a new name and a new address.
+- **The About, Ordo and Logos gates are gone.** Their rooms are all still there,
+  behind the new gates.
+- **About is a small open book in the top-left corner,** opposite the Search
+  glass. It's the same book the About gate carried, at thumb size (44 points).
+  It arrived in the same change that removed the About gate, because that gate
+  was the only way into the About pages.
+- **Two small lines of text grew from 13 to 14 points:** the words under each
+  gate and the "Pray today" label. 14 is the site's floor for easy reading on a
+  phone.
+- **The words that describe the site changed too:**
+  - the link-preview and search-engine description now names the three gates;
+  - the About page groups its six stories under them (Pray: Ordo, Pray;
+    Wander: Eden; Build: Workshop, Camino, Logos), the one place the whole map
+    shows;
+  - the README's "The gates" section;
+  - the glossary's "Website" entry;
+  - a one-line pointer at the top of the two older write-ups about the door.
+- **The sitemap** gains the Build page, so search engines can find it.
+
+### The story, like you're five
+
+**Moving the signs, not the rooms.** No page was deleted, renamed or moved, so
+every address anyone has saved or shared still works. Only the signs on the
+front door changed. It's like a shop that moves its displays around: the
+stockroom is the same, the doors to it are new.
+
+**A name tag outlives the name.** Every piece of a page can wear a hidden
+**class name**, a tag that only style rules and tests read. The middle gate's
+words now say "Wander", but its tag still says `portal--eden`. Three things
+find the gate by that tag: the door's own script (to know which gate to open
+on), a locked Eden test, and the daily walk of the live site. Changing the
+words and keeping the tag meant none of them had to change. The Workshop
+gate's tag did change, to `portal--build`, because it now opens a different
+room.
+
+**Sweeping up.** The three gates that left had their own colours (violet for
+Ordo, parchment for About, lacquer red for Logos) and their own style rules.
+Nothing used them any more, so they were deleted in the same change. Code that
+nothing uses is called **dead code**. Leaving it behind costs nothing on the
+day, but it confuses the next person to read the file.
+
+### What the tests check now
+
+- **The door** (`tests/home-and-doors.spec.js`):
+  - three gates, in the order Pray, Wander, Build, with their words and
+    addresses;
+  - no About, Ordo, Logos, Camino or Workshop gate;
+  - three dots, the middle one lit on arrival.
+- **Every tap and swipe test was turned round.** Pray now peeks in on the
+  *left*, so the "tap a side gate" test aims at its right-hand edge. The
+  desktop arrows walk Wander → Build → Wander → Pray, then loop to Build.
+- **New checks:**
+  - the book opens About: top left, level with the glass, at least 44 points
+    square, and the keyboard works too;
+  - the Build gate opens the Build page;
+  - the gates are exactly 203 points wide on a common phone, as before;
+  - no text on the door is under 14 points, on a common phone and a small one;
+  - both corner buttons answer a thumb;
+  - the Workshop test now walks door → Build → Workshop;
+  - About groups its stories under the three gates.
+- **The guard from step 1 did its job.** `tests/site-map.spec.js` walks the
+  whole site from the front door. With three gates removed, it still finds every
+  page in the sitemap, including the new Build page. That is the proof that no
+  room lost its door.
+
+### What it teaches about software
+
+- **The contract step is the risky one, and the expand step made it safe.**
+  Because every room got its new door in step 1, this change only *removes*
+  things, and a test already stood guard over exactly what could go wrong.
+- **Change the words and keep the hooks.** What visitors read and what code
+  holds on to are different things. Keeping the tag `portal--eden` let the name
+  change without touching three other places.
+- **Sweep as you go.** Delete what a change makes useless in the same change,
+  while the reason is still fresh.
+
+### Left for later, on purpose
+
+Search keeps its own list of pages in `functions/`, the API's folder, which
+this plan never touches. So, for now, the search page's card for the homepage
+still names the six old rooms, and the Build page isn't in search. Fixing both
+means redeploying the API and rebuilding the search index, a separate change
+for another day, with the owner's OK.
+
+### How the owner checks it, on a phone
+
+On the pull request's preview site:
+
+- The door opens on Wander. Swipe left for Pray, right for Build, and past
+  either end to loop round.
+- Tap each gate. Build should open the Build page and its three links.
+- Tap the book for About, and see the stories grouped.
+- "Pray today" is still there, nothing scrolls, and every word is easy to read.
 
 ## Step 3: a Logos station in the garden
 

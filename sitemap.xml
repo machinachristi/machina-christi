@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://machinachristi.com/</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-11-27</lastmod>
   </url>
   <url>
     <loc>https://machinachristi.com/game.html</loc>
@@ -14,7 +14,7 @@
   </url>
   <url>
     <loc>https://machinachristi.com/about.html</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-11-27</lastmod>
   </url>
   <url>
     <loc>https://machinachristi.com/about-camino.html</loc>
@@ -34,7 +34,7 @@
   </url>
   <url>
     <loc>https://machinachristi.com/pray.html</loc>
-    <lastmod>2026-10-06</lastmod>
+    <lastmod>2026-11-27</lastmod>
   </url>
   <url>
     <loc>https://machinachristi.com/about-pray.html</loc>
@@ -59,6 +59,10 @@
   <url>
     <loc>https://machinachristi.com/about-logos.html</loc>
     <lastmod>2026-10-17</lastmod>
+  </url>
+  <url>
+    <loc>https://machinachristi.com/build.html</loc>
+    <lastmod>2026-11-27</lastmod>
   </url>
   <!-- Each prayer's own page: made by scripts/build-prayer-pages.mjs -->
   <url>

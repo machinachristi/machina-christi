@@ -2,6 +2,8 @@
 
 *November 2026, from the whole-site review (Step 2: Q4, M5, F1).*
 
+> **Since late November 2026 the front door has three gates: Pray, Wander and Build.** This page records how it was before; the move is told in [three-gates.md](three-gates.md).
+
 ## What a visitor meets now
 
 The homepage used to say only the name and the season. A first-time visitor
